@@ -1,0 +1,4 @@
+!noci
+data/System/TasksAPIPlugin.txt 0644 Docs
+lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module
+lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0444
