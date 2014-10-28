@@ -46,7 +46,7 @@
 
       var deferred = $.Deferred();
       var url = restEndpoint('/SolrPlugin/search');
-      var q = "type: task";
+      var q = "type: task ";
       if ( query ) {
         if ( /type:\s?task/.test( query ) ) {
           q = query;
