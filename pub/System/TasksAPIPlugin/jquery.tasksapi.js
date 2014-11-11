@@ -90,6 +90,10 @@
 
     update: function( task ) {
       return postTask( 'update', task );
+    },
+
+    multiupdate: function( data ) {
+      return postTask( 'multiupdate', data );
     }
   }
 })(jQuery);
