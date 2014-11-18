@@ -1,6 +1,7 @@
 !noci
 data/System/TasksAPIPlugin.txt 0644 Docs
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module
+lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0444
 lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0444
 lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0444
 pub/System/TasksAPIPlugin/jquery.tasksapi.js 0644
