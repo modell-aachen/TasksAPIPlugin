@@ -83,6 +83,8 @@
         for ( var prop in filter ) {
           opts.push( prop + ':' + filter[prop] );
         }
+      } else if ( typeof filter === 'string' ) {
+        opts.push( filter );
       }
 
       return this.get( opts.join(' '), limit );
