@@ -15,6 +15,7 @@
     $.ajax({
       url: url,
       type: 'POST',
+      dataType: 'json',
       data: task,
       error: function( xhr, status, err ) {
         deferred.reject({
@@ -58,6 +59,7 @@
       $.ajax({
         url: url + '?q=' + q + '&rows=' + limit,
         type: 'GET',
+        dataType: 'json',
         error: function( xhr, status, err ) {
           deferred.reject({
             error: err,
