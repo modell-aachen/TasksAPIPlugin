@@ -25,7 +25,14 @@
         });
       },
       success: function( response, status, xhr ) {
-        deferred.resolve( response );
+        var retval;
+        if ( typeof response === 'string' ) {
+          retval = $.parseJSON( response );
+        } else {
+          retval = response;
+        }
+
+        deferred.resolve( retval );
       }
     });
 
@@ -68,7 +75,14 @@
           });
         },
         success: function( response, status, xhr ) {
-          deferred.resolve( response );
+          var retval;
+          if ( typeof response === 'string' ) {
+            retval = $.parseJSON( response );
+          } else {
+            retval = response;
+          }
+
+          deferred.resolve( retval );
         }
       });
 
