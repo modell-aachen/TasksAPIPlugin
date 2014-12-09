@@ -12,8 +12,6 @@ use Foswiki::Form ();
 use Digest::SHA;
 use JSON;
 
-use Foswiki::Plugins::TasksAPIPlugin;
-
 my $query = \&Foswiki::Plugins::TasksAPIPlugin::_query;
 
 # Create a completely arbitrary task object, with no validation or anything
