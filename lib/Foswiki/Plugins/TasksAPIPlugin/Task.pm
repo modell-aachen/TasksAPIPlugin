@@ -207,6 +207,10 @@ sub create {
         my $siblings = _getSiblings($data{Context}, $data{Parent});
     }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
+        require Foswiki::Plugins::SolrPlugin::GrinderDispatch;
+        Foswiki::Plugins::SolrPlugin::GrinderDispatch::afterSaveHandler(undef, $topic, $web);
+    }
     load($meta);
 }
 
@@ -255,6 +259,10 @@ sub update {
     # show up in changesets; we don't want to be updated about
     # auto-renumbering, for example
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
+        require Foswiki::Plugins::SolrPlugin::GrinderDispatch;
+        Foswiki::Plugins::SolrPlugin::GrinderDispatch::afterSaveHandler(undef, $topic, $web);
+    }
 }
 
 sub close {
