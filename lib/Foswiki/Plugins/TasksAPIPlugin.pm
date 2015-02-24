@@ -37,6 +37,7 @@ sub initPlugin {
 #    );
 #    Foswiki::Func::registerTagHandler( 'EXAMPLETAG', \&_EXAMPLETAG );
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
+    Foswiki::Func::registerRESTHandler( 'multicreate', \&restMultiCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
 #XXX- we don't really want to delete anything
@@ -99,6 +100,15 @@ sub restCreate {
         id => $res->{id},
     });
 }
+
+sub restMultiCreate {
+    my ($session, $subject, $verb, $response) = @_;
+    my $q = $session->{request};
+    my $json = decode_json($q->param('data'));
+    my $res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
+    return '{"status":"ok"}';
+}
+
 
 sub restUpdate {
     my ($session, $subject, $verb, $response) = @_;

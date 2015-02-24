@@ -166,7 +166,7 @@ sub _reduce {
     $cur;
 }
 
-sub create {
+sub _createOne {
     my %data = @_;
     my $form = delete $data{form};
     my $fields;
@@ -201,17 +201,28 @@ sub create {
             name => $name, title => $f->{tooltip}, value => defined($data{$name}) ? $data{$name} : $f->{value}
         });
     }
-    if (my %autonumber = _parsePref($form, 'AUTONUMBER')) {
-        # can't query Solr here because it may be outdated :(
-        # so, iterate over all topics.
-        my $siblings = _getSiblings($data{Context}, $data{Parent});
-    }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    ($web, $topic, $meta);
+}
+
+sub create {
+    my ($web, $topic, $meta) = &_createOne;
     if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
-        require Foswiki::Plugins::SolrPlugin::GrinderDispatch;
-        Foswiki::Plugins::SolrPlugin::GrinderDispatch::afterSaveHandler(undef, $topic, $web);
+        require Foswiki::Plugins::TaskDaemonPlugin;
+        Foswiki::Plugins::TaskDaemonPlugin::send("$web.$topic", 'update_topic', 'SolrPlugin');
     }
     load($meta);
+}
+
+sub createMulti {
+    foreach my $data (@_) {
+        _createOne(%$data);
+    }
+    my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
+    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
+        require Foswiki::Plugins::TaskDaemonPlugin;
+        Foswiki::Plugins::TaskDaemonPlugin::send($web, 'update_web', 'SolrPlugin');
+    }
 }
 
 sub update {
