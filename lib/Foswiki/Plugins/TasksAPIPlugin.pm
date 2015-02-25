@@ -118,7 +118,14 @@ sub restUpdate {
         $data{$k} = $q->param($k);
     }
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, delete $data{id});
-    # TODO check access
+
+    my @acl = _getACL($task->{meta}, 'change');
+    if (@acl) {
+        unless (_checkACL(@acl)) {
+            return '{"status":"error","code":"acl_change","msg":"No permission to update task"}';
+        }
+    }
+
     $task->update(%data);
     return '{"status":"ok"}';
 }
@@ -132,6 +139,8 @@ sub restMultiUpdate {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         $task->update(%$data);
         $res{$id} = {status => 'ok'};
+        my @acl = _getACL($task->{meta}, 'change');
+        $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if @acl && !_checkACL(@acl);
     }
     return encode_json(\%res);
 }

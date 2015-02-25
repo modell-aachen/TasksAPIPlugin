@@ -38,8 +38,11 @@ sub load {
         ($meta, $_text) = Foswiki::Func::readTopic($web, $topic);
     }
     die "Could not read task topic '$web.$topic'" unless ref $meta;
-    unless ($meta->haveAccess) {
-        die "No permission to read task topic '$web.$topic'";
+    my @acl = _getACL($meta, 'view');
+    if (@acl) {
+        unless (_checkACL(@acl)) {
+            die "No permission to read task topic '$web.$topic'";
+        }
     }
 
     my $form = $meta->getFormName;
@@ -164,6 +167,41 @@ sub _reduce {
         $cur = $cb->($cur, $candidate);
     }
     $cur;
+}
+
+sub _getACL {
+    my ($this, $type) = @_;
+    my $aclPref = $this->{form}->getPreference('TASKACL_'. $type);
+    return () unless $aclPref;
+    $aclPref = $this->expandMacros($aclPref);
+    my @acl;
+    my $parent = $this->get('FIELD', 'Parent');
+    my $ctx = $this->get('FIELD', 'Context');
+    my $aclFromRef = sub {
+        my $ref = $this->get('FIELD', shift);
+        return () unless $ref;
+        my $refedTopic = load(undef, $ref->{value});
+        return () unless $refedTopic;
+        return _getACL($refedTopic, $type);
+    };
+    $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
+    $aclPref =~ s/\$contextACL\b/push @acl, $aclFromRef->('Context'); ''/e;
+    push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
+    my %acl; @acl{@acl} = @acl;
+    keys %acl;
+}
+
+sub _checkACL {
+    my $session = $Foswiki::Plugins::SESSION;
+    my $user = $session->{user};
+    foreach my $item (@_) {
+        my $cuid = Foswiki::Func::getCanonicalUserID($item);
+        return 1 if $user eq $cuid;
+        if (Foswiki::Func::isGroup($item)) {
+            return 1 if Foswiki::Func::isGroupMember($item, $user);
+        }
+    }
+    0;
 }
 
 sub _createOne {
