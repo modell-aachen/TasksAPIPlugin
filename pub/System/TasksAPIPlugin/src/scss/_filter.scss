@@ -1,0 +1,16 @@
+.tasktracker > .filter {
+  height: $filter-height;
+  background-color: $filter-bg;
+
+  > div {
+    padding: $filter-padding;
+  }
+
+  .options {
+    display: inline-block;
+  }
+
+  .create {
+    float: right;
+  }
+}

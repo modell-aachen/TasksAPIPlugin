@@ -31,16 +31,20 @@ sub initPlugin {
         return 0;
     }
 
-#    Foswiki::Contrib::JsonRpcContrib::registerMethod(
-#        'tasks', 'query',
-#        \&_query
-#    );
-#    Foswiki::Func::registerTagHandler( 'EXAMPLETAG', \&_EXAMPLETAG );
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
+<script type="text/javascript" src="$pluginURL/js/tasktracker.js"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker.css' />
+STYLE
+
+    Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
+
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
-#XXX- we don't really want to delete anything
-#    Foswiki::Func::registerRESTHandler( 'delete', \&restDelete );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -139,6 +143,64 @@ sub _indexTopicHandler {
     $doc->add_fields(
         task_fulltext_s => $text,
     );
+}
+
+my $gridCounter = 1;
+sub tagGrid {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+  # $params->{foo}
+
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
+    my $ctx = $params->{_DEFAULT} || $params->{context} || "";
+    my $id = $params->{id} || $gridCounter;
+    $gridCounter += 1 if $id eq $gridCounter;
+    my $state = $params->{state} || "";
+    my $system = $Foswiki::cfg{SystemWebName} || "System";
+    my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
+    my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
+    my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
+    my $filterTemplate = $params->{filtertemplate} || "tasksapi::filter";
+    my $gridClass = $params->{gridclass} || "";
+    my $pageSize = $params->{pagesize} || "";
+    my $query = $params->{query} || "";
+
+    Foswiki::Func::loadTemplate( "TasksAPI" );
+    my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
+    my $task = Foswiki::Func::expandTemplate( $taskTemplate );
+    my $filter = Foswiki::Func::expandTemplate( $filterTemplate );
+
+    my %settings = (
+        context => $ctx,
+        form => $form,
+        id => $id,
+        pageSize => $pageSize,
+        query => $query,
+        template => Foswiki::urlEncode( $task )
+    );
+
+    my $json = encode_json( \%settings );
+    my $grid = <<GRID;
+<div id="$id" class="tasktracker $gridClass">
+  <div class="filter">
+    <div>$filter</div>
+  </div>
+  <div class="tasks">
+    <div></div>
+  </div>
+  <div class="editor">
+    <div>
+%BUTTON{"%MAKETEXT{"Save"}%" class="btn-save" icon="accept"}%
+%BUTTON{"%MAKETEXT{"Cancel"}%" class="btn-cancel" icon="cross"}%
+%CLEAR%
+    </div>
+    <div>$editor</div>
+  </div>
+  <div class="settings">$json</div>
+</div>
+GRID
+
+    return $grid;
 }
 
 1;

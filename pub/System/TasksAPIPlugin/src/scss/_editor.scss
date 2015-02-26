@@ -1,0 +1,55 @@
+.tasktracker > .editor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+
+  background: #fff;
+  width: $editor-width;
+
+  transform: translate3d(100%, 0, 0);
+  transition: transform 0.4s ease-in-out;
+
+  &.active {
+    transform: translate3d(0, 0, 0);
+    box-shadow: 0 2px 5px #333;
+  }
+
+  > div {
+    padding: $editor-padding;
+
+    > .state, .reminder, .prioritize {
+      display: inline-block;
+    }
+  }
+
+  label > span {
+    display: block;
+    color: $label-color;
+    text-transform: $label-text-transform;
+    font-size: $label-font-size;
+    font-weight: $label-font-weight;
+  }
+
+  input, select, textarea {
+    background: $input-inactive-bg;
+    border-color: $input-inactive-border-color;
+    color: $input-inactive-color;
+    border-radius: $global-radius;
+    padding: $input-padding;
+
+    &:focus {
+      background: #fff;
+    }
+  }
+
+  div.datepicker {
+    label > :not(:first-child) {
+      display: inline-block;
+    }
+
+    label > input {
+      width: 250px;
+    }
+  }
+}

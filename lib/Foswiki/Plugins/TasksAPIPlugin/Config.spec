@@ -6,8 +6,10 @@
 $Foswiki::cfg{TasksAPIPlugin}{DBWeb} = 'Tasks';
 
 # ---++ JQueryPlugin
-# ---+++ Extra plugins
-# **STRING**
-$Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Module} = 'Foswiki::Plugins::TasksAPIPlugin::JQueryPlugin';
+# ---+++ TasksAPI
+
 # **BOOLEAN**
 $Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Enabled} = 1;
+
+# **STRING EXPERT**
+$Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Module} = 'Foswiki::Plugins::TasksAPIPlugin::JQueryPlugin';

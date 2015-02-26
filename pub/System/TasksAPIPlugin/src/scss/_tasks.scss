@@ -1,0 +1,168 @@
+.tasktracker > .tasks {
+  position: relative;
+  left:0;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 600px;
+  width: 100%;
+
+  transition: right 0.4s ease-in-out;
+
+  &.edit {
+    pointer-events: none;
+    right: $editor-width - 35px;
+  }
+
+  > div {
+    height: inherit;
+    padding: 6px;
+  }
+
+  .task {
+    margin-bottom: 3px;
+    background-color: $white;
+    border-left: 5px solid transparent;
+    border-radius: $global-radius;
+    transition: opacity 0.3s ease-in-out,
+                background-color 0.2s ease-in-out;
+    min-height: $task-min-height;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    padding: 3px;
+
+    &.faded {
+      opacity: 0.4;
+    }
+
+    &.prioritized-Yes {
+      border-left-color: $prioritized;
+    }
+
+    &.selected, &:hover {
+      background-color: $grey;
+      color: $white;
+
+      span.created {
+        color: $light-blue !important;
+      }
+    }
+
+    &:nth-child(odd) {
+      background-color: $light-blue;
+
+      &.selected, &:hover {
+        background-color: $grey;
+        color: $white;
+      }
+
+      div.assigned {
+        background-color: $white !important;
+      }
+    }
+
+    &:hover {
+      > .btn-edit {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    > .btn-edit {
+      align-self: stretch;
+      background-color: white;
+      border-radius: $global-radius;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      background-image: url('../assets/edit-blue.png');
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: background-color 0.3s ease-in-out,
+                  opacity 0.3s ease-in-out;
+      width: 32px;
+
+      &:hover {
+        background-color: $light-blue;
+      }
+
+      &:active {
+        background-color: $blue;
+        background-image: url('../assets/edit-white.png');
+      }
+    }
+
+    > .state {
+      width: 32px;
+      order: -1;
+      flex-shrink: 0;
+      align-self: stretch;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 20px;
+
+      &.open {
+        background-image: url('../assets/task-open.png');
+      }
+
+      &.closed, &.deleted {
+        background-image: url('../assets/task-done.png');
+      }
+    }
+
+    > .content {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      flex: 2 1 auto;
+
+      > div {
+        padding: 3px;
+        font-size: 13px;
+
+        &.assigned {
+          background-color: $light-blue;
+          background-image: url('../assets/user.png');
+          background-position: 6px center;
+          background-repeat: no-repeat;
+          background-size: 12px;
+          border-radius: $global-radius;
+          color: $blue;
+          padding: 0 6px 0 25px;
+        }
+
+        &.caption {
+          order: -1;
+          width: 100%;
+
+          > .title {
+            font-size: 14px;
+            font-weight: bold;
+          }
+
+          > .created {
+            color: #777;
+            font-size: 12px;
+            margin-left: 12px;
+          }
+        }
+
+        &.description {
+          flex-grow: 2;
+          max-width: 50%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+}
