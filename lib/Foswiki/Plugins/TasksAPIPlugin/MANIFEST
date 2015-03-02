@@ -17,3 +17,5 @@ pub/System/TasksAPIPlugin/js/jquery.tasksapi.js 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.min.js 0644
+pub/System/TasksAPIPlugin/css/tasktracker.css 0644
+pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
