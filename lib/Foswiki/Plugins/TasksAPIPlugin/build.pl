@@ -4,6 +4,11 @@ use strict;
 BEGIN { unshift @INC, split( /:/, $ENV{FOSWIKI_LIBS} ); }
 use Foswiki::Contrib::Build;
 
+sub new {
+  my $class = shift;
+  return bless( $class->SUPER::new( "TasksAPIPlugin" ), $class );
+}
+
 sub target_build {
   my $this = shift;
   $this->_installDeps();
