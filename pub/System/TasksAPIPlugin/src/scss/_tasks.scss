@@ -115,7 +115,7 @@
     }
 
     > .content {
-      @include flex-container($wrap: nowrap, $justify: space-between);
+      @include flex-container($wrap: wrap, $justify: space-between);
       @include flex($grow: 2, $align: center);
 
       > div {
