@@ -1,0 +1,166 @@
+.tasktracker {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #f0f0f0; }
+  .tasktracker > .settings {
+    display: none; }
+  .tasktracker .hidden {
+    display: none !important; }
+
+.tasktracker > .editor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background: #fff;
+  width: 400px;
+  transform: translate3d(100%, 0, 0);
+  transition: transform 0.4s ease-in-out; }
+  .tasktracker > .editor.active {
+    transform: translate3d(0, 0, 0);
+    box-shadow: 0 2px 5px #333; }
+  .tasktracker > .editor > div {
+    padding: 12px; }
+    .tasktracker > .editor > div > .state, .tasktracker > .editor > div .reminder, .tasktracker > .editor > div .prioritize {
+      display: inline-block; }
+  .tasktracker > .editor label > span {
+    display: block;
+    color: #ccc;
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: bold; }
+  .tasktracker > .editor input, .tasktracker > .editor select, .tasktracker > .editor textarea {
+    background: #f0f0f0;
+    border-color: #f0f0f0;
+    color: #222;
+    border-radius: 3px;
+    padding: 6px; }
+    .tasktracker > .editor input:focus, .tasktracker > .editor select:focus, .tasktracker > .editor textarea:focus {
+      background: #fff; }
+  .tasktracker > .editor div.datepicker label > :not(:first-child) {
+    display: inline-block; }
+  .tasktracker > .editor div.datepicker label > input {
+    width: 250px; }
+
+.tasktracker > .filter {
+  height: 50px;
+  background-color: #fefefe; }
+  .tasktracker > .filter > div {
+    padding: 12px; }
+  .tasktracker > .filter .options {
+    display: inline-block; }
+  .tasktracker > .filter .create {
+    float: right; }
+
+.tasktracker > .tasks {
+  position: relative;
+  left: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 600px;
+  width: 100%;
+  transition: right 0.4s ease-in-out; }
+  .tasktracker > .tasks.edit {
+    pointer-events: none;
+    right: 365px; }
+  .tasktracker > .tasks > div {
+    height: inherit;
+    padding: 6px; }
+  .tasktracker > .tasks .task {
+    margin-bottom: 3px;
+    background-color: #ffffff;
+    border-left: 5px solid transparent;
+    border-radius: 3px;
+    transition: opacity 0.3s ease-in-out, background-color 0.2s ease-in-out;
+    min-height: 60px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    padding: 3px; }
+    .tasktracker > .tasks .task.faded {
+      opacity: 0.4; }
+    .tasktracker > .tasks .task.prioritized-Yes {
+      border-left-color: #f40; }
+    .tasktracker > .tasks .task.selected, .tasktracker > .tasks .task:hover {
+      background-color: #bebebe;
+      color: #ffffff; }
+      .tasktracker > .tasks .task.selected span.created, .tasktracker > .tasks .task:hover span.created {
+        color: #f2f5f7 !important; }
+    .tasktracker > .tasks .task:nth-child(odd) {
+      background-color: #f2f5f7; }
+      .tasktracker > .tasks .task:nth-child(odd).selected, .tasktracker > .tasks .task:nth-child(odd):hover {
+        background-color: #bebebe;
+        color: #ffffff; }
+      .tasktracker > .tasks .task:nth-child(odd) div.assigned {
+        background-color: #ffffff !important; }
+    .tasktracker > .tasks .task:hover > .btn-edit {
+      opacity: 1;
+      pointer-events: auto; }
+    .tasktracker > .tasks .task > .btn-edit {
+      align-self: stretch;
+      background-color: white;
+      border-radius: 3px;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      background-image: url('../assets/edit-blue.png');
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-left: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: background-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      width: 32px; }
+      .tasktracker > .tasks .task > .btn-edit:hover {
+        background-color: #f2f5f7; }
+      .tasktracker > .tasks .task > .btn-edit:active {
+        background-color: #236aa2;
+        background-image: url('../assets/edit-white.png'); }
+    .tasktracker > .tasks .task > .state {
+      width: 32px;
+      order: -1;
+      flex-shrink: 0;
+      align-self: stretch;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 20px; }
+      .tasktracker > .tasks .task > .state.open {
+        background-image: url('../assets/task-open.png'); }
+      .tasktracker > .tasks .task > .state.closed, .tasktracker > .tasks .task > .state.deleted {
+        background-image: url('../assets/task-done.png'); }
+    .tasktracker > .tasks .task > .content {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      flex: 2 1 auto; }
+      .tasktracker > .tasks .task > .content > div {
+        padding: 3px;
+        font-size: 13px; }
+        .tasktracker > .tasks .task > .content > div.assigned {
+          background-color: #f2f5f7;
+          background-image: url('../assets/user.png');
+          background-position: 6px center;
+          background-repeat: no-repeat;
+          background-size: 12px;
+          border-radius: 3px;
+          color: #236aa2;
+          padding: 0 6px 0 25px; }
+        .tasktracker > .tasks .task > .content > div.caption {
+          order: -1;
+          width: 100%; }
+          .tasktracker > .tasks .task > .content > div.caption > .title {
+            font-size: 14px;
+            font-weight: bold; }
+          .tasktracker > .tasks .task > .content > div.caption > .created {
+            color: #777;
+            font-size: 12px;
+            margin-left: 12px; }
+        .tasktracker > .tasks .task > .content > div.description {
+          flex-grow: 2;
+          max-width: 50%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis; }
