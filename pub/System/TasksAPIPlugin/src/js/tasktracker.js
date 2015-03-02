@@ -5,6 +5,11 @@
   var tasks = {};
 
   $.fn.tasksGrid = function() {
+    if ( typeof _ === typeof undefined ) {
+      error( "Missing dependency underscore.js");
+      return this;
+    }
+
     return this.each(function () {
       var $this = $(this);
 
@@ -24,8 +29,10 @@
 
       var $tasks = $this.children('.tasks');
       var $editor = $this.children('.editor');
+      var $filter = $this.children('.filter');
       var $save = $editor.find('.btn-save');
       var $cancel = $editor.find('.btn-cancel');
+      var $create = $filter.find('.btn-create');
 
       var handleScroll = function( evt ) {
         var $this = $(this);
@@ -56,12 +63,36 @@
       };
 
       var handleSave = function() {
+        var task = readEditor( $editor );
+
+        // missing value for mandatory field
+        if ( task === null ) {
+          return false;
+        }
+
+        if ( $editor.data('new') === true ) {
+          var now = moment();
+          task.form = opts.form;
+
+          $.blockUI();
+          $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
+            var $task = $(opts.template(task));
+            $task.find('.btn-edit').on('click', options[id].onEditClicked);
+            $task.data('id', response.id);
+            opts.container.prepend( $task );
+            $editor.data('new', '');
+
+            $cancel.click();
+          });
+
+          return false;
+        }
+
         var $task = $tasks.find('.selected');
         var taskId = $task.data('id');
+        task.id = taskId;
         var selected = _.findWhere( tasks[id], {id: taskId} );
         var fields = getFieldDefinitions( selected );
-        var task = readEditor( $editor );
-        task.id = taskId;
 
         $.blockUI();
         $.taskapi.update( task ).fail( error ).always( $.unblockUI ).done( function() {
@@ -76,9 +107,21 @@
         return false;
       };
 
+      var handleCreate = function() {
+        var id = $(this).closest('.tasktracker').attr('id');
+        $editor.addClass('active');
+        $tasks.addClass('edit');
+        clearEditor( $editor );
+        $editor.data('new', true);
+        highlightTask( opts.container.children(), null );
+
+        return false;
+      };
+
       $tasks.on( 'scroll', handleScroll );
       $cancel.on( 'click', handleCancel );
       $save.on( 'click', handleSave );
+      $create.on( 'click', handleCreate );
 
       return this;
     });
@@ -109,7 +152,13 @@
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
-    $.taskapi.get(opts.query, fetchSize, opts.page).done( function( solr ) {
+    var query = [
+      'field_Context_s:',
+      opts.context,
+      ' ',
+      opts.query
+    ].join('');
+    $.taskapi.get(query, fetchSize, opts.page).done( function( solr ) {
       var docs = solr.response.docs;
       for( var i = 0; i < docs.length; ++i ) {
         var doc = docs[i];
@@ -187,20 +236,56 @@
     });
   };
 
+  var clearEditor = function( editor ) {
+    $('input,textarea').each( function() {
+      var $this = $(this);
+      $this.val('');
+      $this.trigger('Clear');
+    });
+  };
+
   var readEditor = function( editor ) {
     var $editor = $(editor);
     var data = {};
 
+    var hasError = false;
     $editor.find('input[name],select[name],textarea[name]').each(function() {
       var $input = $(this);
       var prop = $input.attr('name');
-      data[prop] = $input.val();
+      var val = $input.val();
+
+      if ( /^$/.test(val) ) {
+        val = $input.attr('value');
+        if ( /^$/.test(val) ) {
+          val = $input[0].getAttribute('value');
+        }
+      }
+
+      if ( $input.hasClass('foswikiMandatory') && (/^$/.test( val ) || val === null || val === undefined ) ) {
+        alert('TBD. missing value for mandatory field');
+        hasError = true;
+        return false;
+      }
+
+      data[prop] = val;
     });
+
+    if ( hasError ) {
+      return null;
+    }
 
     return data;
   };
 
   var highlightTask = function( container, task ) {
+    if ( task === null ) {
+      container.each( function() {
+        $(this).addClass('faded');
+      });
+
+      return;
+    }
+
     var $task = $(task);
     container.each( function(){
       var $child = $(this);
@@ -224,6 +309,11 @@
 
       task[field.name] = val;
     });
+
+    // ToDo. fix this. currently used as hotfix for ProjectsAppPlugin
+    if ( typeof task.Description === typeof undefined ) {
+      task.Description = 'n/a';
+    }
 
     return task;
   };

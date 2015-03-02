@@ -9,8 +9,9 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
 
-use Foswiki::Plugins::TasksAPIPlugin::Task;
+use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::SolrPlugin::Search;
+use Foswiki::Plugins::TasksAPIPlugin::Task;
 
 use JSON;
 
@@ -30,15 +31,6 @@ sub initPlugin {
             __PACKAGE__, ' and Plugins.pm' );
         return 0;
     }
-
-    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
-<script type="text/javascript" src="$pluginURL/js/tasktracker.js"></script>
-SCRIPT
-
-    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker.css' />
-STYLE
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
 
@@ -199,6 +191,20 @@ sub tagGrid {
   <div class="settings">$json</div>
 </div>
 GRID
+
+    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore");
+    foreach (@jqdeps) {
+        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
+    }
+
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
+<script type="text/javascript" src="$pluginURL/js/tasktracker.js"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker.css' />
+STYLE
 
     return $grid;
 }
