@@ -4,6 +4,9 @@ use strict;
 BEGIN { unshift @INC, split( /:/, $ENV{FOSWIKI_LIBS} ); }
 use Foswiki::Contrib::Build;
 
+package TasksAPIPluginBuild;
+our @ISA = qw(Foswiki::Contrib::Build);
+
 sub new {
   my $class = shift;
   return bless( $class->SUPER::new( "TasksAPIPlugin" ), $class );
@@ -14,23 +17,25 @@ sub target_build {
   $this->_installDeps();
 }
 
+sub target_compress {}
+
 sub _installDeps {
   my $this = shift;
 
   local $| = 1;
   print "Fetching node dependencies:\n";
-  print $this->sys_action( qw(npm install) ) . "\n";
-  print "Done!\n\n";
+  print $this->sys_action( qw(npm install) );
+  print "\nDone!\n\n";
 
   print "Fetching bower dependencies:\n";
-  print $this->sys_action( qw(bower update) ) . "\n";
-  print "Done!\n\n";
+  print $this->sys_action( qw(bower update) );
+  print "\nDone!\n\n";
 
   print "Building...\n";
-  print $this->sys_action( qw(grunt build) ) . "\n";
-  print "Done!\n\n";
+  print $this->sys_action( qw(grunt build) );
+  print "\nDone!\n\n";
 }
 
-my $build = Foswiki::Contrib::Build->new('TasksAPIPlugin');
+my $build = TasksAPIPluginBuild->new('TasksAPIPlugin');
 $build->build( $build->{target} );
 

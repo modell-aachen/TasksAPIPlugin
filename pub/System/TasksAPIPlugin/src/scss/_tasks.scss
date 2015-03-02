@@ -28,9 +28,8 @@
                 background-color 0.2s ease-in-out;
     min-height: $task-min-height;
 
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
+    @include flex-container();
+
     align-items: stretch;
     padding: 3px;
 
@@ -72,7 +71,8 @@
     }
 
     > .btn-edit {
-      align-self: stretch;
+      @include flex($shrink: 0, $align: stretch);
+
       background-color: white;
       border-radius: $global-radius;
       background-position: center center;
@@ -80,7 +80,7 @@
       background-size: 16px;
       background-image: url('../assets/edit-blue.png');
       cursor: pointer;
-      flex-shrink: 0;
+
       margin-left: 6px;
       opacity: 0;
       pointer-events: none;
@@ -99,10 +99,8 @@
     }
 
     > .state {
+      @include flex($shrink: 0, $align: stretch, $order: -1);
       width: 32px;
-      order: -1;
-      flex-shrink: 0;
-      align-self: stretch;
       background-position: center center;
       background-repeat: no-repeat;
       background-size: 20px;
@@ -117,12 +115,8 @@
     }
 
     > .content {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      flex: 2 1 auto;
+      @include flex-container($wrap: nowrap, $justify: space-between);
+      @include flex($grow: 2, $align: center);
 
       > div {
         padding: 3px;
@@ -140,7 +134,7 @@
         }
 
         &.caption {
-          order: -1;
+          @include flex($order: -1);
           width: 100%;
 
           > .title {
@@ -156,7 +150,8 @@
         }
 
         &.description {
-          flex-grow: 2;
+          @include flex($grow: 2);
+
           max-width: 50%;
           white-space: nowrap;
           overflow: hidden;
