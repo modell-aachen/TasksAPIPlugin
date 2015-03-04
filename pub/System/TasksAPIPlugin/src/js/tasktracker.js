@@ -65,6 +65,12 @@
       var handleSave = function() {
         var task = readEditor( $editor );
 
+        var beforeSave = $.Event( 'beforeSave' )
+        $this.trigger( beforeSave, task ); 
+        if( beforeSave.isDefaultPrevented() ) {
+          return false;
+        }
+
         // missing value for mandatory field
         if ( task === null ) {
           return false;
@@ -77,12 +83,17 @@
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
             var $task = $(opts.template(task));
+            $task.on('click', raiseClicked );
             $task.find('.btn-edit').on('click', options[id].onEditClicked);
+
             $task.data('id', response.id);
             opts.container.prepend( $task );
             $editor.data('new', '');
 
             $cancel.click();
+
+            var afterSave = $.Event( 'afterSave' )
+            $this.trigger( afterSave, response.id ); 
           });
 
           return false;
@@ -108,6 +119,12 @@
       };
 
       var handleCreate = function() {
+        var beforeCreate = $.Event( 'beforeCreate' )
+        $this.trigger( beforeCreate ); 
+        if( beforeCreate.isDefaultPrevented() ) {
+          return false;
+        }
+
         var id = $(this).closest('.tasktracker').attr('id');
         $editor.addClass('active');
         $tasks.addClass('edit');
@@ -115,6 +132,8 @@
         $editor.data('new', true);
         highlightTask( opts.container.children(), null );
 
+        var afterCreate = $.Event( 'afterCreate' )
+        $this.trigger( afterCreate );
         return false;
       };
 
@@ -140,15 +159,26 @@
     var $editor = $grid.children('.editor');
 
     opts.onEditClicked = function( evt ) {
-      var id = $(this).closest('.tasktracker').attr('id');
+      var $tracker = $(this).closest('.tasktracker');
+      var id = $tracker.attr('id');
       var $task = $(this).closest('.task');
-      $editor.addClass('active');
-      $tasks.addClass('edit');
-
       var selected = _.findWhere( tasks[id], {id: $task.data('id')} );
+
+      var beforeEdit = $.Event( 'beforeEdit' )
+      $tracker.trigger( beforeEdit, selected ); 
+      if( beforeEdit.isDefaultPrevented() ) {
+        return false;
+      }
+
       var fields = getFieldDefinitions( selected );
       writeEditor( $editor, fields, selected );
       highlightTask( opts.container.children(), $task );
+
+      $editor.addClass('active');
+      $tasks.addClass('edit');
+
+      var afterEdit = $.Event( 'afterEdit' )
+      $tracker.trigger( afterEdit ); 
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
@@ -170,6 +200,7 @@
         $html.data('id', doc.id);
         opts.container.append( $html );
 
+        $html.on('click', raiseClicked );
         $html.find('.btn-edit').on('click', opts.onEditClicked );
       }
 
@@ -177,6 +208,16 @@
     }).fail( deferred.reject );
 
     return deferred.promise();
+  };
+
+  var raiseClicked = function( evt ) {
+    if ( $(evt.target).hasClass('btn-edit') ) {
+      return false;
+    }
+
+    var taskClick = $.Event( 'taskClick' )
+    var $tracker = $(this).closest('.tasktracker');
+    $tracker.trigger( taskClick, this ); 
   };
 
   var getFieldDefinitions = function( solrEntry ) {
