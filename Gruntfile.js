@@ -68,6 +68,31 @@ module.exports = function(grunt) {
             '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
           ]
         }]
+      },
+      devJQ: {
+        options: {
+          beautify: true,
+          compress: false,
+          mangle: false,
+          preserveComments: 'all'
+        },
+        files: {
+          '<%= pkg.pubDir %>/js/jquery.tasksapi.uncompressed.js': [
+            '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
+          ]
+        }
+      },
+      distJQ: {
+        options: {
+          compress: true,
+          mangle: true,
+          preserveComments: false
+        },
+        files: [{
+          '<%= pkg.pubDir %>/js/jquery.tasksapi.js': [
+            '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
+          ]
+        }]
       }
     },
 
@@ -83,9 +108,13 @@ module.exports = function(grunt) {
         files: ['<%= pkg.pubDir %>/src/scss/**/*.scss'],
         tasks: ['sass']
       },
-      uglify: {
-        files: ['<%= pkg.pubDir %>/src/js/**/*.js'],
+      scripts: {
+        files: ['<%= pkg.pubDir %>/src/js/**/!(jquery)*.js'],
         tasks: ['uglify']
+      },
+      jquery: {
+        files: ['<%= pkg.pubDir %>/src/js/**/jquery*.js'],
+        tasks: ['uglify:devJQ','uglify:distJQ']
       }
     },
   });
