@@ -46,7 +46,7 @@
       return postTask( 'create', data );
     },
 
-    get: function( query, limit, offset ) {
+    get: function( query, limit, offset, sort ) {
       if ( !limit || /^\d+$/.test( limit ) === false ) {
         limit = (this.opts && this.opts.limit) || 9999;
         if ( !query ) query = '';
@@ -54,6 +54,11 @@
 
       if ( !offset || /^\d+$/.test( offset ) === false ) {
         offset = 0;
+      }
+
+      var sortBy = '';
+      if ( sort ) {
+        sortBy = '&sort=' + sort;
       }
 
       var deferred = $.Deferred();
@@ -68,7 +73,7 @@
       }
 
       $.ajax({
-        url: url + '?q=' + q + '&rows=' + limit + '&start=' + offset,
+        url: url + '?q=' + q + '&rows=' + limit + '&start=' + offset + sortBy,
         type: 'GET',
         dataType: 'json',
         error: function( xhr, status, err ) {
@@ -93,11 +98,11 @@
       return deferred.promise();
     },
 
-    getAll: function( limit, offset ) {
-      return this.get( 'type:task', limit, offset );
+    getAll: function( limit, offset, sort ) {
+      return this.get( 'type:task', limit, offset, sort );
     },
 
-    getBy: function( filter, limit, offset ) {
+    getBy: function( filter, limit, offset,sort ) {
       var opts = ['type:task'];
       if ( typeof filter === 'object' ) {
         for ( var prop in filter ) {
