@@ -1,6 +1,6 @@
 %TMPL:DEF{"tasksapi::filter"}%%{
 }%<div class="options">%MAKETEXT{"State"}%:&nbsp;
-  <select name="filter">
+  <select name="status">
     <option value="open">%MAKETEXT{"open"}%</option>
     <option value="closed">%MAKETEXT{"closed"}%</option>
     <option value="deleted">%MAKETEXT{"deleted"}%</option>
