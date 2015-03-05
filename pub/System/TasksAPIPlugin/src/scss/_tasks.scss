@@ -105,11 +105,11 @@
       background-repeat: no-repeat;
       background-size: 20px;
 
-      &.open {
+      &.open, &.deleted {
         background-image: url('../assets/task-open.png');
       }
 
-      &.closed, &.deleted {
+      &.closed {
         background-image: url('../assets/task-done.png');
       }
     }
@@ -117,6 +117,14 @@
     > .content {
       @include flex-container($wrap: wrap, $justify: space-between);
       @include flex($grow: 2, $align: center);
+
+      &.deleted {
+        text-decoration: line-through !important;
+      }
+
+      &.milestone-1 {
+        color: maroon;
+      }
 
       > div {
         padding: 3px;
