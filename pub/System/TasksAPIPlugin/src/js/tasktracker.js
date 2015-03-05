@@ -24,12 +24,15 @@
       opts.cntHeight = $this.height();
       opts.container = $this.find('.tasks > div');
 
+      opts.currentState = 'open';
       options[id] = opts;
-      loadTasks( id, true );
+      $.blockUI();
+      loadTasks( id, opts.currentState, true ).always( $.unblockUI );
 
       var $tasks = $this.children('.tasks');
       var $editor = $this.children('.editor');
       var $filter = $this.children('.filter');
+      var $status = $filter.find('select[name="status"]');
       var $save = $editor.find('.btn-save');
       var $cancel = $editor.find('.btn-cancel');
       var $create = $filter.find('.btn-create');
@@ -42,7 +45,7 @@
         if ( opts.canLoadMore && current > opts.page ) {
           opts.page = current;
           $.blockUI();
-          loadTasks( id ).done( function( results ) {
+          loadTasks( id, opts.currentState ).done( function( results ) {
             opts.canLoadMore = results.length > 0;
           }).always( $.unblockUI );
         }
@@ -90,10 +93,10 @@
             opts.container.prepend( $task );
             $editor.data('new', '');
 
-            $cancel.click();
-
             var afterSave = $.Event( 'afterSave' )
-            $this.trigger( afterSave, response.id ); 
+            $this.trigger( afterSave, task );
+
+            $cancel.click();
           });
 
           return false;
@@ -112,6 +115,10 @@
           $task.find('.btn-edit').on('click', options[id].onEditClicked);
 
           updateStoredTask( selected, task, fields );
+
+          var afterSave = $.Event( 'afterSave' )
+          $this.trigger( afterSave, task );
+
           $cancel.click();
         });
 
@@ -137,16 +144,38 @@
         return false;
       };
 
+      var handleStatusFilterChanged = function() {
+        var $select = $(this);
+        opts.currentState = $select.val();
+        opts.container.empty();
+
+        $.blockUI();
+        loadTasks( id, opts.currentState, true ).always( $.unblockUI );
+      };
+
       $tasks.on( 'scroll', handleScroll );
       $cancel.on( 'click', handleCancel );
       $save.on( 'click', handleSave );
       $create.on( 'click', handleCreate );
+      $status.on( 'change', handleStatusFilterChanged );
+
+      $this.on( 'afterSave', function( evt, task ) {
+        if ( task.Status !== $status.val() ) {
+          $tasks.find('.task').each( function() {
+            var $t = $(this);
+            if ( $t.data('id') === task.id ) {
+              $t.remove();
+              return false;
+            }
+          });
+        }
+      });
 
       return this;
     });
   };
 
-  var loadTasks = function( id, initial ) {
+  var loadTasks = function( id, status, initial ) {
     var deferred = $.Deferred();
 
     var opts = options[id];
@@ -182,13 +211,20 @@
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
+    if ( status === 'open' ) {
+      status = '*' + status + '*';
+    }
+
     var query = [
       'field_Context_s:',
       opts.context,
       ' ',
-      opts.query
+      opts.query,
+      ' field_Status_s:',
+      status
     ].join('');
-    $.taskapi.get(query, fetchSize, opts.page).done( function( solr ) {
+
+    $.taskapi.get(query, fetchSize, opts.page, 'field_Position_s').done( function( solr ) {
       var docs = solr.response.docs;
       for( var i = 0; i < docs.length; ++i ) {
         var doc = docs[i];
