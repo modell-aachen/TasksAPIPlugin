@@ -20,7 +20,7 @@ $.taskapi.create(task).done( function( response ) {
 
 
 ## get
-**$.taskapi.get( query, limit [optional, defaults to 9999], offset [optional, defaults to 0] )**
+**$.taskapi.get( query, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )**
 
 Retreives tasks by a given query.
 
@@ -34,7 +34,7 @@ $.taskapi.get('field_Responsible_s:AdminUser').done( function( solr ) {
 
 
 ## getAll
-**$.taskapi.getAll( limit [optional, defaults to 9999], offset [optional, defaults to 0] )**
+**$.taskapi.getAll( limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )**
 
 Retreives all tasks.
 
@@ -48,7 +48,7 @@ $.taskapi.getAll().done( function( solr ) {
 
 
 ## getBy
-**$.taskapi.getBy( filter, limit [optional, defaults to 9999], offset [optional, defaults to 0] )**
+**$.taskapi.getBy( filter, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )**
 
 Same as *get* but also takes an object as argument.
 
@@ -177,12 +177,12 @@ $tracker.on( 'beforeSave', function( evt, task ) {
 
 
 ##afterSave
-Fired after a task has been saved. The according task id is passed into the event handler.
+Fired after a task has been saved. The according task is passed into the event handler.
 
 ```javascript
 var $tracker = $('.tasktracker');
-$tracker.on( 'afterSave', function( evt, taskId ) {
-  console.log( 'Task "' + taskId + '" created.' );
+$tracker.on( 'afterSave', function( evt, task ) {
+  console.log( task );
 });
 ```
 
