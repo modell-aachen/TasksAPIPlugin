@@ -141,26 +141,28 @@ my $gridCounter = 1;
 sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-  # $params->{foo}
-
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
-    my $ctx = $params->{_DEFAULT} || $params->{context} || "";
+    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web";
     my $id = $params->{id} || $gridCounter;
     $gridCounter += 1 if $id eq $gridCounter;
-    my $state = $params->{state} || "";
     my $system = $Foswiki::cfg{SystemWebName} || "System";
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
     my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
-    my $filterTemplate = $params->{filtertemplate} || "tasksapi::filter";
-    my $gridClass = $params->{gridclass} || "";
-    my $pageSize = $params->{pagesize} || "";
+    my $filterClass = $params->{filterclass} || "";
+    my $extraClass = $params->{extraclass} || "";
+    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed';
+    my $pageSize = $params->{pagesize} || 100;
     my $query = $params->{query} || "";
+    my $stateless = $params->{stateless} || 0;
+    my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
+    my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
+    my $templateFile = $params->{templatefile} || 'TasksAPI';
+    $templateFile =~ s/Template$//;
 
-    Foswiki::Func::loadTemplate( "TasksAPI" );
+    Foswiki::Func::loadTemplate( $templateFile );
     my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
     my $task = Foswiki::Func::expandTemplate( $taskTemplate );
-    my $filter = Foswiki::Func::expandTemplate( $filterTemplate );
 
     my %settings = (
         context => $ctx,
@@ -168,42 +170,68 @@ sub tagGrid {
         id => $id,
         pageSize => $pageSize,
         query => $query,
+        stateless => $stateless,
         template => Foswiki::urlEncode( $task )
     );
 
+    my @options = ();
+    foreach my $state (split(/,/, $states)) {
+        my ($text, $value) = split(/=/, $state);
+        $value ||= $text;
+        my $option = "<option value=\"$value\">$text</option>";
+        push(@options, $option);
+    }
+
+    my $statelessStyle = '';
+    if ( $stateless ) {
+        $statelessStyle = 'style="display: none;"';
+    }
+
+    my $select = join('\n', @options),
     my $json = encode_json( \%settings );
     my $grid = <<GRID;
-<div id="$id" class="tasktracker $gridClass">
-  <div class="filter">
-    <div>$filter</div>
-  </div>
-  <div class="tasks">
-    <div></div>
-  </div>
-  <div class="editor">
-    <div>
-%BUTTON{"%MAKETEXT{"Save"}%" class="btn-save" icon="accept"}%
-%BUTTON{"%MAKETEXT{"Cancel"}%" class="btn-cancel" icon="cross"}%
-%CLEAR%
+<div id="$id" class="tasktracker $extraClass">
+    <div class="filter $filterClass">
+        <div>
+            <div class="options">
+                <span class="title">$title</span>
+                <label $statelessStyle>
+                    <select name="status">$select</select>
+                </label>
+            </div>
+            <div class="create">
+                <a href="#" class="tasks-btn tasks-btn-create">$createText</a>
+            </div>
+        </div>
     </div>
-    <div>$editor</div>
-  </div>
-  <div class="settings">$json</div>
+    <div class="tasks">
+        <div></div>
+    </div>
+    <div class="settings">$json</div>
+    <div id="task-editor-$id" class="jqUIDialog task-editor">
+        <div>$editor</div>
+        <div>
+            <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+            <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+        </div>
+    </div>
 </div>
 GRID
 
-    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore");
+    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
 
     my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
-<script type="text/javascript" src="$pluginURL/js/tasktracker.js"></script>
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js"></script>
 SCRIPT
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker.css' />
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
 STYLE
 
     return $grid;
@@ -216,7 +244,7 @@ Q.Wiki Tasks API - Modell Aachen GmbH
 
 Author: %$AUTHOR%
 
-Copyright (C) 2014 Modell Aachen GmbH
+Copyright (C) 2015 Modell Aachen GmbH
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

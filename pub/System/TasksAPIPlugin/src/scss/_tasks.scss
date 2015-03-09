@@ -1,11 +1,11 @@
 .tasktracker > .tasks {
   position: relative;
   left:0;
-
-  overflow-x: hidden;
-  overflow-y: scroll;
-  height: 600px;
   width: 100%;
+
+  // overflow-x: hidden;
+  // overflow-y: scroll;
+  // height: 600px;
 
   transition: right 0.4s ease-in-out;
 
@@ -160,11 +160,21 @@
         &.description {
           @include flex($grow: 2);
 
+          height: auto;
+          max-height: 25px;
+          transition: max-height 0.3s ease-in-out;
           max-width: 50%;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
+      }
+    }
+
+    &.expanded {
+      .content > .description {
+        max-height: 1000px;
+        white-space: normal;
       }
     }
   }

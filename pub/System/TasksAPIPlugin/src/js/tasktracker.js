@@ -30,12 +30,19 @@
       loadTasks( id, opts.currentState, true ).always( $.unblockUI );
 
       var $tasks = $this.children('.tasks');
-      var $editor = $this.children('.editor');
+      var $editor = $('#task-editor-' + id);
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
-      var $save = $editor.find('.btn-save');
-      var $cancel = $editor.find('.btn-cancel');
-      var $create = $filter.find('.btn-create');
+      var $save = $editor.find('.tasks-btn-save');
+      var $cancel = $editor.find('.tasks-btn-cancel');
+      var $create = $filter.find('.tasks-btn-create');
+
+      $editor.dialog({
+        autoOpen: false,
+        closeOnEscape: true,
+        modal: true,
+        resizable: false
+      });
 
       var handleScroll = function( evt ) {
         var $this = $(this);
@@ -53,7 +60,7 @@
 
       var handleCancel = function() {
         $tasks.removeClass('edit');
-        $editor.removeClass('active');
+        $editor.dialog('close');
         $tasks.find('.task').removeClass('faded selected');
 
         $editor.find('input,select,textarea').each( function() {
@@ -68,7 +75,7 @@
       var handleSave = function() {
         var task = readEditor( $editor );
 
-        var beforeSave = $.Event( 'beforeSave' )
+        var beforeSave = $.Event( 'beforeSave' );
         $this.trigger( beforeSave, task ); 
         if( beforeSave.isDefaultPrevented() ) {
           return false;
@@ -90,10 +97,10 @@
             $task.find('.btn-edit').on('click', options[id].onEditClicked);
 
             $task.data('id', response.id);
-            opts.container.prepend( $task );
+            opts.container.append( $task );
             $editor.data('new', '');
 
-            var afterSave = $.Event( 'afterSave' )
+            var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
 
             $cancel.click();
@@ -116,7 +123,7 @@
 
           updateStoredTask( selected, task, fields );
 
-          var afterSave = $.Event( 'afterSave' )
+          var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
 
           $cancel.click();
@@ -126,20 +133,23 @@
       };
 
       var handleCreate = function() {
-        var beforeCreate = $.Event( 'beforeCreate' )
+        var beforeCreate = $.Event( 'beforeCreate' );
         $this.trigger( beforeCreate ); 
         if( beforeCreate.isDefaultPrevented() ) {
           return false;
         }
 
         var id = $(this).closest('.tasktracker').attr('id');
-        $editor.addClass('active');
+        $editor.dialog('open');
+
+        // $editor.addClass('active');
         $tasks.addClass('edit');
+
         clearEditor( $editor );
         $editor.data('new', true);
         highlightTask( opts.container.children(), null );
 
-        var afterCreate = $.Event( 'afterCreate' )
+        var afterCreate = $.Event( 'afterCreate' );
         $this.trigger( afterCreate );
         return false;
       };
@@ -185,15 +195,15 @@
 
     var $tasks = opts.container.parent();
     var $grid = $tasks.parent();
-    var $editor = $grid.children('.editor');
 
     opts.onEditClicked = function( evt ) {
       var $tracker = $(this).closest('.tasktracker');
       var id = $tracker.attr('id');
+      var $editor = $('#task-editor-' + id);
       var $task = $(this).closest('.task');
       var selected = _.findWhere( tasks[id], {id: $task.data('id')} );
 
-      var beforeEdit = $.Event( 'beforeEdit' )
+      var beforeEdit = $.Event( 'beforeEdit' );
       $tracker.trigger( beforeEdit, selected ); 
       if( beforeEdit.isDefaultPrevented() ) {
         return false;
@@ -203,27 +213,27 @@
       writeEditor( $editor, fields, selected );
       highlightTask( opts.container.children(), $task );
 
-      $editor.addClass('active');
       $tasks.addClass('edit');
+      $editor.dialog('open');
 
-      var afterEdit = $.Event( 'afterEdit' )
+      var afterEdit = $.Event( 'afterEdit' );
       $tracker.trigger( afterEdit ); 
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
-    if ( status === 'open' ) {
-      status = '*' + status + '*';
-    }
-
     var query = [
       'field_Context_s:',
       opts.context,
       ' ',
-      opts.query,
-      ' field_Status_s:',
-      status
-    ].join('');
+      opts.query
+    ];
 
+    if ( !/^(1|true)$/i.test( opts.stateless ) ) {
+      query.push( ' field_Status_s:' );
+      query.push( status );
+    }
+
+    query = query.join('');
     $.taskapi.get(query, fetchSize, opts.page, 'field_Position_s').done( function( solr ) {
       var docs = solr.response.docs;
       for( var i = 0; i < docs.length; ++i ) {
@@ -246,14 +256,31 @@
     return deferred.promise();
   };
 
+  var timeout = null;
   var raiseClicked = function( evt ) {
     if ( $(evt.target).hasClass('btn-edit') ) {
       return false;
     }
 
-    var taskClick = $.Event( 'taskClick' )
-    var $tracker = $(this).closest('.tasktracker');
-    $tracker.trigger( taskClick, this ); 
+    var self = this;
+    if ( timeout === null ) {
+      timeout = setTimeout( function() {
+        timeout = null;
+        var taskClick = $.Event( 'taskClick' );
+        var $tracker = $(self).closest('.tasktracker');
+        $tracker.trigger( taskClick, self ); 
+      }, 250);
+    } else {
+      clearTimeout( timeout );
+      timeout = null;
+      raiseDoubleClicked( self );
+    }
+  };
+
+  var raiseDoubleClicked = function( task ) {
+    var taskDblClick = $.Event( 'taskDoubleClick' );
+    var $tracker = $(task).closest('.tasktracker');
+    $tracker.trigger( taskDblClick, task ); 
   };
 
   var getFieldDefinitions = function( solrEntry ) {
@@ -381,7 +408,7 @@
       var val = solrEntry[field.raw];
       if ( field.type === 'dt' ) {
         var date = moment(val);
-        val = date.format('DD MMM YYYY')
+        val = date.format('DD MMM YYYY');
       }
 
       task[field.name] = val;
