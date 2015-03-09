@@ -1,43 +1,287 @@
 %META:TOPICPARENT{name="Plugins"}%
----+ Empty Plugin
+---+ TasksAPI Plugin
 
 %SHORTDESCRIPTION%
 
-Learn how to create your own plugin in %SYSTEMWEB%.DevelopingPlugins.
+%TOC%
 
----++ Plugin Preferences
-
-Plugin preferences should be set using =configure=, as described in
-%SYSTEMWEB%.DevelopingPlugins. You can also use
-[[%SYSTEMWEB%.PreferenceSettings][preference settings]] to define any
-user-controllable configuration. You are strongly advised
-to use the name of the plugin as a prefix, to avoid the risk of namespace
-clashes with other extensions that may try to use the same name.
-
-*BAD*
-   * Set EXAMPLE = Example setting
-   * Set FORMAT  = %d-%m-%y
-*Good*
-   * Set EMPTYPLUGIN_EXAMPLE = Example setting
-   * Set EMPTYPLUGIN_FORMAT  = %d-%m-%y
-
-<!--
-One line description, required for extensions repository catalog.
-   * Set SHORTDESCRIPTION = %$SHORTDESCRIPTION%
--->
-
+<br />
 ---++ Installation
 %$INSTALL_INSTRUCTIONS%
 
+<br />
+---++ Usage
+<verbatim>
+%TASKSGRID{
+  "..."
+  createlinktext="..."
+  context="..."
+  editortemplate="..."
+  extraclass="..."
+  filterclass="..."
+  form="..."
+  id="..."
+  pagesize="..."
+  query="..."
+  states="..."
+  tasktemplate="..."
+  title="..."
+}%
+</verbatim>
+
+| *Parameter* | *Description* | *Default* |
+| "..." (or context="...") | name of the tasks' context | the current web |
+| createlinktext="..." | text shown to create a new entry within the grid | %<nop>MAKETEXT{"Add task"}% |
+| editortemplate="..." | the nameof the template used to render the task editor | tasksapi::editor |
+| extraclass="..." | additional CSS class applied to the tasks grid | |
+| filterclass="..." | additional CSS class applied to the filter area | |
+| form="..." | web.topic of the meta data form | %<nop>SYSTEMWEB%.TasksAPIDefaultForm |
+| id="..." | a unique id in case more than one task grid is used (per page) | _auto increment_ |
+| pagesize="..." | amount of entries to fetch on each (SOLR) request | 100 |
+| query="..." | an additional (SOLR) query string (e.g. field_TaskType_s:foo) | |
+| states="..." | filter options where the key should match a valid task state | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed |
+| stateless="..." | a boolean value to hide the state select | 0 |
+| tasktemplate="..." | the name of the template used to render a task entry | tasksapi::task |
+| templatefile="..." | name of the topic containing the used template definitions | TasksAPITemplate |
+| title="..." | the title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
+
+<br />
+---++ Mandatory form fields
+If you're going to use a custom form *make sure* you're including the following four form fields:
+<verbatim>
+| TopicType | text | 50 | task | | M |
+| Context | text | 50 | ... | | M |
+| Parent | text | 50 | | | H |
+| Status | select+values | | ... | | M |
+</verbatim>
+
+<br />
+---++ RESTful API
+Load the jQuery plugin by adding the following macro to your page. Make sure its enabled in _configure_.
+<verbatim>
+%JQREQUIRE{"tasksapi"}%
+</verbatim>
+
+---+++ create
+*$.taskapi.create( data )*
+
+Creates a new task.
+
+<verbatim>
+var task = {
+  form: 'Web.FooForm',
+  Field1: 'value',
+  Field2: 'value'
+};
+
+$.taskapi.create(task).done( function( response ) {
+  console.log( response.id ); // prints the id of the newly created task.
+}).fail( function( err ) {
+  console.log( err );
+});
+</verbatim>
+
+
+---+++ get
+*$.taskapi.get( query, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
+
+Retreives tasks by a given query.
+
+<verbatim>
+$.taskapi.get('field_Responsible_s:AdminUser').done( function( solr ) {
+  _.each( solr.response.docs, function( result ) {
+    console.log( result );
+  });
+});
+</verbatim>
+
+
+---+++ getAll
+*$.taskapi.getAll( limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
+
+Retreives all tasks.
+
+<verbatim>
+$.taskapi.getAll().done( function( solr ) {
+  _.each( solr.response.docs, function( result ) {
+    console.log( result );
+  });
+});
+</verbatim>
+
+
+---+++ getBy
+*$.taskapi.getBy( filter, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
+
+Same as *get* but also takes an object as argument.
+
+<verbatim>
+$.taskapi.getBy('field_Responsible_s:AdminUser').done( function( solr ) {
+  _.each( solr.response.docs, function( result ) {
+    console.log( result );
+  });
+});
+
+var filter = {'field_Responsible_s': 'AdminUser'};
+$.taskapi.getBy(filter).done( function( solr ) {
+  _.each( solr.response.docs, function( result ) {
+    console.log( result );
+  });
+});
+</verbatim>
+
+
+---+++ update
+*$.taskapi.update( task )*
+
+Updates an existing task identified by its id.
+
+<verbatim>
+var taskToUpdate = {
+  id: 'Tasks.Task-134n213kj4hjk',
+  UpdatedField: 'updatedValue'
+};
+
+$.taskapi.update( taskToUpdate ).done( function( response ) {
+  console.log( response );
+});
+</verbatim>
+
+
+---+++ multiupdate
+*$.taskapi.multiupdate( tasks )*
+
+Same as *update* but takes multiple tasks identified by their id.
+
+<verbatim>
+var tasksToUpdate = {
+  'Tasks.Task-1': {
+    UpdatedField: 'updatedValue'
+  },
+  'Tasks.Task-2': {
+    UpdatedField: 'updatedValue'
+  }
+};
+
+$.taskapi.multiupdate( tasksToUpdate ).done( function( response ) {
+  for( var id in response ) {
+    console.log( 'Updated task ' + id + ' with result' );
+    console.log( response[id] );
+  }
+});
+</verbatim>
+
+<br />
+---++ Events
+---+++ beforeCreate
+*cancelable.* Fired after the user clicked the 'create new task' button.
+The task editor is not yet visible to the user and might still hold data from the previous edit/create action.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeCreate', function( evt ) {
+  if ( someState === state.invalid ) {
+    return false; // cancel creation of a new task...
+  }
+});
+</verbatim>
+
+
+---+++ afterCreate
+Fired after the editor has been cleaned and is shown to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterCreate', function( evt ) {
+  // whatever
+});
+</verbatim>
+
+
+---+++ beforeEdit
+*cancelable.* Fired after the user clicked the 'edit task' button. The selected task is passed into the event handler.
+The editor is not yet visible to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeEdit', function( evt, task ) {
+  if ( someState === state.invalid ) {
+    return false; // cancel edit request...
+  }
+
+  // manipulate task
+});
+</verbatim>
+
+
+---+++ afterEdit
+Fired after *beforeEdit*. The editor is prepared and shown to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterEdit', function( evt ) {
+  console.log( 'task edited...' );
+});
+</verbatim>
+
+
+---+++beforeSave
+*cancelable.* Fired after the user clicked the 'save task' button. The selected task is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeSave', function( evt, task ) {
+  if ( task === null ) {
+    // error or missing mandatory field
+    return false; // stop propagation
+  }
+</verbatim>
+
+
+---+++afterSave
+Fired after a task has been saved. The according task is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterSave', function( evt, task ) {
+  console.log( task );
+});
+</verbatim>
+
+
+---+++ taskClick
+Fired after a task has been clicked by the user. The task's DOM node is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'taskClick', function( evt, cnt ) {
+  var $cnt = $(cnt);
+  var taskId = $cnt.data('id');
+  // ...
+});
+</verbatim>
+
+
+---+++ taskDoubleClick
+Fired after a task has been double clicked by the user. The task's DOM node is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'taskDoubleClick', function( evt, cnt ) {
+  var $cnt = $(cnt);
+  var taskId = $cnt.data('id');
+  // ...
+});
+</verbatim>
+
+<br />
 ---++ Plugin Info
 
-|  Author: | Foswiki:Main.PluginAuthor |
-|  Copyright: | &copy; 2012, Foswiki Contributors |
-|  License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
-|  Release: | %$RELEASE% |
-|  Version: | %$VERSION% |
-|  Change&nbsp;History: | <!-- versions below in reverse order -->&nbsp; |
-|  XX Mmm 20XX (1.0) | Description of change |
-|  Home: | http://foswiki.org/Extensions/%TOPIC% |
-|  Support: | http://foswiki.org/Support/%TOPIC% |
+| Author: | Foswiki:Main.JanKrueger, Foswiki:Main.SvenMeyer |
+| Copyright: | &copy; 2015, Modell Aachen GmbH |
+| License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+| Release: | %$RELEASE% |
+| Version: | %$VERSION% |
+| Home: | http://www.modell-aachen.de |
+| Support: | http://www.modell-aachen.de |
 
