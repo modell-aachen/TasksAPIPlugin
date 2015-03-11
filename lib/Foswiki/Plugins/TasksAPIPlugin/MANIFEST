@@ -17,6 +17,8 @@ pub/System/TasksAPIPlugin/assets/edit-white.png 0644
 pub/System/TasksAPIPlugin/assets/clock-blue.png 0644
 pub/System/TasksAPIPlugin/assets/clock-grey.png 0644
 pub/System/TasksAPIPlugin/assets/clock-white.png 0644
+pub/System/TasksAPIPlugin/assets/task-open.png 0644
+pub/System/TasksAPIPlugin/assets/task-done.png 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.js 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
