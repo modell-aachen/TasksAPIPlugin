@@ -58,30 +58,6 @@ sub _query {
     $solr->solrSearch(@_);
 }
 
-# The function used to handle the %EXAMPLETAG{...}% macro
-# You would have one of these for each macro you want to process.
-#sub _EXAMPLETAG {
-#    my($session, $params, $topic, $web, $topicObject) = @_;
-#}
-
-#sub beforeSaveHandler {
-#    my ( $text, $topic, $web ) = @_;
-#}
-
-#sub afterSaveHandler {
-#    my ( $text, $topic, $web, $error, $meta ) = @_;
-#}
-
-#sub afterRenameHandler {
-#    my ( $oldWeb, $oldTopic, $oldAttachment,
-#         $newWeb, $newTopic, $newAttachment ) = @_;
-#}
-
-#sub restExample {
-#   my ( $session, $subject, $verb, $response ) = @_;
-#   return "This is an example of a REST invocation\n\n";
-#}
-
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
