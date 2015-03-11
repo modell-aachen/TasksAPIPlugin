@@ -96,9 +96,17 @@
             $task.on('click', raiseClicked );
             $task.find('.btn-edit').on('click', options[id].onEditClicked);
 
+            task.id = response.id;
             $task.data('id', response.id);
             opts.container.append( $task );
             $editor.data('new', '');
+
+            var solrTask = mapToSolr( task, $editor );
+            if ( typeof tasks[id] === typeof undefined ) {
+              tasks[id] = [solrTask];
+            } else {
+              tasks[id].push( solrTask );
+            }
 
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
@@ -420,6 +428,41 @@
     }
 
     return task;
+  };
+
+  var mapToSolr = function( task, editor ) {
+    var $editor = $(editor);
+    var props = Object.getOwnPropertyNames( task );
+    var retval = {};
+    _.each( props, function( name ) {
+      if ( !/^[A-Z]/.test( name ) ) {
+        retval[name] = task[name];
+        return;
+      }
+
+      var type = ['field', name];
+      var $input = $editor.find('[name="' + name + '"]');
+      if ( $input.length === 0 ) {
+        type.push('s');
+      } else {
+        if ( $input.hasClass('foswikiEditFormDateField') ) {
+          type.push('dt');
+        } else if ( $input.hasClass('foswikiInput') || $input.hasClass('foswikiTextarea') || $input.hasClass('foswikiSelect') ) {
+          type.push('s');
+        } else {
+          var $parent = $input.parent();
+          if ( $parent.find('.jqTextboxListContainer').length > 0 ) {
+            type.push('lst');
+          } else {
+            type.push('s');
+          }
+        }
+      }
+
+      retval[type.join('_')] = task[name];
+    });
+
+    return retval;
   };
 
   var updateStoredTask = function( solrEntry, data, fields  ) {
