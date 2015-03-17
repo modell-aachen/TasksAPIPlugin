@@ -200,6 +200,11 @@ sub _index {
     for my $f (keys %{$task->{fields}}) {
         my $v = $task->{fields}{$f};
         next unless defined $v;
+        if ($form->getField($f)->isMultiValued()) {
+            $v = [ split(/\s*,\s*/, $v) ];
+        } else {
+            $v = [ $v ];
+        }
         if ($singles{lc $f}) {
             $vals{$f} = $v;
         } elsif (grep { $_ eq lc $f } @multis) {
