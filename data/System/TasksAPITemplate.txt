@@ -60,3 +60,8 @@
 </div>%{
 }%%TMPL:END%
 
+%TMPL:DEF{"tasksapi::caption"}%<!--tasksapi::caption-->
+<div class="text"><span>%MAKETEXT{"Description"}%</span></div>
+<div class="assigned"><span>%MAKETEXT{"Assigned to"}%</span></div>
+<div class="due"><span>%MAKETEXT{"Due date"}%</span></div>
+<!--/tasksapi::caption-->%TMPL:END%

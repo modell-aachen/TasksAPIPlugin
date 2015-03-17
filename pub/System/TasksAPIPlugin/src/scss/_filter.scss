@@ -77,3 +77,36 @@
     }
   }
 }
+
+.tasktracker > .caption {
+  > .container {
+    padding: 6px 50px;
+
+    > div {
+      @include flex-container($wrap: wrap, $justify: space-between);
+      align-items: stretch;
+
+      > .text {
+        @include flex($grow: 2);
+        max-width: 50%;
+      }
+
+      > .assigned {
+        @include flex();
+        margin-left: -50px;
+      }
+
+      > .due {
+        @include flex();
+      }
+
+      .text, .assigned, .due {
+        color: #777;
+        font-weight: bold;
+        font-size: 10px;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+    }
+  }
+}

@@ -14,6 +14,9 @@
 <verbatim>
 %TASKSGRID{
   "..."
+  allowcreate="..."
+  allowupload="..."
+  captionclass="..."
   createlinktext="..."
   context="..."
   editortemplate="..."
@@ -23,14 +26,20 @@
   id="..."
   pagesize="..."
   query="..."
+  showupload="..."
+  stateless="..."
   states="..."
   tasktemplate="..."
+  templatefile="..."
   title="..."
 }%
 </verbatim>
 
 | *Parameter* | *Description* | *Default* |
 | "..." (or context="...") | name of the tasks' context | the current web |
+| allowcreate="..." | a boolean value to determine whether the user is allowed to create a new entry within the grid | 0 |
+| allowupload="..." | a boolean value to determine whether the user is allowed to upload attachments to a task | 0 |
+| captionclass="..." | additional CSS class applied to the caption area | |
 | createlinktext="..." | text shown to create a new entry within the grid | %<nop>MAKETEXT{"Add task"}% |
 | editortemplate="..." | the nameof the template used to render the task editor | tasksapi::editor |
 | extraclass="..." | additional CSS class applied to the tasks grid | |
@@ -39,6 +48,7 @@
 | id="..." | a unique id in case more than one task grid is used (per page) | _auto increment_ |
 | pagesize="..." | amount of entries to fetch on each (SOLR) request | 100 |
 | query="..." | an additional (SOLR) query string (e.g. field_TaskType_s:foo) | |
+| showupload="..." | a boolean value to determine whether existing attachments should be shown to the user | 0 |
 | states="..." | filter options where the key should match a valid task state | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed |
 | stateless="..." | a boolean value to hide the state select | 0 |
 | tasktemplate="..." | the name of the template used to render a task entry | tasksapi::task |
@@ -52,7 +62,7 @@ If you're going to use a custom form *make sure* you're including the following 
 | TopicType | text | 50 | task | | M |
 | Context | text | 50 | ... | | M |
 | Parent | text | 50 | | | H |
-| Status | select+values | | ... | | M |
+| Status | select+values | | open,closed,deleted | | M |
 </verbatim>
 
 <br />

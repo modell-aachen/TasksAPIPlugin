@@ -125,7 +125,9 @@ sub tagGrid {
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
     my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
+    my $captionTemplate = $params->{captiontemplate} || "tasksapi::caption";
     my $filterClass = $params->{filterclass} || "";
+    my $captionClass = $params->{captionclass} || "";
     my $extraClass = $params->{extraclass} || "";
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed';
     my $pageSize = $params->{pagesize} || 100;
@@ -134,10 +136,14 @@ sub tagGrid {
     my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
     my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
     my $templateFile = $params->{templatefile} || 'TasksAPI';
+    my $allowCreate = $params->{allowcreate} || 0;
+    my $allowUpload = $params->{allowupload} || 0;
+    my $showAttachments = $params->{showattachments} || 0;
     $templateFile =~ s/Template$//;
 
     Foswiki::Func::loadTemplate( $templateFile );
     my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
+    my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
     my $task = Foswiki::Func::expandTemplate( $taskTemplate );
 
     my %settings = (
@@ -163,6 +169,21 @@ sub tagGrid {
         $statelessStyle = 'style="display: none;"';
     }
 
+    my $allowCreateStyle = '';
+    unless ( $allowCreate =~ m/^1|true$/i ) {
+        $allowCreateStyle = 'style="display: none;"';
+    }
+
+    my $allowUploadStyle = '';
+    unless ( $allowUpload =~ m/^1|true$/i ) {
+        $allowUploadStyle = 'style="display: none;"';
+    }
+
+    my $showAttachmentsStyle = '';
+    unless ( $showAttachments =~ m/^1|true$/i ) {
+        $showAttachmentsStyle = 'style="display: none;"';
+    }
+
     my $select = join('\n', @options),
     my $json = encode_json( \%settings );
     my $grid = <<GRID;
@@ -175,10 +196,13 @@ sub tagGrid {
                     <select name="status">$select</select>
                 </label>
             </div>
-            <div class="create">
+            <div class="create" $allowCreateStyle>
                 <a href="#" class="tasks-btn tasks-btn-create">$createText</a>
             </div>
         </div>
+    </div>
+    <div class="caption $captionClass">
+        <div class="container"><div>$caption</div></div>
     </div>
     <div class="tasks">
         <div></div>
@@ -186,6 +210,15 @@ sub tagGrid {
     <div class="settings">$json</div>
     <div id="task-editor-$id" class="jqUIDialog task-editor">
         <div>$editor</div>
+        <div $showAttachmentsStyle>
+            %TWISTY{showlink="%MAKETEXT{"Show attachments"}%" hidelink="%MAKETEXT{"Hide attachments"}%" start="hide"}%
+            %ENDTWISTY%
+        </div>
+        <div $allowUploadStyle>
+            %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+            %DNDUPLOAD{extraclass="full-width"}%
+            %ENDTWISTY%
+        </div>
         <div>
             <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
             <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
@@ -194,7 +227,7 @@ sub tagGrid {
 </div>
 GRID
 
-    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "ui::dialog");
+    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
