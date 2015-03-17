@@ -12,14 +12,12 @@ use Foswiki::Form ();
 use Digest::SHA;
 use JSON;
 
-my $query = \&Foswiki::Plugins::TasksAPIPlugin::_query;
-
 # Create a completely arbitrary task object, with no validation or anything
 sub new {
     my $class = shift;
     my %params = @_;
     my $self = bless {}, $class;
-    @{$self}{'id', 'form', 'text'} = delete @params{'id','form','text'};
+    @{$self}{'id', 'form', 'text', 'meta'} = delete @params{'id','form','text','meta'};
     $self->{fields} = \%params;
     $self;
 }
@@ -38,18 +36,15 @@ sub load {
         ($meta, $_text) = Foswiki::Func::readTopic($web, $topic);
     }
     die "Could not read task topic '$web.$topic'" unless ref $meta;
-    my @acl = _getACL($meta, 'view');
-    if (@acl) {
-        unless (_checkACL(@acl)) {
-            die "No permission to read task topic '$web.$topic'";
-        }
-    }
 
     my $form = $meta->getFormName;
     die "Alleged task topic '$web.$topic' has no form attached to it" unless $form;
     my ($formWeb, $formTopic) = Foswiki::Func::normalizeWebTopicName($web, $form);
     $form = Foswiki::Form->new($Foswiki::Plugins::SESSION, $formWeb, $formTopic);
     die "Can't read form definition '$formWeb.$formTopic' for task topic '$web.$topic'" unless ref $form;
+
+    my @acl = _getACL($meta, $form, 'view');
+    die "No permission to read task topic '$web.$topic'" unless _checkACL(\@acl);
 
     my $fields = $form->getFields;
     my %data;
@@ -70,6 +65,16 @@ sub load {
     __PACKAGE__->new(%data);
 }
 
+sub data {
+    my $this = shift;
+    {
+        id => $this->{id},
+        form => $this->{form},
+        text => $this->{text},
+        fields => $this->{fields},
+    };
+}
+
 # Load all tasks from the Tasks web that match all filter functions passed as
 # arguments
 #
@@ -83,34 +88,33 @@ sub loadMany {
         my ($m) = Foswiki::Func::readTopic($web, $iter->next);
         my $f = $m->get('FIELD', 'TopicType');
         next if !$f || !ref $f || $f->{value} ne 'task';
+        my $t = load($m);
         for my $filter (@_) {
-            next Iter if !$filter->($m);
+            next Iter if !$filter->($t);
         }
-        push @res, load($m);
+        push @res, $t;
     }
     @res;
 }
 
-# Initialize a task object from a Solr document
-sub _loadSolr {
-    my $doc = shift;
-    my ($web, $topic) = ($doc->value_for('web'), $doc->value_for('topic'));
-    my $type = $doc->value_for('type');
-    die "Attempted to load non-task '$web.$topic' as task" unless $type && $type eq 'task';
+# Load tasks that match a query, optionally filtering by ACL.
+# Takes an options hash with these fields:
+# - query:  hashref. Key is the lowercase name of the field to match.
+#                    Value is the desired value, or undef to match any value in a multi-valued field.
+# - offset: how many results to skip; defaults to none.
+# - count:  how many results to return after skipping; defaults to all.
+# - order:  field by which to order (does not work for multi-valued fields). Defaults to non-deterministic ordering.
+# - desc:   reverse the ordering; defaults to false.
+# - acl:    apply view ACL restrictions; defaults to true.
+sub search {
+    &Foswiki::Plugins::TasksAPIPlugin::_query;
+}
 
-    my ($form, $fields) = _loadForm($web, $topic);
-    my %data;
-    foreach my $f (@$fields) {
-        my $name = $f->{name};
-        my $entry = $doc->value_for("field_${name}_s", $name);
-        my $val = $entry ? $entry->{value} : undef;
-        $data{$name} = $val;
-    }
-    $web =~ s#/#.#g;
-    $data{id} = "$web.$topic";
-    $data{text} = $doc->value_for('task_fulltext_s');
-    $data{form} = $form;
-    __PACKAGE__->new(%data);
+# Initialize a task object from the raw task text (embedded store form)
+sub _loadRaw {
+    my ($web, $topic, $raw) = shift;
+    my $meta = Foswiki::Meta->new($Foswiki::Plugins::SESSION, $web, $topic, $raw);
+    load($meta);
 }
 
 # Loads a DataForm used by a task object
@@ -170,8 +174,8 @@ sub _reduce {
 }
 
 sub _getACL {
-    my ($this, $type) = @_;
-    my $aclPref = $this->{form}->getPreference('TASKACL_'. $type);
+    my ($this, $form, $type) = @_;
+    my $aclPref = $form->getPreference('TASKACL_'. $type);
     return () unless $aclPref;
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
@@ -182,7 +186,7 @@ sub _getACL {
         return () unless $ref;
         my $refedTopic = load(undef, $ref->{value});
         return () unless $refedTopic;
-        return _getACL($refedTopic, $type);
+        return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
     $aclPref =~ s/\$contextACL\b/push @acl, $aclFromRef->('Context'); ''/e;
@@ -193,8 +197,10 @@ sub _getACL {
 
 sub _checkACL {
     my $session = $Foswiki::Plugins::SESSION;
-    my $user = $session->{user};
-    foreach my $item (@_) {
+    my $acl = shift;
+    return 1 if !@$acl;
+    my $user = shift || $session->{user};
+    foreach my $item (@$acl) {
         my $cuid = Foswiki::Func::getCanonicalUserID($item);
         return 1 if $user eq $cuid;
         if (Foswiki::Func::isGroup($item)) {
@@ -204,7 +210,13 @@ sub _checkACL {
     0;
 }
 
-sub _createOne {
+sub checkACL {
+    my ($this, $type) = @_;
+    my @acl = _getACL($this->{meta}, $this->{form}, $type);
+    _checkACL(\@acl);
+}
+
+sub create {
     my %data = @_;
     my $form = delete $data{form};
     my $fields;
@@ -235,31 +247,21 @@ sub _createOne {
     $data{TopicType} = 'task';
     foreach my $f (@$fields) {
         my $name = $f->{name};
+        my $default = $f->{value};
+        $default = $f->getDefaultValue if $f->can('getDefaultValue');
         $meta->putKeyed('FIELD', {
             name => $name, title => $f->{tooltip}, value => defined($data{$name}) ? $data{$name} : $f->{value}
         });
     }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
-    ($web, $topic, $meta);
-}
-
-sub create {
-    my ($web, $topic, $meta) = &_createOne;
-    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
-        require Foswiki::Plugins::TaskDaemonPlugin;
-        Foswiki::Plugins::TaskDaemonPlugin::send("$web.$topic", 'update_topic', 'SolrPlugin');
-    }
-    load($meta);
+    my $task = load($meta);
+    Foswiki::Plugins::TasksAPIPlugin::_index($task);
+    $task;
 }
 
 sub createMulti {
     foreach my $data (@_) {
-        _createOne(%$data);
-    }
-    my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
-    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
-        require Foswiki::Plugins::TaskDaemonPlugin;
-        Foswiki::Plugins::TaskDaemonPlugin::send($web, 'update_web', 'SolrPlugin');
+        create(%$data);
     }
 }
 
@@ -308,10 +310,7 @@ sub update {
     # show up in changesets; we don't want to be updated about
     # auto-renumbering, for example
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
-    if ($Foswiki::cfg{Plugins}{TaskDaemonPlugin}{Enabled}) {
-        require Foswiki::Plugins::SolrPlugin::GrinderDispatch;
-        Foswiki::Plugins::SolrPlugin::GrinderDispatch::afterSaveHandler(undef, $topic, $web);
-    }
+    Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
 
 sub close {
@@ -331,13 +330,9 @@ sub parent {
 
 sub children {
     my $self = shift;
-    my @res;
-    my $data = Foswiki::Plugins::TasksAPIPlugin::_query('{!edismax}type:task field_Parent_s='. $self->{id});
-
-    for my $doc ($data->docs) {
-        push @res, _loadSolr($doc);
-    }
-    @res;
+    my $acl = shift;
+    $acl = 1 unless defined $acl;
+    search(query => {parent => $self->{id}}, acl => $acl);
 }
 
 1;
