@@ -1,0 +1,17 @@
+| *Name* | *Type* | *Size* | *Values* | *Tooltip message* | *Attributes* |
+| TopicType | text | 50 | task | | M H |
+| Context | text | 50 | %WEB% | | M H |
+| Parent | text | 50 | | | H |
+| Author | text | 50 | %WIKINAME% | | M H |
+| Created | date | 50 | %GMTIME{"$day $month $year"}% | | M H |
+| Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | | M |
+| Title | text | 50 | | | M |
+| AssignedTo | textboxlist | 50 mustMath limit="1" | %USERAUTOCOMPLETE% | | M |
+| Description | textarea | 50 | | | |
+| DueDate | date | 50 | %GMTIME{"$day $month $year"}% | | |
+| Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | | |
+| Reminder | select+values | | %MAKETEXT{"Never"}%=Never,%MAKETEXT{"Daily"}%=Daily,%MAKETEXT{"Weekly"}%=Weekly,%MAKETEXT{"Monthly"}%=Monthly | | |
+| Prioritize | select+values | | %MAKETEXT{"Yes"}%=Yes,%MAKETEXT{"No"}%=No | | |
+
+   * Set ALLOWTOPICCHANGE = AdminUser
+   * Set NOWYSIWYG = 1

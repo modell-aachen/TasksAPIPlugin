@@ -7,8 +7,8 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Contrib::JsonRpcContrib ();
 
+use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 
 use DBI;
@@ -72,7 +72,8 @@ sub initPlugin {
         return 0;
     }
 
-#    Foswiki::Func::registerTagHandler( 'EXAMPLETAG', \&_EXAMPLETAG );
+    Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
+
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'multicreate', \&restMultiCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
@@ -224,30 +225,6 @@ sub _fullindex {
     $db->commit;
 }
 
-# The function used to handle the %EXAMPLETAG{...}% macro
-# You would have one of these for each macro you want to process.
-#sub _EXAMPLETAG {
-#    my($session, $params, $topic, $web, $topicObject) = @_;
-#}
-
-#sub beforeSaveHandler {
-#    my ( $text, $topic, $web ) = @_;
-#}
-
-#sub afterSaveHandler {
-#    my ( $text, $topic, $web, $error, $meta ) = @_;
-#}
-
-#sub afterRenameHandler {
-#    my ( $oldWeb, $oldTopic, $oldAttachment,
-#         $newWeb, $newTopic, $newAttachment ) = @_;
-#}
-
-#sub restExample {
-#   my ( $session, $subject, $verb, $response ) = @_;
-#   return "This is an example of a REST invocation\n\n";
-#}
-
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
@@ -269,7 +246,6 @@ sub restMultiCreate {
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
     return '{"status":"ok"}';
 }
-
 
 sub restUpdate {
     my ($session, $subject, $verb, $response) = @_;
@@ -316,6 +292,139 @@ sub restSearch {
     return encode_json({status => 'ok', data => \@res});
 }
 
+my $gridCounter = 1;
+sub tagGrid {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
+    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web";
+    my $id = $params->{id} || $gridCounter;
+    $gridCounter += 1 if $id eq $gridCounter;
+    my $system = $Foswiki::cfg{SystemWebName} || "System";
+    my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
+    my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
+    my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
+    my $captionTemplate = $params->{captiontemplate} || "tasksapi::caption";
+    my $filterClass = $params->{filterclass} || "";
+    my $captionClass = $params->{captionclass} || "";
+    my $extraClass = $params->{extraclass} || "";
+    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed';
+    my $pageSize = $params->{pagesize} || 100;
+    my $query = $params->{query} || "";
+    my $stateless = $params->{stateless} || 0;
+    my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
+    my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
+    my $templateFile = $params->{templatefile} || 'TasksAPI';
+    my $allowCreate = $params->{allowcreate} || 0;
+    my $allowUpload = $params->{allowupload} || 0;
+    my $showAttachments = $params->{showattachments} || 0;
+    $templateFile =~ s/Template$//;
+
+    Foswiki::Func::loadTemplate( $templateFile );
+    my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
+    my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
+    my $task = Foswiki::Func::expandTemplate( $taskTemplate );
+
+    my %settings = (
+        context => $ctx,
+        form => $form,
+        id => $id,
+        pageSize => $pageSize,
+        query => $query,
+        stateless => $stateless,
+        template => Foswiki::urlEncode( $task )
+    );
+
+    my @options = ();
+    foreach my $state (split(/,/, $states)) {
+        my ($text, $value) = split(/=/, $state);
+        $value ||= $text;
+        my $option = "<option value=\"$value\">$text</option>";
+        push(@options, $option);
+    }
+
+    my $statelessStyle = '';
+    if ( $stateless ) {
+        $statelessStyle = 'style="display: none;"';
+    }
+
+    my $allowCreateStyle = '';
+    unless ( $allowCreate =~ m/^1|true$/i ) {
+        $allowCreateStyle = 'style="display: none;"';
+    }
+
+    my $allowUploadStyle = '';
+    unless ( $allowUpload =~ m/^1|true$/i ) {
+        $allowUploadStyle = 'style="display: none;"';
+    }
+
+    my $showAttachmentsStyle = '';
+    unless ( $showAttachments =~ m/^1|true$/i ) {
+        $showAttachmentsStyle = 'style="display: none;"';
+    }
+
+    my $select = join('\n', @options),
+    my $json = encode_json( \%settings );
+    my $grid = <<GRID;
+<div id="$id" class="tasktracker $extraClass">
+    <div class="filter $filterClass">
+        <div>
+            <div class="options">
+                <span class="title">$title</span>
+                <label $statelessStyle>
+                    <select name="status">$select</select>
+                </label>
+            </div>
+            <div class="create" $allowCreateStyle>
+                <a href="#" class="tasks-btn tasks-btn-create">$createText</a>
+            </div>
+        </div>
+    </div>
+    <div class="caption $captionClass">
+        <div class="container"><div>$caption</div></div>
+    </div>
+    <div class="tasks">
+        <div></div>
+    </div>
+    <div class="settings">$json</div>
+    <div id="task-editor-$id" class="jqUIDialog task-editor">
+        <div>$editor</div>
+        <div $showAttachmentsStyle>
+            %TWISTY{showlink="%MAKETEXT{"Show attachments"}%" hidelink="%MAKETEXT{"Hide attachments"}%" start="hide"}%
+            %ENDTWISTY%
+        </div>
+        <div $allowUploadStyle>
+            %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+            %DNDUPLOAD{extraclass="full-width"}%
+            %ENDTWISTY%
+        </div>
+        <div>
+            <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+            <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+        </div>
+    </div>
+</div>
+GRID
+
+    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
+    foreach (@jqdeps) {
+        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
+    }
+
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
+STYLE
+
+    return $grid;
+}
+
 1;
 
 __END__
@@ -323,7 +432,7 @@ Q.Wiki Tasks API - Modell Aachen GmbH
 
 Author: %$AUTHOR%
 
-Copyright (C) 2014 Modell Aachen GmbH
+Copyright (C) 2015 Modell Aachen GmbH
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

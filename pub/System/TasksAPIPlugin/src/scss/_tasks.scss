@@ -1,0 +1,181 @@
+.tasktracker > .tasks {
+  position: relative;
+  left:0;
+  width: 100%;
+
+  // overflow-x: hidden;
+  // overflow-y: scroll;
+  // height: 600px;
+
+  transition: right 0.4s ease-in-out;
+
+  &.edit {
+    pointer-events: none;
+    right: $editor-width - 35px;
+  }
+
+  > div {
+    height: inherit;
+    padding: 6px;
+  }
+
+  .task {
+    margin-bottom: 3px;
+    background-color: $white;
+    border-left: 5px solid transparent;
+    border-radius: $global-radius;
+    transition: opacity 0.3s ease-in-out,
+                background-color 0.2s ease-in-out;
+    min-height: $task-min-height;
+
+    @include flex-container();
+
+    align-items: stretch;
+    padding: 3px;
+
+    &.faded {
+      opacity: 0.4;
+    }
+
+    &.prioritized-Yes {
+      border-left-color: $prioritized;
+    }
+
+    &.selected, &:hover {
+      background-color: $grey;
+      color: $white;
+
+      span.created {
+        color: $light-blue !important;
+      }
+    }
+
+    &:nth-child(odd) {
+      background-color: $light-blue;
+
+      &.selected, &:hover {
+        background-color: $grey;
+        color: $white;
+      }
+
+      div.assigned {
+        background-color: $white !important;
+      }
+    }
+
+    &:hover {
+      > .btn-edit {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    > .btn-edit {
+      @include flex($shrink: 0, $align: stretch);
+
+      background-color: white;
+      border-radius: $global-radius;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      background-image: url('../assets/edit-blue.png');
+      cursor: pointer;
+
+      margin-left: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: background-color 0.3s ease-in-out,
+                  opacity 0.3s ease-in-out;
+      width: 32px;
+
+      &:hover {
+        background-color: $light-blue;
+      }
+
+      &:active {
+        background-color: $blue;
+        background-image: url('../assets/edit-white.png');
+      }
+    }
+
+    > .state {
+      @include flex($shrink: 0, $align: stretch, $order: -1);
+      width: 32px;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-size: 20px;
+
+      &.open, &.deleted {
+        background-image: url('../assets/task-open.png');
+      }
+
+      &.closed {
+        background-image: url('../assets/task-done.png');
+      }
+    }
+
+    > .content {
+      @include flex-container($wrap: wrap, $justify: space-between);
+      @include flex($grow: 2, $align: center);
+
+      &.deleted {
+        text-decoration: line-through !important;
+      }
+
+      &.milestone-1 {
+        color: maroon;
+      }
+
+      > div {
+        padding: 3px;
+        font-size: 13px;
+
+        &.assigned {
+          background-color: $light-blue;
+          background-image: url('../assets/user.png');
+          background-position: 6px center;
+          background-repeat: no-repeat;
+          background-size: 12px;
+          border-radius: $global-radius;
+          color: $blue;
+          padding: 0 6px 0 25px;
+        }
+
+        &.caption {
+          @include flex($order: -1);
+          width: 100%;
+
+          > .title {
+            font-size: 14px;
+            font-weight: bold;
+          }
+
+          > .created {
+            color: #777;
+            font-size: 12px;
+            margin-left: 12px;
+          }
+        }
+
+        &.description {
+          @include flex($grow: 2);
+
+          height: auto;
+          max-height: 25px;
+          transition: max-height 0.3s ease-in-out;
+          max-width: 50%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    &.expanded {
+      .content > .description {
+        max-height: 1000px;
+        white-space: normal;
+      }
+    }
+  }
+}

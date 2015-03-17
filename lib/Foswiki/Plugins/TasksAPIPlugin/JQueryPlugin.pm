@@ -15,7 +15,7 @@ sub new {
             author       => 'Modell Aachen GmbH',
             homepage     => 'http://www.modell-aachen.de',
             javascript   => ['jquery.tasksapi.js'],
-            puburl       => '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin',
+            puburl       => '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js',
             dependencies => ['JQUERYPLUGIN::FOSWIKI::PREFERENCES'],
         ),
         $class
