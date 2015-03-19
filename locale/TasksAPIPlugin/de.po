@@ -1,0 +1,35 @@
+msgid "open"
+msgstr "offen"
+
+msgid "closed"
+msgstr "geschlossen"
+
+msgid "all"
+msgstr "alle"
+
+msgid "deleted"
+msgstr "gelöscht"
+
+msgid "Tasks"
+msgstr "Aufgaben"
+
+msgid "Add task"
+msgstr "Aufgabe hinzufügen"
+
+msgid "Show attachments"
+msgstr "Anhänge anzeigen"
+
+msgid "Hide attachments"
+msgstr "Anhänge verstecken"
+
+msgid "Attach file(s)"
+msgstr "Datei(en) anhängen"
+
+msgid "Hide"
+msgstr "Verstecken"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Cancel"
+msgstr "Abbrechen"
