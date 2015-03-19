@@ -243,6 +243,10 @@
 
     query = query.join('');
     $.taskapi.get(query, fetchSize, opts.page, 'field_Position_s').done( function( solr ) {
+      if ( !solr || !solr.response ) {
+        return deferred.reject();
+      }
+
       var docs = solr.response.docs;
       for( var i = 0; i < docs.length; ++i ) {
         var doc = docs[i];
