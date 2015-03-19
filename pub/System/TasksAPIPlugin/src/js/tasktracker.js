@@ -238,7 +238,19 @@
 
     if ( !/^(1|true)$/i.test( opts.stateless ) ) {
       query.push( ' field_Status_s:' );
-      query.push( status );
+
+      if ( status === 'all' ) {
+        var $tracker = $('#' + id + '.tasktracker');
+        var $select = $tracker.find('select[name="status"]');
+        var vals = []
+        $select.find('option').each( function() {
+          vals.push( $(this).val() );
+        });
+
+        query.push( '(' + vals.join(' OR ') + ')' );
+      } else {
+        query.push( status );
+      }
     }
 
     query = query.join('');

@@ -129,7 +129,7 @@ sub tagGrid {
     my $filterClass = $params->{filterclass} || "";
     my $captionClass = $params->{captionclass} || "";
     my $extraClass = $params->{extraclass} || "";
-    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed';
+    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
     my $pageSize = $params->{pagesize} || 100;
     my $query = $params->{query} || "";
     my $stateless = $params->{stateless} || 0;

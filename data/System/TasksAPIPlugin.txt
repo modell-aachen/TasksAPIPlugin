@@ -49,7 +49,7 @@
 | pagesize="..." | amount of entries to fetch on each (SOLR) request | 100 |
 | query="..." | an additional (SOLR) query string (e.g. field_TaskType_s:foo) | |
 | showupload="..." | a boolean value to determine whether existing attachments should be shown to the user | 0 |
-| states="..." | filter options where the key should match a valid task state | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed |
+| states="..." | filter options where the key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all') | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
 | stateless="..." | a boolean value to hide the state select | 0 |
 | tasktemplate="..." | the name of the template used to render a task entry | tasksapi::task |
 | templatefile="..." | name of the topic containing the used template definitions | TasksAPITemplate |
