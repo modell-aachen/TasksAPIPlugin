@@ -150,6 +150,8 @@ sub tagGrid {
     my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
     my $task = Foswiki::Func::expandTemplate( $taskTemplate );
 
+    my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
+    my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
     my %settings = (
         context => $ctx,
         parent => $parent,
@@ -158,7 +160,10 @@ sub tagGrid {
         pageSize => $pageSize,
         query => $query,
         stateless => $stateless,
-        template => Foswiki::urlEncode( $task )
+        template => Foswiki::urlEncode( $task ),
+        lang => {
+            missingField => Foswiki::urlEncode( $translated )
+        }
     );
 
     my @options = ();

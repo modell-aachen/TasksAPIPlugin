@@ -395,7 +395,10 @@
       }
 
       if ( $input.hasClass('foswikiMandatory') && (/^$/.test( val ) || val === null || val === undefined ) ) {
-        alert('TBD. missing value for mandatory field');
+        var id = $editor.attr('id').replace('task-editor-', '');
+        var opts = options[id];
+        var field = $input.closest('label').find('span').text().replace(/[\*\s]*$/g, '');
+        alert( decodeURI(opts.lang.missingField) + ': "' + field + '"');
         hasError = true;
         return false;
       }

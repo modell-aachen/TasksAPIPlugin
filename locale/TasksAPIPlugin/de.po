@@ -63,3 +63,6 @@ msgstr "nein"
 
 msgid "Assigned to"
 msgstr "Zugewiesen an"
+
+msgid "Missing value for mandatory field"
+msgstr "Fehlender Wert für Pflichtfeld"
