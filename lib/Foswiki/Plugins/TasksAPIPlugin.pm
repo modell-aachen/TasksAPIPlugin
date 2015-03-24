@@ -7,7 +7,6 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
-use Foswiki::Contrib::JsonRpcContrib ();
 
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::SolrPlugin::Search;
