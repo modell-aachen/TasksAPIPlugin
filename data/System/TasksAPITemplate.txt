@@ -4,6 +4,11 @@
     %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Title" format="$edit"}%
   </label>
 </div>
+<div class="description">
+  <label><span>%MAKETEXT{"Description"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$mandatory"}%</span>
+    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$edit"}%
+  </label>
+</div>
 <div class="assigned">
   <label><span>%MAKETEXT{"Assigned to"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="AssignedTo" format="$mandatory"}%</span>
     %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="AssignedTo" format="$edit"}%
@@ -12,11 +17,6 @@
 <div class="due datepicker">
   <label><span>%MAKETEXT{"Due date"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="DueDate" format="$mandatory"}%</span>
     %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="DueDate" format="$edit"}%
-  </label>
-</div>
-<div class="description">
-  <label><span>%MAKETEXT{"Description"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$edit"}%
   </label>
 </div>
 <div class="state">
