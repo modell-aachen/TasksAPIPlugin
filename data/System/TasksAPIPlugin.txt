@@ -262,6 +262,15 @@ $tracker.on( 'afterSave', function( evt, task ) {
 });
 </verbatim>
 
+---+++editCanceled
+Fired after the user clicked the editor's cancel button.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'editCanceled', function( evt ) {
+  console.log( 'canceled' );
+});
+</verbatim>
 
 ---+++ taskClick
 Fired after a task has been clicked by the user. The task's DOM node is passed into the event handler.

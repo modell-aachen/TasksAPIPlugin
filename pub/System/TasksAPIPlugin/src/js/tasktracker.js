@@ -69,6 +69,8 @@
           $input.trigger('Clear');
         });
 
+        var editCanceled = $.Event( 'editCanceled' );
+        $this.trigger( editCanceled );
         return false;
       };
 
