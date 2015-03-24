@@ -221,7 +221,7 @@ sub tagGrid {
         </div>
         <div $allowUploadStyle>
             %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
-            %DNDUPLOAD{extraclass="full-width"}%
+            %DNDUPLOAD{extraclass="full-width" tasksgrid="1"}%
             %ENDTWISTY%
         </div>
         <div>
