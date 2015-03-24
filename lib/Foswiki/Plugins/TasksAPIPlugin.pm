@@ -117,7 +117,8 @@ sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
-    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web";
+    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
+    my $parent = $params->{parent} || "$web.$topic";
     my $id = $params->{id} || $gridCounter;
     $gridCounter += 1 if $id eq $gridCounter;
     my $system = $Foswiki::cfg{SystemWebName} || "System";
@@ -138,6 +139,10 @@ sub tagGrid {
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
+    my $expandOnClick = $params->{expandonclick};
+
+    $expandOnClick = 1 unless defined $expandOnClick;
+    $expandOnClick = $expandOnClick =~ m/^(1|true)$/i ? 1 : 0;
     $templateFile =~ s/Template$//;
 
     Foswiki::Func::loadTemplate( $templateFile );
@@ -147,6 +152,7 @@ sub tagGrid {
 
     my %settings = (
         context => $ctx,
+        parent => $parent,
         form => $form,
         id => $id,
         pageSize => $pageSize,
@@ -186,7 +192,7 @@ sub tagGrid {
     my $select = join('\n', @options),
     my $json = encode_json( \%settings );
     my $grid = <<GRID;
-<div id="$id" class="tasktracker $extraClass">
+<div id="$id" class="tasktracker $extraClass" data-expand="$expandOnClick">
     <div class="filter $filterClass">
         <div>
             <div class="options">

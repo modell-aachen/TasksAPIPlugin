@@ -88,7 +88,10 @@
 
         if ( $editor.data('new') === true ) {
           var now = moment();
+
           task.form = opts.form;
+          task.Context = opts.context;
+          task.Parent = opts.parent;
 
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
@@ -242,7 +245,7 @@
       if ( status === 'all' ) {
         var $tracker = $('#' + id + '.tasktracker');
         var $select = $tracker.find('select[name="status"]');
-        var vals = []
+        var vals = [];
         $select.find('option').each( function() {
           vals.push( $(this).val() );
         });
@@ -518,6 +521,17 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+    var onTaskClick = function( evt, task ) {
+      $(task).toggleClass('expanded');
+    };
+
+    $('.tasktracker').each( function() {
+      var $tracker = $(this);
+      $tracker.tasksGrid();
+
+      if ( /^1$/.test( $tracker.attr('data-expand') ) ) {
+        $tracker.on( 'taskClick', onTaskClick );
+      }
+    });
   });
 }(jQuery, window._, window.document, window));
