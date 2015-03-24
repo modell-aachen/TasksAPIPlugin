@@ -16,7 +16,7 @@ use JSON;
 
 our $VERSION = '0.1';
 our $RELEASE = '0.1';
-our $SHORTDESCRIPTION = 'Empty Plugin used as a template for new Plugins';
+our $SHORTDESCRIPTION = 'Action Tracker 2.0';
 our $NO_PREFS_IN_TOPIC = 1;
 
 my $solr;
