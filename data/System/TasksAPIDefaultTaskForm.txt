@@ -10,8 +10,8 @@
 | Description | textarea | 50 | | | |
 | DueDate | date | 50 | %GMTIME{"$day $month $year"}% | | |
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | | |
-| Reminder | select+values | | %MAKETEXT{"Never"}%=Never,%MAKETEXT{"Daily"}%=Daily,%MAKETEXT{"Weekly"}%=Weekly,%MAKETEXT{"Monthly"}%=Monthly | | |
-| Prioritize | select+values | | %MAKETEXT{"No"}%=No,%MAKETEXT{"Yes"}%=Yes | | |
+| Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | | |
+| Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | | |
 
    * Set ALLOWTOPICCHANGE = AdminUser
    * Set NOWYSIWYG = 1

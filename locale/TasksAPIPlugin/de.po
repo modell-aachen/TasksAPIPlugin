@@ -33,3 +33,30 @@ msgstr "Speichern"
 
 msgid "Cancel"
 msgstr "Abbrechen"
+
+msgid "Prioritize"
+msgstr "Priorisieren"
+
+msgid "Reminder"
+msgstr "Erinnerung"
+
+msgid "Informees"
+msgstr "Zu informierende Personen"
+
+msgid "never"
+msgstr "nie"
+
+msgid "daily"
+msgstr "täglich"
+
+msgid "weekly"
+msgstr "wöchentlich"
+
+msgid "monthly"
+msgstr "monatlich"
+
+msgid "yes"
+msgstr "ja"
+
+msgid "no"
+msgstr "nein"
