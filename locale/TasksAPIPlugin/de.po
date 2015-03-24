@@ -60,3 +60,6 @@ msgstr "ja"
 
 msgid "no"
 msgstr "nein"
+
+msgid "Assigned to"
+msgstr "Zugewiesen an"
