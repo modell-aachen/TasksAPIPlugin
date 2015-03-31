@@ -42,6 +42,7 @@
 | allowcreate="..." | a boolean value to determine whether the user is allowed to create a new entry within the grid | 0 |
 | allowupload="..." | a boolean value to determine whether the user is allowed to upload attachments to a task | 0 |
 | captionclass="..." | additional CSS class applied to the caption area | |
+| captiontemplate="..." | the name of the template used to render the caption area | tasksapi::caption |
 | createlinktext="..." | text shown to create a new entry within the grid | %<nop>MAKETEXT{"Add task"}% |
 | editortemplate="..." | the nameof the template used to render the task editor | tasksapi::editor |
 | expandonclick="..." | a boolean value to determine whether a task's (trimmed) text should be expanded by clicking that task | 1 |
