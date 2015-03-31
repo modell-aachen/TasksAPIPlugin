@@ -237,7 +237,7 @@ sub tagGrid {
 </div>
 GRID
 
-    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
