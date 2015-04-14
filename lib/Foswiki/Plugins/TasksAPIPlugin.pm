@@ -304,11 +304,13 @@ sub restSearch {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
     my $enrich_data = sub {
-        my $d = shift->data;
+        my $task = shift;
+        my $d = $task->data;
         my $fields = $d->{form}->getFields;
         my $result = {
             id => $d->{id},
             form => $d->{form}->web .'.'. $d->{form}->topic,
+            attachments => [$task->{meta}->find('FILEATTACHMENT')],
             fields => {},
         };
         foreach my $f (@$fields) {
