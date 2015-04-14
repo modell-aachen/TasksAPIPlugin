@@ -61,7 +61,6 @@ my %singles = (
     Created => 1,
     Due => 1,
     Position => 1,
-    Title => 1,
 );
 my @multis = qw(AssignedTo Informees);
 

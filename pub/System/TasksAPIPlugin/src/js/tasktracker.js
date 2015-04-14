@@ -90,6 +90,7 @@
         if ( $editor.data('new') === true ) {
           var now = moment();
           task.form = opts.form;
+          task.Context = opts.context;
 
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
@@ -102,11 +103,8 @@
             opts.container.append( $task );
             $editor.data('new', '');
 
-            var solrTask = mapToSolr( task, $editor );
             if ( typeof tasks[id] === typeof undefined ) {
-              tasks[id] = [solrTask];
-            } else {
-              tasks[id].push( solrTask );
+              tasks[id].push( task );
             }
 
             var afterSave = $.Event( 'afterSave' );

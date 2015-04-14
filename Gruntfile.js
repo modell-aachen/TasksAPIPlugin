@@ -12,7 +12,7 @@ module.exports = function(grunt) {
     var bowerrc = grunt.file.readJSON('.bowerrc');
     pkg.bower = bowerrc.directory;
   } catch( e ) {
-    pkg.bower = 'bower_components'
+    pkg.bower = 'bower_components';
   }
 
   grunt.initConfig({
