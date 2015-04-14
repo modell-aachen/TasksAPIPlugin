@@ -21,8 +21,8 @@ $task-min-height: 60px;
 
 $blue: #236aa2;
 $light-blue: #f2f5f7;
-$grey: #bebebe;
-$white: #ffffff;
+$hover-bg: darken($light-blue, 5%);
+$white: #fff;
 $prioritized: #f40;
 
 @mixin flex-container($direction:row, $align:flex-start, $justify:flex-start, $wrap:nowrap) {

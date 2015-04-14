@@ -49,19 +49,28 @@
 
 %TMPL:DEF{"tasksapi::task"}%%{
 }%<div class="task prioritized-<%= Prioritize %>">
-  <div class="state <%= Status %>"></div>
-  <div class="content">
-    <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
-    <div class="description"><span><%= Description %></span></div>
-    <div class="assigned"><span><%= AssignedTo %></span></div>
-    <div class="due"><span><%= DueDate %></span></div>
+  <div class="task-wrapper">
+    <div class="state <%= Status %>"></div>
+    <div class="content">
+      <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
+      <div class="description"><span><%= Description %></span></div>
+      <div class="assigned"><span><%= AssignedTo %></span></div>
+      <div class="due"><span><%= DueDate %></span></div>
+      <div class="attachcount"><span><%= AttachCount %></span></div>
+    </div>
+    <div class="btn-edit">&nbsp;</div>
   </div>
-  <div class="btn-edit">&nbsp;</div>
+  <div class="task-attachments">
+    <div class="attachment">
+      <ul><%= Attachments %></ul>
+    </div>
+  </div>
 </div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::caption"}%<!--tasksapi::caption-->
-<div class="text"><span>%MAKETEXT{"Description"}%</span></div>
+%TMPL:DEF{"tasksapi::caption"}%%{
+}%<div class="text"><span>%MAKETEXT{"Description"}%</span></div>
 <div class="assigned"><span>%MAKETEXT{"Assigned to"}%</span></div>
 <div class="due"><span>%MAKETEXT{"Due date"}%</span></div>
-<!--/tasksapi::caption-->%TMPL:END%
+<div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>%{
+}%%TMPL:END%
