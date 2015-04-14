@@ -29,16 +29,17 @@ my @schema_updates = (
             id TEXT NOT NULL UNIQUE,
             context TEXT NOT NULL,
             parent TEXT,
-            state TEXT NOT NULL DEFAULT 'open',
+            status TEXT NOT NULL DEFAULT 'open',
             form TEXT NOT NULL,
             author TEXT NOT NULL,
-            created INTEGER NOT NULL,
-            due INTEGER,
+            created INT NOT NULL,
+            due INT,
+            position INT,
             raw TEXT
         )",
         "CREATE INDEX tasks_context_idx ON tasks (context)",
         "CREATE INDEX tasks_parent_idx ON tasks (parent)",
-        "CREATE INDEX tasks_state_idx ON tasks (state)",
+        "CREATE INDEX tasks_status_idx ON tasks (status)",
         "CREATE INDEX tasks_form_idx ON tasks (form)",
         "CREATE INDEX tasks_author_idx ON tasks (author)",
         "CREATE INDEX tasks_created_idx ON tasks (created)",
@@ -55,10 +56,11 @@ my @schema_updates = (
 my %singles = (
     context => 1,
     parent => 1,
-    state => 1,
+    status => 1,
     author => 1,
     created => 1,
     due => 1,
+    position => 1,
 );
 my @multis = qw(assignedto informees);
 
