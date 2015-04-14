@@ -17,16 +17,19 @@
   allowcreate="..."
   allowupload="..."
   captionclass="..."
+  captiontemplate="..."
   createlinktext="..."
   context="..."
   editortemplate="..."
+  expandonclick="..."
   extraclass="..."
   filterclass="..."
   form="..."
   id="..."
   pagesize="..."
+  parent="..."
   query="..."
-  showupload="..."
+  showattachments="..."
   stateless="..."
   states="..."
   tasktemplate="..."
@@ -36,20 +39,23 @@
 </verbatim>
 
 | *Parameter* | *Description* | *Default* |
-| "..." (or context="...") | name of the tasks' context | the current web |
+| "..." (or context="...") | name of the tasks' context | %<nop>WEB%.%<nop>TOPIC% |
 | allowcreate="..." | a boolean value to determine whether the user is allowed to create a new entry within the grid | 0 |
 | allowupload="..." | a boolean value to determine whether the user is allowed to upload attachments to a task | 0 |
 | captionclass="..." | additional CSS class applied to the caption area | |
+| captiontemplate="..." | the name of the template used to render the caption area | tasksapi::caption |
 | createlinktext="..." | text shown to create a new entry within the grid | %<nop>MAKETEXT{"Add task"}% |
 | editortemplate="..." | the nameof the template used to render the task editor | tasksapi::editor |
+| expandonclick="..." | a boolean value to determine whether a task's (trimmed) text should be expanded by clicking that task | 1 |
 | extraclass="..." | additional CSS class applied to the tasks grid | |
 | filterclass="..." | additional CSS class applied to the filter area | |
 | form="..." | web.topic of the meta data form | %<nop>SYSTEMWEB%.TasksAPIDefaultForm |
 | id="..." | a unique id in case more than one task grid is used (per page) | _auto increment_ |
 | pagesize="..." | amount of entries to fetch on each (SOLR) request | 100 |
+| parent="..." | parent web, topic or webtopic of a task | %<nop>WEB%.%<nop>TOPIC% |
 | query="..." | an additional (SOLR) query string (e.g. field_TaskType_s:foo) | |
-| showupload="..." | a boolean value to determine whether existing attachments should be shown to the user | 0 |
-| states="..." | filter options where the key should match a valid task state | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed |
+| showattachments="..." | a boolean value to determine whether existing attachments should be shown to the user | 0 |
+| states="..." | filter options where the key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all') | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
 | stateless="..." | a boolean value to hide the state select | 0 |
 | tasktemplate="..." | the name of the template used to render a task entry | tasksapi::task |
 | templatefile="..." | name of the topic containing the used template definitions | TasksAPITemplate |
@@ -258,6 +264,15 @@ $tracker.on( 'afterSave', function( evt, task ) {
 });
 </verbatim>
 
+---+++editCanceled
+Fired after the user clicked the editor's cancel button.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'editCanceled', function( evt ) {
+  console.log( 'canceled' );
+});
+</verbatim>
 
 ---+++ taskClick
 Fired after a task has been clicked by the user. The task's DOM node is passed into the event handler.

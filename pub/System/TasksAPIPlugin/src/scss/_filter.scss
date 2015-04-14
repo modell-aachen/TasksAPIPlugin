@@ -96,11 +96,15 @@
         margin-left: -50px;
       }
 
-      > .due {
+      > .due,
+      > .attachcount {
         @include flex();
       }
 
-      .text, .assigned, .due {
+      .text,
+      .assigned,
+      .due,
+      .attachcount {
         color: #777;
         font-weight: bold;
         font-size: 10px;

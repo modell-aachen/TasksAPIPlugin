@@ -44,19 +44,20 @@
         resizable: false
       });
 
-      var handleScroll = function( evt ) {
-        var $this = $(this);
-        var opts = options[id];
-        var st = $this.scrollTop();
-        var current = parseInt(st/opts.cntHeight);
-        if ( opts.canLoadMore && current > opts.page ) {
-          opts.page = current;
-          $.blockUI();
-          loadTasks( id, opts.currentState ).done( function( results ) {
-            opts.canLoadMore = results.length > 0;
-          }).always( $.unblockUI );
-        }
-      };
+      // ToDo. FIX ME!
+      // var handleScroll = function( evt ) {
+      //   var $this = $(this);
+      //   var opts = options[id];
+      //   var st = $this.scrollTop();
+      //   var current = parseInt(st/opts.cntHeight);
+      //   if ( opts.canLoadMore && current > opts.page ) {
+      //     opts.page = current;
+      //     $.blockUI();
+      //     loadTasks( id, opts.currentState ).done( function( results ) {
+      //       opts.canLoadMore = results.length > 0;
+      //     }).always( $.unblockUI );
+      //   }
+      // };
 
       var handleCancel = function() {
         $tasks.removeClass('edit');
@@ -69,6 +70,8 @@
           $input.trigger('Clear');
         });
 
+        var editCanceled = $.Event( 'editCanceled' );
+        $this.trigger( editCanceled );
         return false;
       };
 
@@ -88,7 +91,10 @@
 
         if ( $editor.data('new') === true ) {
           var now = moment();
+
           task.form = opts.form;
+          task.Context = opts.context;
+          task.Parent = opts.parent;
 
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
@@ -171,7 +177,7 @@
         loadTasks( id, opts.currentState, true ).always( $.unblockUI );
       };
 
-      $tasks.on( 'scroll', handleScroll );
+      // $tasks.on( 'scroll', handleScroll );
       $cancel.on( 'click', handleCancel );
       $save.on( 'click', handleSave );
       $create.on( 'click', handleCreate );
@@ -238,11 +244,27 @@
 
     if ( !/^(1|true)$/i.test( opts.stateless ) ) {
       query.push( ' field_Status_s:' );
-      query.push( status );
+
+      if ( status === 'all' ) {
+        var $tracker = $('#' + id + '.tasktracker');
+        var $select = $tracker.find('select[name="status"]');
+        var vals = [];
+        $select.find('option').each( function() {
+          vals.push( $(this).val() );
+        });
+
+        query.push( '(' + vals.join(' OR ') + ')' );
+      } else {
+        query.push( status );
+      }
     }
 
     query = query.join('');
     $.taskapi.get(query, fetchSize, opts.page, 'field_Position_s').done( function( solr ) {
+      if ( !solr || !solr.response ) {
+        return deferred.reject();
+      }
+
       var docs = solr.response.docs;
       for( var i = 0; i < docs.length; ++i ) {
         var doc = docs[i];
@@ -256,6 +278,9 @@
 
         $html.on('click', raiseClicked );
         $html.find('.btn-edit').on('click', opts.onEditClicked );
+
+// ToDo. Testing...
+$html.find('.attachment > ul:empty').remove();
       }
 
       deferred.resolve( docs );
@@ -374,7 +399,10 @@
       }
 
       if ( $input.hasClass('foswikiMandatory') && (/^$/.test( val ) || val === null || val === undefined ) ) {
-        alert('TBD. missing value for mandatory field');
+        var id = $editor.attr('id').replace('task-editor-', '');
+        var opts = options[id];
+        var field = $input.closest('label').find('span').text().replace(/[\*\s]*$/g, '');
+        alert( decodeURI(opts.lang.missingField) + ': "' + field + '"');
         hasError = true;
         return false;
       }
@@ -425,6 +453,15 @@
     // ToDo. fix this. currently used as hotfix for ProjectsAppPlugin
     if ( typeof task.Description === typeof undefined ) {
       task.Description = 'n/a';
+    }
+
+    task.AttachCount = 0;
+    task.Attachments = [];
+    if ( solrEntry.attachment && solrEntry.attachment.length > 0 ) {
+      task.AttachCount = solrEntry.attachment.length;
+      _.each( solrEntry.attachment, function(a) {
+        task.Attachments.push( '<li>' + a + '</li>' );
+      });
     }
 
     return task;
@@ -502,6 +539,17 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+    var onTaskClick = function( evt, task ) {
+      $(task).toggleClass('expanded');
+    };
+
+    $('.tasktracker').each( function() {
+      var $tracker = $(this);
+      $tracker.tasksGrid();
+
+      if ( /^1$/.test( $tracker.attr('data-expand') ) ) {
+        $tracker.on( 'taskClick', onTaskClick );
+      }
+    });
   });
 }(jQuery, window._, window.document, window));

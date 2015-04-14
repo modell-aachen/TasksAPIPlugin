@@ -198,3 +198,16 @@ $tracker.on( 'taskClick', function( evt, cnt ) {
   // ...
 });
 ```
+
+
+## taskDoubleClick
+Fired after a task has been double clicked by the user. The task's DOM node is passed into the event handler.
+
+```javascript
+var $tracker = $('.tasktracker');
+$tracker.on( 'taskDoubleClick', function( evt, cnt ) {
+  var $cnt = $(cnt);
+  var taskId = $cnt.data('id');
+  // ...
+});
+```

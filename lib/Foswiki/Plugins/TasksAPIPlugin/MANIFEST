@@ -6,9 +6,11 @@ lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0444
 lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0444
 lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0444
+locale/TasksAPIPlugin/de.po 0644
 pub/System/TasksAPIPlugin/assets/add.png 0644
 pub/System/TasksAPIPlugin/assets/author.png 0644
 pub/System/TasksAPIPlugin/assets/user.png 0644
+pub/System/TasksAPIPlugin/assets/file.png 0644
 pub/System/TasksAPIPlugin/assets/arrow-blue.png 0644
 pub/System/TasksAPIPlugin/assets/arrow-white.png 0644
 pub/System/TasksAPIPlugin/assets/edit-blue.png 0644

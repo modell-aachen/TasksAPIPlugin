@@ -1,0 +1,68 @@
+msgid "open"
+msgstr "offen"
+
+msgid "closed"
+msgstr "geschlossen"
+
+msgid "all"
+msgstr "alle"
+
+msgid "deleted"
+msgstr "gelöscht"
+
+msgid "Tasks"
+msgstr "Aufgaben"
+
+msgid "Add task"
+msgstr "Aufgabe hinzufügen"
+
+msgid "Show attachments"
+msgstr "Anhänge anzeigen"
+
+msgid "Hide attachments"
+msgstr "Anhänge verstecken"
+
+msgid "Attach file(s)"
+msgstr "Datei(en) anhängen"
+
+msgid "Hide"
+msgstr "Verstecken"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Prioritize"
+msgstr "Priorisieren"
+
+msgid "Reminder"
+msgstr "Erinnerung"
+
+msgid "Informees"
+msgstr "Zu informierende Personen"
+
+msgid "never"
+msgstr "nie"
+
+msgid "daily"
+msgstr "täglich"
+
+msgid "weekly"
+msgstr "wöchentlich"
+
+msgid "monthly"
+msgstr "monatlich"
+
+msgid "yes"
+msgstr "ja"
+
+msgid "no"
+msgstr "nein"
+
+msgid "Assigned to"
+msgstr "Zugewiesen an"
+
+msgid "Missing value for mandatory field"
+msgstr "Fehlender Wert für Pflichtfeld"

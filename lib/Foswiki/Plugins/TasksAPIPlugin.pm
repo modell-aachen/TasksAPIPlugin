@@ -16,7 +16,7 @@ use JSON;
 
 our $VERSION = '0.1';
 our $RELEASE = '0.1';
-our $SHORTDESCRIPTION = 'Empty Plugin used as a template for new Plugins';
+our $SHORTDESCRIPTION = 'Action Tracker 2.0';
 our $NO_PREFS_IN_TOPIC = 1;
 
 my $db;
@@ -334,7 +334,8 @@ sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
-    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web";
+    my $ctx = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
+    my $parent = $params->{parent} || "$web.$topic";
     my $id = $params->{id} || $gridCounter;
     $gridCounter += 1 if $id eq $gridCounter;
     my $system = $Foswiki::cfg{SystemWebName} || "System";
@@ -345,7 +346,7 @@ sub tagGrid {
     my $filterClass = $params->{filterclass} || "";
     my $captionClass = $params->{captionclass} || "";
     my $extraClass = $params->{extraclass} || "";
-    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed';
+    my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
     my $pageSize = $params->{pagesize} || 100;
     my $query = $params->{query} || "";
     my $stateless = $params->{stateless} || 0;
@@ -355,6 +356,10 @@ sub tagGrid {
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
+    my $expandOnClick = $params->{expandonclick};
+
+    $expandOnClick = 1 unless defined $expandOnClick;
+    $expandOnClick = $expandOnClick =~ m/^(1|true)$/i ? 1 : 0;
     $templateFile =~ s/Template$//;
 
     Foswiki::Func::loadTemplate( $templateFile );
@@ -362,14 +367,20 @@ sub tagGrid {
     my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
     my $task = Foswiki::Func::expandTemplate( $taskTemplate );
 
+    my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
+    my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
     my %settings = (
         context => $ctx,
+        parent => $parent,
         form => $form,
         id => $id,
         pageSize => $pageSize,
         query => $query,
         stateless => $stateless,
-        template => Foswiki::urlEncode( $task )
+        template => Foswiki::urlEncode( $task ),
+        lang => {
+            missingField => Foswiki::urlEncode( $translated )
+        }
     );
 
     my @options = ();
@@ -403,7 +414,7 @@ sub tagGrid {
     my $select = join('\n', @options),
     my $json = encode_json( \%settings );
     my $grid = <<GRID;
-<div id="$id" class="tasktracker $extraClass">
+<div id="$id" class="tasktracker $extraClass" data-expand="$expandOnClick">
     <div class="filter $filterClass">
         <div>
             <div class="options">
@@ -432,7 +443,7 @@ sub tagGrid {
         </div>
         <div $allowUploadStyle>
             %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
-            %DNDUPLOAD{extraclass="full-width"}%
+            %DNDUPLOAD{extraclass="full-width" tasksgrid="1"}%
             %ENDTWISTY%
         </div>
         <div>
@@ -443,7 +454,7 @@ sub tagGrid {
 </div>
 GRID
 
-    my @jqdeps = ("jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
