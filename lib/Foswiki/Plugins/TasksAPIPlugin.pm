@@ -176,7 +176,10 @@ sub _query {
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
 
     return () unless @$ids;
-    my @tasks = map { Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, "Task-$_->[0]", $_->[1]) } @$ids;
+    my @tasks = map {
+        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
+        Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1])
+    } @$ids;
 
     return @tasks unless $useACL;
     grep {
@@ -190,8 +193,8 @@ sub _index {
     $transact = 1 unless defined $transact;
     my $db = db();
     $db->begin_work if $transact;
-    $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id});
-    $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
+    $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id}) if $transact;
+    $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id}) if $transact;
     my $form = $task->{form};
     my %vals = (
         id => $task->{id},
@@ -208,7 +211,7 @@ sub _index {
             $v = [ $v ];
         }
         if ($singles{lc $f}) {
-            $vals{$f} = $v;
+            $vals{$f} = $v->[0];
         } elsif (grep { $_ eq lc $f } @multis) {
             push @extra, map { { type => $f, value => $_ } } @$v;
         }

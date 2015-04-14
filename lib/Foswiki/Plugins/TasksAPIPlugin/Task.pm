@@ -112,7 +112,7 @@ sub search {
 
 # Initialize a task object from the raw task text (embedded store form)
 sub _loadRaw {
-    my ($web, $topic, $raw) = shift;
+    my ($web, $topic, $raw) = @_;
     my $meta = Foswiki::Meta->new($Foswiki::Plugins::SESSION, $web, $topic, $raw);
     load($meta);
 }
