@@ -47,33 +47,26 @@
     },
 
     get: function( query, limit, offset, sort ) {
+      if ( !query ) query = {};
       if ( !limit || /^\d+$/.test( limit ) === false ) {
         limit = (this.opts && this.opts.limit) || 9999;
-        if ( !query ) query = '';
       }
+      query.limit = limit;
 
       if ( !offset || /^\d+$/.test( offset ) === false ) {
         offset = 0;
       }
+      query.offset = offset;
 
-      var sortBy = '';
       if ( sort ) {
-        sortBy = '&sort=' + sort;
+        query.order = sort;
       }
 
       var deferred = $.Deferred();
-      var url = restEndpoint('/SolrPlugin/search');
-      var q = "type: task ";
-      if ( query ) {
-        if ( /type:\s?task/.test( query ) ) {
-          q = query;
-        } else {
-          q += query;
-        }
-      }
+      var url = restEndpoint('/TasksAPIPlugin/search');
 
       $.ajax({
-        url: url + '?q=' + q + '&rows=' + limit + '&start=' + offset + sortBy,
+        url: url + '?request=' + JSON.stringify(query),
         type: 'GET',
         dataType: 'json',
         error: function( xhr, status, err ) {
@@ -99,20 +92,11 @@
     },
 
     getAll: function( limit, offset, sort ) {
-      return this.get( 'type:task', limit, offset, sort );
+      return this.get( {}, limit, offset, sort );
     },
 
     getBy: function( filter, limit, offset,sort ) {
-      var opts = ['type:task'];
-      if ( typeof filter === 'object' ) {
-        for ( var prop in filter ) {
-          opts.push( prop + ':' + filter[prop] );
-        }
-      } else if ( typeof filter === 'string' ) {
-        opts.push( filter );
-      }
-
-      return this.get( opts.join(' '), limit, offset );
+      return this.get( filter, limit, offset, sort );
     },
 
     update: function( task ) {
