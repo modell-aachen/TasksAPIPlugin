@@ -479,6 +479,18 @@ STYLE
     return $grid;
 }
 
+# Special handler that prevents certain pages from being rendered in the tasks
+# web, to prevent the server from melting
+sub beforeCommonTagsHandler {
+    my ($text, $topic, $web, $meta) = @_;
+    return unless $web eq $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
+    return unless $Foswiki::Plugins::SESSION->inContext('body_text');
+    if (grep /^\Q$topic\E$/, qw(WebAtom WebRss WebNotify WebTopicList WebIndex WebChanges WebShortIndex WebSearch WebSearchAdvanced)) {
+        $_[0] = 'Disabled for performance reasons in this web.';
+        return;
+    }
+}
+
 1;
 
 __END__
