@@ -292,13 +292,40 @@ sub restSearch {
     my @res;
     eval {
         my $q = $session->{request};
-        my $req = decode_json($q->param('request'));
+        my $req = decode_json($q->param('request') || '{}');
         @res = _query(%$req);
     };
     if ($@) {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    @res = map { $_->data } @res;
+    my $enrich_data = sub {
+        my $d = shift->data;
+        my $fields = $d->{form}->getFields;
+        my $result = {
+            id => $d->{id},
+            form => $d->{form}->web .'.'. $d->{form}->topic,
+            fields => {},
+        };
+        foreach my $f (@$fields) {
+            next if $f->{name} eq 'TopicType';
+            my $ff = {
+                name => $f->{name},
+                multi => $f->isMultiValued ? JSON::true : JSON::false,
+                mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
+                tooltip => $f->{tooltip},
+                mandatory => $f->isMandatory ? JSON::true : JSON::false,
+                hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
+                type => $f->{type},
+                size => $f->{size},
+                attributes => $f->{attributes},
+                value => $d->{fields}{$f->{name}} || '',
+            };
+            $result->{fields}{$f->{name}} = $ff;
+        }
+        $result;
+    };
+    @res = map { $enrich_data->($_) } @res;
+    #return JSON->new->pretty->utf8->encode({status => 'ok', data => \@res});
     return encode_json({status => 'ok', data => \@res});
 }
 
