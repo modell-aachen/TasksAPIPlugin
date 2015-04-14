@@ -54,15 +54,16 @@ my @schema_updates = (
     ],
 );
 my %singles = (
-    context => 1,
-    parent => 1,
-    status => 1,
-    author => 1,
-    created => 1,
-    due => 1,
-    position => 1,
+    Context => 1,
+    Parent => 1,
+    Status => 1,
+    Author => 1,
+    Created => 1,
+    Due => 1,
+    Position => 1,
+    Title => 1,
 );
-my @multis = qw(assignedto informees);
+my @multis = qw(AssignedTo Informees);
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -156,23 +157,26 @@ sub _query {
         }
         $order = $t if $order eq $multi;
     }
+    my $filterprefix = ' WHERE';
     for my $col (keys %$query) {
         next unless $col =~ /^\w+$/s;
         my $v = $query->{$col};
         if (ref $v eq 'ARRAY') {
-            $filter .= " WHERE $col IN(". join(',', map { '?' } @$v) .")";
+            $filter .= "$filterprefix $col IN(". join(',', map { '?' } @$v) .")";
             push @args, @$v;
         } else {
-            $filter .= "WHERE $col = ?";
+            $filter .= "$filterprefix $col = ?";
             push @args, $v;
         }
+        $filterprefix = ' AND';
     }
-    $order = " ORDER BY $order" if $order;
+    $order = " ORDER BY $order" if $order && $order =~ /^\w+$/;
     $order .= " DESC" if $opts{desc};
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $limit = " LIMIT $offset, $count" if $count;
     my $group = '';
     $group = ' GROUP BY t.id' if $join;
+Foswiki::Func::writeWarning( encode_json(["SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args]) );
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
 
     return () unless @$ids;
@@ -210,7 +214,7 @@ sub _index {
         } else {
             $v = [ $v ];
         }
-        if ($singles{lc $f}) {
+        if ($singles{$f}) {
             $vals{$f} = $v->[0];
         } elsif (grep { $_ eq lc $f } @multis) {
             push @extra, map { { type => $f, value => $_ } } @$v;
@@ -293,6 +297,7 @@ sub restSearch {
     eval {
         my $q = $session->{request};
         my $req = decode_json($q->param('request') || '{}');
+        delete $req->{acl};
         @res = _query(%$req);
     };
     if ($@) {

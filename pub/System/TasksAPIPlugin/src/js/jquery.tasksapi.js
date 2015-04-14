@@ -37,7 +37,7 @@
     });
 
     return deferred.promise();
-  };
+  }
 
   $.taskapi = {
     opts: {limit: 9999},
@@ -48,25 +48,18 @@
 
     get: function( query, limit, offset, sort ) {
       if ( !query ) query = {};
-      if ( !limit || /^\d+$/.test( limit ) === false ) {
-        limit = (this.opts && this.opts.limit) || 9999;
-      }
-      query.limit = limit;
-
-      if ( !offset || /^\d+$/.test( offset ) === false ) {
-        offset = 0;
-      }
-      query.offset = offset;
-
+      var queryopts = { query: query };
+      queryopts.limit = limit || 999999;
+      queryopts.offset = offset || 0;
       if ( sort ) {
-        query.order = sort;
+        queryopts.order = sort;
       }
 
       var deferred = $.Deferred();
       var url = restEndpoint('/TasksAPIPlugin/search');
 
       $.ajax({
-        url: url + '?request=' + JSON.stringify(query),
+        url: url + '?request=' + JSON.stringify(queryopts),
         type: 'GET',
         dataType: 'json',
         error: function( xhr, status, err ) {

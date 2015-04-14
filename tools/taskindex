@@ -2,7 +2,7 @@
 
 do '../bin/setlib.cfg';
 require Foswiki;
-new Foswiki();
+new Foswiki('admin');
 
 require Foswiki::Plugins::TasksAPIPlugin;
 Foswiki::Plugins::TasksAPIPlugin::_fullindex();

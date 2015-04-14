@@ -44,7 +44,7 @@
         resizable: false
       });
 
-      // ToDo. FIX ME!
+      // todo. fixme
       // var handleScroll = function( evt ) {
       //   var $this = $(this);
       //   var opts = options[id];
@@ -70,8 +70,6 @@
           $input.trigger('Clear');
         });
 
-        var editCanceled = $.Event( 'editCanceled' );
-        $this.trigger( editCanceled );
         return false;
       };
 
@@ -91,10 +89,7 @@
 
         if ( $editor.data('new') === true ) {
           var now = moment();
-
           task.form = opts.form;
-          task.Context = opts.context;
-          task.Parent = opts.parent;
 
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
@@ -235,55 +230,32 @@
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
-    var query = [
-      'field_Context_s:',
-      opts.context,
-      ' ',
-      opts.query
-    ];
+    var query = {
+      Context: opts.context,
+    };
+
+    $.extend(query, $.parseJSON(opts.query));
 
     if ( !/^(1|true)$/i.test( opts.stateless ) ) {
-      query.push( ' field_Status_s:' );
-
-      if ( status === 'all' ) {
-        var $tracker = $('#' + id + '.tasktracker');
-        var $select = $tracker.find('select[name="status"]');
-        var vals = [];
-        $select.find('option').each( function() {
-          vals.push( $(this).val() );
-        });
-
-        query.push( '(' + vals.join(' OR ') + ')' );
-      } else {
-        query.push( status );
-      }
+      query.Status = status;
     }
 
-    query = query.join('');
-    $.taskapi.get(query, fetchSize, opts.page, 'field_Position_s').done( function( solr ) {
-      if ( !solr || !solr.response ) {
-        return deferred.reject();
-      }
+    $.taskapi.get(query, fetchSize, opts.page).done( function( response ) {
+      console.log(response);
+      _.each( response.data, function(entry) {
+        tasks[id].push( entry );
 
-      var docs = solr.response.docs;
-      for( var i = 0; i < docs.length; ++i ) {
-        var doc = docs[i];
-        tasks[id].push( doc );
-
-        var task = mapToTask( doc );
+        var task = mapToTask( entry );
         var html = opts.template( task );
         var $html = $(html);
-        $html.data('id', doc.id);
+        $html.data('id', entry.id);
         opts.container.append( $html );
 
         $html.on('click', raiseClicked );
         $html.find('.btn-edit').on('click', opts.onEditClicked );
+      });
 
-// ToDo. Testing...
-$html.find('.attachment > ul:empty').remove();
-      }
-
-      deferred.resolve( docs );
+      deferred.resolve( response.data );
     }).fail( deferred.reject );
 
     return deferred.promise();
@@ -314,29 +286,6 @@ $html.find('.attachment > ul:empty').remove();
     var taskDblClick = $.Event( 'taskDoubleClick' );
     var $tracker = $(task).closest('.tasktracker');
     $tracker.trigger( taskDblClick, task ); 
-  };
-
-  var getFieldDefinitions = function( solrEntry ) {
-    var props = Object.getOwnPropertyNames( solrEntry );
-    var fieldNames = _.filter( props, function( item ) {
-      return /^field_/.test( item );
-    });
-
-    var fields = [];
-    _.each( fieldNames, function( name ) {
-      var match = name.match( /^field_(.+)_(.+)/ );
-      if ( match && match.length > 2 ) {
-        var field = {
-          name: match[1],
-          type: match[2],
-          raw: name
-        };
-
-        fields.push( field );
-      }
-    });
-
-    return fields;
   };
 
   var writeEditor = function( editor, fields, data ) {
@@ -399,10 +348,7 @@ $html.find('.attachment > ul:empty').remove();
       }
 
       if ( $input.hasClass('foswikiMandatory') && (/^$/.test( val ) || val === null || val === undefined ) ) {
-        var id = $editor.attr('id').replace('task-editor-', '');
-        var opts = options[id];
-        var field = $input.closest('label').find('span').text().replace(/[\*\s]*$/g, '');
-        alert( decodeURI(opts.lang.missingField) + ': "' + field + '"');
+        alert('TBD. missing value for mandatory field');
         hasError = true;
         return false;
       }
@@ -437,12 +383,11 @@ $html.find('.attachment > ul:empty').remove();
     });
   };
 
-  var mapToTask = function( solrEntry ) {
-    var task = {id: solrEntry.id};
-    var fields = getFieldDefinitions( solrEntry );
-    _.each( fields, function( field ) {
-      var val = solrEntry[field.raw];
-      if ( field.type === 'dt' ) {
+  var mapToTask = function( entry ) {
+    var task = {id: entry.id};
+    _.each( entry.fields, function( field ) {
+      var val = field.value;
+      if ( field.type === 'date' ) {
         var date = moment(val);
         val = date.format('DD MMM YYYY');
       }
@@ -450,72 +395,7 @@ $html.find('.attachment > ul:empty').remove();
       task[field.name] = val;
     });
 
-    // ToDo. fix this. currently used as hotfix for ProjectsAppPlugin
-    if ( typeof task.Description === typeof undefined ) {
-      task.Description = 'n/a';
-    }
-
-    task.AttachCount = 0;
-    task.Attachments = [];
-    if ( solrEntry.attachment && solrEntry.attachment.length > 0 ) {
-      task.AttachCount = solrEntry.attachment.length;
-      _.each( solrEntry.attachment, function(a) {
-        task.Attachments.push( '<li>' + a + '</li>' );
-      });
-    }
-
     return task;
-  };
-
-  var mapToSolr = function( task, editor ) {
-    var $editor = $(editor);
-    var props = Object.getOwnPropertyNames( task );
-    var retval = {};
-    _.each( props, function( name ) {
-      if ( !/^[A-Z]/.test( name ) ) {
-        retval[name] = task[name];
-        return;
-      }
-
-      var type = ['field', name];
-      var $input = $editor.find('[name="' + name + '"]');
-      if ( $input.length === 0 ) {
-        type.push('s');
-      } else {
-        if ( $input.hasClass('foswikiEditFormDateField') ) {
-          type.push('dt');
-        } else if ( $input.hasClass('foswikiInput') || $input.hasClass('foswikiTextarea') || $input.hasClass('foswikiSelect') ) {
-          type.push('s');
-        } else {
-          var $parent = $input.parent();
-          if ( $parent.find('.jqTextboxListContainer').length > 0 ) {
-            type.push('lst');
-          } else {
-            type.push('s');
-          }
-        }
-      }
-
-      retval[type.join('_')] = task[name];
-    });
-
-    return retval;
-  };
-
-  var updateStoredTask = function( solrEntry, data, fields  ) {
-    var newFields = [];
-    var props = Object.getOwnPropertyNames( data );
-    _.each( props, function( prop ) {
-      var field = _.findWhere( fields, {name: prop} );
-      if ( typeof field === 'object' ) {
-        field.value = data[prop];
-        newFields.push( field );
-      }
-    });
-
-    _.each( newFields, function( field ) {
-      solrEntry[field.raw] = field.value;
-    });
   };
 
   var error = function( msg ) {
@@ -539,17 +419,6 @@ $html.find('.attachment > ul:empty').remove();
   };
 
   $(document).ready( function() {
-    var onTaskClick = function( evt, task ) {
-      $(task).toggleClass('expanded');
-    };
-
-    $('.tasktracker').each( function() {
-      var $tracker = $(this);
-      $tracker.tasksGrid();
-
-      if ( /^1$/.test( $tracker.attr('data-expand') ) ) {
-        $tracker.on( 'taskClick', onTaskClick );
-      }
-    });
+    $('.tasktracker').tasksGrid();
   });
 }(jQuery, window._, window.document, window));
