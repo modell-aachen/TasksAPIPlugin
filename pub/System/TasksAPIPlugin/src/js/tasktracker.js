@@ -120,15 +120,17 @@
         var taskId = $task.data('id');
         task.id = taskId;
         var selected = _.findWhere( tasks[id], {id: taskId} );
-        var fields = getFieldDefinitions( selected );
+
+        var fields = selected.fields; 
+        console.log(fields);
+
+        //var fields = getFieldDefinitions( selected );
 
         $.blockUI();
         $.taskapi.update( task ).fail( error ).always( $.unblockUI ).done( function() {
           var $newTask = $(opts.template(task));
           $task.html( $newTask.html() );
           $task.find('.btn-edit').on('click', options[id].onEditClicked);
-
-          updateStoredTask( selected, task, fields );
 
           var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
@@ -216,7 +218,13 @@
         return false;
       }
 
-      var fields = getFieldDefinitions( selected );
+      //var fields = getFieldDefinitions( selected );
+      var fields = selected.fields; 
+      console.log("felder");
+      console.log(fields);
+      console.log("alles");
+      console.log(selected);
+
       writeEditor( $editor, fields, selected );
       highlightTask( opts.container.children(), $task );
 
@@ -305,16 +313,16 @@
       var $input = $editor.find(sel);
       if ( $input.length > 0 ) {
 
-        var val = data[field.raw];
-        if ( field.type === 'lst' ) {
+        var val = field.value;
+        if ( field.type === 'textboxlist' ) {
           if ( !/^https?:\/\//.test(val) ) {
             $input.trigger('AddValue', val );
           }
-        } else if ( field.type === 'dt') {
+        } else if ( field.type === 'date') {
           var due = moment( val );
           $input.val( due.format('DD MMM YYYY') );
         } else {
-          $input.val( data[field.raw] );
+          $input.val( field.value );
         }
       }
     });
@@ -392,6 +400,13 @@
 
       task[field.name] = val;
     });
+
+      if (!(typeof entry.attachments === typeof undefined))
+      {
+        task['AttachCount'] = entry.attachments.length;
+      }
+
+      console.log(task);
 
     return task;
   };
