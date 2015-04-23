@@ -1,5 +1,6 @@
 !noci
 data/System/TasksAPIPlugin.txt 0644 Docs
+data/System/TasksAPIChangedMailTemplate.txt 0644 Mail notify for changed task
 data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPITemplate.txt 0644 Task form
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module

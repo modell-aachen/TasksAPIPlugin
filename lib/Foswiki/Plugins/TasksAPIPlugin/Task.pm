@@ -39,14 +39,12 @@ sub load {
 
     my $form = $meta->getFormName;
     die "Alleged task topic '$web.$topic' has no form attached to it" unless $form;
-    my ($formWeb, $formTopic) = Foswiki::Func::normalizeWebTopicName($web, $form);
-    $form = Foswiki::Form->new($Foswiki::Plugins::SESSION, $formWeb, $formTopic);
-    die "Can't read form definition '$formWeb.$formTopic' for task topic '$web.$topic'" unless ref $form;
+    my $fields;
+    ($form, $fields) = _loadForm($web, $form);
 
     my @acl = _getACL($meta, $form, 'view');
     die "No permission to read task topic '$web.$topic'" unless _checkACL(\@acl);
 
-    my $fields = $form->getFields;
     my %data;
     foreach my $f (@$fields) {
         my $name = $f->{name};
@@ -129,20 +127,6 @@ sub _loadForm {
     ($form, $fields);
 }
 
-# Parse out key-value settings from a preference
-sub _parsePref {
-    my ($meta, $name) = @_;
-    my %res;
-    my @res = split(/\|/, $meta->getPreference('TASKCFG_'. $name) || '');
-    for my $r (@res) {
-        $r =~ s#^\s*|\s*$##gs;
-        next unless $r =~ /=/;
-        my ($k, $v) = split(/=/, $r, 2);
-        $res{$k} = $v;
-    }
-    %res;
-}
-
 # Grab all objects that share the same context (and parent, if any)
 sub _getSiblings {
     my $context = shift;
@@ -216,6 +200,46 @@ sub checkACL {
     _checkACL(\@acl);
 }
 
+sub getPref {
+    my ($task, $name, $subkey) = @_;
+
+    my $prefmeta = $task->{form};
+    my $pref;
+    while (1) {
+        $pref = $prefmeta->getPreference('TASKCFG_'. $name);
+        last if defined $pref;
+        my $inclpref = $prefmeta->getPreference('TASKCFG_INCLUDE_CONFIG');
+        return unless defined $pref;
+        ($prefmeta) = Foswiki::Func::readTopic(Foswiki::Func::normalizeWebTopicName($prefmeta->web, $inclpref));
+    }
+    return unless defined $pref;
+
+    $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
+    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
+
+    if (!defined $subkey) {
+        $pref =~ s/^\s*|\s*$//gs;
+        return $task->{meta}->expandMacros($pref);
+    }
+
+    # Parse out sub-keys/values
+    my %pref;
+    my @pref = split(/\|/, $pref);
+    for my $p (@pref) {
+        $p =~ s#^\s*|\s*$##gs;
+        next if $p eq '';
+        my ($k, $v) = split(/=/, $p, 2);
+        $v = 1 unless defined $v;
+        $pref{$k} = $v;
+    }
+    my @keys = ($subkey eq '*') ? $subkey : keys %pref;
+    for my $key (@keys) {
+        $pref{$key} = $task->{meta}->expandMacros($pref{$key});
+    }
+    return $pref{$subkey} if $subkey ne '*';
+    return \%pref;
+}
+
 sub create {
     my %data = @_;
     my $form = delete $data{form};
@@ -253,10 +277,33 @@ sub create {
             name => $name, title => $f->{tooltip}, value => defined($data{$name}) ? $data{$name} : $f->{value}
         });
     }
+
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     my $task = load($meta);
+
+    $task->mailNotify('created');
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
     $task;
+}
+
+sub mailNotify {
+    my ($self, $type, $options) = @_;
+    my $notify = $self->getPref("NOTIFY_\U$type");
+    return unless $notify;
+    my $tpl = $self->getPref("NOTIFY_\U${type}_TEMPLATE") || "TasksAPI\u${type}Mail";
+
+    require Foswiki::Contrib::MailTemplatesContrib;
+    Foswiki::Func::pushTopicContext($self->{meta}->web, $self->{meta}->topic);
+    Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
+    Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
+    while (my ($key, $val) = each(%{$self->{fields}})) {
+        Foswiki::Func::setPreferencesValue("TASKSAPI_VALUE_$key", $val);
+    }
+    if ($self->{pendingcomment}) {
+        Foswiki::Func::setPreferencesValue("TASKSAPI_COMMENT", $self->{pendingcomment});
+    }
+    Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl);
+    Foswiki::Func::popTopicContext();
 }
 
 sub createMulti {
@@ -288,6 +335,8 @@ sub update {
 
     my @changes;
     delete $data{TopicType};
+    my $comment = delete $data{comment};
+    my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
         next if !exists $data{$name};
@@ -304,13 +353,38 @@ sub update {
         } elsif ($val ne $old) {
             push @changes, { type => 'change', name => $name, old => $old, new => $val };
         }
+
+        if ($name eq 'AssignedTo' && $old ne $val) {
+            $notify = 'reassigned';
+        }
+        if ($name eq 'Status') {
+            if ($old eq 'closed' && $val eq 'open') {
+                $notify = 'reopened';
+            } elsif ($old eq 'open' && $val eq 'closed') {
+                $notify = 'closed';
+            }
+        }
+
         $meta->putKeyed('FIELD', { name => $name, title => $f->{tooltip}, value => $val });
         $self->{fields}{$name} = $val;
     }
-    # TODO record changeset
-    # TODO implement PRIMARYFIELDS (e.g.) pref to restrict which fields will
-    # show up in changesets; we don't want to be updated about
-    # auto-renumbering, for example
+    if ($comment) {
+        push @changes, { type => 'comment', text => $comment };
+        $self->{pendingcomment} = $comment;
+    }
+
+    $self->mailNotify($notify);
+    delete $self->{pendingcomment};
+
+    # Find existing changesets to determine new ID
+    my @changesets = $meta->find('TASKCHANGESET');
+    my $newid = @changesets + 1;
+    $meta->putKeyed('TASKCHANGESET', {
+        name => $newid,
+        actor => Foswiki::Func::getWikiName(),
+        at => scalar(time),
+        changes => encode_json(\@changes),
+    });
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
