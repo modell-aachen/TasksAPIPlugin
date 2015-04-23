@@ -434,15 +434,6 @@
       }
     });
 
-    if (typeof entry.attachments !== 'undefined')
-    {
-      entry.fields.AttachCount = {
-        name: 'AttachCount',
-        value: entry.attachments.length,
-        type: 'text'
-      };
-    }
-
     return entry;
   };
 
@@ -451,6 +442,10 @@
     _.each( entry.fields, function( field ) {
       task[field.name] = field.value;
     });
+    if (typeof entry.attachments !== 'undefined') {
+      task.AttachCount = entry.attachments.length;
+    }
+
     return task;
   };
 
