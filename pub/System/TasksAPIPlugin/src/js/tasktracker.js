@@ -1,9 +1,6 @@
 ;(function ($, _, document, window, undefined) {
   'use strict';
 
-  var options = {};
-  var tasks = {};
-
   $.fn.tasksGrid = function() {
     if ( typeof _ === typeof undefined ) {
       error( "Missing dependency underscore.js");
@@ -17,17 +14,22 @@
       var json = $this.children('.settings').text();
       var opts = $.parseJSON( json );
       var decoded = decodeURIComponent( opts.template );
+      var decodedNesting = decodeURIComponent( opts.nestingTemplate );
 
       opts.template = _.template( decoded );
+      opts.nestingTemplate = _.template( decodedNesting );
       opts.canLoadMore = true;
       opts.page = 0;
       opts.cntHeight = $this.height();
       opts.container = $this.find('.tasks > div');
 
       opts.currentState = 'open';
-      options[id] = opts;
+      $this.data('tasktracker_options', opts);
       $.blockUI();
-      loadTasks( id, opts.currentState, true ).always( $.unblockUI );
+      loadTasks( $this, opts.currentState, true ).always( $.unblockUI );
+
+      var $task_subbtn = $this.children('.task-subbtn-template').removeClass('task-subbtn-template').detach();
+      opts.taskSubBtn = $task_subbtn;
 
       var $tasks = $this.children('.tasks');
       var $editor = $('#task-editor-' + id);
@@ -36,6 +38,8 @@
       var $save = $editor.find('.tasks-btn-save');
       var $cancel = $editor.find('.tasks-btn-cancel');
       var $create = $filter.find('.tasks-btn-create');
+
+      $this.data('tasktracker_editor', $editor);
 
       $editor.dialog({
         autoOpen: false,
@@ -47,13 +51,12 @@
       // todo. fixme
       // var handleScroll = function( evt ) {
       //   var $this = $(this);
-      //   var opts = options[id];
       //   var st = $this.scrollTop();
       //   var current = parseInt(st/opts.cntHeight);
       //   if ( opts.canLoadMore && current > opts.page ) {
       //     opts.page = current;
       //     $.blockUI();
-      //     loadTasks( id, opts.currentState ).done( function( results ) {
+      //     loadTasks( $this, opts.currentState ).done( function( results ) {
       //       opts.canLoadMore = results.length > 0;
       //     }).always( $.unblockUI );
       //   }
@@ -62,6 +65,7 @@
       var handleCancel = function() {
         $tasks.removeClass('edit');
         $editor.dialog('close');
+        $editor.removeData('subcontainer');
         $tasks.find('.task').removeClass('faded selected');
 
         $editor.find('input,select,textarea').each( function() {
@@ -94,18 +98,12 @@
 
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
-            var $task = $(opts.template(task));
-            $task.on('click', raiseClicked );
-            $task.find('.btn-edit').on('click', options[id].onEditClicked);
-
             task.id = response.id;
-            $task.data('id', response.id);
-            opts.container.append( $task );
-            $editor.data('new', '');
 
-            if ( typeof tasks[id] === typeof undefined ) {
-              tasks[id].push( task );
-            }
+            var $task = createTaskElement(response.data, opts);
+
+            $editor.data('subcontainer').append( $task );
+            $editor.data('new', '');
 
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
@@ -119,18 +117,11 @@
         var $task = $tasks.find('.selected');
         var taskId = $task.data('id');
         task.id = taskId;
-        var selected = _.findWhere( tasks[id], {id: taskId} );
-
-        var fields = selected.fields; 
-        console.log(fields);
-
-        //var fields = getFieldDefinitions( selected );
 
         $.blockUI();
-        $.taskapi.update( task ).fail( error ).always( $.unblockUI ).done( function() {
-          var $newTask = $(opts.template(task));
-          $task.html( $newTask.html() );
-          $task.find('.btn-edit').on('click', options[id].onEditClicked);
+        $.taskapi.update( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
+          var $newTask = createTaskElement(response.data, opts);
+          $task.replaceWith($newTask);
 
           var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
@@ -147,14 +138,22 @@
         if( beforeCreate.isDefaultPrevented() ) {
           return false;
         }
+        if (!$editor.data('subcontainer')) {
+          $editor.data('subcontainer', opts.container);
+        }
 
-        var id = $(this).closest('.tasktracker').attr('id');
         $editor.dialog('open');
 
         // $editor.addClass('active');
         $tasks.addClass('edit');
 
         clearEditor( $editor );
+
+        if ($editor.data('parent')) {
+          $editor.find('input[name="Parent"]').val($editor.data('parent'));
+          $editor.removeData('parent');
+        }
+
         $editor.data('new', true);
         highlightTask( opts.container.children(), null );
 
@@ -169,7 +168,7 @@
         opts.container.empty();
 
         $.blockUI();
-        loadTasks( id, opts.currentState, true ).always( $.unblockUI );
+        loadTasks( $this, opts.currentState, true ).always( $.unblockUI );
       };
 
       // $tasks.on( 'scroll', handleScroll );
@@ -194,45 +193,67 @@
     });
   };
 
-  var loadTasks = function( id, status, initial ) {
+  var loadTasks = function( $tracker, status, initial, parent, container ) {
     var deferred = $.Deferred();
 
-    var opts = options[id];
-    if ( !tasks[id] || typeof tasks[id].length !== 'number' ) {
-      tasks[id] = [];
+    var opts = $tracker.data('tasktracker_options');
+    if (!container) {
+      container = opts.container;
     }
 
-    var $tasks = opts.container.parent();
+    var $tasks = container.parent();
     var $grid = $tasks.parent();
 
     opts.onEditClicked = function( evt ) {
-      var $tracker = $(this).closest('.tasktracker');
       var id = $tracker.attr('id');
       var $editor = $('#task-editor-' + id);
       var $task = $(this).closest('.task');
-      var selected = _.findWhere( tasks[id], {id: $task.data('id')} );
+      var selected = $task.data('task_data');
 
       var beforeEdit = $.Event( 'beforeEdit' );
-      $tracker.trigger( beforeEdit, selected ); 
+      $tracker.trigger( beforeEdit, selected );
       if( beforeEdit.isDefaultPrevented() ) {
         return false;
       }
 
-      //var fields = getFieldDefinitions( selected );
-      var fields = selected.fields; 
-      console.log("felder");
-      console.log(fields);
-      console.log("alles");
-      console.log(selected);
-
-      writeEditor( $editor, fields, selected );
-      highlightTask( opts.container.children(), $task );
+      writeEditor( $editor, selected, $task );
+      highlightTask( container.children(), $task );
 
       $tasks.addClass('edit');
       $editor.dialog('open');
 
       var afterEdit = $.Event( 'afterEdit' );
-      $tracker.trigger( afterEdit ); 
+      $tracker.trigger( afterEdit );
+    };
+
+    opts.onAddChildClicked = function( evt ) {
+      var $editor = $tracker.data('tasktracker_editor');
+      $editor.data('subcontainer', $(this).closest('.task-children').children('.task-children-list'));
+      $editor.data('parent', $(this).closest('.task').data('id'));
+      $tracker.find('.tasks-btn-create').first().click();
+    };
+
+    opts.onToggleChildrenClicked = function( evt ) {
+      var $task = $(this).closest('.task');
+      var $ccontainer = $task.find('.task-children-list');
+      var $btn = $task.find('.nest').first().children();
+      if ($task.is('.children-expanded')) {
+        $ccontainer.empty();
+        $task.removeClass('children-expanded');
+        $btn.removeClass('contract');
+        return;
+      }
+      $task.addClass('children-expanded');
+      $btn.addClass('contract');
+      $.blockUI();
+      loadTasks($tracker, status, initial, $task.data('id'), $ccontainer).done(function() {
+      }).fail(function() {
+        $btn.removeClass('contract');
+        $task.removeClass('children-expanded');
+        error.apply(this, arguments);
+      }).always(function() {
+        $.unblockUI();
+      });
     };
 
     var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
@@ -245,20 +266,17 @@
     if ( !/^(1|true)$/i.test( opts.stateless ) ) {
       query.Status = status;
     }
+    if (parent) {
+      query.Parent = parent;
+    } else {
+      query.Parent = '';
+    }
 
     $.taskapi.get(query, fetchSize, opts.page).done( function( response ) {
-      console.log(response);
       _.each( response.data, function(entry) {
-        tasks[id].push( entry );
 
         var task = mapToTask( entry );
-        var html = opts.template( task );
-        var $html = $(html);
-        $html.data('id', entry.id);
-        opts.container.append( $html );
-
-        $html.on('click', raiseClicked );
-        $html.find('.btn-edit').on('click', opts.onEditClicked );
+        container.append( createTaskElement(task, opts) );
       });
 
       deferred.resolve( response.data );
@@ -294,9 +312,30 @@
     $tracker.trigger( taskDblClick, task ); 
   };
 
-  var writeEditor = function( editor, fields, data ) {
+  var createTaskElement = function(task, opts) {
+    var $task;
+    if (typeof task.fields.HasChildren !== 'undefined' && task.fields.HasChildren.value === 'Yes') {
+      $task =  opts.nestingTemplate(extractValues(task));
+    } else {
+      $task = opts.template(extractValues(task));
+    }
+    $task = $($task);
+    $task.data('id', task.id);
+    $task.data('task_data', task);
+    $task.on('click', raiseClicked );
+    $task.find('.btn-edit').on('click', opts.onEditClicked);
+
+    if ($task.is('.task-nesting')) {
+      $task.find('.task-children-summary .add').append(opts.taskSubBtn);
+      $task.find('.task-child-add').click(opts.onAddChildClicked);
+      $task.find('.nest').click(opts.onToggleChildrenClicked);
+    }
+    return $task;
+  };
+
+  var writeEditor = function( editor, task, $task ) {
     var $editor = $(editor);
-    _.each( fields, function( field ) {
+    _.each( task.fields, function( field ) {
       var sel = [
         'input#',
         field.name,
@@ -315,21 +354,19 @@
 
         var val = field.value;
         if ( field.type === 'textboxlist' ) {
-          if ( !/^https?:\/\//.test(val) ) {
-            $input.trigger('AddValue', val );
-          }
+          $input.trigger('AddValue', val );
         } else if ( field.type === 'date') {
           var due = moment( val );
           $input.val( due.format('DD MMM YYYY') );
         } else {
-          $input.val( field.value );
+          $input.val( val );
         }
       }
     });
   };
 
   var clearEditor = function( editor ) {
-    $('input,textarea').each( function() {
+    editor.find('input,textarea').each( function() {
       var $this = $(this);
       $this.val('');
       $this.trigger('Clear');
@@ -390,24 +427,30 @@
   };
 
   var mapToTask = function( entry ) {
-    var task = {id: entry.id};
     _.each( entry.fields, function( field ) {
-      var val = field.value;
       if ( field.type === 'date' ) {
-        var date = moment(val);
-        val = date.format('DD MMM YYYY');
+        var date = moment(field.value);
+        field.value = date.format('DD MMM YYYY');
       }
-
-      task[field.name] = val;
     });
 
-      if (!(typeof entry.attachments === typeof undefined))
-      {
-        task['AttachCount'] = entry.attachments.length;
-      }
+    if (typeof entry.attachments !== 'undefined')
+    {
+      entry.fields.AttachCount = {
+        name: 'AttachCount',
+        value: entry.attachments.length,
+        type: 'text'
+      };
+    }
 
-      console.log(task);
+    return entry;
+  };
 
+  var extractValues = function( entry ) {
+    var task = {};
+    _.each( entry.fields, function( field ) {
+      task[field.name] = field.value;
+    });
     return task;
   };
 

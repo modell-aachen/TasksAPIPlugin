@@ -39,6 +39,11 @@
     %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Informees" format="$edit"}%
   </label>
 </div>
+<div class="haschildren">
+  <label><span>%MAKETEXT{"Has sub-tasks"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="HasChildren" format="$mandatory"}%</span>
+    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="HasChildren" format="$edit"}%
+  </label>
+</div>
 <div class="hidden">
   %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Created" format="$edit"}%
   %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Author" format="$edit"}%
@@ -46,17 +51,46 @@
 </div>%{
 }%%TMPL:END%
 
-
-%TMPL:DEF{"tasksapi::task"}%%{
-}%<div class="task prioritized-<%= Prioritize %>">
+%TMPL:DEF{"tasksapi::task::nesting"}%%{
+}%<div class="task task-nesting prioritized-<%= Prioritize %>">
   <div class="task-wrapper">
+    <div class="nest nest-active"><span class="expand"></span></div>
     <div class="state <%= Status %>"></div>
     <div class="content">
       <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
       <div class="description"><span><%= Description %></span></div>
       <div class="assigned"><span><%= AssignedTo %></span></div>
       <div class="due"><span><%= DueDate %></span></div>
-      <div class="attachcount"><span><!--%= AttachCount %-->0</span></div>
+      <div class="attachcount"><span><%= AttachCount %></span></div>
+    </div>
+    <div class="btn-edit">&nbsp;</div>
+  </div>
+  <div class="task-attachments">
+    <div class="attachment">
+      <ul><!--%= Attachments %--></ul>
+    </div>
+  </div>
+  <div class="task-children">
+    <div class="task-children-list">
+    </div>
+    <div class="task-children-summary">
+      <div class="add"></div>
+    </div>
+  </div>
+</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task"}%%{
+}%<div class="task prioritized-<%= Prioritize %>">
+  <div class="task-wrapper">
+    <div class="nest nest-inactive"><span class="nest-inactive-marker"></span></div>
+    <div class="state <%= Status %>"></div>
+    <div class="content">
+      <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
+      <div class="description"><span><%= Description %></span></div>
+      <div class="assigned"><span><%= AssignedTo %></span></div>
+      <div class="due"><span><%= DueDate %></span></div>
+      <div class="attachcount"><span><%= AttachCount %></span></div>
     </div>
     <div class="btn-edit">&nbsp;</div>
   </div>

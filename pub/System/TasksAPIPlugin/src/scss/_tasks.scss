@@ -120,6 +120,28 @@
     }
   }
 
+  > .nest {
+    @include flex($shrink: 0, $align: stretch, $order: -2);
+    width: 32px;
+
+    &.nest-active {
+      line-height: #{$task-min-height - 6px};
+
+      cursor: pointer;
+      > .expand {
+        transition: transform 0.3s ease-in-out;
+        transform: rotate(0deg);
+        display: inline-block;
+        &:before {
+          content: '▶';
+        }
+        &.contract {
+          transform: rotate(90deg);
+        }
+      }
+    }
+  }
+
   > .content {
     @include flex-container($wrap: wrap, $justify: space-between);
     @include flex($grow: 2, $align: center);
@@ -206,8 +228,29 @@
   transition: max-height .3s ease-in-out;
   overflow: hidden;
 }
-
 .task.expanded .task-attachments {
   height: auto;
   max-height: 1000px;
 }
+
+.task-children {
+  height: 0;
+  max-height: 0;
+  transition: max-height .3s ease-in-out;
+  overflow: hidden;
+
+  margin-left: 25px;
+
+  > .task-children-summary {
+    height: $filter-height;
+    line-height: $filter-height;
+    > .add {
+      float: right;
+    }
+  }
+}
+.task.children-expanded .task-children {
+  height: auto;
+  max-height: 1000px;
+}
+

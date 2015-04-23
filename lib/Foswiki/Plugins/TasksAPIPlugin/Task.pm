@@ -260,9 +260,11 @@ sub create {
 }
 
 sub createMulti {
+    my @res;
     foreach my $data (@_) {
-        create(%$data);
+        push @res, create(%$data);
     }
+    @res;
 }
 
 sub update {

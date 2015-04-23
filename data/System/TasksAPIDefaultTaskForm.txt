@@ -12,6 +12,7 @@
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | | |
+| HasChildren | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | | |
 
    * Set ALLOWTOPICCHANGE = AdminUser
    * Set NOWYSIWYG = 1

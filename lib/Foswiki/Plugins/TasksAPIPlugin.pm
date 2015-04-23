@@ -175,7 +175,6 @@ sub _query {
     $limit = " LIMIT $offset, $count" if $count;
     my $group = '';
     $group = ' GROUP BY t.id' if $join;
-Foswiki::Func::writeWarning( encode_json(["SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args]) );
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
 
     return () unless @$ids;
@@ -246,9 +245,10 @@ sub restCreate {
         $data{$k} = $q->param($k);
     }
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
-    return encode_json({
+    return to_json({
         status => 'ok',
         id => $res->{id},
+        data => _enrich_data($res),
     });
 }
 
@@ -256,8 +256,11 @@ sub restMultiCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
     my $json = decode_json($q->param('data'));
-    my $res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
-    return '{"status":"ok"}';
+    my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
+    return to_json({
+        status => 'ok',
+        data => [map { _enrich_data($_) } @res],
+    });
 }
 
 sub restUpdate {
@@ -273,7 +276,10 @@ sub restUpdate {
     }
 
     $task->update(%data);
-    return '{"status":"ok"}';
+    return to_json({
+        status => 'ok',
+        data => _enrich_data($task),
+    });
 }
 
 sub restMultiUpdate {
@@ -284,10 +290,39 @@ sub restMultiUpdate {
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         $task->update(%$data);
-        $res{$id} = {status => 'ok'};
+        $res{$id} = {status => 'ok', data => _enrich_data($task)};
         $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if !$task->checkACL('change');
     }
-    return encode_json(\%res);
+    return to_json(\%res);
+}
+
+sub _enrich_data {
+    my $task = shift;
+    my $d = $task->data;
+    my $fields = $d->{form}->getFields;
+    my $result = {
+        id => $d->{id},
+        form => $d->{form}->web .'.'. $d->{form}->topic,
+        attachments => [$task->{meta}->find('FILEATTACHMENT')],
+        fields => {},
+    };
+    foreach my $f (@$fields) {
+        next if $f->{name} eq 'TopicType';
+        my $ff = {
+            name => $f->{name},
+            multi => $f->isMultiValued ? JSON::true : JSON::false,
+            mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
+            tooltip => $f->{tooltip},
+            mandatory => $f->isMandatory ? JSON::true : JSON::false,
+            hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
+            type => $f->{type},
+            size => $f->{size},
+            attributes => $f->{attributes},
+            value => $d->{fields}{$f->{name}} || '',
+        };
+        $result->{fields}{$f->{name}} = $ff;
+    }
+    $result;
 }
 
 sub restSearch {
@@ -303,36 +338,10 @@ sub restSearch {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
     my $enrich_data = sub {
-        my $task = shift;
-        my $d = $task->data;
-        my $fields = $d->{form}->getFields;
-        my $result = {
-            id => $d->{id},
-            form => $d->{form}->web .'.'. $d->{form}->topic,
-            attachments => [$task->{meta}->find('FILEATTACHMENT')],
-            fields => {},
-        };
-        foreach my $f (@$fields) {
-            next if $f->{name} eq 'TopicType';
-            my $ff = {
-                name => $f->{name},
-                multi => $f->isMultiValued ? JSON::true : JSON::false,
-                mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
-                tooltip => $f->{tooltip},
-                mandatory => $f->isMandatory ? JSON::true : JSON::false,
-                hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
-                type => $f->{type},
-                size => $f->{size},
-                attributes => $f->{attributes},
-                value => $d->{fields}{$f->{name}} || '',
-            };
-            $result->{fields}{$f->{name}} = $ff;
-        }
-        $result;
     };
-    @res = map { $enrich_data->($_) } @res;
+    @res = map { _enrich_data($_) } @res;
     #return JSON->new->pretty->utf8->encode({status => 'ok', data => \@res});
-    return encode_json({status => 'ok', data => \@res});
+    return to_json({status => 'ok', data => \@res});
 }
 
 my $gridCounter = 1;
@@ -347,6 +356,7 @@ sub tagGrid {
     my $system = $Foswiki::cfg{SystemWebName} || "System";
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
+    my $nestingTaskTemplate = $params->{nestingtasktemplate} || "tasksapi::task::nesting";
     my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
     my $captionTemplate = $params->{captiontemplate} || "tasksapi::caption";
     my $filterClass = $params->{filterclass} || "";
@@ -372,6 +382,7 @@ sub tagGrid {
     my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
     my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
     my $task = Foswiki::Func::expandTemplate( $taskTemplate );
+    my $taskNesting = Foswiki::Func::expandTemplate( $nestingTaskTemplate );
 
     my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
     my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
@@ -384,6 +395,7 @@ sub tagGrid {
         query => $query,
         stateless => $stateless,
         template => Foswiki::urlEncode( $task ),
+        nestingTemplate => Foswiki::urlEncode( $taskNesting ),
         lang => {
             missingField => Foswiki::urlEncode( $translated )
         }
@@ -457,6 +469,7 @@ sub tagGrid {
             <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
         </div>
     </div>
+    <a class="task-subbtn-template task-child-add tasks-btn tasks-btn-create" href="#">%MAKETEXT{"Add sub-task"}%</a>
 </div>
 GRID
 
@@ -477,6 +490,13 @@ SCRIPT
 STYLE
 
     return $grid;
+}
+
+# Refresh task metadata after uploading attachments
+sub afterUploadHandler {
+    my ($attachment, $meta) = @_;
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($meta);
+    _index($task);
 }
 
 # Special handler that prevents certain pages from being rendered in the tasks
