@@ -6,7 +6,7 @@
 | Created | date | 50 | %GMTIME{"$day $month $year"}% | | M H |
 | Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | | M |
 | Title | text | 50 | | | M |
-| AssignedTo | textboxlist | 50 mustMath limit="1" | %USERAUTOCOMPLETE% | | M |
+| AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | | M |
 | Description | textarea | 50 | | | |
 | DueDate | date | 50 | %GMTIME{"$day $month $year"}% | | |
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | | |
