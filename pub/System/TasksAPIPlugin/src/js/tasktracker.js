@@ -479,6 +479,27 @@
     if (typeof entry.attachments !== 'undefined') {
       task.AttachCount = entry.attachments.length;
     }
+    var prefs = foswiki.preferences;
+    var id = entry.id.replace('.', '/');
+    var url = [
+      prefs.PUBURL,
+      '/',
+      id,
+      '/'
+    ];
+
+    var $div = $('<div></div>');
+    for(var i = 0; i < entry.attachments.length; ++i) {
+      var a = entry.attachments[i];
+      var $a = $('<a></a>');
+      $a.attr('href', url.join('') + a.name );
+      $a.text(a.name);
+      var $li = $('<li></li>');
+      $a.appendTo($li);
+      $li.appendTo($div);
+    }
+
+    task.Attachments = $div.html();
 
     return task;
   };

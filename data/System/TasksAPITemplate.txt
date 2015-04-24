@@ -80,7 +80,7 @@
   </div>
   <div class="task-attachments">
     <div class="attachment">
-      <ul><!--%= Attachments %--></ul>
+      <ul><%= Attachments %></ul>
     </div>
   </div>
   <div class="task-children">
@@ -109,7 +109,7 @@
   </div>
   <div class="task-attachments">
     <div class="attachment">
-      <ul><!--%= Attachments %--></ul>
+      <ul><%= Attachments %></ul>
     </div>
   </div>
 </div>%{
