@@ -216,14 +216,48 @@
         return false;
       }
 
-      writeEditor( $editor, selected, $task );
-      highlightTask( container.children(), $task );
+      // writeEditor( $editor, selected, $task );
+      // highlightTask( container.children(), $task );
 
-      $tasks.addClass('edit');
-      $editor.dialog('open');
+      // $tasks.addClass('edit');
+      // $editor.dialog('open');
 
-      var afterEdit = $.Event( 'afterEdit' );
-      $tracker.trigger( afterEdit );
+      // var afterEdit = $.Event( 'afterEdit' );
+      // $tracker.trigger( afterEdit );
+
+      var prefs = foswiki.preferences;
+      var url = [
+        prefs.SCRIPTURL,
+        '/rest',
+        prefs.SCRIPTSUFFIX,
+        '/TasksAPIPlugin/lease'
+      ];
+
+      var payload = {
+        request: JSON.stringify({
+          web: prefs.WEB,
+          topic: prefs.TOPIC
+        })
+      };
+
+      $.blockUI();
+      $.ajax({
+        url: url.join(''),
+        data: payload,
+        success: function( response ) {
+          var json = $.parseJSON( response );
+          $tasks.addClass('edit');
+
+          $editor.find('div').first().html( json.editor );
+          writeEditor( $editor, selected, $task );
+          highlightTask( container.children(), $task );
+          $editor.dialog('open');
+
+          var afterEdit = $.Event( 'afterEdit' );
+          $tracker.trigger( afterEdit );
+          $.unblockUI();
+        }
+      });
     };
 
     opts.onAddChildClicked = function( evt ) {
@@ -470,6 +504,17 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+    var onTaskClick = function( evt, task ) {
+      $(task).toggleClass('expanded');
+    };
+
+    $('.tasktracker').each( function() {
+      var $tracker = $(this);
+      $tracker.tasksGrid();
+
+      if ( /^1$/.test( $tracker.attr('data-expand') ) ) {
+        $tracker.on( 'taskClick', onTaskClick );
+      }
+    });
   });
 }(jQuery, window._, window.document, window));

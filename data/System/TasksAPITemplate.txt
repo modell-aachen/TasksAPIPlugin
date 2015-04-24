@@ -1,4 +1,17 @@
-%TMPL:DEF{"tasksapi::editor"}%%{
+%TMPL:DEF{"tasksapi::editor"}%<!--tasksapi::editor-->
+%RENDERFOREDIT{
+  form="System.TasksAPIDefaultTaskForm"
+  hidden="(Created|Author|Parent|TopicType|Context)"
+  include="(Created|Author|Parent|TopicType|Context)"
+}%%RENDERFOREDIT{
+  form="System.TasksAPIDefaultTaskForm"
+  fields="Title,AssignedTo"
+}%%RENDERFOREDIT{
+  form="System.TasksAPIDefaultTaskForm"
+  exclude="(Title|AssignedTo|Created|Author|Parent|TopicType|Context)"
+}%<!--/tasksapi::editor-->%TMPL:END%
+
+%TMPL:DEF{"tasksapi::editor2"}%%{
 }%<div class="title">
   <label><span>%MAKETEXT{"Title"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Title" format="$mandatory"}%</span>
     %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Title" format="$edit"}%

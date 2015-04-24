@@ -81,6 +81,8 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch );
+    Foswiki::Func::registerRESTHandler( 'lease', \&restLease );
+    Foswiki::Func::registerRESTHandler( 'release', \&restRelease );
 
     # Plugin correctly initialized
     return 1;
@@ -344,6 +346,53 @@ sub restSearch {
     return to_json({status => 'ok', data => \@res});
 }
 
+sub restLease {
+    my ( $session, $subject, $verb, $response ) = @_;
+    my $q = $session->{request};
+    my $r = decode_json($q->param('request') || '{}');
+
+    unless ( $r->{web} && $r->{topic}) {
+        return to_json({status => 'error', msg => "Missing web or topic parameter."});
+    }
+
+    my $meta = Foswiki::Meta->new($session, $r->{web}, $r->{topic});
+    my $lease = $meta->getLease();
+    if ( $lease ) {
+        my $cuid = $lease->{user};
+        my $ccuid = $session->{user};
+        return to_json({status => 'error', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
+    }
+
+    my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
+    $meta->setLease( $ltime );
+
+    Foswiki::Func::loadTemplate( $r->{template} || 'TasksAPI' );
+    my $editor = Foswiki::Func::expandTemplate( $r->{editor} || 'tasksapi::editor' );
+    $editor = Foswiki::Func::expandCommonVariables( $editor, $r->{topic}, $r->{web}, $meta );
+
+    return to_json({status => 'ok', editor => $editor, headzone => $session->_renderZone('head'), scriptzone => $session->_renderZone('script')});
+}
+
+sub restRelease {
+    my ( $session, $subject, $verb, $response ) = @_;
+    my $q = $session->{request};
+    my $r = decode_json($q->param('request') || '{}');
+
+    my $meta = Foswiki::Meta->new($session, $r->{web}, $r->{topic});
+    my $lease = $meta->getLease();
+    if ( $lease ) {
+        my $cuid = $lease->{user};
+        my $ccuid = $session->{user};
+        
+        if ( $cuid eq $ccuid ) {
+            $meta->clearLease();
+            return to_json({status => 'ok'});
+        }
+    }
+
+    return to_json({status => 'error', 'code' => 'server_error', msg => "Access denied"});
+}
+
 my $gridCounter = 1;
 sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
@@ -454,7 +503,7 @@ sub tagGrid {
     </div>
     <div class="settings">$json</div>
     <div id="task-editor-$id" class="jqUIDialog task-editor">
-        <div>$editor</div>
+        <div></div>
         <div $showAttachmentsStyle>
             %TWISTY{showlink="%MAKETEXT{"Show attachments"}%" hidelink="%MAKETEXT{"Hide attachments"}%" start="hide"}%
             %ENDTWISTY%
