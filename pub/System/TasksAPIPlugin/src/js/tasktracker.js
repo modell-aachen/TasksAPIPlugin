@@ -326,7 +326,7 @@
     $task.find('.btn-edit').on('click', opts.onEditClicked);
 
     if ($task.is('.task-nesting')) {
-      $task.find('.task-children-summary .add').append(opts.taskSubBtn);
+      $task.find('.task-children-summary .add').append(opts.taskSubBtn.clone());
       $task.find('.task-child-add').click(opts.onAddChildClicked);
       $task.find('.nest').click(opts.onToggleChildrenClicked);
     }
