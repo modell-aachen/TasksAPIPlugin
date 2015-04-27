@@ -62,7 +62,6 @@ my %singles = (
     Due => 1,
     Position => 1,
 );
-my @multis = qw(AssignedTo Informees);
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -103,6 +102,7 @@ sub db {
             RaiseError => 1,
             PrintError => 0,
             AutoCommit => 1,
+            FetchHashKeyName => 'NAME_lc',
         }
     );
     eval {
@@ -143,36 +143,38 @@ sub _query {
     my $filter = '';
     my $order = $opts{order} || '';
     my @args;
-    for my $multi (@multis) {
-        next unless exists $query->{$multi};
-        my $v = delete $query->{$multi};
-        my $t = "j_$multi";
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$multi')";
-        if (defined $v) {
-            if (ref $v eq 'ARRAY') {
-                $filter .= " WHERE $t.value IN(". join(',', map { '?' } @$v) .")";
+    my $filterprefix = ' WHERE';
+    for my $q (keys %$query) {
+        next unless $q =~ /^\w+$/s;
+        my $v = $query->{$q};
+
+        if ($singles{$q}) {
+            if (ref($v) eq 'ARRAY') {
+                $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
                 push @args, @$v;
             } else {
-                $filter .= " WHERE $t.value = ?";
+                $filter .= "$filterprefix $q = ?";
                 push @args, $v;
             }
         }
-        $order = $t if $order eq $multi;
-    }
-    my $filterprefix = ' WHERE';
-    for my $col (keys %$query) {
-        next unless $col =~ /^\w+$/s;
-        my $v = $query->{$col};
-        if (ref $v eq 'ARRAY') {
-            $filter .= "$filterprefix $col IN(". join(',', map { '?' } @$v) .")";
-            push @args, @$v;
-        } else {
-            $filter .= "$filterprefix $col = ?";
-            push @args, $v;
+
+        # multi field
+        my $t = "j_$q";
+        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')";
+        if (defined $v) {
+            if (ref $v eq 'ARRAY') {
+                $filter .= "$filterprefix $t.value IN(". join(',', map { '?' } @$v) .")";
+                push @args, @$v;
+            } else {
+                $filter .= "$filterprefix $t.value = ?";
+                push @args, $v;
+            }
+            $filterprefix = ' AND';
         }
-        $filterprefix = ' AND';
+        $order = "$t.value" if $order eq $q;
     }
-    $order = " ORDER BY $order" if $order && $order =~ /^\w+$/;
+
+    $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
     $order .= " DESC" if $opts{desc};
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $limit = " LIMIT $offset, $count" if $count;
