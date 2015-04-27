@@ -219,7 +219,7 @@ sub _index {
         }
         if ($singles{$f}) {
             $vals{$f} = $v->[0];
-        } elsif (grep { $_ eq lc $f } @multis) {
+        } else {
             push @extra, map { { type => $f, value => $_ } } @$v;
         }
     }
