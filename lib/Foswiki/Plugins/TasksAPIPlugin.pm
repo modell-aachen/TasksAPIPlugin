@@ -75,6 +75,7 @@ sub initPlugin {
     }
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
+    Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
 
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'multicreate', \&restMultiCreate );
@@ -325,6 +326,27 @@ sub _enrich_data {
         $result->{fields}{$f->{name}} = $ff;
     }
     $result;
+}
+
+sub tagSearch {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $format = $params->{_format} || 'json';
+    $format = lc($format);
+    return "" unless $format eq 'json'; # ToDo
+    delete $params->{_format};
+
+    my @res;
+    eval {
+        @res = _query(%$params);
+    };
+    if ($@) {
+        return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
+    }
+
+    my $enrich_data = sub {};
+    @res = map { _enrich_data($_) } @res;
+    return encode_json({status => 'ok', data => \@res});
 }
 
 sub restSearch {
