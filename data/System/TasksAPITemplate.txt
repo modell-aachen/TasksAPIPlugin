@@ -6,9 +6,15 @@
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Title,AssignedTo"
+  header=""
+  footer=""
+  format="<div class=\"$name\"><label><span>$title$mandatory</span>$edit</label></div>"
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   exclude="(Title|AssignedTo|Created|Author|Parent|TopicType|Context)"
+  header=""
+  footer=""
+  format="<div class=\"$name\"><label><span>$title$mandatory</span>$edit</label></div>"
 }%<!--/tasksapi::editor-->%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::nesting"}%%{
