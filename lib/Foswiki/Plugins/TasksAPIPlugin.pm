@@ -157,6 +157,7 @@ sub _query {
                 push @args, $v;
             }
             $filterprefix = ' AND';
+            next;
         }
 
         # multi field
