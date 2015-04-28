@@ -10,6 +10,7 @@ use Foswiki::Plugins ();
 
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
+use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use JSON;
@@ -23,6 +24,7 @@ my $db;
 my %schema_versions;
 my @schema_updates = (
     [
+        # Basic relations
         "CREATE TABLE meta (type TEXT NOT NULL UNIQUE, version INT NOT NULL)",
         "INSERT INTO meta (type, version) VALUES('core', 0)",
         "CREATE TABLE tasks (
@@ -51,6 +53,18 @@ my @schema_updates = (
         )",
         "CREATE INDEX task_multi_id_idx ON task_multi (id, type, value)",
         "CREATE INDEX task_type_idx ON task_multi (type, value)"
+    ],
+    [
+        # Jobs
+        "CREATE TABLE jobs (
+            task_id TEXT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE ON UPDATE RESTRICT,
+            job_time INT NOT NULL,
+            job_type TEXT NOT NULL,
+            job_done INT NOT NULL DEFAULT 0,
+            parameters TEXT
+        )",
+        "CREATE INDEX jobs_task ON jobs (task_id)",
+        "CREATE INDEX jobs_done_time ON jobs (job_done, job_time)",
     ],
 );
 my %singles = (

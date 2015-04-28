@@ -9,6 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 
+use Date::Manip;
 use Digest::SHA;
 use JSON;
 
