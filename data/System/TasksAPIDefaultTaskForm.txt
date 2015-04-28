@@ -8,7 +8,7 @@
 | Title | text | 50 | | | M |
 | AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | | M |
 | Description | textarea | 50 | | | |
-| DueDate | date | 50 | %GMTIME{"$day $month $year"}% | | |
+| DueDate | date | 50 | | | |
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | | |
