@@ -283,6 +283,16 @@ sub restUpdate {
     }
 
     $task->update(%data);
+    my $lease = $task->{meta}->getLease();
+    if ( $lease ) {
+        my $cuid = $lease->{user};
+        my $ccuid = $session->{user};
+        
+        if ( $cuid eq $ccuid ) {
+            $task->{meta}->clearLease();
+        }
+    }
+
     return to_json({
         status => 'ok',
         data => _enrich_data($task),

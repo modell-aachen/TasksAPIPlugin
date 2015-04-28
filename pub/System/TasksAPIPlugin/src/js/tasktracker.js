@@ -48,27 +48,15 @@
         resizable: false
       });
 
-      // todo. fixme
-      // var handleScroll = function( evt ) {
-      //   var $this = $(this);
-      //   var st = $this.scrollTop();
-      //   var current = parseInt(st/opts.cntHeight);
-      //   if ( opts.canLoadMore && current > opts.page ) {
-      //     opts.page = current;
-      //     $.blockUI();
-      //     loadTasks( $this, opts.currentState ).done( function( results ) {
-      //       opts.canLoadMore = results.length > 0;
-      //     }).always( $.unblockUI );
-      //   }
-      // };
-
-      var handleCancel = function() {
+      var closeEditor = function() {
         $tasks.removeClass('edit');
         $editor.dialog('close');
         $editor.removeData('subcontainer');
         $tasks.find('.task').removeClass('faded selected');
+      };
 
-        $editor.find('div').first().empty();
+      var handleCancel = function() {
+        closeEditor();
 
         $.blockUI();
         releaseTopic().always( $.unblockUI ).fail( function( msg ) {
@@ -92,18 +80,12 @@
           return false;
         }
 
-        var alwaysFunc = function() {
-          releaseTopic().fail( function( msg ) {
-            error( msg );
-          }).always( $.unblockUI );
-        };
-
         if ( $editor.data('new') === true ) {
           var now = moment();
           task.form = opts.form;
           task.Context = opts.context;
           $.blockUI();
-          $.taskapi.create( task ).fail( error ).always( alwaysFunc ).done( function( response ) {
+          $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
             task.id = response.id;
 
             var $task = createTaskElement(response.data, opts);
@@ -114,7 +96,7 @@
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
 
-            $cancel.click();
+            closeEditor();
           });
 
           return false;
@@ -125,15 +107,15 @@
         task.id = taskId;
 
         $.blockUI();
-        $.taskapi.update( task ).fail( error ).always( alwaysFunc ).done( function( response ) {
+        $.taskapi.update( task ).fail( error ).done( function( response ) {
           var $newTask = createTaskElement(response.data, opts);
           $task.replaceWith($newTask);
 
           var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
 
-          $cancel.click();
-        });
+          closeEditor();
+        }).always( $.unblockUI );
 
         return false;
       };
@@ -393,11 +375,11 @@
       if ( $input.length > 0 ) {
 
         var val = field.value;
-        if ( field.type === 'textboxlist' ) {
-          $input.trigger('AddValue', val );
-        } else if ( field.type === 'date') {
-          var due = moment( val );
-          $input.val( due.format('DD MMM YYYY') );
+        if ( field.type === 'date') {
+          if ( !/^$/.test(val) ) {
+            var due = moment( val, 'DD MMM YYYY' );
+            $input.val( due.format('DD MMM YYYY') );
+          }
         } else {
           $input.val( val );
         }
@@ -436,7 +418,7 @@
         return false;
       }
 
-      data[prop] = val;
+      data[prop] = val !== null ? val : "";
     });
 
     if ( hasError ) {
@@ -469,8 +451,10 @@
   var mapToTask = function( entry ) {
     _.each( entry.fields, function( field ) {
       if ( field.type === 'date' ) {
-        var date = moment(field.value);
-        field.value = date.format('DD MMM YYYY');
+        if ( field.value ) {
+          var date = moment(field.value, 'DD MMM YYYY');
+          field.value = date.format('DD MMM YYYY');
+        }
       }
     });
 
