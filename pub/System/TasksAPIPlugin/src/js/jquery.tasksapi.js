@@ -99,5 +99,5 @@
     multiupdate: function( data ) {
       return postTask( 'multiupdate', data );
     }
-  }
+  };
 })(jQuery);

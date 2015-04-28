@@ -396,7 +396,30 @@ sub restLease {
     my $editor = Foswiki::Func::expandTemplate( $r->{editor} || 'tasksapi::editor' );
     $editor = Foswiki::Func::expandCommonVariables( $editor, $r->{topic}, $r->{web}, $meta );
 
-    return to_json({status => 'ok', editor => $editor, headzone => $session->_renderZone('head'), scriptzone => $session->_renderZone('script')});
+    my @scripts = _getZone($session, $r->{web}, $r->{topic}, $meta, 'script');
+    my @styles = _getZone($session, $r->{web}, $r->{topic}, $meta, 'head');
+
+    return to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles});
+}
+
+sub _getZone {
+    my ($session, $web, $topic, $meta, $zone) = @_;
+    my @arr = ();
+
+    while (my ($k, $v) = each %$session->{_zones}->{$zone}) {
+        my $txt = Foswiki::Func::expandCommonVariables( $v->{text}, $topic, $web, $meta);
+        my $reqs = $v->{requires};
+        my @deps = ();
+        foreach(@$reqs) {
+            my $dep = $_;
+            my $dtxt = Foswiki::Func::expandCommonVariables( $dep->{text}, $topic, $web, $meta);
+            push(@deps, {'id', $dep->{id}, 'text', $dtxt});
+        }
+
+        push(@arr, {'id', $v->{id}, 'text', $txt, 'requires', \@deps});
+    }
+
+    return @arr
 }
 
 sub restRelease {

@@ -68,10 +68,11 @@
         $editor.removeData('subcontainer');
         $tasks.find('.task').removeClass('faded selected');
 
-        $editor.find('input,select,textarea').each( function() {
-          var $input = $(this);
-          $input.val('');
-          $input.trigger('Clear');
+        $editor.find('div').first().empty();
+
+        $.blockUI();
+        releaseTopic().always( $.unblockUI ).fail( function( msg ) {
+          error( msg );
         });
 
         return false;
@@ -91,13 +92,19 @@
           return false;
         }
 
+        var alwaysFunc = function() {
+          releaseTopic().fail( function( msg ) {
+            error( msg );
+          }).always( $.unblockUI );
+        };
+
         if ( $editor.data('new') === true ) {
           var now = moment();
           task.form = opts.form;
           task.Context = opts.context;
 
           $.blockUI();
-          $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
+          $.taskapi.create( task ).fail( error ).always( alwaysFunc ).done( function( response ) {
             task.id = response.id;
 
             var $task = createTaskElement(response.data, opts);
@@ -119,7 +126,7 @@
         task.id = taskId;
 
         $.blockUI();
-        $.taskapi.update( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
+        $.taskapi.update( task ).fail( error ).always( alwaysFunc ).done( function( response ) {
           var $newTask = createTaskElement(response.data, opts);
           $task.replaceWith($newTask);
 
@@ -138,27 +145,38 @@
         if( beforeCreate.isDefaultPrevented() ) {
           return false;
         }
+
         if (!$editor.data('subcontainer')) {
           $editor.data('subcontainer', opts.container);
         }
 
-        $editor.dialog('open');
+        $.blockUI();
+        leaseTopic().done( function( response ) {
+          updateHead( response.scripts );
+          updateHead( response.styles );
 
-        // $editor.addClass('active');
-        $tasks.addClass('edit');
+          $editor.find('div').first().html(response.editor);
+          $editor.dialog('open');
 
-        clearEditor( $editor );
+          // $editor.addClass('active');
+          $tasks.addClass('edit');
 
-        if ($editor.data('parent')) {
-          $editor.find('input[name="Parent"]').val($editor.data('parent'));
-          $editor.removeData('parent');
-        }
+          clearEditor( $editor );
 
-        $editor.data('new', true);
-        highlightTask( opts.container.children(), null );
+          if ($editor.data('parent')) {
+            $editor.find('input[name="Parent"]').val($editor.data('parent'));
+            $editor.removeData('parent');
+          }
 
-        var afterCreate = $.Event( 'afterCreate' );
-        $this.trigger( afterCreate );
+          $editor.data('new', true);
+          highlightTask( opts.container.children(), null );
+
+          var afterCreate = $.Event( 'afterCreate' );
+          $this.trigger( afterCreate );
+        }).fail( function( msg ) {
+          error( msg );
+        }).always( $.unblockUI );
+
         return false;
       };
 
@@ -226,13 +244,6 @@
       // $tracker.trigger( afterEdit );
 
       var prefs = foswiki.preferences;
-      var url = [
-        prefs.SCRIPTURL,
-        '/rest',
-        prefs.SCRIPTSUFFIX,
-        '/TasksAPIPlugin/lease'
-      ];
-
       var payload = {
         request: JSON.stringify({
           web: prefs.WEB,
@@ -241,23 +252,22 @@
       };
 
       $.blockUI();
-      $.ajax({
-        url: url.join(''),
-        data: payload,
-        success: function( response ) {
-          var json = $.parseJSON( response );
-          $tasks.addClass('edit');
+      leaseTopic().done( function( response ) {
+        updateHead( response.scripts );
+        updateHead( response.styles );
 
-          $editor.find('div').first().html( json.editor );
-          writeEditor( $editor, selected, $task );
-          highlightTask( container.children(), $task );
-          $editor.dialog('open');
+        $editor.find('div').first().html(response.editor);
+        $tasks.addClass('edit');
 
-          var afterEdit = $.Event( 'afterEdit' );
-          $tracker.trigger( afterEdit );
-          $.unblockUI();
-        }
-      });
+        writeEditor( $editor, selected, $task );
+        highlightTask( container.children(), $task );
+        $editor.dialog('open');
+
+        var afterEdit = $.Event( 'afterEdit' );
+        $tracker.trigger( afterEdit );
+      }).fail( function( msg ) {
+        error( msg );
+      }).always( $.unblockUI );
     };
 
     opts.onAddChildClicked = function( evt ) {
@@ -522,6 +532,87 @@
     if ( window.console && console.log ) {
       console.log( msg );
     }
+  };
+
+  var handleLease = function( action, payload ) {
+    var deferred = $.Deferred();
+
+    var prefs = foswiki.preferences;
+    var url = [
+      prefs.SCRIPTURL,
+      '/rest',
+      prefs.SCRIPTSUFFIX,
+      '/TasksAPIPlugin/',
+      action
+    ].join('');
+
+    $.ajax({
+      url: url,
+      data: payload,
+      success: function( response ) {
+        var json = $.parseJSON( response );
+        deferred.resolve( json );
+      },
+      error: function( xhr, sts, err ) {
+        deferred.reject( err );
+      }
+    });
+
+    return deferred.promise();
+  };
+
+  var releaseTopic = function( data ) {
+    if ( !_.isObject( data ) ) {
+      data = {};
+    }
+
+    var prefs = foswiki.preferences;
+    var defaults = {
+      web: prefs.WEB,
+      topic: prefs.TOPIC
+    };
+
+    $.extend( data, defaults );
+    var payload = {request: JSON.stringify( data )};
+    return handleLease( 'release', payload );
+  };
+
+  var leaseTopic = function( data ) {
+    if ( !_.isObject( data ) ) {
+      data = {};
+    }
+
+    var prefs = foswiki.preferences;
+    var defaults = {
+      web: prefs.WEB,
+      topic: prefs.TOPIC
+    };
+
+    $.extend( data, defaults );
+    var payload = {request: JSON.stringify( data )};
+    return handleLease( 'lease', payload );
+  };
+
+  var updateHead = function( data ) {
+    var $head = $('head');
+    var html = $head.html();
+    _.each( data, function( entry ) {
+      var r = new RegExp( entry.id );
+
+      // hotfix.. currently we are not able to dynamically load CKE
+      if ( /CKEDITOR/.test(entry.id) ) { return; }
+
+      if ( !r.test( html ) ) {
+        _.each( entry.requires, function( require ) {
+          var rr = new RegExp( require.id );
+          if ( !rr.test( html ) ) {
+            $(require.text).appendTo( $head );
+          }
+        });
+
+        $(entry.text).appendTo( $head );
+      }
+    });
   };
 
   $(document).ready( function() {
