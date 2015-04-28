@@ -156,6 +156,7 @@ sub _query {
                 $filter .= "$filterprefix $q = ?";
                 push @args, $v;
             }
+            $filterprefix = ' AND';
         }
 
         # multi field
