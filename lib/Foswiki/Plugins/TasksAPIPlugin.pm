@@ -568,7 +568,11 @@ STYLE
 # Refresh task metadata after uploading attachments
 sub afterUploadHandler {
     my ($attachment, $meta) = @_;
-    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($meta);
+    my $task;
+    eval {
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($meta);
+    };
+    return if ($@);
     _index($task);
 }
 
