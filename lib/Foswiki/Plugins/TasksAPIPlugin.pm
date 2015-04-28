@@ -418,7 +418,7 @@ sub _getZone {
     my ($session, $web, $topic, $meta, $zone) = @_;
     my @arr = ();
 
-    while (my ($k, $v) = each %$session->{_zones}->{$zone}) {
+    while (my ($k, $v) = each %{$session->{_zones}->{$zone}}) {
         my $txt = Foswiki::Func::expandCommonVariables( $v->{text}, $topic, $web, $meta);
         my $reqs = $v->{requires};
         my @deps = ();
