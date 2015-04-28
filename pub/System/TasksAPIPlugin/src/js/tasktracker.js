@@ -102,7 +102,6 @@
           var now = moment();
           task.form = opts.form;
           task.Context = opts.context;
-
           $.blockUI();
           $.taskapi.create( task ).fail( error ).always( alwaysFunc ).done( function( response ) {
             task.id = response.id;
@@ -160,9 +159,6 @@
 
           // $editor.addClass('active');
           $tasks.addClass('edit');
-
-          clearEditor( $editor );
-
           if ($editor.data('parent')) {
             $editor.find('input[name="Parent"]').val($editor.data('parent'));
             $editor.removeData('parent');
