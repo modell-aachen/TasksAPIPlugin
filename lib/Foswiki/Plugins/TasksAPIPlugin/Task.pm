@@ -282,12 +282,13 @@ sub create {
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     my $task = load($meta);
 
-    $task->mailNotify('created');
+    $task->notify('created');
+    $task->_postCreate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
     $task;
 }
 
-sub mailNotify {
+sub notify {
     my ($self, $type, $options) = @_;
     my $notify = $self->getPref("NOTIFY_\U$type");
     return unless $notify;
@@ -374,7 +375,14 @@ sub update {
         $self->{pendingcomment} = $comment;
     }
 
-    $self->mailNotify($notify);
+    $self->notify($notify);
+    if ($notify eq 'closed') {
+        $self->_postClose;
+    } elsif ($notify eq 'reopened') {
+        $self->_postReopen;
+    } elsif ($notify eq 'reassigned') {
+        $self->_postReassign;
+    }
     delete $self->{pendingcomment};
 
     # Find existing changesets to determine new ID
@@ -409,7 +417,29 @@ sub children {
     my $self = shift;
     my $acl = shift;
     $acl = 1 unless defined $acl;
-    search(query => {parent => $self->{id}}, acl => $acl);
+    search(query => {Parent => $self->{id}}, acl => $acl);
+}
+
+sub _postCreate {
+    # TODO
+}
+sub _postClose {
+    my $self = shift;
+    if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
+        my $date = new Date::Manip::Date;
+        $date->parse($reopen);
+        Foswiki::Plugins::TasksAPIPlugin::Job::create(
+            type => 'reopen',
+            time => $date,
+            task => $self,
+        );
+    }
+}
+sub _postReopen {
+    # TODO
+}
+sub _postReassign {
+    # TODO
 }
 
 1;
@@ -419,7 +449,7 @@ Q.Wiki Tasks API - Modell Aachen GmbH
 
 Author: %$AUTHOR%
 
-Copyright (C) 2014 Modell Aachen GmbH
+Copyright (C) 2014-2015 Modell Aachen GmbH
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
