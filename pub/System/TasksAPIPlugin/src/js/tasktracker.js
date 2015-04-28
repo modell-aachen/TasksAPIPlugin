@@ -132,14 +132,15 @@
         }
 
         $.blockUI();
-        leaseTopic().done( function( response ) {
+        leaseTopic({
+          form: opts.form
+        }).done( function( response ) {
           updateHead( response.scripts );
           updateHead( response.styles );
 
           $editor.find('div').first().html(response.editor);
           $editor.dialog('open');
 
-          // $editor.addClass('active');
           $tasks.addClass('edit');
           if ($editor.data('parent')) {
             $editor.find('input[name="Parent"]').val($editor.data('parent'));
@@ -167,7 +168,6 @@
         loadTasks( $this, opts.currentState, true ).always( $.unblockUI );
       };
 
-      // $tasks.on( 'scroll', handleScroll );
       $cancel.on( 'click', handleCancel );
       $save.on( 'click', handleSave );
       $create.on( 'click', handleCreate );
@@ -212,15 +212,6 @@
         return false;
       }
 
-      // writeEditor( $editor, selected, $task );
-      // highlightTask( container.children(), $task );
-
-      // $tasks.addClass('edit');
-      // $editor.dialog('open');
-
-      // var afterEdit = $.Event( 'afterEdit' );
-      // $tracker.trigger( afterEdit );
-
       var prefs = foswiki.preferences;
       var payload = {
         request: JSON.stringify({
@@ -230,7 +221,9 @@
       };
 
       $.blockUI();
-      leaseTopic().done( function( response ) {
+      leaseTopic({
+        form: selected.form
+      }).done( function( response ) {
         updateHead( response.scripts );
         updateHead( response.styles );
 

@@ -402,6 +402,8 @@ sub restLease {
     my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
     $meta->setLease( $ltime );
 
+    Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
+
     Foswiki::Func::loadTemplate( $r->{template} || 'TasksAPI' );
     my $editor = Foswiki::Func::expandTemplate( $r->{editor} || 'tasksapi::editor' );
     $editor = Foswiki::Func::expandCommonVariables( $editor, $r->{topic}, $r->{web}, $meta );
@@ -630,7 +632,7 @@ Q.Wiki Tasks API - Modell Aachen GmbH
 
 Author: %$AUTHOR%
 
-Copyright (C) 2015 Modell Aachen GmbH
+Copyright (C) 2014-2015 Modell Aachen GmbH
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

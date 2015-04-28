@@ -1,68 +1,15 @@
 %TMPL:DEF{"tasksapi::editor"}%<!--tasksapi::editor-->
 %RENDERFOREDIT{
-  form="System.TasksAPIDefaultTaskForm"
+  form="%taskeditor_form%"
   hidden="(Created|Author|Parent|TopicType|Context)"
   include="(Created|Author|Parent|TopicType|Context)"
 }%%RENDERFOREDIT{
-  form="System.TasksAPIDefaultTaskForm"
+  form="%taskeditor_form%"
   fields="Title,AssignedTo"
 }%%RENDERFOREDIT{
-  form="System.TasksAPIDefaultTaskForm"
+  form="%taskeditor_form%"
   exclude="(Title|AssignedTo|Created|Author|Parent|TopicType|Context)"
 }%<!--/tasksapi::editor-->%TMPL:END%
-
-%TMPL:DEF{"tasksapi::editor2"}%%{
-}%<div class="title">
-  <label><span>%MAKETEXT{"Title"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Title" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Title" format="$edit"}%
-  </label>
-</div>
-<div class="description">
-  <label><span>%MAKETEXT{"Description"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Description" format="$edit"}%
-  </label>
-</div>
-<div class="assigned">
-  <label><span>%MAKETEXT{"Assigned to"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="AssignedTo" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="AssignedTo" format="$edit"}%
-  </label>
-</div>
-<div class="due datepicker">
-  <label><span>%MAKETEXT{"Due date"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="DueDate" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="DueDate" format="$edit"}%
-  </label>
-</div>
-<div class="state">
-  <label><span>%MAKETEXT{"State"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Status" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Status" format="$edit"}%
-  </label>
-</div>
-<div class="reminder">
-  <label><span>%MAKETEXT{"Reminder"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Reminder" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Reminder" format="$edit"}%
-  </label>
-</div>
-<div class="prioritize">
-  <label><span>%MAKETEXT{"Prioritize"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Prioritize" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Prioritize" format="$edit"}%
-  </label>
-</div>
-<div class="informees">
-  <label><span>%MAKETEXT{"Informees"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Informees" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Informees" format="$edit"}%
-  </label>
-</div>
-<div class="haschildren">
-  <label><span>%MAKETEXT{"Has sub-tasks"}%%RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="HasChildren" format="$mandatory"}%</span>
-    %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="HasChildren" format="$edit"}%
-  </label>
-</div>
-<div class="hidden">
-  %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Created" format="$edit"}%
-  %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Author" format="$edit"}%
-  %RENDERFOREDIT{form="System.TasksAPIDefaultTaskForm" fields="Parent" format="$edit"}%
-</div>%{
-}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::nesting"}%%{
 }%<div class="task task-nesting prioritized-<%= Prioritize %>">
