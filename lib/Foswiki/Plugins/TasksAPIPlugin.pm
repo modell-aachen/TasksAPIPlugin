@@ -430,7 +430,10 @@ sub restLease {
         return to_json({status => 'error', msg => "Missing web or topic parameter."});
     }
 
-    my $meta = Foswiki::Meta->new($session, $r->{web}, $r->{topic});
+    my $web = Foswiki::Sandbox::untaint($r->{web}, \&Foswiki::Sandbox::validateWebName);
+    my $topic = Foswiki::Sandbox::untaint($r->{topic}, \&Foswiki::Sandbox::validateTopicName);
+
+    my $meta = Foswiki::Meta->new($session, $web, $topic);
     my $lease = $meta->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
@@ -478,7 +481,10 @@ sub restRelease {
     my $q = $session->{request};
     my $r = decode_json($q->param('request') || '{}');
 
-    my $meta = Foswiki::Meta->new($session, $r->{web}, $r->{topic});
+    my $web = Foswiki::Sandbox::untaint($r->{web}, \&Foswiki::Sandbox::validateWebName);
+    my $topic = Foswiki::Sandbox::untaint($r->{topic}, \&Foswiki::Sandbox::validateTopicName);
+
+    my $meta = Foswiki::Meta->new($session, $web, $topic);
     my $lease = $meta->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
