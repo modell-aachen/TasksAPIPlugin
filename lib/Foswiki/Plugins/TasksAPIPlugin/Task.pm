@@ -386,14 +386,16 @@ sub update {
     delete $self->{pendingcomment};
 
     # Find existing changesets to determine new ID
-    my @changesets = $meta->find('TASKCHANGESET');
-    my $newid = @changesets + 1;
-    $meta->putKeyed('TASKCHANGESET', {
-        name => $newid,
-        actor => Foswiki::Func::getWikiName(),
-        at => scalar(time),
-        changes => encode_json(\@changes),
-    });
+    if (@changes) {
+        my @changesets = $meta->find('TASKCHANGESET');
+        my $newid = @changesets + 1;
+        $meta->putKeyed('TASKCHANGESET', {
+            name => $newid,
+            actor => Foswiki::Func::getWikiName(),
+            at => scalar(time),
+            changes => encode_json(\@changes),
+        });
+    }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
