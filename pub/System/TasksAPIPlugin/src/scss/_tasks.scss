@@ -227,6 +227,7 @@
   transition: max-height .3s ease-in-out;
   overflow: hidden;
 }
+
 .task.expanded > .task-attachments {
   height: auto;
   max-height: 1000px;
@@ -248,8 +249,9 @@
     }
   }
 }
+
 .task.children-expanded > .task-children {
   height: auto;
-  max-height: 1000px;
+  max-height: 1000000px;
 }
 

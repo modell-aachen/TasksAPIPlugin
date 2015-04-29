@@ -33,6 +33,15 @@
   </div>
   <div class="task-attachments">
     <div class="attachment">
+      <table>
+        <thead>
+          <th>%MAKETEXT{"Name"}%</th>
+          <th>%MAKETEXT{"Size"}%</th>
+          <th>%MAKETEXT{"Date"}%</th>
+          <th>%MAKETEXT{"Uploaded by"}%</th>
+          <th>%MAKETEXT{"Actions"}%</th>
+        </thead>
+      </table>
       <ul><%= Attachments %></ul>
     </div>
   </div>
@@ -62,7 +71,28 @@
   </div>
   <div class="task-attachments">
     <div class="attachment">
-      <ul><%= Attachments %></ul>
+      <% if( Attachments.length > 0 ) { %>
+      <table class="foswikiTable tablesorter" style="width: 100%;">
+        <thead>
+          <th>%MAKETEXT{"Name"}%</th>
+          <th>%MAKETEXT{"Size"}%</th>
+          <th>%MAKETEXT{"Date"}%</th>
+          <th>%MAKETEXT{"Who"}%</th>
+          <th>%MAKETEXT{"Action"}%</th>
+        </thead>
+        <tbody>
+          <% _.each(Attachments, function(a) { %>
+             <tr>
+               <td><a target="_blank" href="<%= a.link %>"><%= a.name %></a></td>
+               <td><%= a.size.human %></td>
+               <td><%= a.date.gmt %></td>
+               <td><%= a.user.wikiusername %></td>
+               <td>&nbsp;</td>
+             </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
     </div>
   </div>
 </div>%{

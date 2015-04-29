@@ -372,6 +372,10 @@ sub _enrich_data {
             bytes => $a->{size},
             human => format_bytes($a->{size})
         };
+
+        my $pub = $Foswiki::cfg{PubUrlPath} || '/pub';
+        my ($web, $topic) = split(/\./, $d->{id});
+        $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
     $result;
@@ -526,8 +530,9 @@ sub tagGrid {
     Foswiki::Func::loadTemplate( $templateFile );
     my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
     my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
-    my $task = Foswiki::Func::expandTemplate( $taskTemplate );
+    my $task = Foswiki::Func::expandCommonVariables( Foswiki::Func::expandTemplate( $taskTemplate ) );
     my $taskNesting = Foswiki::Func::expandTemplate( $nestingTaskTemplate );
+
 
     my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
     my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
@@ -606,7 +611,7 @@ sub tagGrid {
         </div>
         <div $allowUploadStyle>
             %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
-            %DNDUPLOAD{extraclass="full-width" tasksgrid="1"}%
+            %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
             %ENDTWISTY%
         </div>
         <div>
