@@ -14,6 +14,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use JSON;
+use Number::Bytes::Human qw(format_bytes);
 
 our $VERSION = '0.1';
 our $RELEASE = '0.1';
@@ -353,6 +354,26 @@ sub _enrich_data {
         };
         $result->{fields}{$f->{name}} = $ff;
     }
+
+    foreach my $a (@{$result->{attachments}}) {
+        $a->{user} = {
+            cuid => $a->{user},
+            wikiusername => Foswiki::Func::getWikiUserName($a->{user}),
+            wikiuname => Foswiki::Func::getWikiName($a->{user}),
+            loginname => Foswiki::Func::wikiToUserName($a->{user})
+        };
+
+        $a->{date} = {
+            epoch => $a->{date},
+            gmt => Foswiki::Time::formatTime($a->{date})
+        };
+
+        $a->{size} = {
+            bytes => $a->{size},
+            human => format_bytes($a->{size})
+        };
+    }
+
     $result;
 }
 
