@@ -344,13 +344,13 @@ sub update {
         next if !exists $data{$name};
         my $val = $data{$name};
         my $old = $self->{fields}{$name};
-        if (!defined $val && defined $old) {
+        if ($val eq '' && $old ne '') {
             $meta->remove('FIELD', $name);
             delete $self->{fields}{$name};
             push @changes, { type => 'delete', name => $name, old => $old };
             next;
         }
-        if (!defined $old) {
+        if ($old eq '' && $val ne '') {
             push @changes, { type => 'add', name => $name, new => $val };
         } elsif ($val ne $old) {
             push @changes, { type => 'change', name => $name, old => $old, new => $val };
