@@ -56,6 +56,7 @@
       };
 
       var handleCancel = function() {
+        $('.qw-dnd-upload').clearQueue();
         closeEditor();
 
         $.blockUI();
@@ -80,43 +81,46 @@
           return false;
         }
 
-        if ( $editor.data('new') === true ) {
-          var now = moment();
-          task.form = opts.form;
-          task.Context = opts.context;
-          $.blockUI();
-          $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
-            task.id = response.id;
+        $.blockUI();
+        $('.qw-dnd-upload').on('queueEmpty', function() {
+          if ( $editor.data('new') === true ) {
+            var now = moment();
+            task.form = opts.form;
+            task.Context = opts.context;
 
-            var $task = createTaskElement(response.data, opts);
+            $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
+              task.id = response.id;
 
-            $editor.data('subcontainer').append( $task );
-            $editor.data('new', '');
+              var $task = createTaskElement(response.data, opts);
+
+              $editor.data('subcontainer').append( $task );
+              $editor.data('new', '');
+
+              var afterSave = $.Event( 'afterSave' );
+              $this.trigger( afterSave, task );
+
+              closeEditor();
+            });
+
+            return false;
+          }
+
+          var $task = $tasks.find('.selected');
+          var taskId = $task.data('id');
+          task.id = taskId;
+
+          $.taskapi.update( task ).fail( error ).done( function( response ) {
+            var $newTask = createTaskElement(response.data, opts);
+            $task.replaceWith($newTask);
 
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
 
             closeEditor();
-          });
+          }).always( $.unblockUI );
+        });
 
-          return false;
-        }
-
-        var $task = $tasks.find('.selected');
-        var taskId = $task.data('id');
-        task.id = taskId;
-
-        $.blockUI();
-        $.taskapi.update( task ).fail( error ).done( function( response ) {
-          var $newTask = createTaskElement(response.data, opts);
-          $task.replaceWith($newTask);
-
-          var afterSave = $.Event( 'afterSave' );
-          $this.trigger( afterSave, task );
-
-          closeEditor();
-        }).always( $.unblockUI );
-
+        $('.qw-dnd-upload').upload();
         return false;
       };
 
@@ -278,8 +282,10 @@
 
     $.extend(query, $.parseJSON(opts.query));
 
-    if ( !/^(1|true)$/i.test( opts.stateless ) ) {
+    if ( !/^(1|true)$/i.test( opts.stateless ) && status !== 'all' ) {
       query.Status = status;
+    } else {
+      query.Status = ['open', 'closed'];
     }
     if (parent) {
       query.Parent = parent;
@@ -289,7 +295,6 @@
 
     $.taskapi.get(query, fetchSize, opts.page).done( function( response ) {
       _.each( response.data, function(entry) {
-
         var task = mapToTask( entry );
         container.append( createTaskElement(task, opts) );
       });
@@ -312,7 +317,7 @@
         timeout = null;
         var taskClick = $.Event( 'taskClick' );
         var $tracker = $(self).closest('.tasktracker');
-        $tracker.trigger( taskClick, self ); 
+        $tracker.trigger( taskClick, self );
       }, 250);
     } else {
       clearTimeout( timeout );
@@ -471,18 +476,19 @@
       '/'
     ];
 
-    var $div = $('<div></div>');
-    for(var i = 0; i < entry.attachments.length; ++i) {
-      var a = entry.attachments[i];
-      var $a = $('<a></a>');
-      $a.attr('href', url.join('') + a.name );
-      $a.text(a.name);
-      var $li = $('<li></li>');
-      $a.appendTo($li);
-      $li.appendTo($div);
-    }
+    // var $div = $('<div></div>');
+    // for(var i = 0; i < entry.attachments.length; ++i) {
+    //   var a = entry.attachments[i];
+    //   var $a = $('<a></a>');
+    //   $a.attr('href', url.join('') + a.name );
+    //   $a.text(a.name);
+    //   var $li = $('<li></li>');
+    //   $a.appendTo($li);
+    //   $li.appendTo($div);
+    // }
 
-    task.Attachments = $div.html();
+    // task.Attachments = $div.html();
+    task.Attachments = entry.attachments;
 
     return task;
   };
@@ -566,24 +572,42 @@
     return handleLease( 'lease', payload );
   };
 
+  var loadScript = function( id, script ) {
+    if ( /CKEDITORPLUGIN::SCRIPTS/.test( id ) ) {
+      var scripts = $(script).wrap('<div></div>').find('script');
+      var loadNext = function() {
+        if (scripts.length === 0) { return; }
+        var $script = scripts.shift();
+        var src = $script.attr('src');
+        if ( src ) {
+          $.getScript( src ).then(loadNext);
+        } else {
+          $script.appendTo( $('head') );
+          loadNext();
+        }
+      };
+      loadNext();
+    } else {
+      $(script).appendTo( $('head') );
+    }
+  };
+
   var updateHead = function( data ) {
     var $head = $('head');
     var html = $head.html();
     _.each( data, function( entry ) {
       var r = new RegExp( entry.id );
 
-      // hotfix.. currently we are not able to dynamically load CKE
-      if ( /CKEDITOR/.test(entry.id) ) { return; }
-
       if ( !r.test( html ) ) {
         _.each( entry.requires, function( require ) {
           var rr = new RegExp( require.id );
           if ( !rr.test( html ) ) {
-            $(require.text).appendTo( $head );
+            loadScript( require.id, require.text );
           }
         });
 
-        $(entry.text).appendTo( $head );
+        loadScript( entry.id, entry.text );
+        html = $head.html();
       }
     });
   };
