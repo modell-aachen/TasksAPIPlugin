@@ -160,7 +160,7 @@ sub _reduce {
 
 sub _getACL {
     my ($this, $form, $type) = @_;
-    my $aclPref = $form->getPreference('TASKACL_'. $type);
+    my $aclPref = $form->getPreference("TASKACL_\U$type");
     return () unless $aclPref;
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
@@ -174,6 +174,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
+    # TODO: Context ACL must be fetched differently (isn't a task)
     $aclPref =~ s/\$contextACL\b/push @acl, $aclFromRef->('Context'); ''/e;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
