@@ -227,12 +227,10 @@
   };
 
   var log = function( msg ) {
-    if ( !msg ) {
-      return;
-    }
-
     if ( window.console && console.log ) {
-      console.log( msg );
+      _.each( [].splice.call(arguments, 0), function( msg ) {
+        console.log( msg );
+      });
     }
   };
 
