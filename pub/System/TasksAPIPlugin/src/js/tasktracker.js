@@ -218,13 +218,11 @@
     return $task;
   };
 
-  var error = function( msg ) {
-    if ( !msg ) {
-      return;
-    }
-
+  var error = function() {
     if ( window.console && console.error ) {
-      console.error( msg );
+      _.each( [].splice.call(arguments, 0), function( msg ) {
+        console.error( msg );
+      });
     }
   };
 
