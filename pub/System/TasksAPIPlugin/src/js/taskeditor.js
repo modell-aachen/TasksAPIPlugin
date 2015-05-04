@@ -20,7 +20,7 @@
 
     var data = delete opts.data;
     if (!data) {
-      data = {};
+      data = { fields: {} };
     }
     var beforeEdit = $.Event( 'beforeEdit' );
     $this.trigger( beforeEdit, data );

@@ -431,7 +431,7 @@ sub restLease {
     my $q = $session->{request};
     my $r = decode_json($q->param('request') || '{}');
 
-    my $meta = Foswiki::Meta->new($session->{webName}, $session->{topicName});
+    my $meta = Foswiki::Meta->new($session, $session->{webName}, $session->{topicName});
 
     if ($r->{id}) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
