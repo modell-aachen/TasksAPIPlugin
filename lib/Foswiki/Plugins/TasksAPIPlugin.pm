@@ -13,6 +13,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
+use Encode;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 
@@ -78,6 +79,11 @@ my %singles = (
     Position => 1,
 );
 
+my $gridCounter = 1;
+my $renderRecurse = 0;
+my $currentTask;
+my $currentOptions;
+
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
 
@@ -90,6 +96,7 @@ sub initPlugin {
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
+    Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'multicreate', \&restMultiCreate );
@@ -98,14 +105,15 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch );
     Foswiki::Func::registerRESTHandler( 'lease', \&restLease );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease );
-
-    # Plugin correctly initialized
     return 1;
 }
 
 sub finishPlugin {
     undef $db;
     undef %schema_versions;
+    undef $currentTask;
+    $gridCounter = 1;
+    $renderRecurse = 0;
 }
 
 sub db {
@@ -270,7 +278,7 @@ sub restCreate {
     return to_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res),
+        data => _enrich_data($res, $q->param('tasktemplate')),
     });
 }
 
@@ -281,7 +289,7 @@ sub restMultiCreate {
     my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
     return to_json({
         status => 'ok',
-        data => [map { _enrich_data($_) } @res],
+        data => [map { _enrich_data($_, $q->param('tasktemplate')) } @res],
     });
 }
 
@@ -310,7 +318,7 @@ sub restUpdate {
 
     return to_json({
         status => 'ok',
-        data => _enrich_data($task),
+        data => _enrich_data($task, $q->param('tasktemplate')),
     });
 }
 
@@ -322,7 +330,7 @@ sub restMultiUpdate {
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         $task->update(%$data);
-        $res{$id} = {status => 'ok', data => _enrich_data($task)};
+        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
         $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if !$task->checkACL('change');
     }
     return to_json(\%res);
@@ -330,6 +338,7 @@ sub restMultiUpdate {
 
 sub _enrich_data {
     my $task = shift;
+    my $tpl = shift || 'tasksapi::grid::task';
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
     my $result = {
@@ -378,16 +387,13 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
+    $result->{html} = _renderTask($task->{meta}, $tpl, $task);
+
     $result;
 }
 
 sub tagSearch {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
-
-    my $format = $params->{_format} || 'json';
-    $format = lc($format);
-    return "" unless $format eq 'json'; # ToDo
-    delete $params->{_format};
 
     my @res;
     eval {
@@ -398,15 +404,16 @@ sub tagSearch {
     }
 
     my $enrich_data = sub {};
-    @res = map { _enrich_data($_) } @res;
+    @res = map { _enrich_data($_, $params->{tasktemplate}) } @res;
     return encode_json({status => 'ok', data => \@res});
 }
 
 sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
     my @res;
+    my $q;
     eval {
-        my $q = $session->{request};
+        $q = $session->{request};
         my $req = decode_json($q->param('request') || '{}');
         delete $req->{acl};
         @res = _query(%$req);
@@ -414,9 +421,7 @@ sub restSearch {
     if ($@) {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    my $enrich_data = sub {
-    };
-    @res = map { _enrich_data($_) } @res;
+    @res = map { _enrich_data($_, $q->param('tasktemplate')) } @res;
     #return JSON->new->pretty->utf8->encode({status => 'ok', data => \@res});
     return to_json({status => 'ok', data => \@res});
 }
@@ -426,29 +431,29 @@ sub restLease {
     my $q = $session->{request};
     my $r = decode_json($q->param('request') || '{}');
 
-    unless ( $r->{web} && $r->{topic}) {
-        return to_json({status => 'error', msg => "Missing web or topic parameter."});
+    my $meta = Foswiki::Meta->new($session->{webName}, $session->{topicName});
+
+    if ($r->{id}) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
+        my $lease = $task->{meta}->getLease();
+        if ( $lease ) {
+            my $cuid = $lease->{user};
+            my $ccuid = $session->{user};
+            return to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
+        }
+
+        my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
+        $task->{meta}->setLease( $ltime );
+        $meta = $task->{meta};
+
+        Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
+    } else {
+        Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
     }
-
-    my $web = Foswiki::Sandbox::untaint($r->{web}, \&Foswiki::Sandbox::validateWebName);
-    my $topic = Foswiki::Sandbox::untaint($r->{topic}, \&Foswiki::Sandbox::validateTopicName);
-
-    my $meta = Foswiki::Meta->new($session, $web, $topic);
-    my $lease = $meta->getLease();
-    if ( $lease ) {
-        my $cuid = $lease->{user};
-        my $ccuid = $session->{user};
-        return to_json({status => 'error', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
-    }
-
-    my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
-    $meta->setLease( $ltime );
-
-    Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
 
     Foswiki::Func::loadTemplate( $r->{template} || 'TasksAPI' );
-    my $editor = Foswiki::Func::expandTemplate( $r->{editor} || 'tasksapi::editor' );
-    $editor = Foswiki::Func::expandCommonVariables( $editor, $r->{topic}, $r->{web}, $meta );
+    my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || 'tasksapi::editor' );
+    $editor = $meta->expandMacros( $editor );
 
     my @scripts = _getZone($session, $r->{web}, $r->{topic}, $meta, 'script');
     my @styles = _getZone($session, $r->{web}, $r->{topic}, $meta, 'head');
@@ -481,45 +486,64 @@ sub restRelease {
     my $q = $session->{request};
     my $r = decode_json($q->param('request') || '{}');
 
-    my $web = Foswiki::Sandbox::untaint($r->{web}, \&Foswiki::Sandbox::validateWebName);
-    my $topic = Foswiki::Sandbox::untaint($r->{topic}, \&Foswiki::Sandbox::validateTopicName);
+    return to_json({status => 'ok'}) unless $r->{id};
+    my $task = Foswiki::Plugins::TasksAPIPlugin::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
 
-    my $meta = Foswiki::Meta->new($session, $web, $topic);
-    my $lease = $meta->getLease();
+    my $lease = $task->{meta}->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
         my $ccuid = $session->{user};
         
         if ( $cuid eq $ccuid ) {
-            $meta->clearLease();
+            $task->{meta}->clearLease();
             return to_json({status => 'ok'});
         }
     }
 
-    return to_json({status => 'error', 'code' => 'server_error', msg => "Access denied"});
+    return to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"});
 }
 
-my $gridCounter = 1;
+sub _renderTask {
+    my ($meta, $taskTemplate, $task) = @_;
+    if ($renderRecurse >= 16) {
+        return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
+    }
+    $renderRecurse++;
+    my $prev = $currentTask;
+    $currentTask = $task;
+    my $canChange = $task->checkACL('CHANGE');
+    my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
+    $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
+    $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
+    if ($canChange && $haveCtx) {
+        $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
+    } elsif ($canChange) {
+        $Foswiki::Plugins::SESSION->leaveContext('task_canedit'); # remove altogether
+    }
+    $currentTask = $prev;
+    $renderRecurse--;
+    return $task;
+}
+
 sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
     my $ctx = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
-    my $parent = $params->{parent} || "$web.$topic";
+    my $parent = $params->{parent} || "";
     my $id = $params->{id} || $gridCounter;
     $gridCounter += 1 if $id eq $gridCounter;
     my $system = $Foswiki::cfg{SystemWebName} || "System";
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
-    my $taskTemplate = $params->{tasktemplate} || "tasksapi::task";
-    my $nestingTaskTemplate = $params->{nestingtasktemplate} || "tasksapi::task::nesting";
-    my $editorTemplate = $params->{editortemplate} || "tasksapi::editor";
-    my $captionTemplate = $params->{captiontemplate} || "tasksapi::caption";
-    my $filterClass = $params->{filterclass} || "";
-    my $captionClass = $params->{captionclass} || "";
-    my $extraClass = $params->{extraclass} || "";
+    my $template = $params->{template} || 'tasksapi::grid';
+    my $taskTemplate = $params->{tasktemplate} || 'tasksapi::grid::task';
+    my $taskFullTemplate = $params->{taskfulltemplate} || 'tasksapi::viewer';
+    my $editorTemplate = $params->{editortemplate} || 'tasksapi::editor';
+    my $captionTemplate = $params->{captiontemplate};
+    my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
     my $pageSize = $params->{pagesize} || 100;
-    my $query = $params->{query} || "";
+    my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
     my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
     my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
@@ -527,18 +551,15 @@ sub tagGrid {
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
-    my $expandOnClick = $params->{expandonclick};
 
-    $expandOnClick = 1 unless defined $expandOnClick;
-    $expandOnClick = $expandOnClick =~ m/^(1|true)$/i ? 1 : 0;
-    $templateFile =~ s/Template$//;
+    my $_tplDefault = sub {
+        $_[0] = $_[1] unless defined $_[0];
+        $_[0] = 'tasksapi::empty' if $_[0] eq '';
+    };
+    $_tplDefault->($captionTemplate, 'tasksapi::grid::caption');
+    $_tplDefault->($filterTemplate, 'tasksapi::grid::filter');
 
     Foswiki::Func::loadTemplate( $templateFile );
-    my $editor = Foswiki::Func::expandTemplate( $editorTemplate );
-    my $caption = Foswiki::Func::expandTemplate( $captionTemplate );
-    my $task = Foswiki::Func::expandCommonVariables( Foswiki::Func::expandTemplate( $taskTemplate ) );
-    my $taskNesting = Foswiki::Func::expandTemplate( $nestingTaskTemplate );
-
 
     my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
     my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
@@ -549,13 +570,20 @@ sub tagGrid {
         id => $id,
         pageSize => $pageSize,
         query => $query,
+        allowupload => $allowUpload,
         stateless => $stateless,
-        template => Foswiki::urlEncode( $task ),
-        nestingTemplate => Foswiki::urlEncode( $taskNesting ),
+        templateFile => $templateFile,
+        taskTemplate => $taskTemplate,
+        taskFullTemplate => $taskFullTemplate,
+        editorTemplate => $editorTemplate,
         lang => {
             missingField => Foswiki::urlEncode( $translated )
         }
     );
+
+    my $fctx = Foswiki::Func::getContext();
+    $fctx->{task_allowcreate} = 1 if $allowCreate;
+    $fctx->{task_stateless} = 1 if $stateless;
 
     my @options = ();
     foreach my $state (split(/,/, $states)) {
@@ -565,69 +593,52 @@ sub tagGrid {
         push(@options, $option);
     }
 
-    my $statelessStyle = '';
-    if ( $stateless ) {
-        $statelessStyle = 'style="display: none;"';
-    }
-
-    my $allowCreateStyle = '';
-    unless ( $allowCreate =~ m/^1|true$/i ) {
-        $allowCreateStyle = 'style="display: none;"';
-    }
-
-    my $allowUploadStyle = '';
-    unless ( $allowUpload =~ m/^1|true$/i ) {
-        $allowUploadStyle = 'style="display: none;"';
-    }
-
-    my $showAttachmentsStyle = '';
-    unless ( $showAttachments =~ m/^1|true$/i ) {
-        $showAttachmentsStyle = 'style="display: none;"';
-    }
-
     my $select = join('\n', @options),
     my $json = encode_json( \%settings );
-    my $grid = <<GRID;
-<div id="$id" class="tasktracker $extraClass" data-expand="$expandOnClick">
-    <div class="filter $filterClass">
-        <div>
-            <div class="options">
-                <span class="title">$title</span>
-                <label $statelessStyle>
-                    <select name="status">$select</select>
-                </label>
-            </div>
-            <div class="create" $allowCreateStyle>
-                <a href="#" class="tasks-btn tasks-btn-create">$createText</a>
-            </div>
-        </div>
-    </div>
-    <div class="caption $captionClass">
-        <div class="container"><div>$caption</div></div>
-    </div>
-    <div class="tasks">
-        <div></div>
-    </div>
-    <div class="settings">$json</div>
-    <div id="task-editor-$id" class="jqUIDialog task-editor">
-        <div></div>
-        <div $showAttachmentsStyle>
-            %TWISTY{showlink="%MAKETEXT{"Show attachments"}%" hidelink="%MAKETEXT{"Hide attachments"}%" start="hide"}%
-            %ENDTWISTY%
-        </div>
-        <div $allowUploadStyle>
-            %TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
-            %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
-            %ENDTWISTY%
-        </div>
-        <div>
-            <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
-            <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
-        </div>
-    </div>
-    <a class="task-subbtn-template task-child-add tasks-btn tasks-btn-create" href="#">%MAKETEXT{"Add sub-task"}%</a>
-</div>
-GRID
+    $currentOptions = \%settings;
+
+    eval {
+        $query = decode_json($query)
+    };
+    if ($@) {
+        my $err = $@;
+        $err =~ s/&/&amp;/;
+        $err =~ s/</&lt;/;
+        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
+    }
+    $query->{Context} = $ctx if $ctx && !exists $query->{Context};
+    $query->{Parent} = $parent if $parent && !exists $query->{Parent};
+
+    my @tasks = _query(
+        query => $query,
+        order => $params->{order},
+        desc => $params->{desc},
+        limit => $params->{pagesize},
+    );
+    Foswiki::Func::setPreferencesValue("TASKSGRID_taskfulltemplate", $taskFullTemplate);
+    for my $task (@tasks) {
+        $task = _renderTask($topicObject, $taskTemplate, $task);
+    }
+
+    my %tmplAttrs = (
+        stateoptions => $select,
+        settings => $json,
+        title => $title,
+        createtext => $createText,
+        captiontemplate => $captionTemplate,
+        filtertemplate => $filterTemplate,
+        tasks => join('', @tasks),
+        id => $id,
+    );
+    while (my ($k, $v) = each(%tmplAttrs)) {
+        Foswiki::Func::setPreferencesValue("TASKSGRID_$k", $v);
+    }
+
+    my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
+
+    undef $currentOptions;
+    delete $fctx->{task_allowcreate};
+    delete $fctx->{task_stateless};
 
     my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
     foreach (@jqdeps) {
@@ -646,6 +657,59 @@ SCRIPT
 STYLE
 
     return $grid;
+}
+
+sub tagInfo {
+    my ( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    if (my $option = $params->{option}) {
+        if (!$currentOptions) {
+            return '%RED%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR%%BR%';
+        }
+        return $currentOptions->{$option};
+    }
+    if (my $expandTpl = $params->{expandtemplate}) {
+        if (!$currentOptions) {
+            return '%RED%TASKINFO: parameter =expandtemplate= can only be used in grid/task templates%ENDCOLOR%%BR%';
+        }
+        return Foswiki::Func::expandTemplate($expandTpl);
+    }
+
+    my $task = $currentTask;
+    if ($params->{task}) {
+        $task = Foswiki::Plugins::TasksAPIPlugin::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
+    }
+    if (!$task) {
+        return '%RED%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
+    }
+
+    if (my $field = $params->{field}) {
+        my $val = $task->{fields}{$field} || '';
+        if ($params->{shorten}) {
+            $val = Encode::decode($Foswiki::cfg{Site}{CharSet}, $val);
+            $val = substr($val, 0, $params->{shorten} - 3) ."..." if length($val) > ($params->{shorten} + 3); # a bit of fuzz
+            $val = Encode::encode($Foswiki::cfg{Site}{CharSet}, $val);
+        }
+        unless (Foswiki::isTrue($params->{escape}, 1)) {
+            $val =~ s/&/&amp;/g;
+            $val =~ s/</&lt;/g;
+            $val =~ s/>/&gt;/g;
+            $val =~ s/"/&quot;/g;
+        }
+        return $val;
+    }
+
+    if (my $meta = $params->{meta}) {
+        return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
+        return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
+        return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
+    }
+
+    if (my $tpl = $params->{template}) {
+        return _renderTask($topicObject, $tpl, $task);
+    }
+
+    return '';
 }
 
 # Refresh task metadata after uploading attachments

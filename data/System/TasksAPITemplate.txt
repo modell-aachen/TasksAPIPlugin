@@ -1,4 +1,5 @@
 %TMPL:DEF{"tasksapi::editor"}%<!--tasksapi::editor-->
+<div class="jqUIDialog task-editor">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   hidden="(Created|Author|Parent|TopicType|Context)"
@@ -15,60 +16,41 @@
   header=""
   footer=""
   format="<div class=\"$name\"><label><span>$title$mandatory</span>$edit</label></div>"
-}%<!--/tasksapi::editor-->%TMPL:END%
+}%
+%IF{"'%TASKINFO{option="allowupload"}%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
+  <div>
+    <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+  </div>
+</div>
+<!--/tasksapi::editor-->%TMPL:END%
 
-%TMPL:DEF{"tasksapi::task::nesting"}%%{
-}%<div class="task task-nesting prioritized-<%= Prioritize %>">
+%TMPL:DEF{"tasksapi::editor::upload"}%%{
+  }%%TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+  %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
+  %ENDTWISTY%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::task"}%%{
+}%<div class="task prioritized-%TASKINFO{field="Prioritized"}%">
+  <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
+  <div class="task-fullview">%TASKINFO{template="%TASKSGRID_taskfulltemplate%"}%</div>
   <div class="task-wrapper">
-    <div class="nest nest-active"><span class="expand"></span></div>
-    <div class="state <%= Status %>"></div>
     <div class="content">
-      <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
-      <div class="description"><span><%= Description %></span></div>
-      <div class="assigned"><span><%= AssignedTo %></span></div>
-      <div class="due"><span><%= DueDate %></span></div>
-      <div class="attachcount"><span><%= AttachCount %></span></div>
-    </div>
-    <div class="btn-edit">&nbsp;</div>
-  </div>
-  <div class="task-attachments">
-    <div class="attachment">
-      <table>
-        <thead>
-          <th>%MAKETEXT{"Name"}%</th>
-          <th>%MAKETEXT{"Size"}%</th>
-          <th>%MAKETEXT{"Date"}%</th>
-          <th>%MAKETEXT{"Uploaded by"}%</th>
-          <th>%MAKETEXT{"Actions"}%</th>
-        </thead>
-      </table>
-      <ul><%= Attachments %></ul>
-    </div>
-  </div>
-  <div class="task-children">
-    <div class="task-children-list">
-    </div>
-    <div class="task-children-summary">
-      <div class="add"></div>
-    </div>
+      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %TASKINFO{field="Created"}%</span></div>
+      <div class="description"><span>%TASKINFO{field="Description" shorten="140"}%</span></div>
+      <div class="assigned"><span>%TASKINFO{field="AssignedTo"}%</span></div>
+      <div class="due"><span>%TASKINFO{field="DueDate"}%</span></div>
+      <div class="attachcount"><span>%TASKINFO{meta="AttachCount"}%</span></div>
+    </div>%IF{"context task_canedit"
+      then="<div class=\"btn-edit\">&nbsp;</div>"
+    }%
   </div>
 </div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::task"}%%{
-}%<div class="task prioritized-<%= Prioritize %>">
-  <div class="task-wrapper">
-    <div class="nest nest-inactive"><span class="nest-inactive-marker"></span></div>
-    <div class="state <%= Status %>"></div>
-    <div class="content">
-      <div class="caption"><span class="title"><%= Title %></span><span class="created"><%= Author %>, <%= Created %></span></div>
-      <div class="description"><span><%= Description %></span></div>
-      <div class="assigned"><span><%= AssignedTo %></span></div>
-      <div class="due"><span><%= DueDate %></span></div>
-      <div class="attachcount"><span><%= AttachCount %></span></div>
-    </div>
-    <div class="btn-edit">&nbsp;</div>
-  </div>
+%TMPL:DEF{"tasksapi::viewer"}%%{
+}%<!-- TODO -->
   <div class="task-attachments">
     <div class="attachment">
       <% if( Attachments.length > 0 ) { %>
@@ -95,12 +77,53 @@
       <% } %>
     </div>
   </div>
+%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid"}%<div id="%TASKSGRID_id%" class="tasktracker">
+  %TASKINFO{expandtemplate="%TASKSGRID_filtertemplate%"}%
+  %TASKINFO{expandtemplate="%TASKSGRID_captiontemplate%"}%
+  <div class="tasks">
+    <div>%TASKSGRID_tasks%</div>
+  </div>
+  <div class="settings"><literal>%TASKSGRID_settings%</literal></div>
+</div>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::filter"}%
+<div class="filter">
+  <div>
+    <div class="options">
+      <span class="title">%TASKSGRID_title%</span>
+      %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
+    </div>
+    %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%
+  </div>
+</div>
+%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::filter::status"}%%{
+}%<label>
+  <select name="status">%TASKSGRID_stateoptions%</select>
+</label>%{
+}%%TMPL:END%
+%TMPL:DEF{"tasksapi::grid::filter::create"}%%{
+}%<div class="create">
+  <a href="#" class="tasks-btn tasks-btn-create">%TASKSGRID_createtext%</a>
 </div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::caption"}%%{
-}%<div class="text"><span>%MAKETEXT{"Description"}%</span></div>
-<div class="assigned"><span>%MAKETEXT{"Assigned to"}%</span></div>
-<div class="due"><span>%MAKETEXT{"Due date"}%</span></div>
-<div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>%{
+
+%TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
+  <div class="container"><div>
+    <div class="text"><span>%MAKETEXT{"Description"}%</span></div>
+    <div class="assigned"><span>%MAKETEXT{"Assigned to"}%</span></div>
+    <div class="due"><span>%MAKETEXT{"Due date"}%</span></div>
+    <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
+  </div></div>
+</div>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::addnew"}%%{
+}%<a class="task-subbtn-template task-child-add tasks-btn tasks-btn-create" href="#">%MAKETEXT{"Add sub-task"}%</a>%{
 }%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::empty"}%%TMPL:END%

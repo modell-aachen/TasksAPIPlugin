@@ -4,11 +4,6 @@
   width: 100%;
   transition: right 0.4s ease-in-out;
 
-  &.edit {
-    pointer-events: none;
-    right: $editor-width - 35px;
-  }
-
   > div {
     height: inherit;
     padding: 6px;
@@ -59,6 +54,8 @@
       opacity: 1;
       pointer-events: auto;
     }
+    > .task-data { display: none; }
+    > .task-fullview { display: none; }
 
     &.expanded {
       .content > .description {
