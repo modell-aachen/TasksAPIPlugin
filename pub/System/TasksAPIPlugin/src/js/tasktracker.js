@@ -41,9 +41,9 @@
       var $create = $filter.find('.tasks-btn-create');
 
       var handleCreate = function() {
-        $editor.taskEditor({ form: opts.form }).done(function(type, data) {
-          if (type === save) {
-            opts.container.append(createTaskElement(data));
+        $editor.taskEditor({ form: opts.form, context: opts.context }).done(function(type, data) {
+          if (type === 'save') {
+            opts.container.append(createTaskElement(data, opts));
           }
         }).fail(error);
         return false;
@@ -91,7 +91,7 @@
       var $task = evt.data;
       $('#task-editor').taskEditor({ id: $task.data('id') }).done(function(type, data) {
         if (type === 'save') {
-          $task.replaceWith(createTaskElement(data));
+          $task.replaceWith(createTaskElement(data, opts));
         }
       }).fail(function(type, msg) {
         error(msg);

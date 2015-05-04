@@ -1,5 +1,5 @@
 %TMPL:DEF{"tasksapi::editor"}%<!--tasksapi::editor-->
-<div class="jqUIDialog task-editor">
+<div class="task-editor">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   hidden="(Created|Author|Parent|TopicType|Context)"
@@ -17,7 +17,7 @@
   footer=""
   format="<div class=\"$name\"><label><span>$title$mandatory</span>$edit</label></div>"
 }%
-%IF{"'%TASKINFO{option="allowupload"}%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
+%IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
   <div>
     <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
     <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>

@@ -339,6 +339,7 @@ sub restMultiUpdate {
 sub _enrich_data {
     my $task = shift;
     my $tpl = shift || 'tasksapi::grid::task';
+    my $tplFile = shift || 'TasksAPI';
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
     my $result = {
@@ -387,6 +388,7 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
+    Foswiki::Func::loadTemplate($tplFile);
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
 
     $result;
@@ -450,6 +452,7 @@ sub restLease {
     } else {
         Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
     }
+    Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
 
     Foswiki::Func::loadTemplate( $r->{template} || 'TasksAPI' );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || 'tasksapi::editor' );

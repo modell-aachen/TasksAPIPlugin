@@ -17,7 +17,7 @@
     padding: 0;
 
     > div {
-      padding: $editor-padding;
+      padding: #{$editor-padding/2};
 
       &:first-child {
         padding-top: 5px;

@@ -18,7 +18,8 @@
 
     var def = $.Deferred();
 
-    var data = delete opts.data;
+    var data = opts.data;
+    delete opts.data;
     if (!data) {
       data = { fields: {} };
     }
@@ -45,14 +46,18 @@
       $this.trigger( afterEdit );
     }).fail(function(msg) {
       def.reject('lease', msg);
-    });
+    }).always($.unblockUI);
 
     var closeEditor = function() {
       $this.dialog('close');
     };
 
     var handleCancel = function() {
-      $this.find('.qw-dnd-upload').clearQueue();
+      var $up = $this.find('.qw-dnd-upload');
+      if ($up.length) {
+        $up.clearQueue();
+      }
+      closeEditor();
       var taskid;
       var task = $this.data('task');
       if (!task) {
@@ -61,7 +66,6 @@
       }
       task = task.data('task_data');
       taskid = task.id;
-      closeEditor();
 
       $.blockUI();
       releaseTopic({ id: taskid }).always( $.unblockUI ).fail( function( msg ) {
@@ -86,8 +90,9 @@
       }
 
       $.blockUI();
-      $this.find('.qw-dnd-upload').on('queueEmpty', function() {
-        if ( $this.data('new') === true ) {
+
+      var doSaveFoobar = function() {
+        if (!data.id) {
           var now = moment();
           task.form = opts.form;
           task.Context = opts.context;
@@ -111,9 +116,15 @@
           closeEditor();
           def.resolve('save', response.data);
         }).always( $.unblockUI );
-      });
+      };
 
-      $this.find('.qw-dnd-upload').upload();
+      var $up = $this.find('.qw-dnd-upload');
+      if ($up.length) {
+        $up.on('queueEmpty', doSaveFoobar);
+        $up.upload();
+      } else {
+        doSaveFoobar();
+      }
       return false;
     };
 
