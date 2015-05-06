@@ -366,6 +366,8 @@ sub _enrich_data {
     }
 
     foreach my $a (@{$result->{attachments}}) {
+        next if ref($a->{user});
+
         $a->{user} = {
             cuid => $a->{user},
             wikiusername => Foswiki::Func::getWikiUserName($a->{user}),
@@ -398,14 +400,14 @@ sub tagSearch {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     my @res;
+    delete $params->{_RAW};
     eval {
-        @res = _query(%$params);
+        @res = _query(query => { %$params });
     };
     if ($@) {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
 
-    my $enrich_data = sub {};
     @res = map { _enrich_data($_, $params->{tasktemplate}) } @res;
     return encode_json({status => 'ok', data => \@res});
 }
@@ -601,7 +603,7 @@ sub tagGrid {
     $currentOptions = \%settings;
 
     eval {
-        $query = decode_json($query)
+        $query = decode_json($query);
     };
     if ($@) {
         my $err = $@;
