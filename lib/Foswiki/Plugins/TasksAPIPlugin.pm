@@ -613,6 +613,7 @@ sub tagGrid {
     }
     $query->{Context} = $ctx if $ctx && !exists $query->{Context};
     $query->{Parent} = $parent if $parent && !exists $query->{Parent};
+    $query->{Status} = 'open' if !exists $query->{Status};
 
     my @tasks = _query(
         query => $query,

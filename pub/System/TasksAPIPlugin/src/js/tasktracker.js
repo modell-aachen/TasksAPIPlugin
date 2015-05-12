@@ -182,8 +182,7 @@
     }
 
     var qopts = {
-      query: opts.query,
-      Status: query.Status,
+      query: query,
       form: opts.form,
       context: opts.context,
       editorTemplate: opts.editorTemplate,
