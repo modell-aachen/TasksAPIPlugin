@@ -54,7 +54,7 @@
         opts.currentState = $select.val();
         opts.container.empty();
 
-        loadTasks( $this, opts.currentState, true );
+        loadTasks( $this, opts.currentState, false );
       };
 
       $create.on( 'click', handleCreate );
@@ -84,12 +84,30 @@
       container = opts.container;
     }
 
+    if ( opts.query ) {
+      var json = $.parseJSON( opts.query );
+      if ( json.Status && opts.currentState ) {
+        json.Status = opts.currentState;
+        opts.query = JSON.stringify( json );
+      }
+    }
+
     var $tasks = container.parent();
     var $grid = $tasks.parent();
 
     opts.onEditClicked = function( evt ) {
+      var edopts = {};
+      for(var p in opts ) {
+        if ( /string|number|boolean/.test( typeof opts[p] ) ) {
+          edopts[p] = opts[p];
+        }
+      }
+
       var $task = evt.data;
-      $('#task-editor').taskEditor({ id: $task.data('id') }).done(function(type, data) {
+      edopts.id = $task.data('id');
+      edopts.data = task;
+      var task = $.parseJSON( $task.find('.task-data').text() );
+      $('#task-editor').taskEditor(edopts).done(function(type, data) {
         if (type === 'save') {
           $task.replaceWith(createTaskElement(data, opts));
         }
@@ -147,19 +165,37 @@
     };
 
     $.extend(query, $.parseJSON(opts.query));
-
     if ( !/^(1|true)$/i.test( opts.stateless ) && status !== 'all' ) {
       query.Status = status;
     } else {
-      query.Status = ['open', 'closed'];
+      if ( opts.currentState !== 'all' ) {
+        query.Status = [opts.currentState];
+      } else {
+        query.Status = ['open', 'closed'];
+      }
     }
+
     if (parent) {
       query.Parent = parent;
     } else {
       query.Parent = '';
     }
 
-    $.taskapi.get(query, fetchSize, opts.page).always(function() {
+    var qopts = {
+      query: opts.query,
+      Status: query.Status,
+      form: opts.form,
+      context: opts.context,
+      editorTemplate: opts.editorTemplate,
+      taskFullTemplate: opts.taskFullTemplate,
+      taskTemplate: opts.taskTemplate,
+      templateFile: opts.templateFile,
+      pageSize: opts.pageSize,
+      page: opts.page,
+      order: opts.order
+    };
+
+    $.taskapi.get(qopts).always(function() {
       $.unblockUI();
     }).done( function( response ) {
       _.each( response.data, function(entry) {

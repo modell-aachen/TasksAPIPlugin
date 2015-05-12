@@ -7,7 +7,7 @@
     ].join('');
 
     return url + (/^\//.test( endpoint ) ? endpoint : '/' + endpoint);
-  };
+  }
 
   function postTask( action, task ) {
     var deferred = $.Deferred();
@@ -46,21 +46,20 @@
       return postTask( 'create', data );
     },
 
-    get: function( query, limit, offset, sort ) {
-      if ( !query ) query = {};
-      var queryopts = { query: query };
-      queryopts.limit = limit || 999999;
-      queryopts.offset = offset || 0;
-      if ( sort ) {
-        queryopts.order = sort;
+    get: function(queryopts) {
+      if ( typeof queryopts.query === typeof '' ) {
+        queryopts.query = $.parseJSON(queryopts.query);
       }
 
       var deferred = $.Deferred();
       var url = restEndpoint('/TasksAPIPlugin/search');
 
       $.ajax({
-        url: url + '?request=' + JSON.stringify(queryopts),
-        type: 'GET',
+        url: url,
+        type: 'POST',
+        data: {
+          request: JSON.stringify(queryopts)
+        },
         dataType: 'json',
         error: function( xhr, status, err ) {
           deferred.reject({

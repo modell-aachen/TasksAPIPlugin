@@ -1,7 +1,12 @@
+#task-editor {
+  overflow-x: hidden;
+}
+
 .ui-dialog[role="dialog"][aria-labelledby|="ui-dialog-title-task-editor"] {
   border-radius: 6px;
   box-shadow: 3px 3px 3px rgba(#000, .3);
   min-width: 555px;
+  padding: 10px 20px 10px 0;
   z-index: 1001;
 
   & ~ .ui-widget-overlay {
@@ -11,75 +16,6 @@
 
   > .ui-dialog-titlebar {
     display: none;
-  }
-
-  .task-editor {
-    padding: 0;
-
-    > div {
-      padding: #{$editor-padding/2};
-
-      &:first-child {
-        padding-top: 5px;
-      }
-
-      &:last-child {
-        border-top: 1px solid #cecece;
-        padding-top: 20px;
-        padding-bottom: 20px;
-      }
-
-      > .Status,
-        .Reminder,
-        .Prioritize {
-        display: inline-block;
-      }
-    }
-
-    label > span {
-      color: #727272;
-      display: block;
-      font-size: 13px;
-      font-weight: $label-font-weight;
-      // text-transform: $label-text-transform;
-    }
-
-    div.datepicker {
-      label > :not(:first-child) {
-        display: inline-block;
-      }
-
-      label > input {
-        width: 250px;
-      }
-    }
-
-    input, select, textarea {
-      border-color: #cecece;
-      border-radius: 0;
-      border-width: 1px;
-      color: $input-inactive-color;
-      padding: $input-padding;
-
-      &:focus {
-        background: #fff;
-      }
-    }
-
-    input, textarea {
-      width: 515px;
-    }
-
-    .jqTextboxListValue {
-      background-color: $light-blue;
-      background-image: url('../assets/user.png');
-      background-position: 6px center;
-      background-repeat: no-repeat;
-      background-size: 12px;
-      border-radius: $global-radius;
-      color: $blue;
-      padding: 5px 15px 5px 25px;
-    }
   }
 
   .hidden {
@@ -131,6 +67,56 @@
       background-color: #f3f3f3;
       color: maroon;
     }
+  }
+}
+
+.task-editor {
+  padding: 0;
+
+  > div {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-top: 30px;
+    }
+  }
+
+  .foswikiEditFormDateField {
+    width: 50%;
+  }
+
+  label > span:first-child {
+    color: #727272;
+    display: block;
+    font-size: 13px;
+    font-weight: $label-font-weight;
+  }
+
+  input, select, textarea {
+    border-color: #cecece;
+    border-radius: 0;
+    border-width: 1px;
+    color: $input-inactive-color;
+    padding: $input-padding;
+
+    &:focus {
+      background: #fff;
+    }
+  }
+
+  input, textarea {
+    width: 515px;
+  }
+
+  .jqTextboxListValue {
+    background-color: $light-blue;
+    background-image: url('../assets/user.png');
+    background-position: 6px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+    border-radius: $global-radius;
+    color: $blue;
+    padding: 5px 15px 5px 25px;
   }
 }
 

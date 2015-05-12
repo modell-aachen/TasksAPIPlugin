@@ -4,6 +4,9 @@
   $.fn.taskEditor = function(opts) {
     if (this.length === 0) { return; }
     var $this = this;
+    if ( opts.id ) {
+      $this.data('id', opts.id);
+    }
 
     if (!$this.is('.task-editor-init')) {
       $this.dialog({
@@ -28,6 +31,12 @@
     if( beforeEdit.isDefaultPrevented() ) {
       def.resolve('cancel_plugin', data);
       return def.promise();
+    }
+
+    var evtResult = beforeEdit.result;
+    if ( _.isObject( evtResult ) ) {
+      delete evtResult.id;
+      $.extend(opts, evtResult);
     }
 
     $.blockUI();
@@ -62,7 +71,7 @@
       var task = $this.data('task');
       if (!task) {
         def.resolve('cancel');
-        return;
+        return false;
       }
       task = task.data('task_data');
       taskid = task.id;
@@ -73,6 +82,8 @@
       }).done( function() {
         def.resolve('cancel', task);
       });
+
+      return false;
     };
 
     var handleSave = function() {
@@ -90,10 +101,8 @@
       }
 
       $.blockUI();
-
-      var doSaveFoobar = function() {
-        if (!data.id) {
-          var now = moment();
+      var doSaveTask = function() {
+        if (!task.id) {
           task.form = opts.form;
           task.Context = opts.context;
 
@@ -120,10 +129,10 @@
 
       var $up = $this.find('.qw-dnd-upload');
       if ($up.length) {
-        $up.on('queueEmpty', doSaveFoobar);
+        $up.on('queueEmpty', doSaveTask);
         $up.upload();
       } else {
-        doSaveFoobar();
+        doSaveTask();
       }
       return false;
     };
@@ -148,7 +157,9 @@
     };
 
     var readEditor = function() {
-      var data = {};
+      var data = {
+        id: $this.data('id')
+      };
 
       var hasError = false;
       $this.find('input[name],select[name],textarea[name]').each(function() {
