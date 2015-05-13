@@ -6,6 +6,9 @@
     var $this = this;
     if ( opts.id ) {
       $this.data('id', opts.id);
+      if ( opts.trackerId ) {
+        $this.data('trackerId', opts.trackerId);
+      }
     }
 
     if (!$this.is('.task-editor-init')) {
@@ -250,11 +253,18 @@
     return handleLease( 'lease', payload );
   };
 
+  var loadedScripts = [];
   var loadScript = function( id, script ) {
+    if ( loadedScripts.indexOf(id) !== - 1) {
+      return;
+    }
+
+    loadedScripts.push(id);
     if ( /CKEDITORPLUGIN::SCRIPTS/.test( id ) ) {
       var scripts = $(script).wrap('<div></div>').find('script');
       var loadNext = function() {
-        if (scripts.length === 0) { return; }
+        if (!scripts || scripts.length === 0) { return; }
+
         var $script = scripts.shift();
         var src = $script.attr('src');
         if ( src ) {

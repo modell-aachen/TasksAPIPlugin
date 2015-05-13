@@ -105,8 +105,13 @@
 
       var $task = evt.data;
       edopts.id = $task.data('id');
+      edopts.trackerId = $tracker.attr('id');
       edopts.data = task;
       var task = $.parseJSON( $task.find('.task-data').text() );
+      if ( task.fields.Description ) {
+        task.fields.Description.value = decodeURIComponent( unescape(task.fields.Description.value) );
+      }
+
       $('#task-editor').taskEditor(edopts).done(function(type, data) {
         if (type === 'save') {
           $task.replaceWith(createTaskElement(data, opts));
@@ -150,7 +155,14 @@
     if (initial) {
       var results = [];
       $(container).children('.task').each(function(idx, e) {
-        var data = $.parseJSON( $(e).children('.task-data').text().replace(/\n/g, '') );
+        var data = $.parseJSON( $(e).children('.task-data').text() );
+
+        if ( data.fields.Description ) {
+          data.fields.Description.value = decodeURIComponent( unescape(data.fields.Description.value) );
+          var $desc = $(e).find('.description');
+          $desc.text(decodeURIComponent( unescape($desc.text()) ));
+        }
+
         initTaskElement($(e), data, opts);
         results.push(data);
       });
@@ -198,7 +210,10 @@
       $.unblockUI();
     }).done( function( response ) {
       _.each( response.data, function(entry) {
-        container.append( createTaskElement(entry, opts) );
+        var $task = createTaskElement(entry, opts);
+        var $desc = $task.find('.description');
+        $desc.text(decodeURIComponent( unescape($desc.text()) ));
+        container.append( $task );
       });
 
       deferred.resolve( response.data );
@@ -269,18 +284,29 @@
     }
   };
 
+  var toggleFullview = function() {};
+
   $(document).ready( function() {
     var onTaskClick = function( evt, task ) {
-      $(task).toggleClass('expanded');
+      var $task = $(task);
+      var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
+
+
+      var $full = $task.find('.task-full-wrapper');
+      var $desc = $task.find('.task-wrapper .description');
+      if ( !$full.html() ) {
+        $full.html( '<div>' + txt + '</div>' );
+        $desc.css('opacity', 0);
+      } else {
+        $full.empty();
+        $desc.css('opacity', 1);
+      }
     };
 
     $('.tasktracker').each( function() {
       var $tracker = $(this);
       $tracker.tasksGrid();
-
-      if ( /^1$/.test( $tracker.attr('data-expand') ) ) {
-        $tracker.on( 'taskClick', onTaskClick );
-      }
+      $tracker.on( 'taskClick', onTaskClick );
     });
   });
 }(jQuery, window._, window.document, window));

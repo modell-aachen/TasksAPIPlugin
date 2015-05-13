@@ -705,6 +705,8 @@ sub tagInfo {
         return $val;
     }
 
+    $task->{fields}->{Description} = Foswiki::urlEncode( $task->{fields}->{Description} );
+
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
