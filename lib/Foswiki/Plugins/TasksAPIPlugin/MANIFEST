@@ -3,6 +3,7 @@ data/System/TasksAPIPlugin.txt 0644 Docs
 data/System/TasksAPIChangedMailTemplate.txt 0644 Mail notify for changed task
 data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPITemplate.txt 0644 Task form
+lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0644
 lib/Foswiki/Plugins/TasksAPIPlugin/Job.pm 0644
