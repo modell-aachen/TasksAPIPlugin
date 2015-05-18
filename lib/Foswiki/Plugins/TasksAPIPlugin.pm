@@ -709,6 +709,7 @@ sub tagInfo {
 
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
+        return $task->id if $meta eq 'id';
         return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
     }
