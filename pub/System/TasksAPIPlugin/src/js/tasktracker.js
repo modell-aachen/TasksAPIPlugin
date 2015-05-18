@@ -113,7 +113,18 @@
 
       $('#task-editor').taskEditor(edopts).done(function(type, data) {
         if (type === 'save') {
-          $task.replaceWith(createTaskElement(data, opts));
+
+          var $newTask = $(createTaskElement(data, opts));
+          var $desc = $newTask.find('.description');
+          $desc.text(decodeURIComponent(unescape($desc.text())));
+
+          // ToDo. Hotfix...
+          if ( $newTask.find('.full-description').length === 0 ) {
+            $('<div class="full-description"></div>').appendTo($newTask.find('.task-fullview'));
+          }
+
+          $newTask.find('.full-description').text( data.fields.Description.value );
+          $task.replaceWith( $newTask );
         }
       }).fail(function(type, msg) {
         error(msg);

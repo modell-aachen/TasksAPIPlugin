@@ -92,6 +92,14 @@
     var handleSave = function() {
       var task = readEditor();
 
+      if ( opts.tasktemplate ) {
+        task.tasktemplate = opts.tasktemplate;
+      }
+
+      if ( opts.template ) {
+        task.template = opts.template;
+      }
+
       var beforeSave = $.Event( 'beforeSave' );
       $this.trigger( beforeSave, task ); 
       if( beforeSave.isDefaultPrevented() ) {

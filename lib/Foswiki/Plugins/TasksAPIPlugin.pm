@@ -278,7 +278,7 @@ sub restCreate {
     return to_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, $q->param('tasktemplate')),
+        data => _enrich_data($res, $q->param('tasktemplate'), $q->param('template')),
     });
 }
 
@@ -289,7 +289,7 @@ sub restMultiCreate {
     my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
     return to_json({
         status => 'ok',
-        data => [map { _enrich_data($_, $q->param('tasktemplate')) } @res],
+        data => [map { _enrich_data($_, $q->param('tasktemplate'), $q->param('template')) } @res],
     });
 }
 
@@ -318,7 +318,7 @@ sub restUpdate {
 
     return to_json({
         status => 'ok',
-        data => _enrich_data($task, $q->param('tasktemplate')),
+        data => _enrich_data($task, $q->param('tasktemplate'), $q->param('template')),
     });
 }
 
@@ -330,7 +330,7 @@ sub restMultiUpdate {
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         $task->update(%$data);
-        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
+        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'), $q->param('template'))};
         $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if !$task->checkACL('change');
     }
     return to_json(\%res);
