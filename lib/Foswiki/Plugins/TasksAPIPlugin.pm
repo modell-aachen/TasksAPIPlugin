@@ -556,6 +556,7 @@ sub tagGrid {
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
+    my $order = $params->{order} || '';
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -575,6 +576,7 @@ sub tagGrid {
         id => $id,
         pageSize => $pageSize,
         query => $query,
+        order => $order,
         allowupload => $allowUpload,
         stateless => $stateless,
         templateFile => $templateFile,

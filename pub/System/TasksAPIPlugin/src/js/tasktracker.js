@@ -17,20 +17,17 @@
       var id = $this.attr('id');
       var json = $this.children('.settings').text();
       var opts = $.parseJSON( json );
-      var decoded = decodeURIComponent( opts.template );
-      var decodedNesting = decodeURIComponent( opts.nestingTemplate );
 
-      opts.template = _.template( decoded );
-      opts.nestingTemplate = _.template( decodedNesting );
+      // ToDo. implement...
       opts.canLoadMore = true;
       opts.page = 0;
+
       opts.cntHeight = $this.height();
       opts.container = $this.find('.tasks > div');
 
       opts.currentState = 'open';
       $this.data('tasktracker_options', opts);
       loadTasks( $this, opts.currentState, true );
-
       var $task_subbtn = $this.children('.task-subbtn-template').removeClass('task-subbtn-template').detach();
       opts.taskSubBtn = $task_subbtn;
 
@@ -106,8 +103,10 @@
       var $task = evt.data;
       edopts.id = $task.data('id');
       edopts.trackerId = $tracker.attr('id');
-      edopts.data = task;
+
       var task = $.parseJSON( $task.find('.task-data').text() );
+      edopts.data = task;
+
       if ( task.fields.Description ) {
         task.fields.Description.value = decodeURIComponent( unescape(task.fields.Description.value) );
       }
@@ -189,8 +188,6 @@
 
     if (parent) {
       query.Parent = parent;
-    } else {
-      query.Parent = '';
     }
 
     var qopts = {
@@ -205,6 +202,10 @@
       page: opts.page,
       order: opts.order
     };
+
+    if ( opts.order ) {
+      qopts.order = opts.order;
+    }
 
     $.taskapi.get(qopts).always(function() {
       $.unblockUI();
