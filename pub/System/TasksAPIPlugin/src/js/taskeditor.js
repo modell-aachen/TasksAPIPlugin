@@ -268,24 +268,7 @@
     }
 
     loadedScripts.push(id);
-    if ( /CKEDITORPLUGIN::SCRIPTS/.test( id ) ) {
-      var scripts = $(script).wrap('<div></div>').find('script');
-      var loadNext = function() {
-        if (!scripts || scripts.length === 0) { return; }
-
-        var $script = scripts.shift();
-        var src = $script.attr('src');
-        if ( src ) {
-          $.getScript( src ).then(loadNext);
-        } else {
-          $script.appendTo( $('head') );
-          loadNext();
-        }
-      };
-      loadNext();
-    } else {
-      $(script).appendTo( $('head') );
-    }
+    $(script).appendTo( $('head') );
   };
 
   var updateHead = function( data ) {

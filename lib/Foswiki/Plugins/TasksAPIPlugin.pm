@@ -694,6 +694,9 @@ sub tagInfo {
     if (my $field = $params->{field}) {
         my $val = $task->{fields}{$field} || '';
         if ($params->{shorten}) {
+            $val = Foswiki::urlDecode(Foswiki::urlDecode($val));
+            $val =~ s/<.+?>//g;
+
             $val = Encode::decode($Foswiki::cfg{Site}{CharSet}, $val);
             $val = substr($val, 0, $params->{shorten} - 3) ."..." if length($val) > ($params->{shorten} + 3); # a bit of fuzz
             $val = Encode::encode($Foswiki::cfg{Site}{CharSet}, $val);

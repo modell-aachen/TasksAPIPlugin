@@ -170,7 +170,8 @@
         if ( data.fields.Description ) {
           data.fields.Description.value = decodeURIComponent( unescape(data.fields.Description.value) );
           var $desc = $(e).find('.description');
-          $desc.text(decodeURIComponent( unescape($desc.text()) ));
+          var txt = unescape($desc.text());
+          $desc.text( decodeURIComponent(txt) );
         }
 
         initTaskElement($(e), data, opts);
