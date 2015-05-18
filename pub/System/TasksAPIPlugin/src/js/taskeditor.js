@@ -23,12 +23,12 @@
     }
 
     var def = $.Deferred();
-
     var data = opts.data;
     delete opts.data;
     if (!data) {
       data = { fields: {} };
     }
+
     var beforeEdit = $.Event( 'beforeEdit' );
     $this.trigger( beforeEdit, data );
     if( beforeEdit.isDefaultPrevented() ) {
