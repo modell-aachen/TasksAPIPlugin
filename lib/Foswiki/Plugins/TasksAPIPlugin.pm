@@ -441,9 +441,13 @@ sub restLease {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
         my $lease = $task->{meta}->getLease();
         if ( $lease ) {
-            my $cuid = $lease->{user};
-            my $ccuid = $session->{user};
-            return to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
+            if ( $lease->{expires} < time ) {
+                $task->{meta}->clearLease();
+            } else {
+                my $cuid = $lease->{user};
+                my $ccuid = $session->{user};
+                return to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
+            }
         }
 
         my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
