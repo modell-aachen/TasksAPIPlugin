@@ -38,7 +38,7 @@
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
     <div class="content">
-      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %TASKINFO{field="Created"}%</span></div>
+      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %TASKINFO{field="Created" format="$day $month $year ($hour:$min)"}%</span></div>
       <div class="description"><span>%TASKINFO{field="Description" shorten="140"}%</span></div>
       <div class="assigned"><span>%TASKINFO{field="AssignedTo"}%</span></div>
       <div class="due"><span>%TASKINFO{field="DueDate"}%</span></div>

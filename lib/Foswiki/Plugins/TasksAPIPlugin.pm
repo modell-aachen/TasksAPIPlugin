@@ -705,6 +705,11 @@ sub tagInfo {
             $val = substr($val, 0, $params->{shorten} - 3) ."..." if length($val) > ($params->{shorten} + 3); # a bit of fuzz
             $val = Encode::encode($Foswiki::cfg{Site}{CharSet}, $val);
         }
+        if ($params->{format}) {
+            if ( $val =~ /^\d+$/ ) {
+                $val = Foswiki::Time::formatTime($val, $params->{format});
+            }
+        }
         unless (Foswiki::isTrue($params->{escape}, 1)) {
             $val =~ s/&/&amp;/g;
             $val =~ s/</&lt;/g;
