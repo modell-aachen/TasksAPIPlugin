@@ -32,3 +32,4 @@ pub/System/TasksAPIPlugin/css/tasktracker.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
 tools/taskcron 0755
 tools/taskindex 0755
+tools/virtualhosts-taskindex 0755
