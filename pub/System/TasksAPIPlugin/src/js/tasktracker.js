@@ -237,7 +237,7 @@
 
   var timeout = null;
   var raiseClicked = function( evt ) {
-    if ( $(evt.target).hasClass('btn-edit') ) {
+    if ( $(evt.target).hasClass('btn-edit') | $(evt.target).hasClass('btn-expander')) {
       return false;
     }
 
@@ -262,11 +262,31 @@
     $tracker.trigger( taskDblClick, task ); 
   };
 
+  var toggleTaskExpanded = function(evt) {
+    var $btn = $(this);
+    $btn.toggleClass('expanded');
+
+    var $task = $(evt.data);
+    $task.toggleClass('expanded');
+    var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
+
+    var $full = $task.find('.task-full-wrapper');
+    var $desc = $task.find('.task-wrapper .description');
+    if ( !$full.html() ) {
+      $full.html( '<div>' + txt + '</div>' );
+      $desc.css('opacity', 0);
+    } else {
+      $full.empty();
+      $desc.css('opacity', 1);
+    }
+  };
+
   var initTaskElement = function($task, task, opts) {
     $task.data('id', task.id);
     $task.data('task_data', task);
     $task.on('click', raiseClicked );
     $task.find('.btn-edit').on('click', $task, opts.onEditClicked);
+    $task.find('.btn-expander').on('click', $task, toggleTaskExpanded );
 
     if ($task.is('.task-nesting')) {
       $task.find('.task-children-summary .add').append(opts.taskSubBtn.clone());
@@ -297,29 +317,10 @@
     }
   };
 
-  var toggleFullview = function() {};
-
   $(document).ready( function() {
-    var onTaskClick = function( evt, task ) {
-      var $task = $(task);
-      var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
-
-
-      var $full = $task.find('.task-full-wrapper');
-      var $desc = $task.find('.task-wrapper .description');
-      if ( !$full.html() ) {
-        $full.html( '<div>' + txt + '</div>' );
-        $desc.css('opacity', 0);
-      } else {
-        $full.empty();
-        $desc.css('opacity', 1);
-      }
-    };
-
     $('.tasktracker').each( function() {
       var $tracker = $(this);
       $tracker.tasksGrid();
-      $tracker.on( 'taskClick', onTaskClick );
     });
   });
 }(jQuery, window._, window.document, window));
