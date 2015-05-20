@@ -9,6 +9,11 @@
 ---++ Installation
 %$INSTALL_INSTRUCTIONS%
 
+Components to install via package-mangager:
+
+<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl</verbatim>
+
+
 <br />
 ---++ Usage
 <verbatim>
