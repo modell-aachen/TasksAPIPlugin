@@ -709,6 +709,8 @@ sub tagInfo {
             if ( $val =~ /^\d+$/ ) {
                 $val = Foswiki::Time::formatTime($val, $params->{format});
             }
+
+            $val =~ s/([^\d\s]+)/%MAKETEXT\{$1\}%/;
         }
         unless (Foswiki::isTrue($params->{escape}, 1)) {
             $val =~ s/&/&amp;/g;
