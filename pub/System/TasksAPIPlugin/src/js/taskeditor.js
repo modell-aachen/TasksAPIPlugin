@@ -50,7 +50,6 @@
       $this.html(response.editor);
       $this.find('.tasks-btn-save').click(handleSave);
       $this.find('.tasks-btn-cancel').click(handleCancel);
-
       writeEditor( data );
       $this.dialog('open');
 
@@ -69,22 +68,20 @@
       if ($up.length) {
         $up.clearQueue();
       }
-      closeEditor();
-      var taskid;
-      var task = $this.data('task');
-      if (!task) {
+
+      var taskid = opts.id;
+      if (!taskid) {
+        closeEditor();
         def.resolve('cancel');
         return false;
       }
-      task = task.data('task_data');
-      taskid = task.id;
 
       $.blockUI();
       releaseTopic({ id: taskid }).always( $.unblockUI ).fail( function( msg ) {
         def.reject('cancel_clearlease', msg);
       }).done( function() {
-        def.resolve('cancel', task);
-      });
+        def.resolve('cancel', taskid);
+      }).always( closeEditor );
 
       return false;
     };

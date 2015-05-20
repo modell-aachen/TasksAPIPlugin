@@ -496,7 +496,7 @@ sub restRelease {
     my $r = decode_json($q->param('request') || '{}');
 
     return to_json({status => 'ok'}) unless $r->{id};
-    my $task = Foswiki::Plugins::TasksAPIPlugin::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
 
     my $lease = $task->{meta}->getLease();
     if ( $lease ) {
