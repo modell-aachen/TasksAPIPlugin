@@ -9,27 +9,27 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 
-use Date::Manip;
+# use Date::Manip;
 use JSON;
 
 *_db = \&Foswiki::Plugins::TasksAPIPlugin::db;
 
 sub create {
-    my %params = @_;
-    my $db = _db();
-    my ($tid, $time, $type) = delete @params{'task_id', 'time', 'type'};
-    if (my $task = delete $params{task}) {
-        $tid = $task->id;
-    }
-    if (ref $time && $time->isa('Date::Manip::Delta')) {
-        my $date = new Date::Manip::Date;
-        $date->parse('now');
-        $date->calc($time);
-        $time = $date->printf('%s');
-    } elsif (ref $time && $time->isa('Date::Manip::Date')) {
-        $time = $time->printf('%s');
-    }
-    $db->do("INSERT INTO jobs (task_id, job_time, job_type, parameters) VALUES(?,?,?,?)", {}, $tid, $time, $type, encode_json(\%params));
+    # my %params = @_;
+    # my $db = _db();
+    # my ($tid, $time, $type) = delete @params{'task_id', 'time', 'type'};
+    # if (my $task = delete $params{task}) {
+    #     $tid = $task->id;
+    # }
+    # if (ref $time && $time->isa('Date::Manip::Delta')) {
+    #     my $date = new Date::Manip::Date;
+    #     $date->parse('now');
+    #     $date->calc($time);
+    #     $time = $date->printf('%s');
+    # } elsif (ref $time && $time->isa('Date::Manip::Date')) {
+    #     $time = $time->printf('%s');
+    # }
+    # $db->do("INSERT INTO jobs (task_id, job_time, job_type, parameters) VALUES(?,?,?,?)", {}, $tid, $time, $type, encode_json(\%params));
 }
 
 sub process {

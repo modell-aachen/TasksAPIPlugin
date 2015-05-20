@@ -9,7 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 
-use Date::Manip;
+# use Date::Manip;
 use Digest::SHA;
 use JSON;
 
@@ -427,16 +427,16 @@ sub _postCreate {
     # TODO
 }
 sub _postClose {
-    my $self = shift;
-    if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
-        my $date = new Date::Manip::Date;
-        $date->parse($reopen);
-        Foswiki::Plugins::TasksAPIPlugin::Job::create(
-            type => 'reopen',
-            time => $date,
-            task => $self,
-        );
-    }
+    # my $self = shift;
+    # if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
+    #     my $date = new Date::Manip::Date;
+    #     $date->parse($reopen);
+    #     Foswiki::Plugins::TasksAPIPlugin::Job::create(
+    #         type => 'reopen',
+    #         time => $date,
+    #         task => $self,
+    #     );
+    # }
 }
 sub _postReopen {
     # TODO
