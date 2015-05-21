@@ -426,7 +426,7 @@ sub restSearch {
     if ($@) {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    @res = map { _enrich_data($_, $req->{tasktemplate}, $req->{templatefile}) } @res;
+    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $req->{templatefile}) } @res;
     return to_json({status => 'ok', data => \@res});
 }
 
@@ -545,7 +545,7 @@ sub tagGrid {
     my $system = $Foswiki::cfg{SystemWebName} || "System";
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $template = $params->{template} || 'tasksapi::grid';
-    my $taskTemplate = $params->{tasktemplate} || 'tasksapi::grid::task';
+    my $taskTemplate = $params->{tasktemplate};
     my $taskFullTemplate = $params->{taskfulltemplate} || 'tasksapi::viewer';
     my $editorTemplate = $params->{editortemplate} || 'tasksapi::editor';
     my $captionTemplate = $params->{captiontemplate};
@@ -629,7 +629,7 @@ sub tagGrid {
     );
     Foswiki::Func::setPreferencesValue("TASKSGRID_taskfulltemplate", $taskFullTemplate);
     for my $task (@tasks) {
-        $task = _renderTask($topicObject, $taskTemplate, $task);
+        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
     }
 
     my %tmplAttrs = (

@@ -21,10 +21,6 @@
     align-items: stretch;
     padding: 0 3px;
 
-    &.faded {
-      opacity: 0.4;
-    }
-
     &.prioritized-Yes {
       border-left-color: $prioritized;
     }
@@ -42,10 +38,12 @@
         background-color: $hover-bg;
       }
 
-      div.assigned,
-      div.attachcount,
-      div.due {
-        background-color: $white !important;
+      .assigned,
+      .attachcount,
+      .due {
+        div {
+          background-color: $white !important;
+        }
       }
     }
 
@@ -54,12 +52,14 @@
       opacity: 1;
       pointer-events: auto;
     }
+
     > .task-data { display: none; }
     > .task-fullview { display: none; }
 
     &.expanded {
       .content > .description {
         max-height: 1000px;
+        overflow: auto;
         white-space: normal;
       }
     }
@@ -134,44 +134,6 @@
     }
   }
 
-  > .state {
-    @include flex($shrink: 0, $align: stretch, $order: -1);
-    width: 32px;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: 20px;
-
-    &.open, &.deleted {
-      background-image: url('../assets/task-open.png');
-    }
-
-    &.closed {
-      background-image: url('../assets/task-done.png');
-    }
-  }
-
-  > .nest {
-    @include flex($shrink: 0, $align: stretch, $order: -2);
-    width: 32px;
-
-    &.nest-active {
-      line-height: #{$task-min-height - 6px};
-
-      // cursor: pointer;
-      > .expand {
-        transition: transform 0.3s ease-in-out;
-        transform: rotate(0deg);
-        display: inline-block;
-        &:before {
-          content: '▶';
-        }
-        &.contract {
-          transform: rotate(90deg);
-        }
-      }
-    }
-  }
-
   > .content {
     @include flex-container($wrap: wrap, $justify: space-between);
     @include flex($grow: 2, $align: center);
@@ -194,19 +156,30 @@
     > div {
       padding: 3px;
       font-size: 13px;
+      @include flex($grow: 1, $basis: 0);
 
-      &.attachcount {
-        background-color: $light-blue;
-        background-image: url('../assets/file.png');
-        background-position: 6px center;
-        background-repeat: no-repeat;
-        background-size: 12px;
-        border-radius: $global-radius;
-        color: $blue;
-        padding: 0 6px 0 25px;
+      > div {
+        display: inline-block;
       }
 
-      &.assigned {
+      &.attachcount {
+        @include flex($basis: main-size, $grow: 0);
+        flex-shrink: 1;
+        max-width: 50px;
+
+        div {
+          background-color: $light-blue;
+          background-image: url('../assets/file.png');
+          background-position: 6px center;
+          background-repeat: no-repeat;
+          background-size: 12px;
+          border-radius: $global-radius;
+          color: $blue;
+          padding: 0 6px 0 25px;
+        }
+      }
+
+      &.assigned div {
         background-color: $light-blue;
         background-image: url('../assets/user.png');
         background-position: 6px center;
@@ -217,7 +190,7 @@
         padding: 0 6px 0 25px;
       }
 
-      &.due {
+      &.due div {
         background-color: $light-blue;
         background-image: url('../assets/clock-blue.png');
         background-position: 6px center;
@@ -229,7 +202,7 @@
       }
 
       &.caption {
-        @include flex($order: -1);
+        @include flex($order: -1, $grow: 2);
         width: 100%;
 
         > .title {
@@ -244,14 +217,17 @@
         }
       }
 
-      &.description {
+      &.description,
+      &.description-expanded {
         @include flex($grow: 2);
 
         height: auto;
         max-height: 25px;
         transition: max-height 0.3s ease-in-out;
-        width: 1px;
+        min-width: 50%;
         max-width: 50%;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
       }
     }

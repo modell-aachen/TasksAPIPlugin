@@ -88,17 +88,22 @@
 
       > .text {
         @include flex($grow: 2);
+        min-width: 50%;
         max-width: 50%;
       }
 
       > .assigned {
-        @include flex();
-        margin-left: -50px;
+        @include flex($grow: 1);
+        // margin-left: -50px;
       }
 
       > .due,
       > .attachcount {
-        @include flex();
+        @include flex($grow: 1);
+      }
+
+      > .attachcount {
+        max-width: 50px;
       }
 
       .text,
