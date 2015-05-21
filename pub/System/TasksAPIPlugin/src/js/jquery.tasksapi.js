@@ -58,7 +58,8 @@
         url: url,
         type: 'POST',
         data: {
-          request: JSON.stringify(queryopts)
+          request: JSON.stringify(queryopts),
+          topic: foswiki.preferences.WEB +'.'+ foswiki.preferences.TOPIC
         },
         dataType: 'json',
         error: function( xhr, status, err ) {

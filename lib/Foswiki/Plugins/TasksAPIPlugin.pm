@@ -415,18 +415,18 @@ sub tagSearch {
 sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
     my @res;
+    my $req;
     my $q;
     eval {
         $q = $session->{request};
-        my $req = decode_json($q->param('request') || '{}');
+        $req = decode_json($q->param('request') || '{}');
         delete $req->{acl};
         @res = _query(%$req);
     };
     if ($@) {
         return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    @res = map { _enrich_data($_, $q->param('tasktemplate')) } @res;
-    #return JSON->new->pretty->utf8->encode({status => 'ok', data => \@res});
+    @res = map { _enrich_data($_, $req->{tasktemplate}, $req->{templatefile}) } @res;
     return to_json({status => 'ok', data => \@res});
 }
 
@@ -710,7 +710,7 @@ sub tagInfo {
                 $val = Foswiki::Time::formatTime($val, $params->{format});
             }
 
-            $val =~ s/([^\d\s]+)/%MAKETEXT\{$1\}%/;
+            $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
         unless (Foswiki::isTrue($params->{escape}, 1)) {
             $val =~ s/&/&amp;/g;

@@ -207,9 +207,9 @@
       form: opts.form,
       context: opts.context,
       editorTemplate: opts.editorTemplate,
-      taskFullTemplate: opts.taskFullTemplate,
-      taskTemplate: opts.taskTemplate,
-      templateFile: opts.templateFile,
+      taskfulltemplate: opts.taskFullTemplate,
+      tasktemplate: opts.taskTemplate,
+      templatefile: opts.templateFile,
       pageSize: opts.pageSize,
       page: opts.page,
       order: opts.order
@@ -267,6 +267,11 @@
     $btn.toggleClass('expanded');
 
     var $task = $(evt.data);
+    var isExpanding = $task.hasClass('expanded');
+    var e = $.Event( isExpanding ? 'taskCollapsing' : 'taskExpanding');
+    var $tracker = $task.closest('.tasktracker');
+    $tracker.trigger( e, $task );
+
     $task.toggleClass('expanded');
     var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
 
