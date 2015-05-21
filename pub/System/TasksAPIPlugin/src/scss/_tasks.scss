@@ -176,12 +176,19 @@
     @include flex-container($wrap: wrap, $justify: space-between);
     @include flex($grow: 2, $align: center);
 
-    &.deleted {
-      text-decoration: line-through !important;
+    &.deleted, {
+      text-decoration: line-through;
     }
 
     &.milestone-1 {
       color: maroon;
+    }
+
+    &.closed {
+      > div.caption,
+      > div.description {
+        text-decoration: line-through;
+      }
     }
 
     > div {
