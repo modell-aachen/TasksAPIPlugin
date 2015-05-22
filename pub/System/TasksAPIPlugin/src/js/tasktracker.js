@@ -267,10 +267,14 @@
     $btn.toggleClass('expanded');
 
     var $task = $(evt.data);
-    var isExpanding = $task.hasClass('expanded');
-    var e = $.Event( isExpanding ? 'taskCollapsing' : 'taskExpanding');
+    var data = {
+      isExpanded: $task.hasClass('expanded'),
+      container: $task
+    };
+
+    var e = $.Event('toggleExpand');
     var $tracker = $task.closest('.tasktracker');
-    $tracker.trigger( e, $task );
+    $tracker.trigger( e, data );
 
     $task.toggleClass('expanded');
     var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
@@ -290,14 +294,8 @@
     $task.data('id', task.id);
     $task.data('task_data', task);
     $task.on('click', raiseClicked );
-    $task.find('.btn-edit').on('click', $task, opts.onEditClicked);
-    $task.find('.btn-expander').on('click', $task, toggleTaskExpanded );
-
-    if ($task.is('.task-nesting')) {
-      $task.find('.task-children-summary .add').append(opts.taskSubBtn.clone());
-      $task.find('.task-child-add').click(opts.onAddChildClicked);
-      $task.find('.nest').click(opts.onToggleChildrenClicked);
-    }
+    $task.on('click', '.btn-edit', $task, opts.onEditClicked);
+    $task.on('click', '.btn-expander', $task, toggleTaskExpanded);
   };
 
   var createTaskElement = function(task, opts) {
@@ -323,9 +321,6 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').each( function() {
-      var $tracker = $(this);
-      $tracker.tasksGrid();
-    });
+    $('.tasktracker').tasksGrid();
   });
 }(jQuery, window._, window.document, window));
