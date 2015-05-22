@@ -34,7 +34,7 @@
 %TMPL:DEF{"tasksapi::grid::task"}%%{
 }%<div class="task prioritized-%TASKINFO{field="Prioritized"}%">
   <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
-  <div class="task-fullview">%TASKINFO{template="%TASKSGRID_taskfulltemplate%"}%</div>
+  <div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div>
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
     <div class="content">
