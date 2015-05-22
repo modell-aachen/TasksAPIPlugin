@@ -728,6 +728,7 @@ sub tagInfo {
         return $task->id if $meta eq 'id';
         return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
+        return scalar $task->children if $meta eq 'ChildCount';
     }
 
     if (my $tpl = $params->{template}) {
