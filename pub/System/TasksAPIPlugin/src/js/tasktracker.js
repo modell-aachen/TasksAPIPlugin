@@ -18,16 +18,14 @@
       var json = $this.children('.settings').text();
       var opts = $.parseJSON( json );
 
-      // ToDo. implement...
-      opts.canLoadMore = true;
-      opts.page = 0;
-
       opts.cntHeight = $this.height();
       opts.container = $this.find('.tasks > div');
 
       opts.currentState = 'open';
       $this.data('tasktracker_options', opts);
       loadTasks( $this, opts.currentState, true );
+
+      // ToDo: phase out
       var $task_subbtn = $this.children('.task-subbtn-template').removeClass('task-subbtn-template').detach();
       opts.taskSubBtn = $task_subbtn;
 
@@ -40,7 +38,7 @@
       var handleCreate = function() {
         $editor.taskEditor({ form: opts.form, context: opts.context }).done(function(type, data) {
           if (type === 'save') {
-            opts.container.append(createTaskElement(data, opts));
+            opts.container.append(createTaskElement(data));
           }
         }).fail(error);
         return false;
@@ -69,7 +67,6 @@
         }
       });
 
-      $this.on('click', '[data-tasksort]', this, sortTasks);
       return this;
     });
   };
@@ -93,76 +90,6 @@
     var $tasks = container.parent();
     var $grid = $tasks.parent();
 
-    opts.onEditClicked = function( evt ) {
-      var edopts = {};
-      for(var p in opts ) {
-        if ( /string|number|boolean/.test( typeof opts[p] ) ) {
-          edopts[p] = opts[p];
-        }
-      }
-
-      var $task = evt.data;
-      edopts.id = $task.data('id');
-      edopts.trackerId = $tracker.attr('id');
-
-      var task = $.parseJSON( $task.find('.task-data').text() );
-      edopts.data = task;
-
-      if ( task.fields.Description ) {
-        task.fields.Description.value = decodeURIComponent( unescape(task.fields.Description.value) );
-      }
-
-      $('#task-editor').taskEditor(edopts).done(function(type, data) {
-        if (type === 'save') {
-
-          var $newTask = $(createTaskElement(data, opts));
-          var $desc = $newTask.find('.description');
-          $desc.text(decodeURIComponent(unescape($desc.text())));
-
-          // ToDo. Hotfix...
-          if ( $newTask.find('.full-description').length === 0 ) {
-            $('<div class="full-description"></div>').appendTo($newTask.find('.task-fullview'));
-          }
-
-          $newTask.find('.full-description').text( data.fields.Description.value );
-          $task.replaceWith( $newTask );
-        }
-      }).fail(function(type, msg) {
-        error(msg);
-      });
-
-    };
-
-    opts.onAddChildClicked = function( evt ) {
-      var $editor = $tracker.data('tasktracker_editor');
-      $editor.data('subcontainer', $(this).closest('.task-children').children('.task-children-list'));
-      $editor.data('parent', $(this).closest('.task').data('id'));
-      $tracker.find('.tasks-btn-create').first().click();
-    };
-
-    opts.onToggleChildrenClicked = function( evt ) {
-      var $task = $(this).closest('.task');
-      var $ccontainer = $task.find('.task-children-list');
-      var $btn = $task.find('.nest').first().children();
-      if ($task.is('.children-expanded')) {
-        $ccontainer.empty();
-        $task.removeClass('children-expanded');
-        $btn.removeClass('contract');
-        return;
-      }
-      $task.addClass('children-expanded');
-      $btn.addClass('contract');
-      $.blockUI();
-      loadTasks($tracker, status, initial, $task.data('id'), $ccontainer).done(function() {
-      }).fail(function() {
-        $btn.removeClass('contract');
-        $task.removeClass('children-expanded');
-        error.apply(this, arguments);
-      }).always(function() {
-        $.unblockUI();
-      });
-    };
-
     if (initial) {
       var results = [];
       $(container).children('.task').each(function(idx, e) {
@@ -183,7 +110,6 @@
     }
 
     $.blockUI();
-    var fetchSize = opts.pageSize * (initial === true ? 2 : 1);
     var query = {
       Context: opts.context,
     };
@@ -211,8 +137,6 @@
       taskfulltemplate: opts.taskFullTemplate,
       tasktemplate: opts.taskTemplate,
       templatefile: opts.templateFile,
-      pageSize: opts.pageSize,
-      page: opts.page,
       order: opts.order
     };
 
@@ -224,7 +148,7 @@
       $.unblockUI();
     }).done( function( response ) {
       _.each( response.data, function(entry) {
-        var $task = createTaskElement(entry, opts);
+        var $task = createTaskElement(entry);
         var $desc = $task.find('.description');
         $desc.text(decodeURIComponent( unescape($desc.text()) ));
         container.append( $task );
@@ -236,38 +160,11 @@
     return deferred.promise();
   };
 
-  var timeout = null;
-  var raiseClicked = function( evt ) {
-    if ( $(evt.target).hasClass('btn-edit') | $(evt.target).hasClass('btn-expander')) {
-      return false;
-    }
-
-    var self = this;
-    if ( timeout === null ) {
-      timeout = setTimeout( function() {
-        timeout = null;
-        var taskClick = $.Event( 'taskClick' );
-        var $tracker = $(self).closest('.tasktracker');
-        $tracker.trigger( taskClick, self );
-      }, 250);
-    } else {
-      clearTimeout( timeout );
-      timeout = null;
-      raiseDoubleClicked( self );
-    }
-  };
-
-  var raiseDoubleClicked = function( task ) {
-    var taskDblClick = $.Event( 'taskDoubleClick' );
-    var $tracker = $(task).closest('.tasktracker');
-    $tracker.trigger( taskDblClick, task ); 
-  };
-
   var toggleTaskExpanded = function(evt) {
     var $btn = $(this);
     $btn.toggleClass('expanded');
 
-    var $task = $(evt.data);
+    var $task = $btn.closest('.task');
     var data = {
       isExpanded: $task.hasClass('expanded'),
       container: $task
@@ -291,23 +188,62 @@
     }
   };
 
-  var initTaskElement = function($task, task, opts) {
+  var initTaskElement = function($task, task) {
     $task.data('id', task.id);
     $task.data('task_data', task);
-    $task.on('click', raiseClicked );
-    $task.on('click', '.btn-edit', $task, opts.onEditClicked);
-    $task.on('click', '.btn-expander', $task, toggleTaskExpanded);
   };
 
-  var createTaskElement = function(task, opts) {
+  var createTaskElement = function(task) {
     var $task = $(task.html);
-    initTaskElement($task, task, opts);
+    initTaskElement($task, task);
     return $task;
   };
 
-  var sortTasks = function(evt) {
+  var editClicked = function( evt ) {
+    var $btn = $(this);
+    var edopts = {};
+    var $tracker = $btn.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
+    for(var p in opts ) {
+      if ( /string|number|boolean/.test( typeof opts[p] ) ) {
+        edopts[p] = opts[p];
+      }
+    }
+
+    var $task = $btn.closest('.task');
+    edopts.id = $task.data('id');
+    edopts.trackerId = $tracker.attr('id');
+
+    var task = $.parseJSON( $task.find('.task-data').text() );
+    edopts.data = task;
+
+    if ( task.fields.Description ) {
+      task.fields.Description.value = decodeURIComponent( unescape(task.fields.Description.value) );
+    }
+
+    $('#task-editor').taskEditor(edopts).done(function(type, data) {
+      if (type === 'save') {
+
+        var $newTask = $(createTaskElement(data));
+        var $desc = $newTask.find('.description');
+        $desc.text(decodeURIComponent(unescape($desc.text())));
+
+        // ToDo. Hotfix...
+        if ( $newTask.find('.full-description').length === 0 ) {
+          $('<div class="full-description"></div>').appendTo($newTask.find('.task-fullview'));
+        }
+
+        $newTask.find('.full-description').text( data.fields.Description.value );
+        $task.replaceWith( $newTask );
+      }
+    }).fail(function(type, msg) {
+      error(msg);
+    });
+  };
+
+  var sortTasks = function() {
     var $filter = $(this);
-    var $tracker = $(evt.data);
+    var $tracker = $filter.closest('.tasktracker');
     var sortBy = $filter.data('tasksort');
 
     $('[data-tasksort]').each( function() {
@@ -358,6 +294,10 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+    $('.tasktracker')
+      .tasksGrid()
+      .on('click', '[data-tasksort]', sortTasks)
+      .on('click', '.btn-expander', toggleTaskExpanded)
+      .on('click', '.btn-edit', editClicked);
   });
 }(jQuery, window._, window.document, window));
