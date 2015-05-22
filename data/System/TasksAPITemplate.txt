@@ -92,9 +92,9 @@
 
 %TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
   <div class="container"><div>
-    <div class="text"><span>%MAKETEXT{"Description"}%</span></div>
-    <div class="assigned"><span>%MAKETEXT{"Assigned to"}%</span></div>
-    <div class="due"><span>%MAKETEXT{"Due date"}%</span></div>
+    <div class="text"><span class="tasksort" data-tasksort="Title">%MAKETEXT{"Description"}%</span></div>
+    <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo">%MAKETEXT{"Assigned to"}%</span></div>
+    <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Due date"}%</span></div>
     <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
   </div></div>
 </div>%TMPL:END%

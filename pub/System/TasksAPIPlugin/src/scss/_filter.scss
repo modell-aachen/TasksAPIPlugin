@@ -79,6 +79,10 @@
 }
 
 .tasktracker > .caption {
+  [data-tasksort] {
+    cursor: pointer;
+  }
+
   > .container {
     padding: 6px 50px;
 
@@ -114,8 +118,24 @@
         font-weight: bold;
         font-size: 10px;
         text-transform: uppercase;
-        cursor: pointer;
       }
     }
+  }
+}
+
+.tasksort {
+  background-position: right center;
+  background-repeat: no-repeat;
+  display: inline-block;
+  line-height: 1;
+  padding-right: 20px;
+  vertical-align: middle;
+
+  &.tasksort-asc {
+    background-image: url('../assets/sort-asc.png');
+  }
+
+  &.tasksort-desc {
+    background-image: url('../assets/sort-desc.png');
   }
 }

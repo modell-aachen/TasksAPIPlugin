@@ -69,6 +69,7 @@
         }
       });
 
+      $this.on('click', '[data-tasksort]', this, sortTasks);
       return this;
     });
   };
@@ -302,6 +303,42 @@
     var $task = $(task.html);
     initTaskElement($task, task, opts);
     return $task;
+  };
+
+  var sortTasks = function(evt) {
+    var $filter = $(this);
+    var $tracker = $(evt.data);
+    var sortBy = $filter.data('tasksort');
+
+    $('[data-tasksort]').each( function() {
+      if ( $(this).data('tasksort') !== sortBy ) {
+        $(this).removeClass('tasksort-asc tasksort-desc');
+      }
+    });
+
+    var $tasks = $tracker.find('.tasks > div');
+    var tasks = $tasks.find('.task');
+
+    var sortedTasks = _.sortBy( tasks, function(task) {
+      var d  =$.parseJSON($(task).find('.task-data').text());
+      var val = d.fields[sortBy].value;
+      return val;
+    });
+
+    if ( $filter.hasClass('tasksort-asc') ) {
+      sortedTasks = sortedTasks.reverse();
+      $filter.removeClass('tasksort-asc');
+      $filter.addClass('tasksort-desc');
+    } else if ( $filter.hasClass('tasksort-desc') || (!$filter.hasClass('tasksort-asc') && !$filter.hasClass('tasksort-desc')) ) {
+      $filter.removeClass('tasksort-desc');
+      $filter.addClass('tasksort-asc');
+    }
+
+    $tasks.empty();
+    _.each(sortedTasks, function(task) {
+      $(task).appendTo($tasks);
+    });
+
   };
 
   var error = function() {
