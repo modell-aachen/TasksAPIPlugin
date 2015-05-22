@@ -299,13 +299,12 @@ sub notify {
     Foswiki::Func::pushTopicContext($self->{meta}->web, $self->{meta}->topic);
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
-    while (my ($key, $val) = each(%{$self->{fields}})) {
-        Foswiki::Func::setPreferencesValue("TASKSAPI_VALUE_$key", $val);
-    }
-    if ($self->{pendingcomment}) {
-        Foswiki::Func::setPreferencesValue("TASKSAPI_COMMENT", $self->{pendingcomment});
+    Foswiki::Plugins::TasksAPIPlugin::setCurrentTask($self);
+    if ($options->{changeset}) {
+        $self->{changeset} = $options->{changeset};
     }
     Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl);
+    Foswiki::Plugins::TasksAPIPlugin::setCurrentTask();
     Foswiki::Func::popTopicContext();
 }
 
@@ -427,16 +426,16 @@ sub _postCreate {
     # TODO
 }
 sub _postClose {
-    # my $self = shift;
-    # if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
-    #     my $date = new Date::Manip::Date;
-    #     $date->parse($reopen);
-    #     Foswiki::Plugins::TasksAPIPlugin::Job::create(
-    #         type => 'reopen',
-    #         time => $date,
-    #         task => $self,
-    #     );
-    # }
+    my $self = shift;
+    if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
+        my $date = new Date::Manip::Date();
+        $date->parse($reopen);
+        Foswiki::Plugins::TasksAPIPlugin::Job::create(
+            type => 'reopen',
+            time => $date,
+            task => $self,
+        );
+    }
 }
 sub _postReopen {
     # TODO

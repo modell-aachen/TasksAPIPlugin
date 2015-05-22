@@ -155,6 +155,9 @@ sub _applySchema {
     }
 }
 
+sub setCurrentTask {
+    my $currentTask = shift;
+}
 
 sub _query {
     my %opts = @_;
@@ -671,6 +674,31 @@ STYLE
     return $grid;
 }
 
+sub _renderChangeset {
+    my ($meta, $task, $cset, $params) = @_;
+
+    my $fields = $task->form->getFields;
+    my $sep = $params->{fieldseparator} || '';
+    my $template = $params->{template} || '<li><strong>$title</strong>: $old &#8594; $new';
+    my @out;
+    my $exclude = $params->{exclude} || '^$';
+
+    foreach my $f (@$fields) {
+        my $change = $cset->{$f->{name}};
+        next unless $change;
+        next if $f->{name} =~ /$exclude/;
+
+        my $out = $template;
+        $out =~ s#\$name#$f->{name}#g;
+        $out =~ s#\$type#$change->{type}#g;
+        $out =~ s#\$title#$f->{tooltip} || $f->{name}#eg;
+        $out =~ s#\$old#$change->{old}#g;
+        $out =~ s#\$new#$change->{new}#g;
+        push @out, $meta->expandMacros($out);
+    }
+    return join($sep, @out);
+}
+
 sub tagInfo {
     my ( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -689,14 +717,17 @@ sub tagInfo {
 
     my $task = $currentTask;
     if ($params->{task}) {
-        $task = Foswiki::Plugins::TasksAPIPlugin::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
     }
     if (!$task) {
         return '%RED%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
     }
 
     if (my $field = $params->{field}) {
-        my $val = $task->{fields}{$field} || '';
+        my $val = $task->{fields}{$field} || $params->{default} || '';
+        if ($params->{type} && $params->{type} eq 'title') {
+            return $task->form->getField($field)->{tooltip} || $field;
+        }
         if ($params->{shorten}) {
             $val = Foswiki::urlDecode(Foswiki::urlDecode($val));
             $val =~ s/<.+?>//g;
@@ -720,6 +751,31 @@ sub tagInfo {
         }
         return $val;
     }
+    if ($params->{type} && $params->{type} eq 'changeset') {
+        my $cset;
+        if ($params->{cid}) {
+            $cset = $task->{meta}->get('CHANGESET', $params->{cid});
+        } else {
+            $cset = pop @{[sort { $a->{name} <=> $b->{name} } $task->{meta}->find('CHANGESET')]};
+        }
+        return '' unless $cset && ref $cset;
+        $cset = decode_json($cset->{value});
+        $cset = { map { ($cset->{name}, $cset) } @$cset };
+
+        if ($params->{checkfield}) {
+            my $checkfield = $params->{checkfield};
+            return exists($cset->{$checkfield}) ? '1' : '0';
+        }
+
+        return _renderChangeset($topicObject, $task, $cset, $params);
+    }
+    if ($params->{type} && $params->{type} eq 'changesets') {
+        my @out;
+        foreach my $cset (sort { $b->{name} <=> $a->{name} } $task->{meta}->find('CHANGESET')) {
+            push @out, _renderChangeset($topicObject, $task, $cset, $params);
+        }
+        return join($params->{separator} || "\n", @out);
+    }
 
     $task->{fields}->{Description} = Foswiki::urlEncode( $task->{fields}->{Description} );
 
@@ -728,6 +784,7 @@ sub tagInfo {
         return $task->id if $meta eq 'id';
         return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
+        return scalar $task->{meta}->find('CHANGESET') if $meta eq 'ChangesetCount';
         return scalar $task->children if $meta eq 'ChildCount';
     }
 
