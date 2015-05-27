@@ -7,6 +7,7 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
+use Foswiki::Time ();
 
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
@@ -83,6 +84,7 @@ my $gridCounter = 1;
 my $renderRecurse = 0;
 my $currentTask;
 my $currentOptions;
+my $currentExpands;
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -105,6 +107,7 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch );
     Foswiki::Func::registerRESTHandler( 'lease', \&restLease );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease );
+
     return 1;
 }
 
@@ -458,8 +461,10 @@ sub restLease {
         $meta = $task->{meta};
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
+        Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
     } else {
         Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
+        Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
     }
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
 
@@ -630,7 +635,6 @@ sub tagGrid {
         desc => $params->{desc},
         limit => $params->{pagesize},
     );
-    Foswiki::Func::setPreferencesValue("TASKSGRID_taskfulltemplate", $taskFullTemplate);
     for my $task (@tasks) {
         $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
     }
@@ -645,12 +649,11 @@ sub tagGrid {
         tasks => join('', @tasks),
         id => $id,
     );
-    while (my ($k, $v) = each(%tmplAttrs)) {
-        Foswiki::Func::setPreferencesValue("TASKSGRID_$k", $v);
-    }
+    $currentExpands = \%tmplAttrs;
 
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
 
+    undef $currentExpands;
     undef $currentOptions;
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
@@ -678,25 +681,57 @@ sub _renderChangeset {
     my ($meta, $task, $cset, $params) = @_;
 
     my $fields = $task->form->getFields;
-    my $sep = $params->{fieldseparator} || '';
-    my $template = $params->{template} || '<li><strong>$title</strong>: $old &#8594; $new';
-    my @out;
-    my $exclude = $params->{exclude} || '^$';
+    my $fsep = $params->{fieldseparator} || '';
+    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header"><span class="task-changeset-id">#$id</span>%MAKETEXT{"Updated by [_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul>$comment</div>';
+    my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
+    my @fout;
+    my $exclude = $params->{excludefields} || '^$';
 
     foreach my $f (@$fields) {
-        my $change = $cset->{$f->{name}};
+        my $change = $cset->{changes}{$f->{name}};
         next unless $change;
         next if $f->{name} =~ /$exclude/;
 
-        my $out = $template;
+        my $out = $fformat;
+        $out = $params->{fieldaddformat} if $change->{type} eq 'add' && $params->{fieldaddformat};
+        $out = $params->{fielddeleteformat} if $change->{type} eq 'delete' && $params->{fielddeleteformat};
+
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
         $out =~ s#\$title#$f->{tooltip} || $f->{name}#eg;
-        $out =~ s#\$old#$change->{old}#g;
-        $out =~ s#\$new#$change->{new}#g;
-        push @out, $meta->expandMacros($out);
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1)#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
+        $out =~ s#\$old(\(\))?#$change->{old}#g;
+        $out =~ s#\$new(\(\))?#$change->{new}#g;
+        push @fout, $out;
     }
-    return join($sep, @out);
+    return '' unless @fout || $cset->{comment};
+    my $out = $format;
+    $out =~ s#\$id#$cset->{name}#g;
+    $out =~ s#\$user#$cset->{actor}#g;
+    $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
+    $out =~ s#\$fields#join($fsep, @fout)#eg;
+    $out =~ s#\$comment#$cset->{comment}#g;
+    $out;
+}
+
+sub _shorten {
+    my ($text, $len) = @_;
+    return $text unless defined $len;
+    $text =~ s/<.+?>//g;
+    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text);
+    $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
+    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text);
+}
+
+sub _decodeChanges {
+    my $changes = shift;
+    return {} unless $changes;
+    $changes = decode_json($changes);
+    if (ref $changes eq 'ARRAY') {
+        $changes = { map { ($_->{name}, $_) } @$changes };
+    }
+    $changes;
 }
 
 sub tagInfo {
@@ -707,6 +742,12 @@ sub tagInfo {
             return '%RED%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR%%BR%';
         }
         return $currentOptions->{$option};
+    }
+    if (my $expand = $params->{expand}) {
+        if (!$currentExpands) {
+            return '%RED%TASKINFO: parameter =expand= can only be used in task grid templates%ENDCOLOR%%BR%';
+        }
+        return $currentExpands->{$expand};
     }
     if (my $expandTpl = $params->{expandtemplate}) {
         if (!$currentOptions) {
@@ -728,14 +769,7 @@ sub tagInfo {
         if ($params->{type} && $params->{type} eq 'title') {
             return $task->form->getField($field)->{tooltip} || $field;
         }
-        if ($params->{shorten}) {
-            $val = Foswiki::urlDecode(Foswiki::urlDecode($val));
-            $val =~ s/<.+?>//g;
-
-            $val = Encode::decode($Foswiki::cfg{Site}{CharSet}, $val);
-            $val = substr($val, 0, $params->{shorten} - 3) ."..." if length($val) > ($params->{shorten} + 3); # a bit of fuzz
-            $val = Encode::encode($Foswiki::cfg{Site}{CharSet}, $val);
-        }
+        $val = _shorten($val, $params->{shorten});
         if ($params->{format}) {
             if ( $val =~ /^\d+$/ ) {
                 $val = Foswiki::Time::formatTime($val, $params->{format});
@@ -754,13 +788,12 @@ sub tagInfo {
     if ($params->{type} && $params->{type} eq 'changeset') {
         my $cset;
         if ($params->{cid}) {
-            $cset = $task->{meta}->get('CHANGESET', $params->{cid});
+            $cset = $task->{meta}->get('TASKCHANGESET', $params->{cid});
         } else {
-            $cset = pop @{[sort { $a->{name} <=> $b->{name} } $task->{meta}->find('CHANGESET')]};
+            $cset = pop @{[sort { $a->{name} <=> $b->{name} } $task->{meta}->find('TASKCHANGESET')]};
         }
         return '' unless $cset && ref $cset;
-        $cset = decode_json($cset->{value});
-        $cset = { map { ($cset->{name}, $cset) } @$cset };
+        $cset->{changes} = _decodeChanges($cset->{changes});
 
         if ($params->{checkfield}) {
             my $checkfield = $params->{checkfield};
@@ -771,13 +804,13 @@ sub tagInfo {
     }
     if ($params->{type} && $params->{type} eq 'changesets') {
         my @out;
-        foreach my $cset (sort { $b->{name} <=> $a->{name} } $task->{meta}->find('CHANGESET')) {
-            push @out, _renderChangeset($topicObject, $task, $cset, $params);
+        foreach my $cset (sort { $b->{name} <=> $a->{name} } $task->{meta}->find('TASKCHANGESET')) {
+            $cset->{changes} = _decodeChanges($cset->{changes});
+            my $out = _renderChangeset($topicObject, $task, $cset, $params);
+            push @out, $out if $out ne '';
         }
         return join($params->{separator} || "\n", @out);
     }
-
-    $task->{fields}->{Description} = Foswiki::urlEncode( $task->{fields}->{Description} );
 
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';

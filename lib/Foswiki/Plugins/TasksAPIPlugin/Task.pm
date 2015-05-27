@@ -337,7 +337,7 @@ sub update {
 
     my @changes;
     delete $data{TopicType};
-    my $comment = delete $data{comment};
+    my @comment = delete $data{comment};
     my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
@@ -370,9 +370,9 @@ sub update {
         $meta->putKeyed('FIELD', { name => $name, title => $f->{tooltip}, value => $val });
         $self->{fields}{$name} = $val;
     }
-    if ($comment) {
-        push @changes, { type => 'comment', text => $comment };
-        $self->{pendingcomment} = $comment;
+    if (@comment) {
+        unshift @comment, 'comment';
+        $self->{pendingcomment} = $comment[1];
     }
 
     $self->notify($notify);
@@ -386,7 +386,7 @@ sub update {
     delete $self->{pendingcomment};
 
     # Find existing changesets to determine new ID
-    if (@changes) {
+    if (@changes || @comment) {
         my @changesets = $meta->find('TASKCHANGESET');
         my $newid = @changesets + 1;
         $meta->putKeyed('TASKCHANGESET', {
@@ -394,6 +394,7 @@ sub update {
             actor => Foswiki::Func::getWikiName(),
             at => scalar(time),
             changes => encode_json(\@changes),
+            @comment
         });
     }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);

@@ -18,12 +18,20 @@
   format="<div class=\"$name\"><label><span>$title$mandatory</span>$edit</label></div>"
 }%
 %IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
+%IF{"'%taskeditor_isnew%'='0'" then="$percntTMPL:P{\"tasksapi::editor::comment\"}$percnt"}%
   <div>
     <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
     <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
   </div>
 </div>
 <!--/tasksapi::editor-->%TMPL:END%
+
+%TMPL:DEF{"tasksapi::editor::comment"}%%{
+}%  <div class="Comment"><label>
+    <span>%MAKETEXT{"Comment"}%</span>
+    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
+  </label></div>%{
+}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::upload"}%%{
   }%%TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
@@ -34,7 +42,6 @@
 %TMPL:DEF{"tasksapi::grid::task"}%%{
 }%<div class="task prioritized-%TASKINFO{field="Prioritized"}%">
   <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
-  <div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div>
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
     <div class="content">
@@ -47,30 +54,35 @@
       then="<div class=\"btn-edit\">&nbsp;</div>"
     }%
   </div>
-  <div class="task-full-wrapper"></div>
+  <div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div>
 </div>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::viewer"}%%{
 }%
   <div class="full-description">%TASKINFO{field="Description"}%</div>
+  <div class="changes">%TASKINFO{
+    type="changesets"
+    fieldaddformat="<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>"
+    fielddeleteformat="<li>%MAKETEXT{"[_1] removed" args="<strong>$title</strong>"}%</li>"
+  }%</div>
 %{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid"}%<div id="%TASKSGRID_id%" class="tasktracker">
-  %TASKINFO{expandtemplate="%TASKSGRID_filtertemplate%"}%
-  %TASKINFO{expandtemplate="%TASKSGRID_captiontemplate%"}%
+%TMPL:DEF{"tasksapi::grid"}%<div id="%TASKINFO{expand="id"}%" class="tasktracker">
+  %TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%
+  %TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%
   <div class="tasks">
-    <div>%TASKSGRID_tasks%</div>
+    <div>%TASKINFO{expand="tasks"}%</div>
   </div>
-  <div class="settings"><literal>%TASKSGRID_settings%</literal></div>
+  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
 </div>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::filter"}%
 <div class="filter">
   <div>
     <div class="options">
-      <span class="title">%TASKSGRID_title%</span>
+      <span class="title">%TASKINFO{expand="title"}%</span>
       %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
     </div>
     %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%
@@ -80,12 +92,12 @@
 
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
 }%<label>
-  <select name="status">%TASKSGRID_stateoptions%</select>
+  <select name="status">%TASKINFO{expand="stateoptions"}%</select>
 </label>%{
 }%%TMPL:END%
 %TMPL:DEF{"tasksapi::grid::filter::create"}%%{
 }%<div class="create">
-  <a href="#" class="tasks-btn tasks-btn-create">%TASKSGRID_createtext%</a>
+  <a href="#" class="tasks-btn tasks-btn-create">%TASKINFO{expand="createtext"}%</a>
 </div>%{
 }%%TMPL:END%
 

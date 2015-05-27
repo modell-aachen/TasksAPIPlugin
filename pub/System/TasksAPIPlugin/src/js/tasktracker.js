@@ -162,7 +162,6 @@
 
   var toggleTaskExpanded = function(evt) {
     var $btn = $(this);
-    $btn.toggleClass('expanded');
 
     var $task = $btn.closest('.task');
     var data = {
@@ -175,6 +174,7 @@
     $tracker.trigger( e, data );
 
     $task.toggleClass('expanded');
+/*
     var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
 
     var $full = $task.find('.task-full-wrapper');
@@ -186,6 +186,7 @@
       $full.empty();
       $desc.css('opacity', 1);
     }
+*/
   };
 
   var initTaskElement = function($task, task) {
@@ -217,23 +218,14 @@
     var task = $.parseJSON( $task.find('.task-data').text() );
     edopts.data = task;
 
-    if ( task.fields.Description ) {
-      task.fields.Description.value = decodeURIComponent( unescape(task.fields.Description.value) );
-    }
-
+    var expanded = $task.is('.expanded');
     $('#task-editor').taskEditor(edopts).done(function(type, data) {
       if (type === 'save') {
 
         var $newTask = $(createTaskElement(data));
-        var $desc = $newTask.find('.description');
-        $desc.text(decodeURIComponent(unescape($desc.text())));
-
-        // ToDo. Hotfix...
-        if ( $newTask.find('.full-description').length === 0 ) {
-          $('<div class="full-description"></div>').appendTo($newTask.find('.task-fullview'));
+        if (expanded) {
+          $newTask.addClass('expanded');
         }
-
-        $newTask.find('.full-description').text( data.fields.Description.value );
         $task.replaceWith( $newTask );
       }
     }).fail(function(type, msg) {
