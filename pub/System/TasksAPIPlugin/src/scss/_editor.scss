@@ -1,11 +1,15 @@
 #task-editor {
   overflow-x: hidden;
+
+  .cke_chrome {
+    box-shadow: none;
+  }
 }
 
 .ui-dialog[role="dialog"][aria-labelledby|="ui-dialog-title-task-editor"] {
   border-radius: 6px;
   box-shadow: 3px 3px 3px rgba(#000, .3);
-  min-width: 555px;
+  min-width: 575px;
   padding: 10px 20px 10px 0;
   z-index: 1001;
 
