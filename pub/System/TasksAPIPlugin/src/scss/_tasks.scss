@@ -263,7 +263,6 @@
   max-height: 0;
   transition: max-height .3s ease-in-out;
   overflow: hidden;
-  margin-top: 15px 0;
 
   table {
     width: 100%;
@@ -276,7 +275,7 @@
   }
 }
 
-.task.expanded > .task-attachments {
+.task.expanded .task-attachments {
   height: auto;
   max-height: 1000px;
 }
