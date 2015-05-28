@@ -41,7 +41,7 @@
       .assigned,
       .attachcount,
       .due {
-        div {
+        span {
           background-color: $white !important;
         }
       }
@@ -191,7 +191,7 @@
         flex-shrink: 1;
         max-width: 50px;
 
-        div {
+        span {
           background-color: $light-blue;
           background-image: url('../assets/file.png');
           background-position: 6px center;
@@ -200,10 +200,11 @@
           border-radius: $global-radius;
           color: $blue;
           padding: 0 6px 0 25px;
+          display: inline-block;
         }
       }
 
-      &.assigned div {
+      &.assigned span {
         background-color: $light-blue;
         background-image: url('../assets/user.png');
         background-position: 6px center;
@@ -212,9 +213,10 @@
         border-radius: $global-radius;
         color: $blue;
         padding: 0 6px 0 25px;
+        display: inline-block;
       }
 
-      &.due div {
+      &.due span {
         background-color: $light-blue;
         background-image: url('../assets/clock-blue.png');
         background-position: 6px center;
@@ -223,6 +225,7 @@
         border-radius: $global-radius;
         color: $blue;
         padding: 0 6px 0 25px;
+        display: inline-block;
       }
 
       &.caption {
