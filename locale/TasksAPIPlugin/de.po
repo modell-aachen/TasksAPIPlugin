@@ -102,3 +102,6 @@ msgstr "Nov"
 
 msgid "Dec"
 msgstr "Dez"
+
+msgid "Updated by %1 on %2"
+msgstr "Aktualisiert von %1 am %2"
