@@ -836,7 +836,7 @@ sub tagInfo {
         return $task->id if $meta eq 'id';
         return to_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
-        return scalar $task->{meta}->find('CHANGESET') if $meta eq 'ChangesetCount';
+        return scalar $task->{meta}->find('TASKCHANGESET') if $meta eq 'ChangesetCount';
         return scalar $task->children if $meta eq 'ChildCount';
     }
 
