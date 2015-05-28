@@ -59,10 +59,10 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::viewer"}%%{
-}%
+}%<literal>
   <div class="full-description">%TASKINFO{field="Description"}%</div>
   <div class="changes">%TASKINFO{type="changesets"}%</div>
-%{
+</literal>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">

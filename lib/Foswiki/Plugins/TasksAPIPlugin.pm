@@ -695,9 +695,16 @@ sub _renderChangeset {
     my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header"><span class="task-changeset-id">#$id</span>%MAKETEXT{"Updated by [_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul>$comment</div>';
     my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
     my $faddformat = $params->{fieldaddformat} || '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
-    my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed" args="<strong>$title</strong>"}%</li>';
+    my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
     my @fout;
     my $exclude = $params->{excludefields} || '^$';
+
+    my $xlate = sub {
+        for my $v (@_) {
+            $v = $meta->expandMacros($v);
+        }
+    };
+    $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
     foreach my $f (@$fields) {
         my $change = $cset->{changes}{$f->{name}};
