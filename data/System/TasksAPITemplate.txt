@@ -65,14 +65,14 @@
 %{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid"}%<div id="%TASKINFO{expand="id"}%" class="tasktracker">
+%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">
   %TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%
   %TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%
   <div class="tasks">
     <div>%TASKINFO{expand="tasks"}%</div>
   </div>
   <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
-</div>%TMPL:END%
+</div></noautolink>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::filter"}%
 <div class="filter">

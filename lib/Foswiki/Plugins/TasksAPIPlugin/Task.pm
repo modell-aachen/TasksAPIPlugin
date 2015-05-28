@@ -393,7 +393,7 @@ sub update {
             name => $newid,
             actor => Foswiki::Func::getWikiName(),
             at => scalar(time),
-            changes => encode_json(\@changes),
+            changes => to_json(\@changes),
             @comment
         });
     }

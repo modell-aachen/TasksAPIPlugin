@@ -131,6 +131,7 @@ sub db {
             FetchHashKeyName => 'NAME_lc',
         }
     );
+    $db->{sqlite_unicode} = 0;
     eval {
         %schema_versions = %{ $db->selectall_hashref("SELECT * FROM meta", 'type') };
     };
@@ -291,7 +292,7 @@ sub restCreate {
 sub restMultiCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
-    my $json = decode_json($q->param('data'));
+    my $json = from_json($q->param('data'));
     my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
     return to_json({
         status => 'ok',
@@ -331,7 +332,7 @@ sub restUpdate {
 sub restMultiUpdate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
-    my $req = decode_json($q->param('request'));
+    my $req = from_json($q->param('request'));
     my %res;
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
@@ -420,11 +421,11 @@ sub tagSearch {
         @res = _query(query => { %$params });
     };
     if ($@) {
-        return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
+        return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
 
     @res = map { _enrich_data($_, $params->{tasktemplate}) } @res;
-    return encode_json({status => 'ok', data => \@res});
+    return to_json({status => 'ok', data => \@res});
 }
 
 sub restSearch {
@@ -434,12 +435,12 @@ sub restSearch {
     my $q;
     eval {
         $q = $session->{request};
-        $req = decode_json($q->param('request') || '{}');
+        $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
         @res = _query(%$req);
     };
     if ($@) {
-        return encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
+        return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
     @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $req->{templatefile}) } @res;
     return to_json({status => 'ok', data => \@res});
@@ -448,7 +449,7 @@ sub restSearch {
 sub restLease {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = $session->{request};
-    my $r = decode_json($q->param('request') || '{}');
+    my $r = from_json($q->param('request') || '{}');
 
     my $meta = Foswiki::Meta->new($session, $session->{webName}, $session->{topicName});
 
@@ -510,7 +511,7 @@ sub _getZone {
 sub restRelease {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = $session->{request};
-    my $r = decode_json($q->param('request') || '{}');
+    my $r = from_json($q->param('request') || '{}');
 
     return to_json({status => 'ok'}) unless $r->{id};
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
@@ -622,11 +623,11 @@ sub tagGrid {
     }
 
     my $select = join('\n', @options),
-    my $json = encode_json( \%settings );
+    my $json = to_json( \%settings );
     $currentOptions = \%settings;
 
     eval {
-        $query = decode_json($query);
+        $query = from_json($query);
     };
     if ($@) {
         my $err = $@;
@@ -738,7 +739,7 @@ sub _shorten {
 sub _decodeChanges {
     my $changes = shift;
     return {} unless $changes;
-    $changes = decode_json($changes);
+    $changes = from_json($changes);
     if (ref $changes eq 'ARRAY') {
         $changes = { map { ($_->{name}, $_) } @$changes };
     }
@@ -826,7 +827,7 @@ sub tagInfo {
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
-        return encode_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
+        return to_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
         return scalar $task->{meta}->find('CHANGESET') if $meta eq 'ChangesetCount';
         return scalar $task->children if $meta eq 'ChildCount';
