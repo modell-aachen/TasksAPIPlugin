@@ -342,6 +342,15 @@ sub restMultiUpdate {
     return to_json(\%res);
 }
 
+sub _translate {
+    my ($meta, $text) = @_;
+    $text =~ s#(\\+)#$1\\#g;
+    $text =~ s#(?<!\\)"#\\"#g;
+    $text =~ s#\$#\$dollar#g;
+    $text =~ s#%#\$percnt#g;
+    $meta->expandMacros("%MAKETEXT{\"$text\"}%");
+};
+
 sub _enrich_data {
     my $task = shift;
     my $tpl = shift || 'tasksapi::grid::task';
@@ -360,7 +369,7 @@ sub _enrich_data {
             name => $f->{name},
             multi => $f->isMultiValued ? JSON::true : JSON::false,
             mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
-            tooltip => $f->{tooltip},
+            tooltip => _translate($task->{meta}, $f->{tooltip}),
             mandatory => $f->isMandatory ? JSON::true : JSON::false,
             hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
             type => $f->{type},
@@ -684,6 +693,8 @@ sub _renderChangeset {
     my $fsep = $params->{fieldseparator} || '';
     my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header"><span class="task-changeset-id">#$id</span>%MAKETEXT{"Updated by [_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul>$comment</div>';
     my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
+    my $faddformat = $params->{fieldaddformat} || '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
+    my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed" args="<strong>$title</strong>"}%</li>';
     my @fout;
     my $exclude = $params->{excludefields} || '^$';
 
@@ -693,12 +704,12 @@ sub _renderChangeset {
         next if $f->{name} =~ /$exclude/;
 
         my $out = $fformat;
-        $out = $params->{fieldaddformat} if $change->{type} eq 'add' && $params->{fieldaddformat};
-        $out = $params->{fielddeleteformat} if $change->{type} eq 'delete' && $params->{fielddeleteformat};
+        $out = $faddformat if $change->{type} eq 'add';
+        $out = $fdeleteformat if $change->{type} eq 'delete';
 
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
-        $out =~ s#\$title#$f->{tooltip} || $f->{name}#eg;
+        $out =~ s#\$title#_translate($meta, $f->{tooltip}) || $f->{name}#eg;
         $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1)#eg;
         $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;

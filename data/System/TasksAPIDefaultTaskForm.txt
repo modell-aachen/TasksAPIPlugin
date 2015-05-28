@@ -2,17 +2,17 @@
 | TopicType | text | 50 | task | | M H |
 | Context | text | 50 | %WEB%.%TOPIC% | | M H |
 | Parent | text | 50 | | | H |
-| Author | text | 50 | %WIKINAME% | %MAKETEXT{"Task creator"}% | M H |
-| Created | date | 50 | %GMTIME{"$day $month $year"}% | %MAKETEXT{"Time of creation"}% | M H |
-| Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | %MAKETEXT{"Status"}% | M |
-| Title | text | 50 | | %MAKETEXT{"Title"}% | M |
-| AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | %MAKETEXT{"Assigned to"}% | M |
-| Description | textarea | 50 | | %MAKETEXT{"Description"}% | |
-| DueDate | date | 50 | | %MAKETEXT{"Due"}% | |
-| Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | %MAKETEXT{"Notify on changes"}% | |
-| Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | %MAKETEXT{"Send reminder"}% | |
-| Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | %MAKETEXT{"High priority"}% | |
-| HasChildren | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | %MAKETEXT{"Divided into sub-tasks"}% | |
+| Author | text | 50 | %WIKINAME% | Task "creator" | M H |
+| Created | date | 50 | %GMTIME{"$day $month $year"}% | Time of creation | M H |
+| Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | M |
+| Title | text | 50 | | Title | M |
+| AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
+| Description | textarea | 50 | | Description | |
+| DueDate | date | 50 | | Due | |
+| Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | Notify on changes | |
+| Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
+| Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | High priority | |
+| HasChildren | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | Divided into sub-tasks | |
 
    * Set ALLOWTOPICCHANGE = AdminUser
    * Set NOWYSIWYG = 1
