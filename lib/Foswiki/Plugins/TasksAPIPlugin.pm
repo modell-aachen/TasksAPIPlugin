@@ -684,6 +684,7 @@ SCRIPT
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
 STYLE
 
+    Foswiki::Func::getContext()->{'tasksgrid'} = 1;
     return $grid;
 }
 
