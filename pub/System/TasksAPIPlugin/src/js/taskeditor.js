@@ -89,12 +89,10 @@
     var handleSave = function() {
       var task = readEditor();
 
-      if ( opts.tasktemplate ) {
-        task.tasktemplate = opts.tasktemplate;
-      }
-
-      if ( opts.template ) {
-        task.template = opts.template;
+      for (var prop in opts) {
+        if ( /template/.test(prop) ) {
+          task[prop] = opts[prop];
+        }
       }
 
       var beforeSave = $.Event( 'beforeSave' );

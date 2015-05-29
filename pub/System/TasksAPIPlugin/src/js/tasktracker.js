@@ -38,6 +38,7 @@
       var handleCreate = function() {
         var qopts = {};
         $.extend(qopts, opts);
+        qopts.trackerId = opts.id;
         delete qopts.id;
 
         $editor.taskEditor(qopts).done(function(type, data) {
