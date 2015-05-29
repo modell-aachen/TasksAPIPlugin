@@ -36,7 +36,11 @@
       var $create = $filter.find('.tasks-btn-create');
 
       var handleCreate = function() {
-        $editor.taskEditor({ form: opts.form, context: opts.context }).done(function(type, data) {
+        var qopts = {};
+        $.extend(qopts, opts);
+        delete qopts.id;
+
+        $editor.taskEditor(qopts).done(function(type, data) {
           if (type === 'save') {
             opts.container.append(createTaskElement(data));
           }
@@ -48,7 +52,6 @@
         var $select = $(this);
         opts.currentState = $select.val();
         opts.container.empty();
-
         loadTasks( $this, opts.currentState, false );
       };
 
@@ -122,20 +125,9 @@
       query.Parent = parent;
     }
 
-    var qopts = {
-      query: query,
-      form: opts.form,
-      context: opts.context,
-      editorTemplate: opts.editorTemplate,
-      taskfulltemplate: opts.taskFullTemplate,
-      tasktemplate: opts.taskTemplate,
-      templatefile: opts.templateFile,
-      order: opts.order
-    };
-
-    if ( opts.order ) {
-      qopts.order = opts.order;
-    }
+    var qopts = {};
+    $.extend(qopts, opts);
+    qopts.query = query;
 
     $.taskapi.get(qopts).always(function() {
       $.unblockUI();

@@ -601,10 +601,10 @@ sub tagGrid {
         order => $order,
         allowupload => $allowUpload,
         stateless => $stateless,
-        templateFile => $templateFile,
-        taskTemplate => $taskTemplate,
-        taskFullTemplate => $taskFullTemplate,
-        editorTemplate => $editorTemplate,
+        templatefile => $templateFile,
+        tasktemplate => $taskTemplate,
+        taskfulltemplate => $taskFullTemplate,
+        editortemplate => $editorTemplate,
         lang => {
             missingField => Foswiki::urlEncode( $translated )
         }
@@ -684,7 +684,6 @@ SCRIPT
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
 STYLE
 
-    Foswiki::Func::getContext()->{'tasksgrid'} = 1;
     return $grid;
 }
 

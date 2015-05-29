@@ -7,7 +7,7 @@
 | Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | M |
 | Title | text | 50 | | Title | M |
 | AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
-| Description | textarea | 50 | | Description | |
+| Description | taskeditor | 50 | | Description | |
 | DueDate | date | 50 | | Due | |
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | Notify on changes | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
