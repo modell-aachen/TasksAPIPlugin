@@ -684,6 +684,10 @@ SCRIPT
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
 STYLE
 
+    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
+    require Foswiki::Plugins::CKEditorPlugin;
+    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
+
     return $grid;
 }
 
