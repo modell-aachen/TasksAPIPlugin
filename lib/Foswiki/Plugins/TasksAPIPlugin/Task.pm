@@ -290,21 +290,16 @@ sub create {
 }
 
 sub notify {
-    my ($self, $type, $options) = @_;
-    my $notify = $self->getPref("NOTIFY_\U$type");
+    my ($self, $type, %options) = @_;
+    my $notify = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { $self->getPref("NOTIFY_\U$type") });
     return unless $notify;
     my $tpl = $self->getPref("NOTIFY_\U${type}_TEMPLATE") || "TasksAPI\u${type}Mail";
 
     require Foswiki::Contrib::MailTemplatesContrib;
-    Foswiki::Func::pushTopicContext($self->{meta}->web, $self->{meta}->topic);
+    Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{field}{Context}));
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
-    Foswiki::Plugins::TasksAPIPlugin::setCurrentTask($self);
-    if ($options->{changeset}) {
-        $self->{changeset} = $options->{changeset};
-    }
-    Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl);
-    Foswiki::Plugins::TasksAPIPlugin::setCurrentTask();
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl) });
     Foswiki::Func::popTopicContext();
 }
 
@@ -338,6 +333,7 @@ sub update {
     my @changes;
     delete $data{TopicType};
     my @comment = delete $data{comment};
+    @comment = () if @comment && !defined $comment[0];
     my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
@@ -372,18 +368,7 @@ sub update {
     }
     if (@comment) {
         unshift @comment, 'comment';
-        $self->{pendingcomment} = $comment[1];
     }
-
-    $self->notify($notify);
-    if ($notify eq 'closed') {
-        $self->_postClose;
-    } elsif ($notify eq 'reopened') {
-        $self->_postReopen;
-    } elsif ($notify eq 'reassigned') {
-        $self->_postReassign;
-    }
-    delete $self->{pendingcomment};
 
     # Find existing changesets to determine new ID
     if (@changes || @comment) {
@@ -396,8 +381,20 @@ sub update {
             changes => to_json(\@changes),
             @comment
         });
+        $self->{changeset} = $newid;
     }
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+
+    $self->notify($notify);
+    delete $self->{changeset};
+    if ($notify eq 'closed') {
+        $self->_postClose;
+    } elsif ($notify eq 'reopened') {
+        $self->_postReopen;
+    } elsif ($notify eq 'reassigned') {
+        $self->_postReassign;
+    }
+
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
 

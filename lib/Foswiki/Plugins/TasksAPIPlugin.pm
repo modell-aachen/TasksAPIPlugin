@@ -159,8 +159,13 @@ sub _applySchema {
     }
 }
 
-sub setCurrentTask {
-    my $currentTask = shift;
+sub withCurrentTask {
+    my $prev = $currentTask;
+    $currentTask = shift;
+    my $sub = shift;
+    my $res = $sub->(@_);
+    $currentTask = $prev;
+    $res;
 }
 
 sub _query {
@@ -731,8 +736,9 @@ sub _renderChangeset {
     };
     $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
+    my $changes = _decodeChanges($cset->{changes});
     foreach my $f (@$fields) {
-        my $change = $cset->{changes}{$f->{name}};
+        my $change = $changes->{$f->{name}};
         next unless $change;
         next if $f->{name} =~ /$exclude/;
 
@@ -834,10 +840,9 @@ sub tagInfo {
         if ($params->{cid}) {
             $cset = $task->{meta}->get('TASKCHANGESET', $params->{cid});
         } else {
-            $cset = pop @{[sort { $a->{name} <=> $b->{name} } $task->{meta}->find('TASKCHANGESET')]};
+            $cset = $task->{meta}->get('TASKCHANGESET', $task->{changeset} || 'DNE');
         }
         return '' unless $cset && ref $cset;
-        $cset->{changes} = _decodeChanges($cset->{changes});
 
         if ($params->{checkfield}) {
             my $checkfield = $params->{checkfield};
@@ -849,7 +854,6 @@ sub tagInfo {
     if ($params->{type} && $params->{type} eq 'changesets') {
         my @out;
         foreach my $cset (sort { $b->{name} <=> $a->{name} } $task->{meta}->find('TASKCHANGESET')) {
-            $cset->{changes} = _decodeChanges($cset->{changes});
             my $out = _renderChangeset($topicObject, $task, $cset, $params);
             push @out, $out if $out ne '';
         }
