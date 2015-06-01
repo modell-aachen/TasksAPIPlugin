@@ -282,10 +282,15 @@ sub restCreate {
         $data{$k} = $q->param($k);
     }
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
+
+    if ( $q->param('templatefile') ) {
+        Foswiki::Func::loadTemplate( $q->param('templatefile') );
+    }
+
     return to_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, $q->param('tasktemplate'), $q->param('template')),
+        data => _enrich_data($res, $q->param('tasktemplate')),
     });
 }
 
@@ -294,9 +299,14 @@ sub restMultiCreate {
     my $q = $session->{request};
     my $json = from_json($q->param('data'));
     my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
+
+    if ( $q->param('templatefile') ) {
+        Foswiki::Func::loadTemplate( $q->param('templatefile') );
+    }
+
     return to_json({
         status => 'ok',
-        data => [map { _enrich_data($_, $q->param('tasktemplate'), $q->param('template')) } @res],
+        data => [map { _enrich_data($_, $q->param('tasktemplate')) } @res],
     });
 }
 
@@ -323,9 +333,13 @@ sub restUpdate {
         }
     }
 
+    if ( $q->param('templatefile') ) {
+        Foswiki::Func::loadTemplate( $q->param('templatefile') );
+    }
+
     return to_json({
         status => 'ok',
-        data => _enrich_data($task, $q->param('tasktemplate'), $q->param('template')),
+        data => _enrich_data($task, $q->param('tasktemplate')),
     });
 }
 
@@ -337,7 +351,7 @@ sub restMultiUpdate {
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         $task->update(%$data);
-        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'), $q->param('template'))};
+        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'), $q->param('templatefile'))};
         $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if !$task->checkACL('change');
     }
     return to_json(\%res);
@@ -355,7 +369,7 @@ sub _translate {
 sub _enrich_data {
     my $task = shift;
     my $tpl = shift || 'tasksapi::grid::task';
-    my $tplFile = shift || 'TasksAPI';
+
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
     my $result = {
@@ -406,7 +420,6 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
-    Foswiki::Func::loadTemplate($tplFile);
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
 
     $result;
@@ -422,6 +435,10 @@ sub tagSearch {
     };
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
+    }
+
+    if ( $params->{templatefile}) {
+        Foswiki::Func::loadTemplate( $params->{templatefile} );
     }
 
     @res = map { _enrich_data($_, $params->{tasktemplate}) } @res;
@@ -442,7 +459,12 @@ sub restSearch {
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $req->{templatefile}) } @res;
+
+    if ( $req->{templatefile} ) {
+        Foswiki::Func::loadTemplate( $req->{templatefile} );
+    }
+
+    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task') } @res;
     return to_json({status => 'ok', data => \@res});
 }
 
@@ -477,8 +499,7 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
     }
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
-
-    Foswiki::Func::loadTemplate( $r->{template} || 'TasksAPI' );
+    Foswiki::Func::loadTemplate( $r->{templatefile} || 'TasksAPI' );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || 'tasksapi::editor' );
     $editor = $meta->expandMacros( $editor );
 
