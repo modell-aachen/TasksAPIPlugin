@@ -85,15 +85,27 @@
     }
   }
 
+  .editor-block {
+    margin-bottom: 12px;
+
+    label > span {
+      margin-bottom: 3px;
+    }
+  }
+
   .foswikiEditFormDateField {
     width: 50%;
   }
 
-  label > span:first-child {
-    color: #727272;
-    display: block;
-    font-size: 13px;
-    font-weight: $label-font-weight;
+  label {
+    padding: 0;
+
+    > span:first-child {
+      color: #727272;
+      display: block;
+      font-size: 13px;
+      font-weight: $label-font-weight;
+    }
   }
 
   input, select, textarea {

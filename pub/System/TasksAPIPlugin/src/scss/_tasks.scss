@@ -10,41 +10,27 @@
   }
 
   .task {
-    background-color: $white;
-    border-left: 5px solid transparent;
-    border-radius: $global-radius;
-    transition: opacity 0.3s ease-in-out,
-                background-color 0.2s ease-in-out;
-    min-height: $task-min-height;
-
     @include flex-container($direction: column);
+
     align-items: stretch;
+    // background-color: $white;
+    background-color: $light-blue;
+    border: 1px solid $light-blue;
+    border-radius: $global-radius;
+    margin-bottom: 3px;
+    min-height: $task-min-height;
     padding: 0 3px;
+    transition: opacity .3s ease-in-out,
+                background-color .2s ease-in-out;
 
     &.prioritized-Yes {
       border-left-color: $prioritized;
+      border-left-width: 5px;
     }
 
     &.selected,
     &:hover {
       background-color: $hover-bg;
-    }
-
-    &:nth-child(odd) {
-      background-color: $light-blue;
-
-      &.selected,
-      &:hover {
-        background-color: $hover-bg;
-      }
-
-      .assigned,
-      .attachcount,
-      .due {
-        span {
-          background-color: $white !important;
-        }
-      }
     }
 
     > .task-wrapper:hover .btn-edit,
@@ -72,6 +58,7 @@
         font-weight: bold;
         border-bottom: dotted 1px #88a;
       }
+
       del { color: #c00; }
       ins { color: #080; }
     }
@@ -157,106 +144,110 @@
       background-image: url('../assets/edit-white.png');
     }
   }
+}
 
-  > .content {
-    @include flex-container($wrap: wrap, $justify: space-between);
-    @include flex($grow: 2, $align: center);
+.task-content {
+  @include flex-container($wrap: wrap, $justify: space-between);
+  @include flex($grow: 2, $align: center);
 
-    &.deleted, {
+  &.deleted, {
+    text-decoration: line-through;
+  }
+
+  &.closed {
+    > .caption,
+    > .description {
       text-decoration: line-through;
     }
+  }
 
-    &.milestone-1 {
-      color: maroon;
+  > div {
+    @include flex($grow: 1, $basis: 0);
+    font-size: 13px;
+    padding: 3px;
+
+    &.attachcount {
+      @include flex($grow: 0);
+      flex-shrink: 1;
+
+      display: inline-block;
+      max-width: 50px;
+      padding: 0 6px;
     }
 
-    &.closed {
-      > div.caption,
-      > div.description {
-        text-decoration: line-through;
+    &.assigned span {
+      display: inline-block;
+      padding: 0 6px;
+    }
+
+    &.date span {
+      display: inline-block;
+      padding: 0 6px;
+    }
+
+    &.caption {
+      @include flex($order: -1, $grow: 2);
+      width: 100%;
+
+      > .title {
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      > .created {
+        color: #777;
+        font-size: 12px;
+        margin-left: 12px;
       }
     }
 
-    > div {
-      padding: 3px;
-      font-size: 13px;
-      @include flex($grow: 1, $basis: 0);
+    &.description {
+      @include flex($grow: 2);
 
-      > div {
-        display: inline-block;
-      }
+      height: auto;
+      opacity: 1;
+      transition: opacity .3s ease-in-out;
+      max-height: 25px;
+      min-width: 50%;
+      max-width: 50%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 
-      &.attachcount {
-        @include flex($basis: main-size, $grow: 0);
-        flex-shrink: 1;
-        max-width: 50px;
+  &.flat {
+    .attachcount span {
+      background-color: $light-blue;
+      background-image: url('../assets/file.png');
+      background-position: 6px center;
+      background-repeat: no-repeat;
+      background-size: 12px;
+      border-radius: $global-radius;
+      color: $blue;
+      padding: 0 6px 0 25px;
+    }
 
-        span {
-          background-color: $light-blue;
-          background-image: url('../assets/file.png');
-          background-position: 6px center;
-          background-repeat: no-repeat;
-          background-size: 12px;
-          border-radius: $global-radius;
-          color: $blue;
-          padding: 0 6px 0 25px;
-          display: inline-block;
-        }
-      }
+    .assigned span {
+      background-color: $light-blue;
+      background-image: url('../assets/user.png');
+      background-position: 6px center;
+      background-repeat: no-repeat;
+      background-size: 12px;
+      border-radius: $global-radius;
+      color: $blue;
+      padding: 0 6px 0 25px;
+    }
 
-      &.assigned span {
-        background-color: $light-blue;
-        background-image: url('../assets/user.png');
-        background-position: 6px center;
-        background-repeat: no-repeat;
-        background-size: 12px;
-        border-radius: $global-radius;
-        color: $blue;
-        padding: 0 6px 0 25px;
-        display: inline-block;
-      }
-
-      &.due span {
-        background-color: $light-blue;
-        background-image: url('../assets/clock-blue.png');
-        background-position: 6px center;
-        background-repeat: no-repeat;
-        background-size: 12px;
-        border-radius: $global-radius;
-        color: $blue;
-        padding: 0 6px 0 25px;
-        display: inline-block;
-      }
-
-      &.caption {
-        @include flex($order: -1, $grow: 2);
-        width: 100%;
-
-        > .title {
-          font-size: 14px;
-          font-weight: bold;
-        }
-
-        > .created {
-          color: #777;
-          font-size: 12px;
-          margin-left: 12px;
-        }
-      }
-
-      &.description {
-        @include flex($grow: 2);
-
-        height: auto;
-        opacity: 1;
-        transition: opacity 0.3s ease-in-out;
-        max-height: 25px;
-        min-width: 50%;
-        max-width: 50%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+    .date span {
+      background-color: $light-blue;
+      background-image: url('../assets/clock-blue.png');
+      background-position: 6px center;
+      background-repeat: no-repeat;
+      background-size: 12px;
+      border-radius: $global-radius;
+      color: $blue;
+      padding: 0 6px 0 25px;
     }
   }
 }

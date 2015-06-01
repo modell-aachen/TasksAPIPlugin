@@ -111,3 +111,24 @@ msgstr "Dez"
 
 msgid "Updated by %1 on %2"
 msgstr "Aktualisiert von %1 am %2"
+
+msgid "Decision"
+msgstr "Beschluss"
+
+msgid "Task"
+msgstr "Aufgabe"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "High priority"
+msgstr "Hohe Priorität"
+
+msgid "Notify on changes"
+msgstr "Bei Änderung benachrichtigen"
+
+msgid "Send reminder"
+msgstr "Erinnerung verschicken"

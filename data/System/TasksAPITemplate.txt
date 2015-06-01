@@ -6,19 +6,22 @@
   include="(Created|Author|Parent|TopicType|Context)"
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Title,AssignedTo"
+  fields="Title,Description,AssignedTo,Result,DueDate,Status"
   header=""
   footer=""
-  format="<div class=\"$name\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  exclude="(Title|AssignedTo|Created|Author|Parent|TopicType|Context)"
-  header=""
-  footer=""
-  format="<div class=\"$name\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%
-%IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%<br />
 %IF{"'%taskeditor_isnew%'='0'" then="$percntTMPL:P{\"tasksapi::editor::comment\"}$percnt"}%
+%IF{"'%taskeditor_allowupload%'='1' and '%taskeditor_isnew%'='0'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%
+<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Prioritize,Informees,Reminder"
+  header=""
+  footer=""
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%
+%ENDTWISTY%
   <div>
     <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
     <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
@@ -27,16 +30,35 @@
 <!--/tasksapi::editor-->%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::comment"}%%{
-}%  <div class="Comment"><label>
-    <span>%MAKETEXT{"Comment"}%</span>
-    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
-  </label></div>%{
+}%<hr><div class="Comment">
+%TWISTY{showlink="%MAKETEXT{"Add comment"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+  <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
+%ENDTWISTY%
+</div>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::upload"}%%{
-  }%%TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
+}%<hr>%TWISTY{showlink="%MAKETEXT{"Attach file(s)"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
   %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
   %ENDTWISTY%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer"}%%{
+}%<literal>
+  <div class="full-description">%TASKINFO{field="Description"}%</div>
+  <hr>
+%TWISTY{showlink="%MAKETEXT{"Show recent changes"}% (%TASKINFO{meta="ChangesetCount"}%)" hidelink="%MAKETEXT{"Hide changes"}%" start="hide"}%
+  <div class="changes">%TASKINFO{type="changesets"}%</div>
+%ENDTWISTY%
+  <div class="task-attachments">
+%ATTACHMENTLIST{
+  topic="%TASKINFO{meta="id"}%"
+  header="<hr>$percntTWISTY{link=\"%MAKETEXT{Attachments}% ($fileCount)\" remember=\"on\" id=\"$percntTASKINFO{meta=\"id\"}$percnt\"}$percnt<table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th><th>%MAKETEXT{Actions}%</th></tr></thead><tbody>"
+  format="<tr><td>$fileIcon</td><td><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td><td><a href=\"$percntSCRIPTURLPATH{\"attach\"}$percnt/$fileWeb/$fileTopioc?filename=$percntENCODE{\"$fileName\"}$percnt;revInfo=1\" title=\"%MAKETEXT{"Update attachment"}%\" rel=\"follow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_refresh.jpg\" border=\"0\" alt=\"%MAKETEXT{"Update attachment"}%\" style=\"border:none;\" /></a> &nbsp; <a href=\"$percntSCRIPTURLPATH{\"rename\"}$percnt/$fileWeb/$fileTopic?template=moveattachment&attachment=$percntENCODE{\"$fileName\"}$percnt\" title=\"%MAKETEXT{"Move attachment"}%\" rel=\"nofollow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_move.jpg\" border=\"0\" alt=\"%MAKETEXT{"Move attachment"}%\" style=\"border:none;\" /></a> &nbsp; <a href=\"$percntSCRIPTURLPATH{\"rename\"}$percnt/$fileWeb/$fileTopic?newweb=$percntTRASHWEB$percnt;newtopic=TrashAttachment;template=renameattachmentdelete;attachment=$percntENCODE{\"$fileName\"}$percnt\" title=\"%MAKETEXT{"Delete attachment"}%\" rel=\"nofollow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_delete.jpg\" border=\"0\" alt=\"%MAKETEXT{"Delete attachment"}%\" style=\"border:none;\" /></a></td></tr>"
+  footer="</tbody></table>$percntENDTWISTY$percnt"
+}%
+  </div>
+</literal>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::task"}%%{
@@ -44,11 +66,12 @@
   <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
-    <div class="content">
-      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %TASKINFO{field="Created" format="$day $month $year ($hour:$min)"}%</span></div>
+    <div class="task-content">
+      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %MAKETEXT{%TASKINFO{field="Result"}%}%</span></div>
       <div class="description"><span>%TASKINFO{field="Description" shorten="140"}%</span></div>
+      <div class="date"><span>%TASKINFO{field="Created" format="$day $month $year"}%</span></div>
       <div class="assigned"><span>%TASKINFO{field="AssignedTo"}%</span></div>
-      <div class="due"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></div>
+      <div class="date"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></div>
       <div class="attachcount"><span>%TASKINFO{meta="AttachCount"}%</span></div>
     </div>%IF{"context task_canedit"
       then="<div class=\"btn-edit\">&nbsp;</div>"
@@ -58,12 +81,6 @@
 </div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::viewer"}%%{
-}%<literal>
-  <div class="full-description">%TASKINFO{field="Description"}%</div>
-  <div class="changes">%TASKINFO{type="changesets"}%</div>
-</literal>%{
-}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">
   %TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%
@@ -101,6 +118,7 @@
 %TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
   <div class="container"><div>
     <div class="text"><span class="tasksort" data-tasksort="Title">%MAKETEXT{"Description"}%</span></div>
+    <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Created"}%</span></div>
     <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo">%MAKETEXT{"Assigned to"}%</span></div>
     <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Due date"}%</span></div>
     <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
