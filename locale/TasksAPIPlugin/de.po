@@ -16,6 +16,12 @@ msgstr "Aufgaben"
 msgid "Add task"
 msgstr "Aufgabe hinzufügen"
 
+msgid "Add comment"
+msgstr "Kommentar hinzufügen"
+
+msgid "More options"
+msgstr "Weitere Optionen"
+
 msgid "Show attachments"
 msgstr "Anhänge anzeigen"
 
