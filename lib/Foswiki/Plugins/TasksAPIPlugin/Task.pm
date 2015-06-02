@@ -333,7 +333,7 @@ sub update {
     my @changes;
     delete $data{TopicType};
     my @comment = delete $data{comment};
-    @comment = () if @comment && !defined $comment[0];
+    @comment = () if @comment && (!defined $comment[0] || $comment[0] =~ /^\s*$/s);
     my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
