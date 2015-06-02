@@ -1,16 +1,11 @@
-%TMPL:INCLUDE{"mailtemplatescontrib"}%
+%TMPL:INCLUDE{"TasksAPIDefaultMail"}%
 
-%TMPL:DEF{"ModacMailTo"}%%TASKSAPI_MAIL_TO%%TMPL:END%
-
-%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task updated: " args="$percntTASKINFO{field=\"Title\" default=\"%MAKETEXT{"(no title)"}%\"}$percnt"}%%TMPL:END%
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task updated: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
 %MAKETEXT{"[_1] updated a task in [_2]:" args="%TASKSAPI_ACTOR%,%SCRIPTURL{view}%/%WEB%/%TOPIC%"}%
 
-%TASKINFO{field="Title" default="%MAKETEXT{"(no title)"}%"}%
+%TMPL:P{"ModacMailTitle"}%
 
 %TASKINFO{type="changeset"}%
 %TMPL:END%
-
-%TMPL:DEF{"ModacMailFrom"}%%WIKIWEBMASTERNAME% <%WIKIWEBMASTER%>%TMPL:END%
-

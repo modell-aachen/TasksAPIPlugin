@@ -1,0 +1,5 @@
+%TMPL:INCLUDE{"mailtemplatescontrib"}%
+
+%TMPL:DEF{"ModacMailTo"}%%TASKSAPI_MAIL_TO%%TMPL:END%
+%TMPL:DEF{"ModacMailTitle"}%%TASKINFO{field="Title" default="%MAKETEXT{(no title)}%"}%%TMPL:END%
+%TMPL:DEF{"ModacMailFrom"}%%WIKIWEBMASTERNAME% <%WIKIWEBMASTER%>%TMPL:END%

@@ -132,3 +132,36 @@ msgstr "Bei Änderung benachrichtigen"
 
 msgid "Send reminder"
 msgstr "Erinnerung verschicken"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Task created: %1"
+msgstr "Aufgabe erstellt: %1"
+
+msgid "Task updated: %1"
+msgstr "Aufgabe aktualisiert: %1"
+
+msgid "Task closed: %1"
+msgstr "Aufgabe geschlossen: %1"
+
+msgid "Task reopened: %1"
+msgstr "Aufgabe wieder eröffnet: %1"
+
+msgid "Task reassigned: %1"
+msgstr "Aufgabe neu zugewiesen: %1"
+
+msgid "%1 created a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 erstellt:"
+
+msgid "%1 updated a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 aktualisiert:"
+
+msgid "%1 closed a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 geschlossen:"
+
+msgid "%1 reopened a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 wieder geöffnet:"
+
+msgid "%1 reassigned a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 neu zugewiesen:"
