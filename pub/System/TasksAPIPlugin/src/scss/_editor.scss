@@ -91,6 +91,22 @@
     label > span {
       margin-bottom: 3px;
     }
+
+    &.Description, &.Comment {
+      min-height: 240px;
+    }
+
+    &.Result, &.Status, &.DueDate {
+      display: inline-block;
+      max-width: 33%;
+      min-width: 33%;
+    }
+
+    &.Prioritize, &.Reminder {
+      display: inline-block;
+      max-width: 50%;
+      min-width: 50%;
+    }
   }
 
   .foswikiEditFormDateField {

@@ -127,8 +127,8 @@ msgstr "Typ"
 msgid "High priority"
 msgstr "Hohe Priorität"
 
-msgid "Notify on changes"
-msgstr "Bei Änderung benachrichtigen"
+msgid "Persons to notify on changes"
+msgstr "Personen bei Änderungen benachrichtigen"
 
 msgid "Send reminder"
 msgstr "Erinnerung verschicken"

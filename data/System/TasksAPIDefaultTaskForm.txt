@@ -4,12 +4,12 @@
 | Parent | text | 50 | | | H |
 | Author | text | 50 | %WIKINAME% | Task "creator" | M H |
 | Created | date | 50 | %GMTIME{"$day $month $year"}% | Time of creation | M H |
-| Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | M |
+| Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | |
 | Title | text | 50 | | Title | M |
 | AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
 | Description | taskeditor | 50 | | Description | |
 | DueDate | date | 50 | | Due | |
-| Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | Notify on changes | |
+| Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | Persons to notify on changes | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | High priority | |
 | HasChildren | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | Divided into sub-tasks | |
