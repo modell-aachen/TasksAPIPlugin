@@ -79,45 +79,45 @@
 }
 
 .tasktracker > .caption {
+  padding: 6px 9px;
+
   [data-tasksort] {
     cursor: pointer;
   }
 
   > .container {
-    padding: 6px 50px;
+    @include flex-container($wrap: nowrap, $justify: space-between);
+    margin-left: 38px;
 
     > div {
-      @include flex-container($wrap: wrap, $justify: space-between);
-      align-items: stretch;
+      @include flex($grow: 1, $basis: 0);
+      color: #777;
+      font-weight: bold;
+      font-size: 10px;
+      text-transform: uppercase;
+      padding: 3px;
 
-      > .text {
-        @include flex($grow: 2);
-        min-width: 50%;
-        max-width: 50%;
-      }
-
-      > .assigned {
-        @include flex($grow: 1);
-        // margin-left: -50px;
-      }
-
-      > .due,
-      > .attachcount {
-        @include flex($grow: 1);
-      }
-
-      > .attachcount {
+      &.attachcount {
+        height: 16px;
         max-width: 50px;
       }
 
-      .text,
-      .assigned,
-      .due,
-      .attachcount {
-        color: #777;
-        font-weight: bold;
-        font-size: 10px;
-        text-transform: uppercase;
+      &.created {
+        max-width: 150px;
+      }
+
+      &.description {
+        @include flex($grow: 2);
+        min-width: calc(50% - 20px);
+        max-width: calc(50% - 20px);
+      }
+
+      &.due {
+        max-width: 100px;
+      }
+
+      &.type {
+        max-width: 100px;
       }
     }
   }

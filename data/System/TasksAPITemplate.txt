@@ -6,7 +6,7 @@
   include="(Created|Author|Parent|TopicType|Context)"
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Title,Description,AssignedTo,Result,DueDate,Status"
+  fields="Title,Description,Result,Status,DueDate,AssignedTo"
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
@@ -16,7 +16,7 @@
 <hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide"}%
 %RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Prioritize,Informees,Reminder"
+  fields="Prioritize,Reminder,Informees"
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
@@ -67,12 +67,26 @@
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
     <div class="task-content">
-      <div class="caption"><span class="title">%TASKINFO{field="Title"}%</span><span class="created">%TASKINFO{field="Author"}%, %MAKETEXT{%TASKINFO{field="Result"}%}%</span></div>
-      <div class="description"><span>%TASKINFO{field="Description" shorten="140"}%</span></div>
-      <div class="date"><span>%TASKINFO{field="Created" format="$day $month $year"}%</span></div>
-      <div class="assigned"><span>%TASKINFO{field="AssignedTo"}%</span></div>
-      <div class="date"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></div>
-      <div class="attachcount"><span>%TASKINFO{meta="AttachCount"}%</span></div>
+      <div class="created">
+        <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+        <span>%TASKINFO{field="Author"}%</span>
+      </div>
+      <div class="type">
+        <span>%MAKETEXT{%TASKINFO{field="Result"}%}%</span>
+      </div>
+      <div class="description">
+        <span class="title">%TASKINFO{field="Title"}%</span>
+        <span>%TASKINFO{field="Description" shorten="140"}%</span>
+      </div>
+      <div class="assigned">
+        <span>%TASKINFO{field="AssignedTo"}%</span>
+      </div>
+      <div class="due">
+        <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+      </div>
+      <div class="attachcount">
+        <span>%TASKINFO{meta="AttachCount"}%</span>
+      </div>
     </div>%IF{"context task_canedit"
       then="<div class=\"btn-edit\">&nbsp;</div>"
     }%
@@ -116,13 +130,14 @@
 
 
 %TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
-  <div class="container"><div>
-    <div class="text"><span class="tasksort" data-tasksort="Title">%MAKETEXT{"Description"}%</span></div>
-    <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Created"}%</span></div>
+  <div class="container">
+    <div class="created"><span class="tasksort" data-tasksort="Created">%MAKETEXT{"Created"}%</span></div>
+    <div class="type"><span class="tasksort" data-tasksort="Result">%MAKETEXT{"Type"}%</span></div>
+    <div class="description"><span class="tasksort" data-tasksort="Title">%MAKETEXT{"Description"}%</span></div>
     <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo">%MAKETEXT{"Assigned to"}%</span></div>
     <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Due date"}%</span></div>
     <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
-  </div></div>
+  </div>
 </div>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::addnew"}%%{

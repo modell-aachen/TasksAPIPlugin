@@ -478,7 +478,8 @@ sub restLease {
     my $q = $session->{request};
     my $r = from_json($q->param('request') || '{}');
 
-    my $meta = Foswiki::Meta->new($session, $session->{webName}, $session->{topicName});
+    my $meta;
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $r->{Context});
 
     if ($r->{id}) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
@@ -500,16 +501,19 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
     } else {
+        $meta = Foswiki::Meta->new($session, $web, $topic);
         Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
     }
+
+    Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
     Foswiki::Func::loadTemplate( $r->{templatefile} || 'TasksAPI' );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || 'tasksapi::editor' );
     $editor = $meta->expandMacros( $editor );
 
-    my @scripts = _getZone($session, $r->{web}, $r->{topic}, $meta, 'script');
-    my @styles = _getZone($session, $r->{web}, $r->{topic}, $meta, 'head');
+    my @scripts = _getZone($session, $web, $topic, $meta, 'script');
+    my @styles = _getZone($session, $web, $topic, $meta, 'head');
 
     return to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles});
 }

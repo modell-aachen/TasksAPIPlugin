@@ -1,6 +1,6 @@
 | *Name* | *Type* | *Size* | *Values* | *Tooltip message* | *Attributes* |
 | TopicType | text | 50 | task | | M H |
-| Context | text | 50 | %WEB%.%TOPIC% | | M H |
+| Context | text | 50 | | | M H |
 | Parent | text | 50 | | | H |
 | Author | text | 50 | %WIKINAME% | Task "creator" | M H |
 | Created | date | 50 | %GMTIME{"$day $month $year"}% | Time of creation | M H |

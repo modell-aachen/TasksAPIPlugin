@@ -4,11 +4,9 @@
   $.fn.taskEditor = function(opts) {
     if (this.length === 0) { return; }
     var $this = this;
-    if ( opts.id ) {
-      $this.data('id', opts.id);
-      if ( opts.trackerId ) {
-        $this.data('trackerId', opts.trackerId);
-      }
+    $this.data('id', _.isUndefined(opts.id) ? '' : opts.id);
+    if ( opts.trackerId ) {
+      $this.data('trackerId', opts.trackerId);
     }
 
     if (!$this.is('.task-editor-init')) {
@@ -120,7 +118,6 @@
             $this.trigger( afterSave, task );
             closeEditor();
             def.resolve('save', response.data);
-
           });
 
           return;
@@ -257,7 +254,7 @@
 
   var leaseTopic = function( data ) {
     var payload = {request: JSON.stringify( data )};
-    return handleLease( 'lease', payload );
+    return handleLease( 'lease', payload, data.id );
   };
 
   var loadedScripts = [];

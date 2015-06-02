@@ -150,13 +150,13 @@
 .task-content {
   @include flex-container($wrap: wrap, $justify: space-between);
   @include flex($grow: 2, $align: center);
+  align-items: center;
 
   &.deleted, {
     text-decoration: line-through;
   }
 
   &.closed {
-    > .caption,
     > .description {
       text-decoration: line-through;
     }
@@ -167,6 +167,11 @@
     font-size: 13px;
     padding: 3px;
 
+    span {
+      display: block;
+      text-align: left;
+    }
+
     &.attachcount {
       @include flex($grow: 0);
       flex-shrink: 1;
@@ -176,30 +181,10 @@
       padding: 0 6px;
     }
 
-    &.assigned span {
-      display: inline-block;
-      padding: 0 6px;
-    }
-
-    &.date span {
-      display: inline-block;
-      padding: 0 6px;
-    }
-
-    &.caption {
-      @include flex($order: -1, $grow: 2);
-      width: 100%;
-
-      > .title {
-        font-size: 14px;
-        font-weight: bold;
-      }
-
-      > .created {
-        color: #777;
-        font-size: 12px;
-        margin-left: 12px;
-      }
+    &.created {
+      color: #777;
+      font-size: 11px;
+      max-width: 150px;
     }
 
     &.description {
@@ -208,47 +193,24 @@
       height: auto;
       opacity: 1;
       transition: opacity .3s ease-in-out;
-      max-height: 25px;
       min-width: 50%;
       max-width: 50%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-  }
 
-  &.flat {
-    .attachcount span {
-      background-color: $light-blue;
-      background-image: url('../assets/file.png');
-      background-position: 6px center;
-      background-repeat: no-repeat;
-      background-size: 12px;
-      border-radius: $global-radius;
-      color: $blue;
-      padding: 0 6px 0 25px;
+      .title {
+        font-size: 14px;
+        font-weight: bold;
+      }
     }
 
-    .assigned span {
-      background-color: $light-blue;
-      background-image: url('../assets/user.png');
-      background-position: 6px center;
-      background-repeat: no-repeat;
-      background-size: 12px;
-      border-radius: $global-radius;
-      color: $blue;
-      padding: 0 6px 0 25px;
+    &.due {
+      max-width: 100px;
     }
 
-    .date span {
-      background-color: $light-blue;
-      background-image: url('../assets/clock-blue.png');
-      background-position: 6px center;
-      background-repeat: no-repeat;
-      background-size: 12px;
-      border-radius: $global-radius;
-      color: $blue;
-      padding: 0 6px 0 25px;
+    &.type {
+      max-width: 100px;
     }
   }
 }
