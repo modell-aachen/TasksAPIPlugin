@@ -11,6 +11,7 @@ lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0644
 lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0644
 locale/TasksAPIPlugin/de.po 0644
 pub/System/TasksAPIPlugin/assets/add.png 0644
+pub/System/TasksAPIPlugin/assets/add-white.png 0644
 pub/System/TasksAPIPlugin/assets/sub.png 0644
 pub/System/TasksAPIPlugin/assets/sort-asc.png 0644
 pub/System/TasksAPIPlugin/assets/sort-desc.png 0644

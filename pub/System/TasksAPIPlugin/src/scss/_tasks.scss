@@ -89,7 +89,7 @@
   > .btn-expander {
     @include flex($shrink: 0, $align: stretch);
 
-    background-color: $white;
+    background-color: transparent;
     border-radius: $global-radius;
     background-position: center center;
     background-repeat: no-repeat;
@@ -112,6 +112,7 @@
 
     &:active {
       background-color: $blue;
+      background-image: url('../assets/add-white.png');
     }
 
   }
@@ -119,7 +120,7 @@
   > .btn-edit {
     @include flex($shrink: 0, $align: stretch);
 
-    background-color: $white;
+    background-color: transparent;
     border-radius: $global-radius;
     background-position: center center;
     background-repeat: no-repeat;
