@@ -89,6 +89,13 @@
     var handleSave = function() {
       var task = readEditor();
 
+      // missing value for mandatory field
+      if ( task.hasError ) {
+        var msg = decodeURIComponent(opts.lang.missingField) + ': ' + task.missingFields;
+        alert(msg);
+        return false;
+      }
+
       for (var prop in opts) {
         if ( /template/.test(prop) ) {
           task[prop] = opts[prop];
@@ -98,11 +105,6 @@
       var beforeSave = $.Event( 'beforeSave' );
       $this.trigger( beforeSave, task ); 
       if( beforeSave.isDefaultPrevented() ) {
-        return false;
-      }
-
-      // missing value for mandatory field
-      if ( task === null ) {
         return false;
       }
 
@@ -164,10 +166,11 @@
 
     var readEditor = function() {
       var data = {
-        id: $this.data('id')
+        id: $this.data('id'),
+        hasError: false
       };
 
-      var hasError = false;
+      var missingFields = [];
       $this.find('input[name],select[name],textarea[name]').each(function() {
         var $input = $(this);
         var prop = $input.attr('name');
@@ -181,16 +184,17 @@
         }
 
         if ( $input.hasClass('foswikiMandatory') && (/^$/.test( val ) || val === null || val === undefined ) ) {
-          alert('TBD. missing value for mandatory field');
-          hasError = true;
+          var fname = $input.parent().find('span').text().replace(/\*/g, '');
+          missingFields.push(fname);
+          data.hasError = true;
           return false;
         }
 
         data[prop] = val !== null ? val : "";
       });
 
-      if ( hasError ) {
-        return null;
+      if ( data.hasError ) {
+        data.missingFields = missingFields.join(', ');
       }
 
       return data;

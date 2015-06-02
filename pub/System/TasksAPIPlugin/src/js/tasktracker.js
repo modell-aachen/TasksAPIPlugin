@@ -203,6 +203,7 @@
 
     var task = $.parseJSON( $task.find('.task-data').text() );
     edopts.data = task;
+    edopts.lang = opts.lang;
 
     var expanded = $task.is('.expanded');
     $('#task-editor').taskEditor(edopts).done(function(type, data) {
