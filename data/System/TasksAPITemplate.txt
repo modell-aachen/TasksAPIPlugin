@@ -88,7 +88,7 @@
         <span>%TASKINFO{meta="AttachCount"}%</span>
       </div>
       <div class="ampel">
-        <span>%TASKSAMPEL{%TASKINFO{field="DueDate" format="$day $month $year"}%}%</span>
+        <span>%TASKSAMPEL{"%TASKINFO{field="DueDate" format="$day $month $year"}%" status="%TASKINFO{field="Status"}%"}%</span>
       </div>
     </div>%IF{"context task_canedit"
       then="<div class=\"btn-edit\">&nbsp;</div>"

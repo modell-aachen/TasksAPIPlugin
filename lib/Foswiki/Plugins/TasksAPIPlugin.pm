@@ -432,22 +432,28 @@ sub _enrich_data {
 }
 
 sub tagAmpel {
-  my( $session, $params, $topic, $web, $topicObject ) = @_;
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-  my $warn = $params->{warn} || 3;
-  my $date = $params->{_DEFAULT} || $params->{data};
-  return '' unless $date;
-Foswiki::Func::writeWarning( $date );
-  my $now = scalar time();
-  my $secs = Foswiki::Time::parseTime($date);
-  my $offset = $warn * 24 * 60 * 60;
+    my $date = $params->{_DEFAULT} || $params->{data};
+    return '' unless $date;
+    my $warn = $params->{warn} || 3;
+    my $status = $params->{status} || 'open';
 
-  my $state = 'g';
-  $state = 'o' if $now  + $offset > $secs;
-  $state = 'r' if $now >= $secs;
+    my $src = '';
+    if ( $status eq 'open' ) {
+        my $now = scalar time();
+        my $secs = Foswiki::Time::parseTime($date);
+        my $offset = $warn * 24 * 60 * 60;
+        my $state = 'g';
+        $state = 'o' if $now  + $offset > $secs;
+        $state = 'r' if $now >= $secs;
+        $src = "ampel_$state"
+    } else {
+        $src = $status;
+    }
 
-  my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel_$state.png" alt="">
+    my $img = <<IMG;
+<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="">
 IMG
 
     return $img;
