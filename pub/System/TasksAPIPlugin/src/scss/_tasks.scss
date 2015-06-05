@@ -67,15 +67,22 @@
       .content > .description {
         opacity: 0;
       }
+
       > .task-fullview {
         max-height: 800px;
         opacity: 1;
         overflow: auto;
         white-space: normal;
       }
+
       .btn-expander {
         background-image: url('../assets/sub.png');
         opacity: 1;
+      }
+
+      .btn-edit {
+        opacity: 1;
+        pointer-events: auto;
       }
     }
   }
