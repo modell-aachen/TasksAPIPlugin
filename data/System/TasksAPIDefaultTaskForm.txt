@@ -3,7 +3,7 @@
 | Context | text | 50 | | | M H |
 | Parent | text | 50 | | | H |
 | Author | text | 50 | %WIKINAME% | Task "creator" | M H |
-| Created | date | 50 | %GMTIME{"$day $month $year"}% | Time of creation | M H |
+| Created | date | 50 | %GMTIME{"$epoch"}% | Time of creation | M H |
 | Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | |
 | Title | text | 50 | | Title | M |
 | AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
