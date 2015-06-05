@@ -96,6 +96,7 @@ sub initPlugin {
         return 0;
     }
 
+    Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&tagAmpel );
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
@@ -428,6 +429,28 @@ sub _enrich_data {
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
 
     $result;
+}
+
+sub tagAmpel {
+  my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+  my $warn = $params->{warn} || 3;
+  my $date = $params->{_DEFAULT} || $params->{data};
+  return '' unless $date;
+
+  my $now = scalar time();
+  my $secs = Foswiki::Time::parseTime($date);
+  my $offset = $warn * 24 * 60 * 60;
+
+  my $state = 'g';
+  $state = 'o' if $now  + $offset > $secs;
+  $state = 'r' if $now >= $secs;
+
+  my $img = <<IMG;
+<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel_$state.png" alt="">
+IMG
+
+    return $img;
 }
 
 sub tagSearch {

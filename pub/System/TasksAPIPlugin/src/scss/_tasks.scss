@@ -172,19 +172,38 @@
       text-align: left;
     }
 
+    &.ampel {
+      @include flex($grow: 0);
+      flex-shrink: 1;
+      min-width: 56px;
+
+      span {
+        text-align: center;
+      }
+    }
+
+    &.assigned {
+      @include flex($grow: 0);
+      flex-shrink: 1;
+      min-width: 120px;
+    }
+
     &.attachcount {
       @include flex($grow: 0);
       flex-shrink: 1;
+      min-width: 61px;
 
-      display: inline-block;
-      max-width: 50px;
-      padding: 0 6px;
+      span {
+        text-align: center;
+      }
     }
 
     &.created {
+      @include flex($grow: 0);
+      flex-shrink: 1;
+      min-width: 100px;
       color: #777;
       font-size: 11px;
-      max-width: 150px;
     }
 
     &.description {
@@ -193,8 +212,9 @@
       height: auto;
       opacity: 1;
       transition: opacity .3s ease-in-out;
-      min-width: 50%;
+      min-width: 25%;
       max-width: 50%;
+      width: 50%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -210,7 +230,9 @@
     }
 
     &.type {
-      max-width: 100px;
+      @include flex($grow: 0);
+      flex-shrink: 1;
+      min-width: 90px;
     }
   }
 }

@@ -87,7 +87,7 @@
 
   > .container {
     @include flex-container($wrap: nowrap, $justify: space-between);
-    margin-left: 38px;
+    margin: 0 38px;
 
     > div {
       @include flex($grow: 1, $basis: 0);
@@ -97,19 +97,36 @@
       text-transform: uppercase;
       padding: 3px;
 
+      &.assigned {
+        @include flex($grow: 0);
+        flex-shrink: 1;
+        min-width: 120px;
+      }
+
       &.attachcount {
-        height: 16px;
-        max-width: 50px;
+        @include flex($grow: 0);
+        flex-shrink: 1;
+        min-width: 61px;
+      }
+
+      &.ampel {
+        @include flex($grow: 0);
+        flex-shrink: 1;
+        min-width: 56px;
       }
 
       &.created {
-        max-width: 150px;
+        @include flex($grow: 0);
+        flex-shrink: 1;
+        min-width: 100px;
       }
 
       &.description {
         @include flex($grow: 2);
-        min-width: calc(50% - 20px);
+
+        min-width: calc(25% - 20px);
         max-width: calc(50% - 20px);
+        width: calc(50% - 20px);
       }
 
       &.due {
@@ -117,7 +134,9 @@
       }
 
       &.type {
-        max-width: 100px;
+        @include flex($grow: 0);
+        flex-shrink: 1;
+        min-width: 90px;
       }
     }
   }
@@ -127,7 +146,6 @@
   background-position: right center;
   background-repeat: no-repeat;
   display: inline-block;
-  line-height: 1;
   padding-right: 20px;
   vertical-align: middle;
 
