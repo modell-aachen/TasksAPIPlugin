@@ -49,6 +49,44 @@
       $this.find('.tasks-btn-save').click(handleSave);
       $this.find('.tasks-btn-cancel').click(handleCancel);
       writeEditor( data );
+
+      if ( opts.autoassign && opts.autoassign.enabled ) {
+        var $target = $(opts.autoassign.target).find('input');
+        var triggers = opts.autoassign.assignOn.split(',');
+        var assignee = opts.autoassign.assignee;
+        var $selector = $(opts.autoassign.selector);
+
+        // set initial value
+        if ( triggers.indexOf($selector.val()) !== -1 && /^\s*$/.test($target.val())) {
+          setTimeout(function() {
+            $target.trigger('AddValue', assignee);
+            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
+          }, 300);
+        }
+
+        // handle changes
+        $selector.on('change', function() {
+          var $self = $(this);
+
+          if ( triggers.indexOf($self.val()) !== -1 ) {
+            if ( $target.val() !== assignee ) {
+              $self.data('autoassign-prev', $target.val());
+            }
+
+            $target.trigger('Clear');
+            $target.trigger('AddValue', assignee);
+            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
+          } else {
+            $target.trigger('Clear');
+            if ( $self.data('autoassign-prev') && $target.val() === assignee ) {
+              $target.trigger('AddValue', $self.data('autoassign-prev'));
+              $self.data('autoassign-prev', '');
+              $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'inline');
+            }
+          }
+        });
+      }
+
       $this.dialog('open');
 
       var afterEdit = $.Event( 'afterEdit' );

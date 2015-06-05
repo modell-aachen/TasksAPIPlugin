@@ -160,19 +160,6 @@
     $tracker.trigger( e, data );
 
     $task.toggleClass('expanded');
-/*
-    var txt = decodeURIComponent(unescape($task.find('.full-description').text()));
-
-    var $full = $task.find('.task-full-wrapper');
-    var $desc = $task.find('.task-wrapper .description');
-    if ( !$full.html() ) {
-      $full.html( '<div>' + txt + '</div>' );
-      $desc.css('opacity', 0);
-    } else {
-      $full.empty();
-      $desc.css('opacity', 1);
-    }
-*/
   };
 
   var initTaskElement = function($task, task) {
@@ -204,6 +191,7 @@
     var task = $.parseJSON( $task.find('.task-data').text() );
     edopts.data = task;
     edopts.lang = opts.lang;
+    edopts.autoassign = opts.autoassign;
 
     var expanded = $task.is('.expanded');
     $('#task-editor').taskEditor(edopts).done(function(type, data) {

@@ -609,6 +609,17 @@ sub tagGrid {
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
+    my $autoassign = Foswiki::isTrue($params->{autoassign}, 0);
+    $autoassign = $autoassign ? JSON::true : JSON::false;
+    my $autoassignee = $params->{autoassignee} || '';
+    my $autoassignselector = $params->{autoassignselector} || '';
+    my $autoassigntarget = $params->{autoassigntarget} || '';
+    my $autoassignon = $params->{autoassignon} || '';
+
+    $autoassign = JSON::false unless $autoassignee;
+    $autoassign = JSON::false unless $autoassignselector;
+    $autoassign = JSON::false unless $autoassignon;
+    $autoassign = JSON::false unless $autoassigntarget;
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -637,6 +648,13 @@ sub tagGrid {
         editortemplate => $editorTemplate,
         lang => {
             missingField => Foswiki::urlEncode( $translated )
+        },
+        autoassign => {
+            enabled => $autoassign,
+            assignee => $autoassignee,
+            selector => $autoassignselector,
+            target => $autoassigntarget,
+            assignOn => $autoassignon
         }
     );
 
