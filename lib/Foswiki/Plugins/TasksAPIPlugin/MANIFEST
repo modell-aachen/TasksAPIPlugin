@@ -20,6 +20,8 @@ pub/System/TasksAPIPlugin/assets/add-white.png 0644
 pub/System/TasksAPIPlugin/assets/ampel_g.png 0644
 pub/System/TasksAPIPlugin/assets/ampel_o.png 0644
 pub/System/TasksAPIPlugin/assets/ampel_r.png 0644
+pub/System/TasksAPIPlugin/assets/closed.png 0644
+pub/System/TasksAPIPlugin/assets/deleted.png 0644
 pub/System/TasksAPIPlugin/assets/sub.png 0644
 pub/System/TasksAPIPlugin/assets/sort-asc.png 0644
 pub/System/TasksAPIPlugin/assets/sort-desc.png 0644
