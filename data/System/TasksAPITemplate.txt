@@ -87,6 +87,9 @@
       <div class="attachcount">
         <span>%TASKINFO{meta="AttachCount"}%</span>
       </div>
+      <div class="ampel">
+        <span>%TASKSAMPEL{%TASKINFO{field="DueDate" format="$day $month $year"}%}%</span>
+      </div>
     </div>%IF{"context task_canedit"
       then="<div class=\"btn-edit\">&nbsp;</div>"
     }%
@@ -137,6 +140,7 @@
     <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo">%MAKETEXT{"Assigned to"}%</span></div>
     <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Due date"}%</span></div>
     <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
+    <div class="ampel"><span>%MAKETEXT{"Status"}%</span></div>
   </div>
 </div>%TMPL:END%
 

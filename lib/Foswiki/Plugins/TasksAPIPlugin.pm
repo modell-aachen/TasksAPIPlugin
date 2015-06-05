@@ -437,7 +437,7 @@ sub tagAmpel {
   my $warn = $params->{warn} || 3;
   my $date = $params->{_DEFAULT} || $params->{data};
   return '' unless $date;
-
+Foswiki::Func::writeWarning( $date );
   my $now = scalar time();
   my $secs = Foswiki::Time::parseTime($date);
   my $offset = $warn * 24 * 60 * 60;
