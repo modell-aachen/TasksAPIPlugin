@@ -62,6 +62,10 @@
             $target.trigger('AddValue', assignee);
             $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
           }, 300);
+        } else if ( $target.val() === assignee ) {
+          setTimeout(function() {
+            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
+          }, 300);
         }
 
         // handle changes

@@ -494,9 +494,8 @@ sub restSearch {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
 
-    if ( $req->{templatefile} ) {
-        Foswiki::Func::loadTemplate( $req->{templatefile} );
-    }
+    my $file = $req->{templatefile} || 'TasksAPI';
+    Foswiki::Func::loadTemplate( $file );
 
     @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task') } @res;
     return to_json({status => 'ok', data => \@res});

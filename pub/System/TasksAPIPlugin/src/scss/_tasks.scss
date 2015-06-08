@@ -158,6 +158,7 @@
   @include flex-container($wrap: wrap, $justify: space-between);
   @include flex($grow: 2, $align: center);
   align-items: center;
+  transition: background-color .3s ease-in-out;
 
   &.deleted, {
     text-decoration: line-through;
@@ -264,6 +265,10 @@
 .task.expanded .task-attachments {
   height: auto;
   max-height: 1000px;
+}
+
+.task.expanded .task-content {
+  border-radius: 6px;
 }
 
 .task-children {

@@ -135,8 +135,6 @@
     }).done( function( response ) {
       _.each( response.data, function(entry) {
         var $task = createTaskElement(entry);
-        var $desc = $task.find('.description');
-        $desc.text(decodeURIComponent( unescape($desc.text()) ));
         container.append( $task );
       });
 
@@ -212,7 +210,11 @@
     var $filter = $(this);
     var $tracker = $filter.closest('.tasktracker');
     var sortBy = $filter.data('tasksort');
+    if ( typeof sortBy === typeof undefined ) {
+      return;
+    }
 
+    var type = $filter.data('sorttype') || 'string';
     $('[data-tasksort]').each( function() {
       if ( $(this).data('tasksort') !== sortBy ) {
         $(this).removeClass('tasksort-asc tasksort-desc');
@@ -225,23 +227,33 @@
     var sortedTasks = _.sortBy( tasks, function(task) {
       var d  =$.parseJSON($(task).find('.task-data').text());
       var val = d.fields[sortBy].value;
+
+      try {
+        if ( /int/i.test(type) ) {
+          return parseInt(val);
+        } else if ( /date/i.test(type) ) {
+          return new Date(val);
+        }
+      } catch(e) {
+        error(e);
+      }
+
       return val;
     });
 
-    if ( $filter.hasClass('tasksort-asc') ) {
+    if ( $filter.hasClass('tasksort-desc') ) {
       sortedTasks = sortedTasks.reverse();
-      $filter.removeClass('tasksort-asc');
-      $filter.addClass('tasksort-desc');
-    } else if ( $filter.hasClass('tasksort-desc') || (!$filter.hasClass('tasksort-asc') && !$filter.hasClass('tasksort-desc')) ) {
       $filter.removeClass('tasksort-desc');
       $filter.addClass('tasksort-asc');
+    } else if ( $filter.hasClass('tasksort-asc') || (!$filter.hasClass('tasksort-asc') && !$filter.hasClass('tasksort-desc')) ) {
+      $filter.removeClass('tasksort-asc');
+      $filter.addClass('tasksort-desc');
     }
 
     $tasks.empty();
     _.each(sortedTasks, function(task) {
       $(task).appendTo($tasks);
     });
-
   };
 
   var error = function() {
