@@ -244,7 +244,8 @@ sub _index {
     my %vals = (
         id => $task->{id},
         form => $form->web .'.'. $form->topic,
-        raw => $task->{meta}->getEmbeddedStoreForm,
+        # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
+        raw => Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm),
     );
     my @extra;
     for my $f (keys %{$task->{fields}}) {
