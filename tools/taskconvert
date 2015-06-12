@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+
+do '../bin/setlib.cfg';
+require Foswiki;
+new Foswiki('admin');
+
+require Foswiki::Func;
+require Foswiki::Time;
+require Foswiki::Plugins::ActionTrackerPlugin;
+require Foswiki::Plugins::ActionTrackerPlugin::Action;
+require Foswiki::Plugins::ActionTrackerPlugin::ActionSet;
+require Foswiki::Plugins::ActionTrackerPlugin::Format;
+
+my $web = "Minutes";
+my $topic = "Protokoll000";
+my $form = "System.TasksAPIDefaultTaskForm";
+my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
+my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
+return unless scalar(@{$set->{ACTIONS}});
+
+foreach my $a (@{$set->{ACTIONS}}) {
+  my %data = (
+    AssignedTo => $a->{who},
+    Author => $a->{creator},
+    Context => "Minutes.Protokoll006",
+    Created => $a->{created},
+    Description => $a->{text},
+    DueDate => Foswiki::Time::formatTime($a->{due}, '$day $month $year'),
+    Result => $a->{unloaded_fields}->{result} || 'Information',
+    Status => $a->{state},
+    Title => $a->{unloaded_fields}->{task},
+    form => $form
+  );
+
+  my $task = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
+
+  # if ( $a->{state} eq 'closed') {
+  #   $data{Status} = 'closed';
+  #   my $usr = $Foswiki::Plugins::SESSION->{user};
+  #   $Foswiki::Plugins::SESSION->{user} = Foswiki::Func::getCanonicalUserID($a->{closer} || $a->{unloaded_fields}->{closer});
+  #   $task->update(%data);
+  #   $Foswiki::Plugins::SESSION->{user} = $usr;
+  # }
+}
