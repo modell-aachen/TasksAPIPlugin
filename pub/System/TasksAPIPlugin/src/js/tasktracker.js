@@ -75,6 +75,23 @@
     });
   };
 
+  var unescapeHTML = function(obj) {
+    if ( !obj.fields ) {
+      return obj;
+    }
+
+    for(var prop in obj.fields) {
+      obj.fields[prop].value = obj.fields[prop].value
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&');
+    }
+
+    return obj;
+  };
+
+
   var loadTasks = function( $tracker, status, initial, parent, container ) {
     var deferred = $.Deferred();
 
@@ -97,7 +114,7 @@
     if (initial) {
       var results = [];
       $(container).children('.task').each(function(idx, e) {
-        var data = $.parseJSON( $(e).children('.task-data').text() );
+        var data = unescapeHTML( $.parseJSON($(e).children('.task-data').text()) );
 
         initTaskElement($(e), data, opts);
         results.push(data);
@@ -186,7 +203,7 @@
     edopts.id = $task.data('id');
     edopts.trackerId = $tracker.attr('id');
 
-    var task = $.parseJSON( $task.find('.task-data').text() );
+    var task = unescapeHTML( $.parseJSON($task.find('.task-data').text()) );
     edopts.data = task;
     edopts.lang = opts.lang;
     edopts.autoassign = opts.autoassign;
@@ -225,7 +242,7 @@
     var tasks = $tasks.find('.task');
 
     var sortedTasks = _.sortBy( tasks, function(task) {
-      var d  =$.parseJSON($(task).find('.task-data').text());
+      var d  = unescapeHTML( $.parseJSON($(task).find('.task-data').text()) );
       var val = d.fields[sortBy].value;
 
       try {

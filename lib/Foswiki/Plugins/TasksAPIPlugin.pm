@@ -877,7 +877,7 @@ sub tagInfo {
 
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
-        unless (Foswiki::isTrue($params->{escape}, 1)) {
+        if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
             $val =~ s/</&lt;/g;
             $val =~ s/>/&gt;/g;
@@ -913,7 +913,14 @@ sub tagInfo {
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
-        return to_json(_enrich_data($task, 'tasksapi::empty')) if $meta eq 'json';
+        if ($meta eq 'json') {
+            my $json = to_json(_enrich_data($task, 'tasksapi::empty'));
+            $json =~ s/&/&amp;/g;
+            $json =~ s/</&lt;/g;
+            $json =~ s/>/&gt;/g;
+            $json =~ s/"/&quot;/g;
+            return $json;
+        }
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
         return scalar $task->{meta}->find('TASKCHANGESET') if $meta eq 'ChangesetCount';
         return scalar $task->children if $meta eq 'ChildCount';
