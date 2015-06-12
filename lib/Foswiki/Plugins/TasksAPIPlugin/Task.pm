@@ -186,13 +186,17 @@ sub _checkACL {
     my $acl = shift;
     return 1 if !@$acl;
     my $user = shift || $session->{user};
+    my $aclstring = join(',', @$acl);
+    my $cache = Foswiki::Plugins::TasksAPIPlugin::_cachedACL($aclstring);
+    return $cache if defined $cache;
     foreach my $item (@$acl) {
         my $cuid = Foswiki::Func::getCanonicalUserID($item);
-        return 1 if $user eq $cuid;
-        if (Foswiki::Func::isGroup($item)) {
-            return 1 if Foswiki::Func::isGroupMember($item, $user);
+        if ($user eq $cuid || Foswiki::Func::isGroup($item) && Foswiki::Func::isGroupMember($item, $user)) {
+            Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
+            return 1;
         }
     }
+    Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 0);
     0;
 }
 
@@ -240,6 +244,13 @@ sub getPref {
     }
     return $pref{$subkey} if $subkey ne '*';
     return \%pref;
+}
+
+sub getBoolPref {
+    my ($task, $name, $subkey) = @_;
+    my $res = $task->getPref($name, $subkey);
+    return 0 if !defined $res || $res =~ /^\s*(?:no|false|0|)\s*$/i;
+    1;
 }
 
 sub create {
@@ -414,10 +425,20 @@ sub parent {
 }
 
 sub children {
+    my ($self, $acl) = @_;
+    $acl = 1 unless defined $acl;
+    my $res = $self->cached_children($acl);
+    return @$res if defined $res;
+
+    search(query => {Parent => $self->{id}}, acl => $acl);
+}
+
+sub cached_children {
     my $self = shift;
     my $acl = shift;
     $acl = 1 unless defined $acl;
-    search(query => {Parent => $self->{id}}, acl => $acl);
+    return $self->{children_acl} if $acl;
+    return $self->{children};
 }
 
 sub _postCreate {

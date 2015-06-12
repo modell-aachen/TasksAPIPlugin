@@ -58,6 +58,13 @@
   footer="</tbody></table>$percntENDTWISTY$percnt"
 }%
   </div>
+  <div class="children">
+    <div class="create">
+      <a href="#" class="tasks-btn tasks-btn-create">%TASKINFO{expand="createtext"}%</a>
+    </div>
+    <div style="clear: right;"></div>
+    %TASKINFO{type="children"}%
+  </div>
 </literal>%{
 }%%TMPL:END%
 

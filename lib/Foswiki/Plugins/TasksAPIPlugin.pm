@@ -82,9 +82,11 @@ my %singles = (
 
 my $gridCounter = 1;
 my $renderRecurse = 0;
-my $currentTask;
-my $currentOptions;
-my $currentExpands;
+our $currentTask;
+our $currentOptions;
+our $currentExpands;
+
+my $aclCache = {};
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -115,7 +117,7 @@ sub initPlugin {
 sub finishPlugin {
     undef $db;
     undef %schema_versions;
-    undef $currentTask;
+    $aclCache = {};
     $gridCounter = 1;
     $renderRecurse = 0;
 }
@@ -161,11 +163,9 @@ sub _applySchema {
 }
 
 sub withCurrentTask {
-    my $prev = $currentTask;
-    $currentTask = shift;
+    local $currentTask = shift;
     my $sub = shift;
     my $res = $sub->(@_);
-    $currentTask = $prev;
     $res;
 }
 
@@ -279,6 +279,14 @@ sub _fullindex {
         _index($t, 0);
     }
     $db->commit;
+}
+
+sub _cachedACL {
+    my $acl = shift;
+    $aclCache->{$acl};
+}
+sub _cacheACL {
+    $aclCache->{$_[0]} = $_[1];
 }
 
 sub restCreate {
@@ -638,6 +646,7 @@ sub tagGrid {
     my $allowUpload = $params->{allowupload} || 0;
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
+    my $depth = $params->{depth} || 0;
     my $autoassign = Foswiki::isTrue($params->{autoassign}, 0);
     $autoassign = $autoassign ? JSON::true : JSON::false;
     my $autoassignee = $params->{autoassignee} || '';
@@ -701,7 +710,7 @@ sub tagGrid {
 
     my $select = join('\n', @options),
     my $json = to_json( \%settings );
-    $currentOptions = \%settings;
+    local $currentOptions = \%settings;
 
     eval {
         $query = from_json($query);
@@ -713,7 +722,7 @@ sub tagGrid {
         return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
     $query->{Context} = $ctx if $ctx && !exists $query->{Context};
-    $query->{Parent} = $parent if $parent && !exists $query->{Parent};
+    $query->{Parent} = $parent;
     $query->{Status} = 'open' if !exists $query->{Status};
 
     my @tasks = _query(
@@ -722,9 +731,24 @@ sub tagGrid {
         desc => $params->{desc},
         limit => $params->{pagesize},
     );
-    for my $task (@tasks) {
-        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
+
+    my $tasks = {};
+    @{$tasks}{map {$_->{id}} @tasks} = @tasks;
+    my @taskstofetch = @tasks;
+    while ($depth > 0) {
+        my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
+        last unless @ids;
+        my @children = _query(query => {Parent => \@ids, Status => $query->{Status}});
+        @taskstofetch = ();
+        for my $c (@children) {
+            $tasks->{$c->{fields}{Parent}}{children_acl} ||= [];
+            push @{$tasks->{$c->{fields}{Parent}}{children_acl}}, $c;
+            push @taskstofetch, $c;
+        }
+        $depth--;
     }
+    undef $tasks;
+    undef @taskstofetch;
 
     my %tmplAttrs = (
         stateoptions => $select,
@@ -733,19 +757,21 @@ sub tagGrid {
         createtext => $createText,
         captiontemplate => $captionTemplate,
         filtertemplate => $filterTemplate,
-        tasks => join('', @tasks),
         id => $id,
     );
-    $currentExpands = \%tmplAttrs;
+    local $currentExpands = \%tmplAttrs;
+
+    for my $task (@tasks) {
+        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
+    }
+    $tmplAttrs{tasks} = join('', @tasks);
 
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
 
-    undef $currentExpands;
-    undef $currentOptions;
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
 
-    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::accordion", "ui::dialog");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
@@ -909,6 +935,13 @@ sub tagInfo {
             push @out, $out if $out ne '';
         }
         return join($params->{separator} || "\n", @out);
+    }
+    if ($params->{type} && $params->{type} eq 'children') {
+        my @out;
+        for my $child (@{$task->cached_children || []}) {
+            push @out, _renderTask($topicObject, $currentOptions->{tasktemplate} || $child->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $child);
+        }
+        return join($params->{separator} || '', @out);
     }
 
     if (my $meta = $params->{meta}) {
