@@ -164,8 +164,12 @@
 
     $.blockUI();
     var query = {
-      Context: opts.context,
+      Context: opts.context
     };
+
+    if ( opts.parent !== 'any' ) {
+      query.Parent = parent || '';
+    }
 
     $.extend(query, $.parseJSON(opts.query));
     if ( !/^(1|true)$/i.test( opts.stateless ) && status !== 'all' ) {
@@ -176,10 +180,6 @@
       } else {
         query.Status = ['open', 'closed'];
       }
-    }
-
-    if (parent) {
-      query.Parent = parent;
     }
 
     var qopts = {};

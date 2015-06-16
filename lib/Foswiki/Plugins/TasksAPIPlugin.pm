@@ -244,6 +244,7 @@ sub _index {
     my %vals = (
         id => $task->{id},
         form => $form->web .'.'. $form->topic,
+        Parent => '',
         # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
         raw => Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm),
     );
@@ -735,7 +736,7 @@ sub tagGrid {
     while ($depth > 0) {
         my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
         last unless @ids;
-        my @children = _query(query => {Parent => \@ids, Status => $query->{Status}});
+        my @children = _query(query => {Parent => \@ids});
         @taskstofetch = ();
         for my $c (@children) {
             $tasks->{$c->{id}} = $c;
