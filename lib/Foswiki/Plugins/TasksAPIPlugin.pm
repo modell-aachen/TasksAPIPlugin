@@ -631,7 +631,6 @@ sub tagGrid {
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $template = $params->{template} || 'tasksapi::grid';
     my $taskTemplate = $params->{tasktemplate};
-    my $taskFullTemplate = $params->{taskfulltemplate} || 'tasksapi::viewer';
     my $editorTemplate = $params->{editortemplate} || 'tasksapi::editor';
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
@@ -682,7 +681,6 @@ sub tagGrid {
         stateless => $stateless,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
-        taskfulltemplate => $taskFullTemplate,
         editortemplate => $editorTemplate,
         lang => {
             missingField => Foswiki::urlEncode( $translated )
@@ -741,6 +739,7 @@ sub tagGrid {
         my @children = _query(query => {Parent => \@ids, Status => $query->{Status}});
         @taskstofetch = ();
         for my $c (@children) {
+            $tasks->{$c->{id}} = $c;
             $tasks->{$c->{fields}{Parent}}{children_acl} ||= [];
             push @{$tasks->{$c->{fields}{Parent}}{children_acl}}, $c;
             push @taskstofetch, $c;
@@ -753,8 +752,6 @@ sub tagGrid {
     my %tmplAttrs = (
         stateoptions => $select,
         settings => $json,
-        title => $title,
-        createtext => $createText,
         captiontemplate => $captionTemplate,
         filtertemplate => $filterTemplate,
         id => $id,
@@ -957,7 +954,7 @@ sub tagInfo {
         }
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
         return scalar $task->{meta}->find('TASKCHANGESET') if $meta eq 'ChangesetCount';
-        return scalar $task->children if $meta eq 'ChildCount';
+        return scalar @{$task->cached_children || []} if $meta eq 'FetchedChildCount';
     }
 
     if (my $tpl = $params->{template}) {
