@@ -5,6 +5,8 @@
     if (this.length === 0) { return; }
     var $this = this;
     $this.data('id', _.isUndefined(opts.id) ? '' : opts.id);
+    $this.data('parent', _.isUndefined(opts.parent) ? '' : opts.parent);
+
     if ( opts.trackerId ) {
       $this.data('trackerId', opts.trackerId);
     }
@@ -137,9 +139,13 @@
       }
 
       for (var prop in opts) {
-        if ( /template/.test(prop) ) {
+        if ( /template|form/.test(prop) ) {
           task[prop] = opts[prop];
         }
+      }
+
+      if ( $this.data('parent') && !task.Parent ) {
+        task.Parent = $this.data('parent');
       }
 
       var beforeSave = $.Event( 'beforeSave' );
@@ -151,7 +157,6 @@
       $.blockUI();
       var doSaveTask = function() {
         if (!task.id) {
-          task.form = opts.form;
           task.Context = opts.context;
 
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
