@@ -53,23 +53,30 @@
   <div class="task-attachments">
 %ATTACHMENTLIST{
   topic="%TASKINFO{meta="id"}%"
-  header="<hr>$percntTWISTY{link=\"%MAKETEXT{Attachments}% ($fileCount)\" remember=\"on\" id=\"$percntTASKINFO{meta=\"id\"}$percnt\"}$percnt<table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th><th>%MAKETEXT{Actions}%</th></tr></thead><tbody>"
+  header="<hr>$percntTWISTY{showlink=\"%MAKETEXT{Show attachments}% ($fileCount)\" hidelink=\"%MAKETEXT{Hide attachments}%\" remember=\"on\" id=\"$percntTASKINFO{meta=\"id\"}$percnt\"}$percnt<table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th><th>%MAKETEXT{Actions}%</th></tr></thead><tbody>"
   format="<tr><td>$fileIcon</td><td><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td><td><a href=\"$percntSCRIPTURLPATH{\"attach\"}$percnt/$fileWeb/$fileTopioc?filename=$percntENCODE{\"$fileName\"}$percnt;revInfo=1\" title=\"%MAKETEXT{"Update attachment"}%\" rel=\"follow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_refresh.jpg\" border=\"0\" alt=\"%MAKETEXT{"Update attachment"}%\" style=\"border:none;\" /></a> &nbsp; <a href=\"$percntSCRIPTURLPATH{\"rename\"}$percnt/$fileWeb/$fileTopic?template=moveattachment&attachment=$percntENCODE{\"$fileName\"}$percnt\" title=\"%MAKETEXT{"Move attachment"}%\" rel=\"nofollow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_move.jpg\" border=\"0\" alt=\"%MAKETEXT{"Move attachment"}%\" style=\"border:none;\" /></a> &nbsp; <a href=\"$percntSCRIPTURLPATH{\"rename\"}$percnt/$fileWeb/$fileTopic?newweb=$percntTRASHWEB$percnt;newtopic=TrashAttachment;template=renameattachmentdelete;attachment=$percntENCODE{\"$fileName\"}$percnt\" title=\"%MAKETEXT{"Delete attachment"}%\" rel=\"nofollow\" class=\"requireModacChangePermission modacChanging\"><img src=\"$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_delete.jpg\" border=\"0\" alt=\"%MAKETEXT{"Delete attachment"}%\" style=\"border:none;\" /></a></td></tr>"
   footer="</tbody></table>$percntENDTWISTY$percnt"
 }%
   </div>
-  <div class="children">
-    <div class="create">
-      <a href="#" class="tasks-btn tasks-btn-create">%TASKINFO{expand="createtext"}%</a>
-    </div>
-    <div style="clear: right;"></div>
-    %TASKINFO{type="children"}%
-  </div>
+%TMPL:P{"tasksapi::grid::task::children"}%
 </literal>%{
 }%%TMPL:END%
 
+%TMPL:DEF{"tasksapi::grid::task::children"}%%{
+}%<hr>
+%TWISTY{showlink="%MAKETEXT{"Show subordinate tasks"}% (%TASKINFO{meta="FetchedChildCount"}%)" hidelink="%MAKETEXT{"Hide subordinate tasks"}%" start="hide"}%
+<div class="task-children">
+  <div class="create">
+    <a href="#" class="tasks-btn tasks-btn-create">%MAKETEXT{"Add task"}%</a>
+  </div>
+  <div class="clearfix"></div>
+  <div>%TASKINFO{type="children"}%</div>
+</div>
+%ENDTWISTY%%{
+}%%TMPL:END%
+
 %TMPL:DEF{"tasksapi::grid::task"}%%{
-}%<literal><div class="task prioritized-%TASKINFO{field="Prioritize"}%">
+}%<div class="task prioritized-%TASKINFO{field="Prioritize"}%">
   <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
   <div class="task-wrapper">
     <div class="btn-expander">&nbsp;</div>
@@ -102,7 +109,7 @@
     }%
   </div>
   <div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div>
-</div></literal>%{
+</div>%{
 }%%TMPL:END%
 
 
@@ -119,7 +126,7 @@
 <div class="filter">
   <div>
     <div class="options">
-      <span class="title">%TASKINFO{expand="title"}%</span>
+      <span class="title">%MAKETEXT{"Tasks"}%</span>
       %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
     </div>
     %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%
@@ -134,18 +141,18 @@
 }%%TMPL:END%
 %TMPL:DEF{"tasksapi::grid::filter::create"}%%{
 }%<div class="create">
-  <a href="#" class="tasks-btn tasks-btn-create">%TASKINFO{expand="createtext"}%</a>
+  <a href="#" class="tasks-btn tasks-btn-create">%MAKETEXT{"Add task"}%</a>
 </div>%{
 }%%TMPL:END%
 
 
 %TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
   <div class="container">
-    <div class="created"><span class="tasksort" data-tasksort="Created">%MAKETEXT{"Created"}%</span></div>
-    <div class="type"><span class="tasksort" data-tasksort="Result">%MAKETEXT{"Type"}%</span></div>
-    <div class="description"><span class="tasksort" data-tasksort="Title">%MAKETEXT{"Description"}%</span></div>
-    <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo">%MAKETEXT{"Assigned to"}%</span></div>
-    <div class="due"><span class="tasksort" data-tasksort="DueDate">%MAKETEXT{"Due date"}%</span></div>
+    <div class="created"><span class="tasksort" data-tasksort="Created" data-sorttype="int">%MAKETEXT{"Created"}%</span></div>
+    <div class="type"><span class="tasksort" data-tasksort="Result" data-sorttype="string">%MAKETEXT{"Type"}%</span></div>
+    <div class="description"><span class="tasksort" data-tasksort="Title" data-sorttype="string">%MAKETEXT{"Description"}%</span></div>
+    <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo" data-sorttype="string">%MAKETEXT{"Assigned to"}%</span></div>
+    <div class="due"><span class="tasksort" data-tasksort="DueDate" data-sorttype="date">%MAKETEXT{"Due date"}%</span></div>
     <div class="attachcount"><span>%MAKETEXT{"Attachments"}%</span></div>
     <div class="ampel"><span>%MAKETEXT{"Status"}%</span></div>
   </div>
