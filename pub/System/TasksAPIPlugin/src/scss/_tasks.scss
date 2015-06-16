@@ -64,6 +64,10 @@
     }
 
     &.expanded {
+      background-color: #fff;
+      border-color: #ccc;
+      padding-bottom: 10px;
+
       .content > .description {
         opacity: 0;
       }
@@ -75,12 +79,12 @@
         white-space: normal;
       }
 
-      .btn-expander {
+      > .task-wrapper > .btn-expander {
         background-image: url('../assets/sub.png');
         opacity: 1;
       }
 
-      .btn-edit {
+      > .task-wrapper > .btn-edit {
         opacity: 1;
         pointer-events: auto;
       }
@@ -272,24 +276,12 @@
 }
 
 .task-children {
-  height: 0;
-  max-height: 0;
-  transition: max-height .3s ease-in-out;
-  overflow: hidden;
+  .create {
+    float: right;
+    min-height: 32px;
+  }
 
-  margin-left: 25px;
-
-  > .task-children-summary {
-    height: $filter-height;
-    line-height: $filter-height;
-    > .add {
-      float: right;
-    }
+  .clearfix {
+    clear: both;
   }
 }
-
-.task.children-expanded > .task-children {
-  height: auto;
-  max-height: 1000000px;
-}
-
