@@ -26,7 +26,7 @@ msgid "Show attachments"
 msgstr "Anhänge anzeigen"
 
 msgid "Hide attachments"
-msgstr "Anhänge verstecken"
+msgstr "Anhänge verbergen"
 
 msgid "Attach file(s)"
 msgstr "Datei(en) anhängen"
