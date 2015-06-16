@@ -652,7 +652,6 @@ sub tagGrid {
     my $autoassignselector = $params->{autoassignselector} || '';
     my $autoassigntarget = $params->{autoassigntarget} || '';
     my $autoassignon = $params->{autoassignon} || '';
-
     $autoassign = JSON::false unless $autoassignee;
     $autoassign = JSON::false unless $autoassignselector;
     $autoassign = JSON::false unless $autoassignon;
@@ -719,8 +718,8 @@ sub tagGrid {
         $err =~ s/</&lt;/;
         return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
-    $query->{Context} = $ctx if $ctx && !exists $query->{Context};
-    $query->{Parent} = $parent;
+    $query->{Context} = $ctx unless $ctx eq 'any';
+    $query->{Parent} = $parent unless $parent eq 'any';
     $query->{Status} = 'open' if !exists $query->{Status};
 
     my @tasks = _query(
