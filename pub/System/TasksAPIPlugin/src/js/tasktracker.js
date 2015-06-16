@@ -25,15 +25,12 @@
       $this.data('tasktracker_options', opts);
       loadTasks( $this, opts.currentState, true );
 
-      // ToDo: phase out
-      var $task_subbtn = $this.children('.task-subbtn-template').removeClass('task-subbtn-template').detach();
-      opts.taskSubBtn = $task_subbtn;
-
       var $tasks = $this.children('.tasks');
       var $editor = $('#task-editor');
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
       var $create = $filter.find('.tasks-btn-create');
+      var $createChild = $('.task .tasks-btn-create');
 
       var handleCreate = function() {
         var qopts = {};
@@ -41,9 +38,37 @@
         qopts.trackerId = opts.id;
         delete qopts.id;
 
+        var $self = $(this);
+        var parent = $self.closest('.task').data('id');
+        if ( parent ) {
+          qopts.parent = parent;
+        }
+
+        var beforeCreate = $.Event( 'beforeCreate' );
+        $this.trigger( beforeCreate, qopts );
+        if( beforeCreate.isDefaultPrevented() ) {
+          return false;
+        }
+
+        var evtResult = beforeCreate.result;
+        if ( _.isObject( evtResult ) ) {
+          delete evtResult.id;
+          delete evtResult.trackerId;
+          $.extend(qopts, evtResult);
+        }
+
         $editor.taskEditor(qopts).done(function(type, data) {
           if (type === 'save') {
-            opts.container.append(createTaskElement(data));
+            var pid = data.fields.Parent.value;
+            if (!parent) {
+              opts.container.append(createTaskElement(data));
+            } else {
+              $this.find('.task').each(function() {
+                if ($(this).data('id') === pid) {
+                  $(this).find('.task-children > div:last-child').first().append(createTaskElement(data));
+                }
+              });
+            }
           }
         }).fail(error);
         return false;
@@ -57,7 +82,13 @@
       };
 
       $create.on( 'click', handleCreate );
+      $createChild.on( 'click', handleCreate );
       $status.on( 'change', handleStatusFilterChanged );
+      $tasks.observe('added', '.tasks-btn-create', function(r) {
+        for(var i = 0; i < r.addedNodes.length; ++i) {
+          $(r.addedNodes[i]).find('.tasks-btn-create').on('click', handleCreate);
+        }
+      });
 
       $editor.on( 'afterSave', function( evt, task ) {
         if ( task.Status !== $status.val() ) {
@@ -116,8 +147,16 @@
       $(container).children('.task').each(function(idx, e) {
         var data = unescapeHTML( $.parseJSON($(e).children('.task-data').text()) );
 
-        initTaskElement($(e), data, opts);
+        initTaskElement($(e), data);
         results.push(data);
+
+        $(this).find('.task-children > div:last-child').each(function() {
+          $(this).children('.task').each(function() {
+            var $task = $(this);
+            var data = unescapeHTML( $.parseJSON($task.children('.task-data').text()) );
+            initTaskElement($task, data);
+          });
+        });
       });
       deferred.resolve({data: results});
       return deferred.promise();
@@ -203,7 +242,7 @@
     edopts.id = $task.data('id');
     edopts.trackerId = $tracker.attr('id');
 
-    var task = unescapeHTML( $.parseJSON($task.find('.task-data').text()) );
+    var task = unescapeHTML( $.parseJSON($task.children('.task-data').text()) );
     edopts.data = task;
     edopts.lang = opts.lang;
     edopts.autoassign = opts.autoassign;
@@ -242,7 +281,7 @@
     var tasks = $tasks.find('.task');
 
     var sortedTasks = _.sortBy( tasks, function(task) {
-      var d  = unescapeHTML( $.parseJSON($(task).find('.task-data').text()) );
+      var d  = unescapeHTML( $.parseJSON($(task).children('.task-data').text()) );
       var val = d.fields[sortBy].value;
 
       try {
