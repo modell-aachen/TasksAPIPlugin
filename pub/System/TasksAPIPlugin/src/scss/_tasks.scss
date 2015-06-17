@@ -271,6 +271,12 @@
   max-height: 1000px;
 }
 
+.task.expanded .description {
+  span:last-child {
+    opacity: .5,
+  }
+}
+
 .task.expanded .task-content {
   border-radius: 6px;
 }

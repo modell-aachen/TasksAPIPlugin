@@ -23,23 +23,23 @@
     }
 
     var def = $.Deferred();
+    var beforeEdit = $.Event( 'beforeEdit' );
+    $this.trigger( beforeEdit, opts );
+    if( beforeEdit.isDefaultPrevented() ) {
+      def.resolve('cancel_plugin', opts);
+      return def.promise();
+    }
+
     var data = opts.data;
     delete opts.data;
     if (!data) {
       data = { fields: {} };
     }
 
-    var beforeEdit = $.Event( 'beforeEdit' );
-    $this.trigger( beforeEdit, data );
-    if( beforeEdit.isDefaultPrevented() ) {
-      def.resolve('cancel_plugin', data);
-      return def.promise();
-    }
-
     var evtResult = beforeEdit.result;
     if ( _.isObject( evtResult ) ) {
       delete evtResult.id;
-      $.extend(opts, evtResult);
+      opts = _.extend(opts, evtResult);
     }
 
     $.blockUI();
