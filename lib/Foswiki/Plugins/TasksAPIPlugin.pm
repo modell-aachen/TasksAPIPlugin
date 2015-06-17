@@ -736,7 +736,7 @@ sub tagGrid {
     while ($depth > 0) {
         my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
         last unless @ids;
-        my @children = _query(query => {Parent => \@ids});
+        my @children = _query(query => {Parent => \@ids}, order => $params->{order});
         @taskstofetch = ();
         for my $c (@children) {
             $tasks->{$c->{id}} = $c;
