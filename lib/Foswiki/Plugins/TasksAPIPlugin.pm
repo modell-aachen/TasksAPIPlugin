@@ -608,9 +608,10 @@ sub _renderTask {
     $currentTask = $task;
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
+    my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
     $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
-    if ($canChange && $haveCtx) {
+    if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
     } elsif ($canChange) {
         $Foswiki::Plugins::SESSION->leaveContext('task_canedit'); # remove altogether
@@ -644,6 +645,7 @@ sub tagGrid {
     my $templateFile = $params->{templatefile} || 'TasksAPI';
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
+    my $readonly = $params->{readonly} || 0;
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
     my $depth = $params->{depth} || 0;
@@ -697,6 +699,7 @@ sub tagGrid {
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
     $fctx->{task_stateless} = 1 if $stateless;
+    $fctx->{task_readonly} = 1 if $readonly;
 
     my @options = ();
     foreach my $state (split(/,/, $states)) {
