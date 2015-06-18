@@ -38,7 +38,6 @@
 
     var evtResult = beforeEdit.result;
     if ( _.isObject( evtResult ) ) {
-      delete evtResult.id;
       opts = _.extend(opts, evtResult);
     }
 
