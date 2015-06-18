@@ -20,7 +20,7 @@ use Number::Bytes::Human qw(format_bytes);
 
 our $VERSION = '0.1';
 our $RELEASE = '0.1';
-our $SHORTDESCRIPTION = 'Action Tracker 2.0';
+our $SHORTDESCRIPTION = 'API and frontend for managing assignable tasks';
 our $NO_PREFS_IN_TOPIC = 1;
 
 my $db;
@@ -162,6 +162,15 @@ sub _applySchema {
     }
 }
 
+=begin TML
+
+---++ StaticMethod withCurrentTask( $task, $code )
+
+Executes the code in =$code= while setting =$task= as the current task, i.e.
+the task used by default in the TASKINFO macro.
+
+=cut
+
 sub withCurrentTask {
     local $currentTask = shift;
     my $sub = shift;
@@ -169,7 +178,27 @@ sub withCurrentTask {
     $res;
 }
 
-sub _query {
+=begin TML
+
+---++ StaticMethod query( %opts ) -> @tasks
+
+Queries the database for tasks. =%opts= may contain the following keys:
+
+   * =query=: a hash that is matched against tasks, i.e. each key in the hash
+     corresponds to a field in tasks, and only tasks having the corresponding
+     value (or one of the corresponding values, if the hash value is an array
+     ref) will be returned.
+   * =acl=: 0 to return tasks without checking permissions. Defaults to 1.
+   * =order=: sort results by this field
+   * =desc=: 1 to sort in descending order
+   * =offset=: skip this many results
+   * =count=: return at most this many results
+
+Returns a list of matching task objects.
+
+=cut
+
+sub query {
     my %opts = @_;
     my $useACL = $opts{acl};
     $useACL = 1 unless defined $useACL;
@@ -231,7 +260,9 @@ sub _query {
         $_->checkACL('view')
     } @tasks;
 }
+*_query = \&query; # Backwards compatibility
 
+# Create/update the task entry in the database
 sub _index {
     my $task = shift;
     my $transact = shift;
@@ -270,6 +301,7 @@ sub _index {
     }
     $db->commit if $transact;
 }
+# Bring the entire database up-to-date
 sub _fullindex {
     my $db = db();
     $db->begin_work;
@@ -373,6 +405,7 @@ sub restMultiUpdate {
     return to_json(\%res);
 }
 
+# Translate stuff without having to worry about escaping
 sub _translate {
     my ($meta, $text) = @_;
     $text =~ s#(\\+)#$1\\#g;
@@ -382,6 +415,8 @@ sub _translate {
     $meta->expandMacros("%MAKETEXT{\"$text\"}%");
 };
 
+# Given a task object, returns a structure suitable for serializing to JSON
+# that contains all the information we need
 sub _enrich_data {
     my $task = shift;
     my $tpl = shift || 'tasksapi::grid::task';
@@ -556,6 +591,8 @@ sub restLease {
     return to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles});
 }
 
+# Fetch info about zones, used for dynamically loading scripts for the task
+# editor
 sub _getZone {
     my ($session, $web, $topic, $meta, $zone) = @_;
     my @arr = ();
@@ -598,14 +635,14 @@ sub restRelease {
     return to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"});
 }
 
+# Gets a rendered version of a task
 sub _renderTask {
     my ($meta, $taskTemplate, $task) = @_;
     if ($renderRecurse >= 16) {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
     $renderRecurse++;
-    my $prev = $currentTask;
-    $currentTask = $task;
+    local $currentTask = $task;
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
     my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
@@ -616,7 +653,6 @@ sub _renderTask {
     } elsif ($canChange) {
         $Foswiki::Plugins::SESSION->leaveContext('task_canedit'); # remove altogether
     }
-    $currentTask = $prev;
     $renderRecurse--;
     return $task;
 }
@@ -851,6 +887,8 @@ sub _shorten {
     Encode::encode($Foswiki::cfg{Site}{CharSet}, $text);
 }
 
+# Given a task changeset as a JSON string, deserialize and convert legacy
+# format into hash
 sub _decodeChanges {
     my $changes = shift;
     return {} unless $changes;
