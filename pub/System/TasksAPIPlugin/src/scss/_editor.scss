@@ -96,7 +96,7 @@
       min-height: 240px;
     }
 
-    &.Result, &.Status, &.DueDate {
+    &.Result, &.Status, &.DueDate, &.StartDate, &.Start, &.Due, &.IsMilestone {
       display: inline-block;
       max-width: 33%;
       min-width: 33%;
