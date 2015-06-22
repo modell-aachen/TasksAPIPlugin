@@ -175,6 +175,27 @@ If you're going to use a custom form *make sure* you're including the following 
 </verbatim>
 
 <br />
+---++ Converting actions from previous ActionTrackerPlugin
+TasksAPIPlugin ships with a script called *taskconvert* which allows converting actions created by ActionTrackerPlugin. To convert an AT controlled topic just execute *taskconvert* as web server user. You will be prompted for all necessary parameters during the convertion process. Alternatively you may supply those parameters as command line arguments:
+| *Parameter* | *Description* | *Default* |
+| web | The source web name to read from | |
+| topic | The source topic name ro read from | |
+| form | The TasksAPIPlugin compatibly form to use for converted tasks | System.TasksAPIDefaultTaskForm |
+| context | The context for the newly created task | web.topic |
+| mapping | A comma separated list of key-value pairs to map AT fields to TasksAPI form fields | who=AssignedTo,creator=Author,created=Created,text=Description,due=DueDate,result=Result,state=Status,task=Title |
+| dateformat | A comma separated list of key-value pairs to map AT fields to a date representation. This is useful to convert epoch time strings to date strings | due="$day $month $year" |
+| verbose | Flag. Output some information about converted tasks | 0 |
+| reindex | Flag. Trigger a reindex when the convertion has finished | 0 |
+| ignoreErrors | Flag. Ignore errors during convertion. Forces the creation of a task | 0 |
+| skipErrors | Flag. Skips all tasks for which an error occurred during convertion. | 0 |
+
+*Examples:* <br />
+Run the script without any parameters (you will be prompted instead)
+<verbatim>sudo -u www-data ./taskconvert</verbatim>
+Run the script and supply the source web and topic. Also print some verbose messages and force a reindex of all tasks.
+<verbatim>sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
+
+<br />
 ---++ RESTful API
 Load the jQuery plugin by adding the following macro to your page. Make sure its enabled in _configure_.
 <verbatim>
