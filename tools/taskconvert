@@ -1,5 +1,8 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 do '../bin/setlib.cfg';
 require Foswiki;
 new Foswiki('admin');
@@ -28,7 +31,7 @@ my %defaultDate = (
   due => '"$day $month $year"'
 );
 
-my ($web, $topic, $context, $mapping, $dateformat, $verbose, $reindex, $ignoreErrors, $skipErrors, $help);
+my ($form, $web, $topic, $context, $mapping, $dateformat, $verbose, $reindex, $ignoreErrors, $skipErrors, $help);
 foreach my $arg (@ARGV) {
   if ($arg =~ /^([^=]*)=(.*)$/) {
     my ($k, $v) = ($1, $2);
@@ -94,8 +97,8 @@ unless (scalar @{$set->{ACTIONS}}) {
   exit 0;
 }
 
+my %mapping = %defaultMap;
 unless ($mapping) {
-  my %mapping = %defaultMap;
   $mapping = join(",", map {"$_=$mapping{$_}"} keys %mapping);
   print "Mapping [$mapping]: ";
   $mapping = <STDIN>;
@@ -114,8 +117,8 @@ if ($mapping) {
   }
 }
 
+my %format = %defaultDate;
 unless ($dateformat) {
-  my %format = %defaultDate;
   $dateformat = join(",", map {"$_=$format{$_}"} keys %format);
   print "Convert dates [$dateformat]: ";
   $dateformat = <STDIN>;
@@ -134,7 +137,7 @@ if ($dateformat) {
 }
 
 foreach my $a (@{$set->{ACTIONS}}) {
-  next unless $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+  next unless $a && ref($a) && $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
   my %data = ();
   my $err = 0;
   my @map =();
@@ -151,8 +154,8 @@ foreach my $a (@{$set->{ACTIONS}}) {
       next;
     }
 
-    if ( %format{$k} ) {
-      $data{$v} = Foswiki::Time::formatTime($val, ''.%format{$k});
+    if ( $format{$k} ) {
+      $data{$v} = Foswiki::Time::formatTime($val, ''.$format{$k});
     } else {
       $data{$v} = $val;
     }
