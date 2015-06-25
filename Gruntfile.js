@@ -48,7 +48,8 @@ module.exports = function(grunt) {
         files: {
           '<%= pkg.pubDir %>/js/tasktracker.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
-            '<%= pkg.pubDir %>/src/js/taskeditor.js'
+            '<%= pkg.pubDir %>/src/js/taskeditor.js',
+            '<%= pkg.pubDir %>/src/js/taskviewer.js'
           ],
           '<%= pkg.pubDir %>/js/jquery.tasksapi.uncompressed.js': [
             '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
@@ -64,7 +65,8 @@ module.exports = function(grunt) {
         files: [{
           '<%= pkg.pubDir %>/js/tasktracker.min.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
-            '<%= pkg.pubDir %>/src/js/taskeditor.js'
+            '<%= pkg.pubDir %>/src/js/taskeditor.js',
+            '<%= pkg.pubDir %>/src/js/taskviewer.js'
           ],
           '<%= pkg.pubDir %>/js/jquery.tasksapi.js': [
             '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
