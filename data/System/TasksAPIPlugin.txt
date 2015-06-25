@@ -112,7 +112,9 @@ are listed below) preference to the task's form. In this, the same
 placeholders as in task preferences can be used, plus these:
 
    * =$parentACL=: includes the parent task's ACL
-   * =$contextACL=: includes the context's permissions
+   * =$contextACL=: applies the context's Foswiki permissions
+   * =$wikiACL(Web.Topic,VIEW)=: applies Foswiki's VIEW permissions for
+     =Web.Topic=
 
 The ACL itself is a comma-separated list of users and/or groups; additionally
 the special value =*= (similar to the new ACL syntax in Foswiki 1.2) refers to
@@ -121,8 +123,16 @@ all logged in users.
 Unlike in Foswiki, there is no distinction of ALLOW and DENY. Only users
 covered by the ACL value are granted access.
 
-If an ACL is not set, it defaults to no restrictions whatsoever, i.e. anyone,
-including guests, can view and edit.
+Due to this difference in how ACLs work, the placeholders =$contextACL= and
+=$wikiACL(...)= have special behaviour: any other entry in a task ACL will
+allow access if it matches the current user, and otherwise the next entry will
+be checked. Foswiki ACLs, however, can actively deny access to someone, so if
+one of the Foswiki ACL placeholders is used, its result is taken as definite
+and the rest of the task ACL will be ignored. Therefore, if you use
+=$contextACL= or =$wikiACL(...)=, always put it last.
+
+If an ACL is not set, or set to an empty value, it defaults to no restrictions
+whatsoever, i.e. anyone, including guests, can view and edit.
 
 The following ACL types currently exist:
 

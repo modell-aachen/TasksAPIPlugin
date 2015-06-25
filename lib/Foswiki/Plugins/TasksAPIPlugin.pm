@@ -87,6 +87,7 @@ our $currentOptions;
 our $currentExpands;
 
 my $aclCache = {};
+my $caclCache = {};
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -118,6 +119,7 @@ sub finishPlugin {
     undef $db;
     undef %schema_versions;
     $aclCache = {};
+    $caclCache = {};
     $gridCounter = 1;
     $renderRecurse = 0;
 }
@@ -321,6 +323,14 @@ sub _cachedACL {
 sub _cacheACL {
     $aclCache->{$_[0]} = $_[1];
 }
+sub _cachedContextACL {
+    my $acl = shift;
+    $caclCache->{$acl};
+}
+sub _cacheContextACL {
+    $caclCache->{$_[0]} = $_[1];
+}
+
 
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;

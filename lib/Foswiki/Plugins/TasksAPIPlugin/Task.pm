@@ -174,8 +174,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    # TODO: Context ACL must be fetched differently (isn't a task)
-    $aclPref =~ s/\$contextACL\b/push @acl, $aclFromRef->('Context'); ''/e;
+    $aclPref =~ s/\$contextACL\b/$wikiACL($this->{fields}{Context}{value},$type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -189,7 +188,23 @@ sub _checkACL {
     my $aclstring = join(',', @$acl);
     my $cache = Foswiki::Plugins::TasksAPIPlugin::_cachedACL($aclstring);
     return $cache if defined $cache;
+
     foreach my $item (@$acl) {
+        if ($user ne 'BaseUserMapping_666' && $item eq '*') {
+            Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
+            return 1;
+        }
+        if ($item =~ /\$wikiACL\(([^,]+),([^)]+)\)/) {
+            my ($aclwt, $type) = ($1, $2);
+            $type = uc $type;
+            my $ccache = Foswiki::Plugins::TasksAPIPlugin::_cachedContextACL("$aclwt,$type");
+            return $ccache if defined $ccache;
+
+            my ($meta) = Foswiki::Func::readTopic(undef, $aclwt);
+            $ccache = $meta->haveAccess("$type");
+            Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL($ctx, $ccache);
+            return $ccache;
+        }
         my $cuid = Foswiki::Func::getCanonicalUserID($item);
         if ($user eq $cuid || Foswiki::Func::isGroup($item) && Foswiki::Func::isGroupMember($item, $user)) {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
