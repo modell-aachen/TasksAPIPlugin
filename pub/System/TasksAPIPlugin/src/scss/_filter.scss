@@ -90,43 +90,34 @@
     margin: 0 38px;
 
     > div {
-      @include flex($grow: 1, $basis: 0);
+      @include flex($grow: 1);
       color: #777;
       font-weight: bold;
       font-size: 10px;
       text-transform: uppercase;
-      padding: 3px;
 
       &.assigned {
         @include flex($grow: 0);
-        flex-shrink: 1;
         min-width: 120px;
       }
 
       &.attachcount {
         @include flex($grow: 0);
-        flex-shrink: 1;
         min-width: 61px;
       }
 
       &.ampel {
         @include flex($grow: 0);
-        flex-shrink: 1;
         min-width: 56px;
       }
 
       &.created {
         @include flex($grow: 0);
-        flex-shrink: 1;
         min-width: 100px;
       }
 
       &.description {
         @include flex($grow: 2);
-
-        min-width: calc(25% - 20px);
-        max-width: calc(50% - 20px);
-        width: calc(50% - 20px);
       }
 
       &.due {
@@ -135,7 +126,6 @@
 
       &.type {
         @include flex($grow: 0);
-        flex-shrink: 1;
         min-width: 90px;
       }
     }
