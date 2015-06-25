@@ -22,13 +22,13 @@ my %defaultMap = (
   created => 'Created',
   text => 'Description',
   due => 'DueDate',
-  result => 'Result',
+  result => 'Type',
   state => 'Status',
   task => 'Title'
 );
 
 my %defaultDate = (
-  due => '"$day $month $year"'
+  due => '$epoch'
 );
 
 my ($form, $web, $topic, $context, $mapping, $dateformat, $verbose, $reindex, $ignoreErrors, $skipErrors, $help);

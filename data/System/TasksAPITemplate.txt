@@ -6,7 +6,7 @@
   include="(Created|Author|Parent|TopicType|Context)"
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Title,Description,Result,Status,DueDate,AssignedTo"
+  fields="Title,Description,Type,Status,DueDate,AssignedTo"
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
@@ -86,7 +86,7 @@
         <span>%TASKINFO{field="Author"}%</span>
       </div>
       <div class="type">
-        <span>%MAKETEXT{%TASKINFO{field="Result"}%}%</span>
+        <span>%MAKETEXT{%TASKINFO{field="Type"}%}%</span>
       </div>
       <div class="description">
         <span class="title">%TASKINFO{field="Title"}%</span>
@@ -149,7 +149,7 @@
 %TMPL:DEF{"tasksapi::grid::caption"}%<div class="caption">
   <div class="container">
     <div class="created"><span class="tasksort" data-tasksort="Created" data-sorttype="int">%MAKETEXT{"Created"}%</span></div>
-    <div class="type"><span class="tasksort" data-tasksort="Result" data-sorttype="string">%MAKETEXT{"Type"}%</span></div>
+    <div class="type"><span class="tasksort" data-tasksort="Type" data-sorttype="string">%MAKETEXT{"Type"}%</span></div>
     <div class="description"><span class="tasksort" data-tasksort="Title" data-sorttype="string">%MAKETEXT{"Description"}%</span></div>
     <div class="assigned"><span class="tasksort" data-tasksort="AssignedTo" data-sorttype="string">%MAKETEXT{"Assigned to"}%</span></div>
     <div class="due"><span class="tasksort" data-tasksort="DueDate" data-sorttype="date">%MAKETEXT{"Due date"}%</span></div>
