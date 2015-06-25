@@ -42,16 +42,23 @@ e.g. =AdminUser=.
 Tasks can have an arbitrary form attached to them, but some fields are
 required:
 
-   * =TopicType=: value must be set to =task=
+   * =TopicType=: value must be set to =task=. This is a sanity check to make
+     sure the wrong form is not used by accident. We recommend using a hidden
+     field for this.
    * =Context=: a reference to the topic which "owns" the task (e.g.
-     Foo.BazProjectMeetingMinutes)
-   * =Parent=: a reference to the parent task (if this is a child task), empty
-     otherwise
-   * =Author=: the creator of the task. Must be set to =%WIKINAME%=.
-   * =Created=: the creation time. Must be set to =%GMTIME{"$epoch"}=.
+     !Foo.BazProjectMeetingMinutes or !Main.JohnDoe)
    * =Status=: one of =open=, =closed=, =deleted=. Other values should not be
      added; instead, a different field can be used to further distinguish
      between different states of a task.
+
+A number of other fields, if used, should use these standard names:
+
+   * =Parent=: a reference to the parent task (if this is a child task), empty
+     otherwise. This field does not need to exist for tasks which don't ever
+     appear as children.
+   * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
+   * =Created=: the creation time. Set the default value  to
+     =%GMTIME{"$epoch"}=.
    * =Title=: user-defined title of the task
    * =AssignedTo=: the user this task is assigned to. This is generally meant
      to be a single person because with task with multiple assignees, there is
@@ -108,9 +115,8 @@ placeholders as in task preferences can be used, plus these:
    * =$contextACL=: includes the context's permissions
 
 The ACL itself is a comma-separated list of users and/or groups; additionally
-the special value =*= (as introduced in ACLs in Foswiki 1.2, though this
-plugin supports it any compatible Foswiki version) refers to all logged in
-users.
+the special value =*= (similar to the new ACL syntax in Foswiki 1.2) refers to
+all logged in users.
 
 Unlike in Foswiki, there is no distinction of ALLOW and DENY. Only users
 covered by the ACL value are granted access.
@@ -126,57 +132,15 @@ The following ACL types currently exist:
 ---++ Macros
 
 ---+++ TASKSGRID
+%INCLUDE{"VarTASKSGRID"}%
 
-Shows a table/grid view of tasks. Defaults to showing open tasks that have the
-current topic as their context.
-
-Example:
-
-<verbatim>
-%TASKSGRID{
-  allowcreate="1"
-  allowupload="1"
-  form="MyTasksForm"
-  showattachments="1"
-}%
-</verbatim>
-
-The following parameters are available:
-
-| *Parameter* | *Description* | *Default* |
-| "..." (or context="...") | Context to search for. Only tasks with this context will be shown. | %<nop>WEB%.%<nop>TOPIC% |
-| allowcreate="..." | Show a button to create a new task | 0 |
-| allowupload="..." | In the task editor, render an interface to upload attachments | 0 |
-| captiontemplate="..." | the name of the template used to render the caption area | tasksapi::caption |
-| createlinktext="..." | Label of the button for creating new tasks | %<nop>MAKETEXT{"Add task"}% |
-| depth="..." | Number of levels of child tasks to fetch. This will enable nested rendering of tasks. | 0 |
-| editortemplate="..." | Name of the template used to render the task editor | tasksapi::editor |
-| filtertemplate="..." | Name of the template used to render the status filter widget | tasksapi::grid::filter |
-| form="..." | The form to use for new tasks (in =Web.Topic= format) | %<nop>SYSTEMWEB%.TasksAPIDefaultForm |
-| order="..." | Which field to sort by. | (undefined sort order) |
-| pagesize="..." | Number of tasks to fetch per page | 100 |
-| parent="..." | Provide the ID of a task to show its children only, an empty string (or omit) to show only top-level tasks, or =any= to display all tasks that match the other criteria (this ignores nesting. If you want to use nested tasks, look at the =depth= parameter instead) | |
-| query="..." | an additional query object in JSON format to combine with the query generated from the other parameters. The values covered by other parameters should not be specified again in this query; anything could happen if you do. | |
-| showattachments="..." | Show existing attachments for each task | 0 |
-| states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all') | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
-| stateless="..." | Enable to hide the status filter widget | 0 |
-| tasktemplate="..." | Name of the template used to render a task entry | tasksapi::task |
-| templatefile="..." | Name of the template file to be read before applying templates | TasksAPITemplate |
-| title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
-
-<br />
----++ Mandatory form fields
-If you're going to use a custom form *make sure* you're including the following four form fields:
-<verbatim>
-| TopicType | text | 50 | task | | M |
-| Context | text | 50 | ... | | M |
-| Parent | text | 50 | | | H |
-| Status | select+values | | open,closed,deleted | | M |
-</verbatim>
-
-<br />
 ---++ Converting actions from previous ActionTrackerPlugin
-TasksAPIPlugin ships with a script called *taskconvert* which allows converting actions created by ActionTrackerPlugin. To convert an AT controlled topic just execute *taskconvert* as web server user. You will be prompted for all necessary parameters during the convertion process. Alternatively you may supply those parameters as command line arguments:
+TasksAPIPlugin ships with a script called *taskconvert* which allows
+converting actions created by ActionTrackerPlugin. To convert an AT controlled
+topic just execute *taskconvert* as web server user. You will be prompted for
+all necessary parameters during the convertion process. Alternatively you may
+supply those parameters as command line arguments:
+
 | *Parameter* | *Description* | *Default* |
 | web | The source web name to read from | |
 | topic | The source topic name ro read from | |
@@ -195,9 +159,9 @@ Run the script without any parameters (you will be prompted instead)
 Run the script and supply the source web and topic. Also print some verbose messages and force a reindex of all tasks.
 <verbatim>sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
 
-<br />
 ---++ RESTful API
-Load the jQuery plugin by adding the following macro to your page. Make sure its enabled in _configure_.
+Load the jQuery plugin by adding the following macro to your page. Make sure
+it's enabled in _configure_.
 <verbatim>
 %JQREQUIRE{"tasksapi"}%
 </verbatim>
@@ -225,11 +189,11 @@ $.taskapi.create(task).done( function( response ) {
 ---+++ get
 *$.taskapi.get( query, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
 
-Retreives tasks by a given query.
+Retrieves tasks by a given query.
 
 <verbatim>
-$.taskapi.get('field_Responsible_s:AdminUser').done( function( solr ) {
-  _.each( solr.response.docs, function( result ) {
+$.taskapi.get({Responsible: "AdminUser"}).done( function( res ) {
+  _.each( res.data, function( result ) {
     console.log( result );
   });
 });
@@ -239,32 +203,11 @@ $.taskapi.get('field_Responsible_s:AdminUser').done( function( solr ) {
 ---+++ getAll
 *$.taskapi.getAll( limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
 
-Retreives all tasks.
+Retrieves all tasks.
 
 <verbatim>
-$.taskapi.getAll().done( function( solr ) {
-  _.each( solr.response.docs, function( result ) {
-    console.log( result );
-  });
-});
-</verbatim>
-
-
----+++ getBy
-*$.taskapi.getBy( filter, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
-
-Same as *get* but also takes an object as argument.
-
-<verbatim>
-$.taskapi.getBy('field_Responsible_s:AdminUser').done( function( solr ) {
-  _.each( solr.response.docs, function( result ) {
-    console.log( result );
-  });
-});
-
-var filter = {'field_Responsible_s': 'AdminUser'};
-$.taskapi.getBy(filter).done( function( solr ) {
-  _.each( solr.response.docs, function( result ) {
+$.taskapi.getAll().done( function( res ) {
+  _.each( res.data, function( result ) {
     console.log( result );
   });
 });
