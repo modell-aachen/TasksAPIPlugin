@@ -408,9 +408,12 @@ sub restMultiUpdate {
     my %res;
     while (my ($id, $data) = each(%$req)) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        unless ($task->checkACL('change')) {
+            $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"};
+            next;
+        }
         $task->update(%$data);
         $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'), $q->param('templatefile'))};
-        $res{$id} = {status => 'error', 'code' => 'acl_change', msg => "No permission to update task"} if !$task->checkACL('change');
     }
     return to_json(\%res);
 }

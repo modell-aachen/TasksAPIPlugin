@@ -43,9 +43,6 @@ sub load {
     my $fields;
     ($form, $fields) = _loadForm($web, $form);
 
-    my @acl = _getACL($meta, $form, 'view');
-    die "No permission to read task topic '$web.$topic'" unless _checkACL(\@acl);
-
     my %data;
     foreach my $f (@$fields) {
         my $name = $f->{name};
