@@ -174,7 +174,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$contextACL\b/$wikiACL($this->{fields}{Context}{value},$type)/;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($this->{fields}{Context}{value},$type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -202,7 +202,7 @@ sub _checkACL {
 
             my ($meta) = Foswiki::Func::readTopic(undef, $aclwt);
             $ccache = $meta->haveAccess("$type");
-            Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL($ctx, $ccache);
+            Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
         my $cuid = Foswiki::Func::getCanonicalUserID($item);
