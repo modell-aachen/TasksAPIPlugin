@@ -11,17 +11,6 @@
       $this.data('trackerId', opts.trackerId);
     }
 
-    if (!$this.is('.task-editor-init')) {
-      $this.dialog({
-        autoOpen: false,
-        closeOnEscape: false,
-        modal: true,
-        resizable: false
-      });
-
-      $this.addClass('task-editor-init');
-    }
-
     var def = $.Deferred();
     var beforeEdit = $.Event( 'beforeEdit' );
     $this.trigger( beforeEdit, opts );
@@ -46,53 +35,64 @@
       updateHead( response.scripts );
       updateHead( response.styles );
 
-      $this.html(response.editor);
+      var $ed = $('<div>' + response.editor + '</div>');
+      $ed.find('.ma-taskeditor-cke').addClass('ignoreObserver');
+      $this.html($ed.html());
       $this.find('.tasks-btn-save').click(handleSave);
       $this.find('.tasks-btn-cancel').click(handleCancel);
       writeEditor( data );
 
-      if ( opts.autoassign && opts.autoassign.enabled ) {
-        var $target = $(opts.autoassign.target).find('input');
-        var triggers = opts.autoassign.assignOn.split(',');
-        var assignee = opts.autoassign.assignee;
-        var $selector = $(opts.autoassign.selector);
+      if ( opts.autoassign && opts.autoassignTarget ) {
+        var $type = $this.find('select[name="Type"]');
+        var $target = $this.find('input[name="' + opts.autoassignTarget + '"]');
 
-        // set initial value
-        if ( triggers.indexOf($selector.val()) !== -1 && /^\s*$/.test($target.val())) {
-          setTimeout(function() {
-            $target.trigger('AddValue', assignee);
-            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
-          }, 300);
-        } else if ( $target.val() === assignee ) {
-          setTimeout(function() {
-            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
-          }, 300);
-        }
+        var autoassign = opts.autoassign.split(',');
+        var assign = {};
+        var assignees = [];
+        _.each( opts.autoassign.split(','), function(a) {
+          var arr = a.split('=');
+          assign[arr[0]] = arr[1];
+          assignees.push(arr[1]);
+        });
 
-        // handle changes
-        $selector.on('change', function() {
+        var setAssignee = function() {
           var $self = $(this);
-
-          if ( triggers.indexOf($self.val()) !== -1 ) {
-            if ( $target.val() !== assignee ) {
-              $self.data('autoassign-prev', $target.val());
-            }
-
-            $target.trigger('Clear');
-            $target.trigger('AddValue', assignee);
-            $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'none');
+          var val = $self.val();
+          var assignTo = assign[val];
+          if ( assignTo ) {
+            $target.closest('.' + opts.autoassignTarget).css('display', 'none');
+            setTimeout(function() {
+              $target.trigger('Clear');
+              $target.trigger('AddValue', assignTo);
+            }, 100);
           } else {
-            $target.trigger('Clear');
-            if ( $self.data('autoassign-prev') && $target.val() === assignee ) {
-              $target.trigger('AddValue', $self.data('autoassign-prev'));
-              $self.data('autoassign-prev', '');
-              $(opts.autoassign.target).find('.jqTextboxListClose').css('display', 'inline');
+            $target.closest('.' + opts.autoassignTarget).css('display', 'block');
+            var tval = $target.val();
+            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) !== -1 ) {
+              setTimeout(function() {
+                $target.trigger('Clear');
+              }, 100);
             }
           }
-        });
+        };
+
+        $type.on('change', setAssignee);
+        setAssignee.call($type);
       }
 
-      $this.dialog('open');
+      $this.taskPanel = $this.taskPanel({
+        show: function() {
+          var $panel = this;
+          $this.find('.ignoreObserver').removeClass('ignoreObserver');
+          $this.detach().appendTo($panel);
+        },
+        hide: function() {
+          handleCancel();
+          $this.detach().empty().appendTo($('body'));
+        }
+      });
+
+      $this.taskPanel.show();
 
       var afterEdit = $.Event( 'afterEdit' );
       $this.trigger( afterEdit );
@@ -101,10 +101,13 @@
     }).always($.unblockUI);
 
     var closeEditor = function() {
-      $this.dialog('close');
+      if ( !_.isUndefined(this) ) {
+        $this.taskPanel.hide();
+      }
     };
 
     var handleCancel = function() {
+      var self = this;
       var $up = $this.find('.qw-dnd-upload');
       if ($up.length) {
         $up.clearQueue();
@@ -112,8 +115,8 @@
 
       var taskid = opts.id;
       if (!taskid) {
-        closeEditor();
         def.resolve('cancel');
+        closeEditor.call(self);
         return false;
       }
 
@@ -122,7 +125,9 @@
         def.reject('cancel_clearlease', msg);
       }).done( function() {
         def.resolve('cancel', taskid);
-      }).always( closeEditor );
+      }).always(function() {
+        closeEditor.call(self);
+      });
 
       return false;
     };
@@ -162,7 +167,7 @@
             task.id = response.id;
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
-            closeEditor();
+            closeEditor.call(1);
             def.resolve('save', response.data);
           });
 
@@ -173,7 +178,7 @@
           var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
 
-          closeEditor();
+          closeEditor.call(1);
           def.resolve('save', response.data);
         }).always( $.unblockUI );
       };

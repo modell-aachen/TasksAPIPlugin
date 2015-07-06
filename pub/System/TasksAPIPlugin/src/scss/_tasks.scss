@@ -1,293 +1,186 @@
-.tasktracker > .tasks {
-  position: relative;
-  left: 0;
+.tasks-table {
+  border-collapse: separate;
+  border-spacing: 0 3px;
   width: 100%;
-  transition: right 0.4s ease-in-out;
 
-  > div {
-    height: inherit;
-    padding: 6px;
+
+  td {
+    padding: 2px 10px;
   }
 
-  .task {
-    @include flex-container($direction: column);
+  th {
+    color: $label-color;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 5px 10px;
+    text-align: left;
+    text-transform: uppercase;
+  }
 
-    align-items: stretch;
-    // background-color: $white;
-    background-color: $light-blue;
-    border: 1px solid $light-blue;
+  .hidden {
+    display: none !important;
+  }
+
+  .task, .task-new {
+    border-left: 5px solid transparent;
+    border-bottom: 3px solid $white;
     border-radius: $global-radius;
-    margin-bottom: 3px;
-    min-height: $task-min-height;
-    padding: 0 3px;
-    transition: opacity .3s ease-in-out,
-                background-color .2s ease-in-out;
+    position: relative;
+    transition: background-color .2s ease-in-out;
 
     &.prioritized-Yes {
       border-left-color: $prioritized;
-      border-left-width: 5px;
     }
 
-    &.selected,
+    .expander {
+      cursor: pointer;
+
+      .open {
+        display: inline-block;
+      }
+
+      .close {
+        display: none;
+      }
+    }
+
+    &.expanded {
+      .expander {
+        .open {
+          display: none;
+        }
+
+        .close {
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .tasks > .task,
+  .tasks > .task-new {
+    background-color: $light-blue;
+
     &:hover {
       background-color: $hover-bg;
     }
 
-    > .task-wrapper:hover .btn-edit,
-    > .task-wrapper:hover .btn-expander {
-      opacity: 1;
-      pointer-events: auto;
+    &:active {
+      background-color: $blue;
+
+      > td,
+      > td span {
+        color: $white;
+      }
     }
 
-    > .task-data { display: none; }
-    > .task-fullview {
-      max-height: 0px;
-      overflow: hidden;
-      opacity: 0;
-      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-      margin-left: 40px;
-      margin-right: 40px;
+    &.highlight {
+      background-color: darken($light-blue, 10%);
     }
 
-    .task-changeset {
-      margin-top: 30px;
-      > .task-changeset-header {
-        > .task-changeset-id {
-          float: right;
-        }
-        font-weight: bold;
-        border-bottom: dotted 1px #88a;
+    &.alternate {
+      background-color: $alternate;
+
+      &:hover {
+        background-color: $alternate-hover;
       }
 
-      del { color: #c00; }
-      ins { color: #080; }
-    }
-
-    &.expanded {
-      background-color: #fff;
-      border-color: #ccc;
-      padding-bottom: 10px;
-
-      .content > .description {
-        opacity: 0;
+      &:active {
+        background-color: $alternate-active;
       }
 
-      > .task-fullview {
-        max-height: 800px;
-        opacity: 1;
-        overflow: auto;
-        white-space: normal;
-      }
-
-      > .task-wrapper > .btn-expander {
-        background-image: url('../assets/sub.png');
-        opacity: 1;
-      }
-
-      > .task-wrapper > .btn-edit {
-        opacity: 1;
-        pointer-events: auto;
+      &.highlight {
+        background-color: $alternate-active;
       }
     }
   }
 }
 
-.task-wrapper {
-  @include flex-container();
-  align-items: stretch;
-  padding: 5px 3px 0 3px;
+.controls {
+  background-color: $white;
+  border-bottom-left-radius: 2 * $global-radius;
+  border-bottom: 1px solid darken($light-blue, 5%);
+  border-left: 1px solid darken($light-blue, 5%);
 
-  > .btn-expander {
-    @include flex($shrink: 0, $align: stretch);
-    align-self: center;
-
-    background-color: transparent;
-    border-radius: $global-radius;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: 12px;
-    background-image: url('../assets/add.png');
+  span {
+    display: inline-block;
     cursor: pointer;
-
-    opacity: 0;
-    pointer-events: none;
-    transition: background-color 0.3s ease-in-out,
-                opacity 0.3s ease-in-out;
-    width: 32px;
-    height: 32px;
+    height: 24px;
+    width: 24px;
+    text-align: center;
 
     &:hover {
       background-color: $light-blue;
     }
 
     &:active {
-      background-color: $blue;
-      background-image: url('../assets/add-white.png');
+      background-color: darken($light-blue, 5%);
     }
 
-  }
-
-  > .btn-edit {
-    @include flex($shrink: 0, $align: stretch);
-    align-self: center;
-
-    background-color: transparent;
-    border-radius: $global-radius;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: 12px;
-    background-image: url('../assets/edit-blue.png');
-    cursor: pointer;
-
-    opacity: 0;
-    pointer-events: none;
-    transition: background-color 0.3s ease-in-out,
-                opacity 0.3s ease-in-out;
-    width: 32px;
-    height: 32px;
-
-    &:hover {
-      background-color: $light-blue;
-    }
-
-    &:active {
-      background-color: $blue;
-      background-image: url('../assets/edit-white.png');
+    img {
+      margin-top: 4px;
     }
   }
 }
 
-.task-content {
-  @include flex-container($justify: space-between);
-  @include flex($grow: 2, $align: center);
-  align-items: center;
-  transition: background-color .3s ease-in-out;
-
-  &.deleted, {
-    text-decoration: line-through;
+.tasks > .task td {
+  &.expander {
+    width: 52px;
   }
 
-  &.closed {
-    > .description {
-      text-decoration: line-through;
-    }
-  }
-
-  > div {
-    @include flex($grow: 1, $basis: 0);
-    font-size: 13px;
-    // padding: 3px;
+  &.created {
+    width: 100px;
+    color: #777;
+    font-size: 11px;
 
     span {
       display: block;
-      text-align: left;
     }
+  }
 
-    &.ampel {
-      @include flex($grow: 0);
-      flex-shrink: 1;
-      min-width: 56px;
+  &.type {
+    width: 100px;
+  }
 
-      span {
-        text-align: center;
-      }
-    }
+  &.assigned {
+    width: 120px;
+  }
 
-    &.assigned {
-      @include flex($grow: 0);
-      flex-shrink: 1;
-      min-width: 120px;
-    }
+  &.title {}
 
-    &.attachcount {
-      @include flex($grow: 0);
-      flex-shrink: 1;
-      min-width: 61px;
+  &.due {
+    width: 100px;
+  }
 
-      span {
-        text-align: center;
-      }
-    }
+  &.ampel {
+    text-align: center;
+    width: 55px;
+  }
 
-    &.created {
-      @include flex($grow: 0);
-      flex-shrink: 1;
-      min-width: 100px;
-      color: #777;
-      font-size: 11px;
-    }
-
-    &.description {
-      @include flex($grow: 2);
-
-      height: auto;
-      opacity: 1;
-      transition: opacity .3s ease-in-out;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-
-      .title {
-        font-size: 14px;
-        font-weight: bold;
-      }
-    }
-
-    &.due {
-      max-width: 100px;
-    }
-
-    &.type {
-      @include flex($grow: 0);
-      flex-shrink: 1;
-      min-width: 90px;
-    }
+  &.controls {
+    width: 0;
+    max-width: 0;
   }
 }
 
-.task-attachments {
-  height: 0;
-  max-height: 0;
-  transition: max-height .3s ease-in-out;
-  overflow: hidden;
+.task-children-container {
+  > td {
+    padding: 0 0 0 40px;
+  }
 
-  table {
-    width: 100%;
-    margin-bottom: 10px;
+  .task-new {
+    text-align: center;
+    padding: 6px 0;
+    font-weight: bold;
+    color: $blue;
 
-    th {
+    &:active {
       background-color: $blue;
       color: $white;
     }
   }
 }
 
-.task.expanded .task-attachments {
-  height: auto;
-  max-height: 1000px;
-}
-
-.task.expanded .description {
-  span:last-child {
-    opacity: .5,
-  }
-}
-
-.task.expanded .task-content {
-  border-radius: 6px;
-}
-
-.task.closed > .task-wrapper > .task-content {
-  text-decoration: line-through;
-}
-
-.task-children {
-  .create {
-    float: right;
-    min-height: 32px;
-  }
-
-  .clearfix {
-    clear: both;
-  }
+.dashed-line {
+  border-left: 1px dashed $dash-color;
 }

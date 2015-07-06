@@ -654,12 +654,20 @@ sub _renderTask {
     if ($renderRecurse >= 16) {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
+
     $renderRecurse++;
     local $currentTask = $task;
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
     my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
+
+    if ( $task->{_depth} ne 0 ) {
+        $Foswiki::Plugins::SESSION->enterContext('task_showchildren', 1);
+    } else {
+        $Foswiki::Plugins::SESSION->leaveContext('task_showchildren');
+    }
+
     $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
     if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
@@ -698,16 +706,8 @@ sub tagGrid {
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
     my $depth = $params->{depth} || 0;
-    my $autoassign = Foswiki::isTrue($params->{autoassign}, 0);
-    $autoassign = $autoassign ? JSON::true : JSON::false;
-    my $autoassignee = $params->{autoassignee} || '';
-    my $autoassignselector = $params->{autoassignselector} || '';
-    my $autoassigntarget = $params->{autoassigntarget} || '';
-    my $autoassignon = $params->{autoassignon} || '';
-    $autoassign = JSON::false unless $autoassignee;
-    $autoassign = JSON::false unless $autoassignselector;
-    $autoassign = JSON::false unless $autoassignon;
-    $autoassign = JSON::false unless $autoassigntarget;
+    my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
+    my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -733,15 +733,10 @@ sub tagGrid {
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
         editortemplate => $editorTemplate,
+        autoassign => $autoassign,
+        autoassignTarget => $autoassignTarget,
         lang => {
             missingField => Foswiki::urlEncode( $translated )
-        },
-        autoassign => {
-            enabled => $autoassign,
-            assignee => $autoassignee,
-            selector => $autoassignselector,
-            target => $autoassigntarget,
-            assignOn => $autoassignon
         }
     );
 
@@ -781,6 +776,9 @@ sub tagGrid {
         desc => $params->{desc},
         limit => $params->{pagesize},
     );
+    for my $t (@tasks) {
+        $t->{_depth} = $depth;
+    }
 
     my $tasks = {};
     @{$tasks}{map {$_->{id}} @tasks} = @tasks;
@@ -788,15 +786,17 @@ sub tagGrid {
     while ($depth > 0) {
         my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
         last unless @ids;
+
+        $depth--;
         my @children = _query(query => {Parent => \@ids}, order => $params->{order});
         @taskstofetch = ();
         for my $c (@children) {
+            $c->{_depth} = $depth;
             $tasks->{$c->{id}} = $c;
             $tasks->{$c->{fields}{Parent}}{children_acl} ||= [];
             push @{$tasks->{$c->{fields}{Parent}}{children_acl}}, $c;
             push @taskstofetch, $c;
         }
-        $depth--;
     }
     undef $tasks;
     undef @taskstofetch;
@@ -809,7 +809,6 @@ sub tagGrid {
         id => $id,
     );
     local $currentExpands = \%tmplAttrs;
-
     for my $task (@tasks) {
         $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
     }
@@ -820,7 +819,7 @@ sub tagGrid {
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
 
-    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::underscore", "tasksapi", "ui::dialog");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
@@ -994,6 +993,9 @@ sub tagInfo {
         }
         return join($params->{separator} || '', @out);
     }
+    if ($params->{taskcfg}) {
+        return $task->getPref(uc($params->{taskcfg}));
+    }
 
     if (my $meta = $params->{meta}) {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
@@ -1006,6 +1008,7 @@ sub tagInfo {
             $json =~ s/"/&quot;/g;
             return $json;
         }
+
         return scalar $task->{meta}->find('FILEATTACHMENT') if $meta eq 'AttachCount';
         return scalar $task->{meta}->find('TASKCHANGESET') if $meta eq 'ChangesetCount';
         return scalar @{$task->cached_children || []} if $meta eq 'FetchedChildCount';

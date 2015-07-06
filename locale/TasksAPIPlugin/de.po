@@ -165,3 +165,24 @@ msgstr "%1 hat eine Aufgabe in %2 wieder geöffnet:"
 
 msgid "%1 reassigned a task in %2:"
 msgstr "%1 hat eine Aufgabe in %2 neu zugewiesen:"
+
+msgid "Edit description"
+msgstr "Beschreibung bearbeiten"
+
+msgid "Show description"
+msgstr "Beschreibung anzeigen"
+
+msgid "Hide description"
+msgstr "Beschreibung verbergen"
+
+msgid "Show recent changes"
+msgstr "Letzte Änderungen anzeigen"
+
+msgid "Hide recent changes"
+msgstr "Letzte Änderungen verbergen"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Create new subordinate task"
+msgstr "Neue untergeordnete Aufgabe hinzufügen"

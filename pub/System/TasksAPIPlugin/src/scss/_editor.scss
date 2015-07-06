@@ -1,31 +1,29 @@
 #task-editor {
-  overflow-x: hidden;
-
   .cke_chrome {
     box-shadow: none;
   }
 }
 
-.ui-dialog[role="dialog"][aria-labelledby|="ui-dialog-title-task-editor"] {
-  border-radius: 6px;
-  box-shadow: 3px 3px 3px rgba(#000, .3);
-  min-width: 575px;
-  padding: 10px 20px 10px 0;
-  z-index: 1001;
+// .ui-dialog[role="dialog"][aria-labelledby|="ui-dialog-title-task-editor"] {
+//   border-radius: 6px;
+//   box-shadow: 3px 3px 3px rgba(#000, .3);
+//   min-width: 575px;
+//   padding: 10px 20px 10px 0;
+//   z-index: 1001;
 
-  & ~ .ui-widget-overlay {
-    background: #000;
-    opacity: 0.1;
-  }
+//   & ~ .ui-widget-overlay {
+//     background: #000;
+//     opacity: 0.1;
+//   }
 
-  > .ui-dialog-titlebar {
-    display: none;
-  }
+//   > .ui-dialog-titlebar {
+//     display: none;
+//   }
 
-  .hidden {
-    display: none !important;
-  }
-}
+//   .hidden {
+//     display: none !important;
+//   }
+// }
 
 .tasks-btn {
   background-position: 10px center;
@@ -75,7 +73,7 @@
 }
 
 .task-editor {
-  padding: 0;
+  padding: 15px;
 
   > div {
     margin-bottom: 3px;
@@ -96,7 +94,7 @@
       min-height: 240px;
     }
 
-    &.Result, &.Status, &.DueDate, &.StartDate, &.Start, &.Due, &.IsMilestone {
+    &.Type, &.Status, &.DueDate, &.StartDate, &.Start, &.Due, &.IsMilestone {
       display: inline-block;
       max-width: 33%;
       min-width: 33%;

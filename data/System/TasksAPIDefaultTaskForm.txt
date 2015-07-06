@@ -17,3 +17,4 @@
 
    * Set ALLOWTOPICCHANGE = AdminUser
    * Set NOWYSIWYG = 1
+   * Set TASKCFG_HAS_CHILDREN = 1

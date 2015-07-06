@@ -1,0 +1,133 @@
+#task-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: calc(40% + 48px);
+  min-width: 748px;
+  z-index: 1000;
+
+  background-color: transparent;
+  overflow: hidden;
+  transform: translate3d(100%, 0, 0);
+  transition: transform .3s ease-in-out;
+
+  &.active {
+    transform: translate3d(0, 0, 0);
+  }
+
+  > .close {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 48px;
+    height: 48px;
+    background-color: $dark-red;
+    background-image: url('../assets/close.png');
+    background-position: center center; 
+    background-repeat: no-repeat;
+    background-size: 24px 24px;
+    border-bottom-left-radius: 5px;
+    color: $white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: darken($dark-red, 5%);
+    }
+
+    &:active {
+      background-color: darken($dark-red, 10%);
+    }
+  }
+
+  > .content {
+    position: absolute;
+    top: 0;
+    left: 48px;
+    width: calc(100% - 48px);
+    height: 100%;
+    background-color: $white;
+    border-left: 2px solid $light-blue;
+    overflow-x: auto;
+    overflow-y: scroll;
+  }
+
+  table {
+    border-spacing: 2px;
+    width: 100%;
+  }
+
+  table td {
+    background-color: $light-blue;
+    padding: 3px 6px;
+    min-width: 50%;
+    max-width: 50%;
+    width: 50%;
+
+    span {
+      display: block;
+
+      &.title {
+        text-transform: uppercase;
+        font-weight: bold;
+        color: $label-color;
+        font-size: 10px;
+        margin: 3px 0;
+      }
+    }
+  }
+
+  .jqTabContents {
+    margin-top: 20px;
+  }
+
+  .task-changeset {
+    margin-top: 30px;
+
+    > .task-changeset-header {
+      border-bottom: dotted 1px $changeset-border;
+      font-weight: bold;
+
+      > .task-changeset-id {
+        float: right;
+      }
+    }
+
+    del {color: $del-color}
+    ins {color: $ins-color;}
+  }
+}
+
+#task-overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+
+  opacity: 0;
+  background-color: $black;
+  display: none;
+  transition: opacity .3s ease-in-out;
+
+  &.active {
+    opacity: .2;
+  }
+}
+
+.task-twisty {
+  display: block;
+  text-align: right;
+
+  &:hover > span,
+  &:active > span, {
+    color: $dark-red;
+  }
+
+  > span {
+    color: $label-color;
+    font-weight: bold;
+  }
+}
+

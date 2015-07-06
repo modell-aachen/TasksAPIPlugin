@@ -19,7 +19,7 @@
       var opts = $.parseJSON( json );
 
       opts.cntHeight = $this.height();
-      opts.container = $this.find('.tasks > div');
+      opts.container = $this.children('.tasks-table').children('.tasks');
 
       opts.currentState = 'open';
       $this.data('tasktracker_options', opts);
@@ -29,8 +29,6 @@
       var $editor = $('#task-editor');
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
-      var $create = $filter.find('.tasks-btn-create');
-      var $createChild = $('.task .tasks-btn-create');
 
       var handleCreate = function() {
         var qopts = {};
@@ -39,9 +37,12 @@
         delete qopts.id;
 
         var $self = $(this);
-        var parent = $self.closest('.task').data('id');
-        if ( parent ) {
-          qopts.parent = parent;
+        var parent;
+        if ( $self.hasClass('task-new') ) {
+          parent = $self.closest('.task-children-container').prev().data('id');
+          if ( parent ) {
+            qopts.parent = parent;
+          }
         }
 
         var beforeCreate = $.Event( 'beforeCreate' );
@@ -63,11 +64,7 @@
             if (!parent) {
               opts.container.append(createTaskElement(data));
             } else {
-              $this.find('.task').each(function() {
-                if ($(this).data('id') === pid) {
-                  $(this).find('.task-children > div:last-child').first().append(createTaskElement(data));
-                }
-              });
+              $(createTaskElement(data)).insertBefore($self);
             }
           }
         }).fail(error);
@@ -81,13 +78,15 @@
         loadTasks( $this, opts.currentState, false );
       };
 
-      $create.on( 'click', handleCreate );
-      $createChild.on( 'click', handleCreate );
+      $filter.find('.tasks-btn-create').on('click', handleCreate);
+      $('.task-new').on('click', handleCreate);
+
       $status.on( 'change', handleStatusFilterChanged );
-      $tasks.observe('added', '.tasks-btn-create', function(r) {
-        for(var i = 0; i < r.addedNodes.length; ++i) {
-          $(r.addedNodes[i]).find('.tasks-btn-create').on('click', handleCreate);
-        }
+      $tasks.observe('added', '.task-new', function(r) {
+console.log(r);
+        // for(var i = 0; i < r.addedNodes.length; ++i) {
+        //   $(r.addedNodes[i]).find('.tasks-btn-create').on('click', handleCreate);
+        // }
       });
 
       $editor.on( 'afterSave', function( evt, task ) {
@@ -139,21 +138,19 @@
       }
     }
 
-    var $tasks = container.parent();
-    var $grid = $tasks.parent();
-
     if (initial) {
       var results = [];
       $(container).children('.task').each(function(idx, e) {
-        var data = unescapeHTML( $.parseJSON($(e).children('.task-data').text()) );
+        var $task = $(e);
+        var data = unescapeHTML( $.parseJSON($task.children('.task-data-container').children('.task-data').text()) );
 
-        initTaskElement($(e), data);
+        initTaskElement($task, data);
         results.push(data);
 
-        $(this).find('.task-children > div:last-child').each(function() {
+        $task.find('.task-children .tasks').each(function() {
           $(this).children('.task').each(function() {
             var $task = $(this);
-            var data = unescapeHTML( $.parseJSON($task.children('.task-data').text()) );
+            var data = unescapeHTML( $.parseJSON($task.children('.task-data-container').children('.task-data').text()) );
             initTaskElement($task, data);
           });
         });
@@ -200,20 +197,40 @@
     return deferred.promise();
   };
 
-  var toggleTaskExpanded = function(evt) {
-    var $btn = $(this);
+  var hoveredTask;
+  var toggleTaskDetails = function(evt) {
+    if (!hoveredTask) {
+      return false;
+    }
 
-    var $task = $btn.closest('.task');
+    var $btn = $(this);
+    var $task = hoveredTask;
     var data = {
-      isExpanded: $task.hasClass('expanded'),
+      isDetailsView: $task.hasClass('highlight'),
       container: $task
     };
 
-    var e = $.Event('toggleExpand');
+    var e = $.Event('toggleDetails');
     var $tracker = $task.closest('.tasktracker');
     $tracker.trigger( e, data );
 
-    $task.toggleClass('expanded');
+    $tracker.taskPanel({
+      show: function() {
+        $task.children('.task-fullview-container').children('.task-fullview').detach().appendTo(this);
+        $task.addClass('highlight');
+        this.find('.btn-edit-viewer').on('click', function(evt) {
+          $('#task-panel').children('.close').click();
+          hoveredTask = $task;
+          editClicked();
+          return false;
+        });
+      },
+      hide: function() {
+        this.find('.btn-edit-viewer').off('click');
+        this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
+        $task.removeClass('highlight');
+      }
+    }).show();
   };
 
   var initTaskElement = function($task, task) {
@@ -227,10 +244,15 @@
     return $task;
   };
 
-  var editClicked = function( evt ) {
-    var $btn = $(this);
+  var editClicked = function() {
+    if (!hoveredTask) {
+      return false;
+    }
+
+    var $task = hoveredTask;
     var edopts = {};
-    var $tracker = $btn.closest('.tasktracker');
+
+    var $tracker = $task.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
     for(var p in opts ) {
       if ( /string|number|boolean/.test( typeof opts[p] ) ) {
@@ -238,17 +260,17 @@
       }
     }
 
-    var $task = $btn.closest('.task');
-    edopts.id = $task.data('id');
+    var task = unescapeHTML( $.parseJSON($task.children('.task-data-container').text()) );
+    edopts.autoassign = opts.autoassign;
+    edopts.data = task;
+    edopts.id = task.id;
+    edopts.lang = opts.lang;
     edopts.trackerId = $tracker.attr('id');
 
-    var task = unescapeHTML( $.parseJSON($task.children('.task-data').text()) );
-    edopts.data = task;
-    edopts.lang = opts.lang;
-    edopts.autoassign = opts.autoassign;
-
     var expanded = $task.is('.expanded');
+    $task.addClass('highlight');
     $('#task-editor').taskEditor(edopts).done(function(type, data) {
+      $task.removeClass('highlight');
       if (type === 'save') {
 
         var $newTask = $(createTaskElement(data));
@@ -259,56 +281,6 @@
       }
     }).fail(function(type, msg) {
       error(msg);
-    });
-  };
-
-  var sortTasks = function() {
-    var $filter = $(this);
-    var $tracker = $filter.closest('.tasktracker');
-    var sortBy = $filter.data('tasksort');
-    if ( typeof sortBy === typeof undefined ) {
-      return;
-    }
-
-    var type = $filter.data('sorttype') || 'string';
-    $('[data-tasksort]').each( function() {
-      if ( $(this).data('tasksort') !== sortBy ) {
-        $(this).removeClass('tasksort-asc tasksort-desc');
-      }
-    });
-
-    var $tasks = $tracker.find('.tasks > div');
-    var tasks = $tasks.find('.task');
-
-    var sortedTasks = _.sortBy( tasks, function(task) {
-      var d  = unescapeHTML( $.parseJSON($(task).children('.task-data').text()) );
-      var val = d.fields[sortBy].value;
-
-      try {
-        if ( /int/i.test(type) ) {
-          return parseInt(val);
-        } else if ( /date/i.test(type) ) {
-          return new Date(val);
-        }
-      } catch(e) {
-        error(e);
-      }
-
-      return val;
-    });
-
-    if ( $filter.hasClass('tasksort-desc') ) {
-      sortedTasks = sortedTasks.reverse();
-      $filter.removeClass('tasksort-desc');
-      $filter.addClass('tasksort-asc');
-    } else if ( $filter.hasClass('tasksort-asc') || (!$filter.hasClass('tasksort-asc') && !$filter.hasClass('tasksort-desc')) ) {
-      $filter.removeClass('tasksort-asc');
-      $filter.addClass('tasksort-desc');
-    }
-
-    $tasks.empty();
-    _.each(sortedTasks, function(task) {
-      $(task).appendTo($tasks);
     });
   };
 
@@ -328,11 +300,114 @@
     }
   };
 
+  var taskMouseEnter = function(evt) {
+    var $task = $(this);
+    if (hoveredTask) {
+      $('body > .controls').detach().appendTo($(hoveredTask).children('.task-controls'));
+    }
+
+    hoveredTask = $task;
+    var $ctrl = $task.children('.task-controls').children('div')
+      .detach()
+      .appendTo('body');
+
+    var offset = $task.offset();
+    var left = offset.left + $task.outerWidth() - Math.min($ctrl.outerWidth(), 80);
+    var top = offset.top;
+
+    $ctrl
+      .css('position','absolute')
+      .css('left', left).css('top', top);
+  };
+
+  var taskMouseLeave = function(evt) {
+    var $node = $(evt.toElement);
+    var isCtrl = $node.hasClass('controls') ||
+                  $node.parent().hasClass('controls') ||
+                  $node.parent().parent().hasClass('controls');
+    if ( isCtrl ) {
+      return;
+    }
+
+    var $cnt = $(hoveredTask).children('.task-controls');
+    $('body').children('.controls').detach().appendTo($cnt);
+    hoveredTask = undefined;
+  };
+
+  var resetControls = function() {
+    var $ctrl = $(this).parent();
+    $ctrl.detach().appendTo($(hoveredTask).children('.task-controls'));
+    hoveredTask = undefined;
+  };
+
+  var toggleTaskExpand = function(evt) {
+    var $col = $(this);
+    var $row = $col.parent();
+    $row.toggleClass('expanded');
+
+    var isExpanded = $row.hasClass('expanded');
+    if ( isExpanded ) {
+      var span = $row.children('td').length;
+      var $children = $row.children('.task-children').children('table.children').detach();
+      var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+      $new.children('td').append($children);
+      $new.insertAfter($row);
+    } else {
+      var $next = $row.next();
+      var $table = $next.children('td').children('table.children').detach();
+      $table.appendTo($row.children('.task-children'));
+      $next.remove();
+    }
+
+    applyLevels();
+  };
+
+  var closeTask = function(evt) {
+    hoveredTask.addClass('highlight');
+    if ( confirm('TBD. close task?') ) {
+      alert('möp!');
+    }
+
+    hoveredTask.removeClass('highlight');
+    return false;
+  };
+
+  var applyLevels = function() {
+    $('.task:visible, .task-new:visible').each(function(i,e) {
+      var lvl = 0;
+      var $task = $(e);
+      var $t = $(this);
+      while ($t.parent().closest('.tasks-table').length) {
+        $t = $t.parent().closest('.tasks-table');
+        lvl++;
+      }
+
+      $task.attr('class', function(j,cls) {
+        return cls.replace(/(^|\s)alternate/g, '') + (lvl%2===0 ? ' alternate' : '');
+      });
+    });
+  };
+
   $(document).ready( function() {
     $('.tasktracker')
       .tasksGrid()
-      .on('click', '[data-tasksort]', sortTasks)
-      .on('click', '.btn-expander', toggleTaskExpanded)
-      .on('click', '.btn-edit', editClicked);
+      .observe('added', 'tr.task', function(record) {
+        $(record)
+          .on('mouseenter', taskMouseEnter)
+          .on('mouseleave', taskMouseLeave)
+          .on('click', '.expander', toggleTaskExpand);
+      });
+
+    $('.tasks .task')
+      .on('mouseenter', taskMouseEnter)
+      .on('mouseleave', taskMouseLeave)
+      .on('click', '.expander', toggleTaskExpand);
+
+    $('.controls .btn-close').on('click', closeTask);
+    $('.controls .btn-details').on('click', toggleTaskDetails);
+    $('.controls .btn-edit').on('click', editClicked);
+    $('.controls .task-btn').on('click', resetControls);
+
+    applyLevels();
   });
 }(jQuery, window._, window.document, window));

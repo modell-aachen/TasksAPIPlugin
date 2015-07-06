@@ -2,6 +2,7 @@
   border: 1px solid #f0f0f0;
   overflow: hidden;
   position: relative;
+
   > .settings {
     display: none;
   }
@@ -9,4 +10,12 @@
   .hidden {
     display: none !important;
   }
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
 }
