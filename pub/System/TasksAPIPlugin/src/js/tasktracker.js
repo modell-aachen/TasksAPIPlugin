@@ -101,6 +101,12 @@ console.log(r);
         }
       });
 
+      if ( opts.sortable ) {
+        var $tbl = $this.find('.tasks-table');
+        var sortOpts = $tbl.metadata() || {};
+        $tbl.tablesorter(sortOpts);
+      }
+
       return this;
     });
   };
@@ -321,7 +327,7 @@ console.log(r);
   };
 
   var taskMouseLeave = function(evt) {
-    var $node = $(evt.toElement);
+    var $node = $(evt.toElement || evt.relatedTarget);
     var isCtrl = $node.hasClass('controls') ||
                   $node.parent().hasClass('controls') ||
                   $node.parent().parent().hasClass('controls');
