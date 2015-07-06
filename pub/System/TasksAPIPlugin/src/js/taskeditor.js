@@ -68,10 +68,8 @@
           } else {
             $target.closest('.' + opts.autoassignTarget).css('display', 'block');
             var tval = $target.val();
-            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) !== -1 ) {
-              setTimeout(function() {
-                $target.trigger('Clear');
-              }, 100);
+            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
+              $target.trigger('Clear');
             }
           }
         };
