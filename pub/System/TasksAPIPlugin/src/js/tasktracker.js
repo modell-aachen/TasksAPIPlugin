@@ -209,7 +209,6 @@ console.log(r);
       return false;
     }
 
-    var $btn = $(this);
     var $task = hoveredTask;
     var data = {
       isDetailsView: $task.hasClass('highlight'),
@@ -394,6 +393,22 @@ console.log(r);
     });
   };
 
+  var dclickTimer;
+  var onDoubleClick = function(evt) {
+    if ( $(evt.target).hasClass('expander') ) {
+      return false;
+    }
+
+    if ( dclickTimer ) {
+      hoveredTask = $(this);
+      toggleTaskDetails();
+    }
+
+    dclickTimer = setTimeout(function() {
+      dclickTimer = undefined;
+    }, 300);
+  };
+
   $(document).ready( function() {
     $('.tasktracker')
       .tasksGrid()
@@ -407,7 +422,8 @@ console.log(r);
     $('.tasks .task')
       .on('mouseenter', taskMouseEnter)
       .on('mouseleave', taskMouseLeave)
-      .on('click', '.expander', toggleTaskExpand);
+      .on('click', '.expander', toggleTaskExpand)
+      .on('click', onDoubleClick);
 
     $('.controls .btn-close').on('click', closeTask);
     $('.controls .btn-details').on('click', toggleTaskDetails);
