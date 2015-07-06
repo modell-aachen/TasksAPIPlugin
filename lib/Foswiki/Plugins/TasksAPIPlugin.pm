@@ -493,7 +493,7 @@ sub tagAmpel {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     my $date = $params->{_DEFAULT} || $params->{data};
-    return '' unless $date;
+    return '<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png" alt="">' unless $date;
     my $warn = $params->{warn} || 3;
     my $status = $params->{status} || 'open';
 
@@ -507,7 +507,7 @@ sub tagAmpel {
         $state = 'r' if $now >= $secs;
         $src = "ampel_$state"
     } else {
-        $src = $status;
+        $src = "ampel";
     }
 
     my $img = <<IMG;
@@ -663,9 +663,9 @@ sub _renderTask {
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
 
     if ( $task->{_depth} ne 0 ) {
-        $Foswiki::Plugins::SESSION->enterContext('task_showchildren', 1);
+        $Foswiki::Plugins::SESSION->enterContext('task_showexpander', 1);
     } else {
-        $Foswiki::Plugins::SESSION->leaveContext('task_showchildren');
+        $Foswiki::Plugins::SESSION->leaveContext('task_showexpander');
     }
 
     $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
@@ -744,6 +744,7 @@ sub tagGrid {
     $fctx->{task_allowcreate} = 1 if $allowCreate;
     $fctx->{task_stateless} = 1 if $stateless;
     $fctx->{task_readonly} = 1 if $readonly;
+    $fctx->{task_showexpandercol} = 1 if $depth;
 
     my @options = ();
     foreach my $state (split(/,/, $states)) {
@@ -818,6 +819,7 @@ sub tagGrid {
 
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
+    delete $fctx->{task_showexpandercol};
 
     my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog");
     foreach (@jqdeps) {
@@ -828,11 +830,11 @@ sub tagGrid {
     my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
     my $suffix = $debug ? '' : '.min';
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
-<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js"></script>
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
 SCRIPT
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css' />
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE
 
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;

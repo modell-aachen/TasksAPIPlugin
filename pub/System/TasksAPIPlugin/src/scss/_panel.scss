@@ -57,7 +57,7 @@
     width: 100%;
   }
 
-  table td {
+  table:not(.foswikiTable) td {
     background-color: $light-blue;
     padding: 3px 6px;
     min-width: 50%;
@@ -128,6 +128,17 @@
   > span {
     color: $label-color;
     font-weight: bold;
+  }
+}
+
+.task-attachments > .foswikiTable {
+  thead th {
+    background-color: #003C89;
+    color: $white;
+
+    &:first-child {
+      width: 24px;
+    }
   }
 }
 

@@ -164,7 +164,7 @@ $percntENDTWISTY$percnt"}%%{
 %ENDTAB%%{
 }%%ATTACHMENTLIST{
   topic="%TASKINFO{meta="id"}%"
-  header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th><th>%MAKETEXT{Actionsn}%</th></tr></thead><tbody>"
+  header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th><th>%MAKETEXT{Actions}%</th></tr></thead><tbody>"
   format="<tr><td>$fileIcon</td><td><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td><td><a href='$percntSCRIPTURLPATH{$quotattach$quot}$percnt/$fileWeb/$fileTopic?filename=$percntENCODE{$quot$fileName$quot}$percnt;revInfo=1' title='%MAKETEXT{"Update attachment"}%' rel='follow' class='requireModacChangePermission modacChanging'><img src='$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_refresh.jpg' border='0' alt='%MAKETEXT{"Update attachment"}%' style='border:none;' /></a> &nbsp; <a href='$percntSCRIPTURLPATH{$quotrename$quot}$percnt/$fileWeb/$fileTopic?template=moveattachment&attachment=$percntENCODE{$quot$fileName$quot}$percnt' title='%MAKETEXT{"Move attachment"}%' rel='nofollow' class='requireModacChangePermission modacChanging'><img src='$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_move.jpg' border='0' alt='%MAKETEXT{"Move attachment"}%' style='border:none;' /></a> &nbsp; <a href='$percntSCRIPTURLPATH{$quotrename$quot}$percnt/$fileWeb/$fileTopic?newweb=$percntTRASHWEB$percnt;newtopic=TrashAttachment;template=renameattachmentdelete;attachment=$percntENCODE{$quot$fileName$quot}$percnt' title='%MAKETEXT{"Delete attachment"}%' rel='nofollow' class='requireModacChangePermission modacChanging'><img src='$percntPUBURL$percnt/System/ModacSkinTheme/ModacSkinLogos/icon_delete.jpg' border='0' alt='%MAKETEXT{"Delete attachment"}%' style='border:none;' /></a></td></tr>"
   footer="</tbody></table></div>$percntENDTAB$percnt"
 }%%{
@@ -174,7 +174,7 @@ $percntENDTWISTY$percnt"}%%{
 
 %TMPL:DEF{"tasksapi::grid::task::children::new"}%
 <tr class="task-new">
-  <td colspan="%IF{"context task_showchildren and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
+  <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
     %MAKETEXT{"Create new subordinate task"}%
   </td>
 </tr>
@@ -191,7 +191,7 @@ $percntENDTWISTY$percnt"}%%{
 
 %TMPL:DEF{"tasksapi::grid::task"}%%{
 }%<tr class="task prioritized-%TASKINFO{field="Prioritize"}%">
-%IF{"context task_showchildren and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span>"}%
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span>"}%
   </td>
   <td class="created">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
@@ -262,7 +262,7 @@ $percntENDTWISTY$percnt"}%%{
 
 
 %TMPL:DEF{"tasksapi::grid::caption"}%<tr>
-%IF{"context task_showchildren" then="<th></th>"}%
+%IF{"context task_showexpandercol" then="<th></th>"}%
   <th>%MAKETEXT{"Created"}%</th>
   <th>%MAKETEXT{"Type"}%</th>
   <th>%MAKETEXT{"Assigned to"}%</th>
