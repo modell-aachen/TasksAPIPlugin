@@ -115,7 +115,7 @@ console.log(r);
     var opts = $tbl.data('sortopts');
     if ( typeof opts === 'object' ) {
       var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
-      
+
       $tbl.trigger('update');
       if ( $col.length > 0 ) {
         var dir = $col.hasClass('.headerSortUp') ? 1 : 0;
@@ -375,6 +375,10 @@ console.log(r);
     var $col = $(this);
     var $row = $col.parent();
     $row.toggleClass('expanded');
+
+    // update tablesorter to respect child rows
+    var $tbl = $col.closest('.tasks-table:not(.children)');
+    $tbl.trigger('update');
 
     var isExpanded = $row.hasClass('expanded');
     if ( isExpanded ) {
