@@ -208,8 +208,14 @@
 
         var $input = $this.find(sel);
         if ( $input.hasClass('foswikiEditFormDateField') ) {
-          var d = new Date();
-          d.setTime(parseInt(field.value + '000'));
+          var d;
+          if ( /^\d+\s\w+\s\d+/.test(field.value) ) {
+            d = new Date(field.value);
+          } else {
+            d = new Date();
+            d.setTime(parseInt(field.value + '000'));
+          }
+
           $input.val(d.print('%e %b %Y'));
         } else {
           $input.val(field.value);
