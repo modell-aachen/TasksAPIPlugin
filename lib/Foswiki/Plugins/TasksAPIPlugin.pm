@@ -483,7 +483,8 @@ sub tagAmpel {
     my $src = '';
     if ( $status eq 'open' ) {
         my $now = scalar time();
-        my $secs = Foswiki::Time::parseTime($date);
+        my $secs = $date;
+        $secs = Foswiki::Time::parseTime($date) unless $secs =~ /^\d+$/;
         my $offset = $warn * 24 * 60 * 60;
         my $state = 'g';
         $state = 'o' if $now  + $offset > $secs;
