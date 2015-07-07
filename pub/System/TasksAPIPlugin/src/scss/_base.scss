@@ -10,6 +10,29 @@
   .hidden {
     display: none !important;
   }
+
+  .tasks-table {
+    th.header {
+      background-image: url(../assets/sort_bg.gif);
+      background-position: center right;
+      background-repeat: no-repeat;
+      cursor: pointer;
+
+      &:hover {
+        color: #333;
+      }
+
+      &.headerSortDown {
+        background-image: url(../assets/sort_desc.gif);
+        color: #333;
+      }
+
+      &.headerSortUp {
+        background-image: url(../assets/sort_asc.gif);
+        color: #333;
+      }
+    }
+  }
 }
 
 .float-right {
@@ -19,3 +42,4 @@
 .float-left {
   float: left;
 }
+

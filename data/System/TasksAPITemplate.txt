@@ -191,9 +191,8 @@ $percntENDTWISTY$percnt"}%%{
 
 %TMPL:DEF{"tasksapi::grid::task"}%%{
 }%<tr class="task prioritized-%TASKINFO{field="Prioritize"}%">
-%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span>"}%
-  </td>
-  <td class="created">
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
   </td>
@@ -206,7 +205,7 @@ $percntENDTWISTY$percnt"}%%{
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
   </td>
-  <td class="due">
+  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7"}%</td>
@@ -228,9 +227,17 @@ $percntENDTWISTY$percnt"}%%{
 }%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntJQICONPATH{\"pencil\"}$percnt\" alt=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
 }%%TMPL:END%
 
+%TMPL:DEF{"tasksapi::grid::sortopts"}%%{
+}%%IF{
+  "context task_showexpandercol"
+  then="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [[1,1],[1,1]], headers: {0: {sorter: false}, 1: {sorter: 'taskDateSorter'}, 5: {sorter: 'taskDateSorter'}, 6: {sorter:'taskAmpelSorter'}}}"
+  else="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [[0,1],[0,1]], headers: {0: {sorter: 'taskDateSorter'}, 4: {sorter: 'taskDateSorter'}, 5: {sorter:'taskAmpelSorter'}}}"
+}%%{
+}%%TMPL:END%
+
 %TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">
   %TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%
-  <table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
+  <table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table %TMPL:P{"tasksapi::grid::sortopts"}%">
     <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
     <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
   </table>
@@ -269,7 +276,10 @@ $percntENDTWISTY$percnt"}%%{
   <th>%MAKETEXT{"Title"}%</th>
   <th>%MAKETEXT{"Due date"}%</th>
   <th>%MAKETEXT{"Status"}%</th>
-  <th colspan="5" class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
 </tr>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::addnew"}%%{

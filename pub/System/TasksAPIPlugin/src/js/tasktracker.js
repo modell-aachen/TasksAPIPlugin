@@ -102,9 +102,21 @@ console.log(r);
       });
 
       if ( opts.sortable ) {
-        var $tbl = $this.find('.tasks-table');
+        var $tbl = $this.children('.tasks-table');
         var sortOpts = $tbl.metadata() || {};
+        $tbl.data('sortopts', sortOpts);
         $tbl.tablesorter(sortOpts);
+
+        // ToDo.
+        // $tbl.on('sortStart', function() {
+        //   $('.task-children-container:visible').each(function() {
+        //     var $child = $(this);
+        //     var $parent = $child.prev();
+
+        //     var $tbl = $child.find('> td > table.children').detach();
+        //     $tbl.appendTo($parent.children('.task-children'));
+        //   });
+        // });
       }
 
       return this;

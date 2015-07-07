@@ -689,6 +689,7 @@ sub tagGrid {
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
     my $depth = $params->{depth} || 0;
+    my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
 
@@ -713,6 +714,7 @@ sub tagGrid {
         order => $order,
         allowupload => $allowUpload,
         stateless => $stateless,
+        sortable => $sortable,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
         editortemplate => $editorTemplate,
@@ -812,13 +814,23 @@ sub tagGrid {
     my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
     my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
     my $suffix = $debug ? '' : '.min';
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, 'JQUERYPLUGIN::JQP::UNDERSCORE' );
-<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
-SCRIPT
+    my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE
+
+    if ($sortable) {
+        $scriptDeps .= ', JQTABLESORTERPLUGIN::Scripts';
+        my $sortjs = <<SCRIPTS;
+<script type="text/javascript" src="$pluginURL/js/tasks.tablesorter$suffix.js?version=$RELEASE"></script>
+SCRIPTS
+        Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::TABLESORTER', $sortjs, 'JQTABLESORTERPLUGIN::Scripts' );
+    }
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
+SCRIPT
 
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
     require Foswiki::Plugins::CKEditorPlugin;
