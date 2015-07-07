@@ -192,3 +192,18 @@ msgstr "Details"
 
 msgid "Create new subordinate task"
 msgstr "Neue untergeordnete Aufgabe hinzufügen"
+
+msgid "Unknown status"
+msgstr "Unbekannter Status"
+
+msgid "In one day"
+msgstr "In einem Tag"
+
+msgid "One day over due"
+msgstr "Seit einem Tag abgelaufen"
+
+msgid "In %1 days"
+msgstr "In %1 Tagen"
+
+msgid "%1 days over due"
+msgstr "Seit %1 Tagen abgelaufen"

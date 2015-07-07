@@ -475,8 +475,9 @@ sub _enrich_data {
 sub tagAmpel {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
+    my $title = '%MAKETEXT{"Unknown status"}%';
     my $date = $params->{_DEFAULT} || $params->{data};
-    return '<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png" alt="">' unless $date;
+    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\">" unless $date;
     my $warn = $params->{warn} || 3;
     my $status = $params->{status} || 'open';
 
@@ -489,13 +490,20 @@ sub tagAmpel {
         my $state = 'g';
         $state = 'o' if $now  + $offset > $secs;
         $state = 'r' if $now >= $secs;
-        $src = "ampel_$state"
+        $src = "ampel_$state";
+
+        my $delta = int(($secs - $now)/86400);
+        my $abs = abs($delta);
+        $title = '%MAKETEXT{"In one day"}%' if $delta eq 1;
+        $title = "%MAKETEXT{\"In [_1] days\" args=\"$delta\"}%" if $delta > 1;
+        $title = '%MAKETEXT{"One day over due"}%' if $delta eq -1;
+        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -1;
     } else {
         $src = "ampel";
     }
 
     my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="">
+<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title">
 IMG
 
     return $img;
