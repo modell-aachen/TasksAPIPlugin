@@ -206,7 +206,14 @@
           '"]'
         ].join('');
 
-        $this.find(sel).val(field.value);
+        var $input = $this.find(sel);
+        if ( $input.hasClass('foswikiEditFormDateField') ) {
+          var d = new Date();
+          d.setTime(parseInt(field.value + '000'));
+          $input.val(d.print('%e %b %Y'));
+        } else {
+          $input.val(field.value);
+        }
       });
     };
 
@@ -221,6 +228,15 @@
         var $input = $(this);
         var prop = $input.attr('name');
         var val = $input.val();
+
+        if ( $input.hasClass('foswikiEditFormDateField') ) {
+          try {
+            var d = new Date(val);
+            val = d.print('%s');
+          } catch(e) {
+            error(e);
+          }
+        }
 
         if ( /^$/.test(val) ) {
           val = $input.attr('value');
