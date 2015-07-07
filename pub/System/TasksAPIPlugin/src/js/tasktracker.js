@@ -103,24 +103,37 @@ console.log(r);
 
       if ( opts.sortable ) {
         var $tbl = $this.children('.tasks-table');
-        var sortOpts = $tbl.metadata() || {};
-        $tbl.data('sortopts', sortOpts);
-        $tbl.tablesorter(sortOpts);
-
-        // ToDo.
-        // $tbl.on('sortStart', function() {
-        //   $('.task-children-container:visible').each(function() {
-        //     var $child = $(this);
-        //     var $parent = $child.prev();
-
-        //     var $tbl = $child.find('> td > table.children').detach();
-        //     $tbl.appendTo($parent.children('.task-children'));
-        //   });
-        // });
+        sortTable.call($tbl);
       }
 
       return this;
     });
+  };
+
+  var sortTable = function() {
+    var $tbl = $(this);
+    var opts = $tbl.data('sortopts');
+    if ( typeof opts === 'object' ) {
+      var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
+      
+      $tbl.trigger('update');
+      if ( $col.length > 0 ) {
+        var dir = $col.hasClass('.headerSortUp') ? 1 : 0;
+        var index = $col[0].column;
+
+        // tablesorter's update event is processed by a timeout of 1.
+        // use something higher than 1 here...
+        setTimeout(function() {
+          $tbl.trigger('sorton', [[[index, dir]]]);
+        }, 10);
+      }
+
+      return;
+    }
+
+    opts = $tbl.metadata() || {};
+    $tbl.data('sortopts', opts);
+    $tbl.tablesorter(opts);
   };
 
   var unescapeHTML = function(obj) {
@@ -295,6 +308,7 @@ console.log(r);
           $newTask.addClass('expanded');
         }
         $task.replaceWith( $newTask );
+        sortTable.call($tracker.children('.tasks-table'));
       }
     }).fail(function(type, msg) {
       error(msg);
