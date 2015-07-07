@@ -26,8 +26,9 @@ pub/System/TasksAPIPlugin/assets/close.png 0644
 pub/System/TasksAPIPlugin/assets/closed.png 0644
 pub/System/TasksAPIPlugin/assets/deleted.png 0644
 pub/System/TasksAPIPlugin/assets/sub.png 0644
-pub/System/TasksAPIPlugin/assets/sort-asc.png 0644
-pub/System/TasksAPIPlugin/assets/sort-desc.png 0644
+pub/System/TasksAPIPlugin/assets/sort_asc.gif 0644
+pub/System/TasksAPIPlugin/assets/sort_bg.gif 0644
+pub/System/TasksAPIPlugin/assets/sort_desc.gif 0644
 pub/System/TasksAPIPlugin/assets/author.png 0644
 pub/System/TasksAPIPlugin/assets/user.png 0644
 pub/System/TasksAPIPlugin/assets/file.png 0644
@@ -45,6 +46,8 @@ pub/System/TasksAPIPlugin/js/jquery.tasksapi.js 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.min.js 0644
+pub/System/TasksAPIPlugin/js/tasks.tablesorter.js 0644
+pub/System/TasksAPIPlugin/js/tasks.tablesorter.min.js 0644
 pub/System/TasksAPIPlugin/css/tasktracker.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
 tools/taskcron 0755
