@@ -335,10 +335,12 @@ sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
     my %data;
+    my $depth = $q->param('_depth') || 0;
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
     }
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
+    $res->{_depth} = $depth;
 
     if ( $q->param('templatefile') ) {
         Foswiki::Func::loadTemplate( $q->param('templatefile') );
@@ -354,6 +356,8 @@ sub restCreate {
 sub restUpdate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
+    my $depth = $q->param('_depth');
+    my $order = $q->param('_order');
     my %data;
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
@@ -377,6 +381,7 @@ sub restUpdate {
     if ( $q->param('templatefile') ) {
         Foswiki::Func::loadTemplate( $q->param('templatefile') );
     }
+    _deepen([$task], $depth, $order);
 
     return to_json({
         status => 'ok',
@@ -421,6 +426,7 @@ sub _enrich_data {
     my $fields = $d->{form}->getFields;
     my $result = {
         id => $d->{id},
+        depth => $task->{_depth},
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
@@ -533,9 +539,9 @@ sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
     my @res;
     my $req;
-    my $q;
+    my $q = $session->{request};
+    my $depth = $q->param('depth') || 0;
     eval {
-        $q = $session->{request};
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
         @res = _query(%$req);
@@ -543,6 +549,7 @@ sub restSearch {
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
+    _deepen(\@res, $depth, $req->{order});
 
     my $file = $req->{templatefile} || 'TasksAPI';
     Foswiki::Func::loadTemplate( $file );
@@ -670,6 +677,37 @@ sub _renderTask {
     return $task;
 }
 
+# Given an array of tasks, fetch children up to a specified depth
+sub _deepen {
+    my ($tasks, $depth, $order) = @_;
+
+    for my $t (@$tasks) {
+        $t->{_depth} = $depth;
+    }
+
+    my $thash = {};
+    @{$thash}{map {$_->{id}} @$tasks} = @$tasks;
+    my @taskstofetch = @$tasks;
+    while ($depth > 0) {
+        my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
+        last unless @ids;
+
+        $depth--;
+        my @children = query(query => {Parent => \@ids}, order => $order);
+        @taskstofetch = ();
+        for my $c (@children) {
+            $c->{_depth} = $depth;
+            $thash->{$c->{id}} = $c;
+            my $parent = $thash->{$c->{fields}{Parent}};
+            $parent->{children_acl} ||= [];
+            push @{$parent->{children_acl}}, $c;
+            push @taskstofetch, $c;
+        }
+    }
+
+    $tasks;
+}
+
 sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -718,6 +756,7 @@ sub tagGrid {
         parent => $parent,
         form => $form,
         id => $id,
+        depth => $depth,
         pageSize => $pageSize,
         query => $query,
         order => $order,
@@ -771,30 +810,7 @@ sub tagGrid {
         desc => $params->{desc},
         limit => $params->{pagesize},
     );
-    for my $t (@tasks) {
-        $t->{_depth} = $depth;
-    }
-
-    my $tasks = {};
-    @{$tasks}{map {$_->{id}} @tasks} = @tasks;
-    my @taskstofetch = @tasks;
-    while ($depth > 0) {
-        my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
-        last unless @ids;
-
-        $depth--;
-        my @children = _query(query => {Parent => \@ids}, order => $params->{order});
-        @taskstofetch = ();
-        for my $c (@children) {
-            $c->{_depth} = $depth;
-            $tasks->{$c->{id}} = $c;
-            $tasks->{$c->{fields}{Parent}}{children_acl} ||= [];
-            push @{$tasks->{$c->{fields}{Parent}}{children_acl}}, $c;
-            push @taskstofetch, $c;
-        }
-    }
-    undef $tasks;
-    undef @taskstofetch;
+    _deepen(\@tasks, $depth, $params->{order});
 
     my %tmplAttrs = (
         stateoptions => $select,
