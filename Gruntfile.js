@@ -51,8 +51,8 @@ module.exports = function(grunt) {
             '<%= pkg.pubDir %>/src/js/taskeditor.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
           ],
-          '<%= pkg.pubDir %>/js/jquery.tasksapi.uncompressed.js': [
-            '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
+          '<%= pkg.pubDir %>/js/tasks.tablesorter.js': [
+            '<%= pkg.pubDir %>/src/js/tasks.tablesorter.js'
           ]
         }
       },
@@ -68,8 +68,8 @@ module.exports = function(grunt) {
             '<%= pkg.pubDir %>/src/js/taskeditor.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
           ],
-          '<%= pkg.pubDir %>/js/jquery.tasksapi.js': [
-            '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
+          '<%= pkg.pubDir %>/js/tasks.tablesorter.min.js': [
+            '<%= pkg.pubDir %>/src/js/tasks.tablesorter.js'
           ]
         }]
       },
