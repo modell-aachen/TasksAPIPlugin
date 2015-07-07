@@ -326,14 +326,6 @@ sub notify {
     Foswiki::Func::popTopicContext();
 }
 
-sub createMulti {
-    my @res;
-    foreach my $data (@_) {
-        push @res, create(%$data);
-    }
-    @res;
-}
-
 sub update {
     my ($self, %data) = @_;
     my ($web, $topic) = ($self->{id} =~ /^(.*)\.(.*)$/);

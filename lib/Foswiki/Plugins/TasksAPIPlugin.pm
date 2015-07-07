@@ -105,7 +105,6 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
-    Foswiki::Func::registerRESTHandler( 'multicreate', \&restMultiCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch );
@@ -349,22 +348,6 @@ sub restCreate {
         status => 'ok',
         id => $res->{id},
         data => _enrich_data($res, $q->param('tasktemplate')),
-    });
-}
-
-sub restMultiCreate {
-    my ($session, $subject, $verb, $response) = @_;
-    my $q = $session->{request};
-    my $json = from_json($q->param('data'));
-    my @res = Foswiki::Plugins::TasksAPIPlugin::Task::createMulti(@$json);
-
-    if ( $q->param('templatefile') ) {
-        Foswiki::Func::loadTemplate( $q->param('templatefile') );
-    }
-
-    return to_json({
-        status => 'ok',
-        data => [map { _enrich_data($_, $q->param('tasktemplate')) } @res],
     });
 }
 
