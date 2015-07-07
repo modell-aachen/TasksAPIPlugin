@@ -140,11 +140,11 @@
     <tr>
       <td>
         <span class="title">%MAKETEXT{"Type"}%</span>
-        <span>%TASKINFO{field="Type"}%</span>
+        <span>%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>
       </td>
       <td>
         <span class="title">%MAKETEXT{"Prioritize"}%</span>
-        <span>%TASKINFO{field="Prioritize"}%</span>
+        <span>%MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%</span>
       </td>
     </tr>
   </tbody>
