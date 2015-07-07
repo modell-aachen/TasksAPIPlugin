@@ -207,3 +207,12 @@ msgstr "In %1 Tagen"
 
 msgid "%1 days over due"
 msgstr "Seit %1 Tagen abgelaufen"
+
+msgid "Close task"
+msgstr "Aufgabe schließen"
+
+msgid "View details"
+msgstr "Details anzeigen"
+
+msgid "Edit task"
+msgstr "Aufgabe bearbeiten"

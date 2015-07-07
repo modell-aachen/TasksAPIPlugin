@@ -222,9 +222,9 @@ $percntENDTWISTY$percnt"}%%{
 <span>%ICON{"toggleclose"}%</span>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::task::controls::right"}%%{
-}%%IF{"context task_canedit and not context task_readonly" then="<span class=\"task-btn btn-close\"><img src=\"$percntJQICONPATH{\"tick\"}$percnt\" alt=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
-}%<span class="task-btn btn-details"><img src="%JQICONPATH{"eye"}%" alt="%MAKETEXT{"View details"}%"></span>%{
-}%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntJQICONPATH{\"pencil\"}$percnt\" alt=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly" then="<span class=\"task-btn btn-close\"><img src=\"$percntJQICONPATH{\"tick\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
+}%<span class="task-btn btn-details"><img src="%JQICONPATH{"eye"}%" alt="" title="%MAKETEXT{"View details"}%"></span>%{
+}%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntJQICONPATH{\"pencil\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::sortopts"}%%{
