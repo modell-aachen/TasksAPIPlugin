@@ -64,8 +64,14 @@ msgstr "monatlich"
 msgid "yes"
 msgstr "ja"
 
+msgid "Yes"
+msgstr "Ja"
+
 msgid "no"
 msgstr "nein"
+
+msgid "No"
+msgstr "Nein"
 
 msgid "Assigned to"
 msgstr "Zugewiesen an"
