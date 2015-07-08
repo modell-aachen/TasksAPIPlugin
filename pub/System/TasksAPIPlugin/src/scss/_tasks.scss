@@ -65,15 +65,6 @@
       background-color: $hover-bg;
     }
 
-    &:active {
-      background-color: $blue;
-
-      > td,
-      > td span {
-        color: $white;
-      }
-    }
-
     &.highlight {
       background-color: darken($light-blue, 10%);
     }
@@ -85,11 +76,26 @@
         background-color: $alternate-hover;
       }
 
-      &:active {
+      &.highlight {
         background-color: $alternate-active;
       }
+    }
+  }
 
-      &.highlight {
+  .tasks > .task-new {
+    background-color: $light-blue;
+
+    &:active {
+      background-color: $blue;
+
+      > td,
+      > td span {
+        color: $white;
+      }
+    }
+
+    &.alternate {
+      &:active {
         background-color: $alternate-active;
       }
     }
