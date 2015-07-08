@@ -208,7 +208,7 @@ $percntENDTWISTY$percnt"}%%{
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
-  <td class="ampel">%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7"}%</td>
+  <td class="ampel">%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
   <td class="hidden task-controls">

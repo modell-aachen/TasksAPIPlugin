@@ -482,10 +482,11 @@ sub tagAmpel {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
     my $title = '%MAKETEXT{"Unknown status"}%';
-    my $date = $params->{_DEFAULT} || $params->{data};
-    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\">" unless $date;
-    my $warn = $params->{warn} || 3;
+    my $date = $params->{_DEFAULT} || $params->{date};
     my $status = $params->{status} || 'open';
+    my $warn = $params->{warn} || 3;
+
+    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\">" if ( !$date && $status eq 'open' );
 
     my $src = '';
     if ( $status eq 'open' ) {
@@ -505,7 +506,7 @@ sub tagAmpel {
         $title = '%MAKETEXT{"One day over due"}%' if $delta eq -1;
         $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -1;
     } else {
-        $src = "ampel";
+        $src = $status eq 'closed' ? 'closed' : 'deleted';
     }
 
     my $img = <<IMG;
