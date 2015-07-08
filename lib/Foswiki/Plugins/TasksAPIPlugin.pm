@@ -540,7 +540,7 @@ sub restSearch {
     my @res;
     my $req;
     my $q = $session->{request};
-    my $depth = $q->param('depth') || 0;
+
     eval {
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
@@ -549,8 +549,9 @@ sub restSearch {
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
-    _deepen(\@res, $depth, $req->{order});
 
+    my $depth = $req->{depth} || 0;
+    _deepen(\@res, $depth, $req->{order});
     my $file = $req->{templatefile} || 'TasksAPI';
     Foswiki::Func::loadTemplate( $file );
 
@@ -749,14 +750,14 @@ sub tagGrid {
 
     Foswiki::Func::loadTemplate( $templateFile );
 
-    my $langMacro = '%MAKETEXT{"Missing value for mandatory field"}%';
-    my $translated = Foswiki::Func::expandCommonVariables( $langMacro );
+    my $mand = '%MAKETEXT{"Missing value for mandatory field"}%';
+    my $close = '%MAKETEXT{"Do you really want to close the selected task?"}%';
     my %settings = (
         context => $ctx,
         parent => $parent,
         form => $form,
         id => $id,
-        depth => $depth,
+        depth => int($depth),
         pageSize => $pageSize,
         query => $query,
         order => $order,
@@ -769,7 +770,8 @@ sub tagGrid {
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
         lang => {
-            missingField => Foswiki::urlEncode( $translated )
+            missingField => Foswiki::urlEncode(Foswiki::Func::expandCommonVariables($mand)),
+            closeTask => Foswiki::urlEncode(Foswiki::Func::expandCommonVariables($close))
         }
     );
 
