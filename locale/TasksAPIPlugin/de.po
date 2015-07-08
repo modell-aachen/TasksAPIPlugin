@@ -216,3 +216,6 @@ msgstr "Details anzeigen"
 
 msgid "Edit task"
 msgstr "Aufgabe bearbeiten"
+
+msgid "Do you really want to close the selected task?"
+msgstr "Möchten Sie die ausgewählte Aufgabe wirklich schließen?"
