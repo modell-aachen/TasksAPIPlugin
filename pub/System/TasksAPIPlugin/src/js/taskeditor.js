@@ -78,7 +78,7 @@
         setAssignee.call($type);
       }
 
-      $this.taskPanel = $this.taskPanel({
+      $this.panel = $this.taskPanel({
         show: function() {
           var $panel = this;
           $this.find('.ignoreObserver').removeClass('ignoreObserver');
@@ -90,7 +90,7 @@
         }
       });
 
-      $this.taskPanel.show();
+      $this.panel.show();
 
       var afterEdit = $.Event( 'afterEdit' );
       $this.trigger( afterEdit );
@@ -100,7 +100,7 @@
 
     var closeEditor = function() {
       if ( !_.isUndefined(this) ) {
-        $this.taskPanel.hide();
+        $this.panel.hide();
       }
     };
 
@@ -158,6 +158,7 @@
 
       $.blockUI();
       var doSaveTask = function() {
+        task._depth = opts._depth > 0 ? opts._depth : 0;
         if (!task.id) {
           task.Context = opts.context;
 
@@ -239,8 +240,10 @@
 
         if ( $input.hasClass('foswikiEditFormDateField') ) {
           try {
-            var d = new Date(val);
-            val = d.print('%s');
+            if (val) {
+              var d = new Date(val);
+              val = d.print('%s');
+            }
           } catch(e) {
             error(e);
           }
