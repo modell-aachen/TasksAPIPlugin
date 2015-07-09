@@ -8,6 +8,7 @@ data/System/TasksAPIReopenedMailTemplate.txt 0644 Mail notify for reopened task
 data/System/TasksAPIReassignedMailTemplate.txt 0644 Mail notify for reassigned task
 data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPITemplate.txt 0644 Task form
+data/System/VarTASKINFO.txt 0644 Docs
 data/System/VarTASKSGRID.txt 0644 Docs
 lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module

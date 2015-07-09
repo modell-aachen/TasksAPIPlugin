@@ -21,10 +21,10 @@ Example:
 The following parameters are available:
 
 | *Parameter* | *Description* | *Default* |
-| "..." (or context="...") | Context to search for. Only tasks with this context will be shown. | %<nop>WEB%.%<nop>TOPIC% |
+| "..." (or context="...") | Context to search for. Only tasks with this context will be shown. Use =any= to show tasks from anywhere (in this case, setting a query is recommended to avoid getting an enormous list). | %<nop>WEB%.%<nop>TOPIC% |
 | allowcreate="..." | Show a button to create a new task | 0 |
 | allowupload="..." | In the task editor, render an interface to upload attachments | 0 |
-| captiontemplate="..." | the name of the template used to render the caption area | tasksapi::caption |
+| captiontemplate="..." | Name of the template used to render the caption area | tasksapi::caption |
 | createlinktext="..." | Label of the button for creating new tasks | %<nop>MAKETEXT{"Add task"}% |
 | depth="..." | Number of levels of child tasks to fetch. This will enable nested rendering of tasks. | 0 |
 | editortemplate="..." | Name of the template used to render the task editor | tasksapi::editor |
@@ -32,8 +32,8 @@ The following parameters are available:
 | form="..." | The form to use for new tasks (in =Web.Topic= format) | %<nop>SYSTEMWEB%.TasksAPIDefaultForm |
 | order="..." | Which field to sort by. | (undefined sort order) |
 | pagesize="..." | Number of tasks to fetch per page | 100 |
-| parent="..." | Provide the ID of a task to show its children only, an empty string (or omit) to show only top-level tasks, or =any= to display all tasks that match the other criteria (this ignores nesting. If you want to use nested tasks, look at the =depth= parameter instead) | |
-| query="..." | an additional query object in JSON format to combine with the query generated from the other parameters. The values covered by other parameters should not be specified again in this query; anything could happen if you do. | |
+| parent="..." | Provide the ID of a task to show its children only, an empty string (or omit) to show only top-level tasks, or =any= to display all tasks that match the other criteria. (This does not automatically activate display of nested tasks; the parent itself will not be shown. If you want to use nested tasks, look at the =depth= parameter instead.) | |
+| query="..." | An additional query object in JSON format to combine with the query generated from the other parameters. The values covered by other parameters should not be specified again in this query; anything could happen if you do. | |
 | showattachments="..." | Show existing attachments for each task | 0 |
 | states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all') | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
 | stateless="..." | Enable to hide the status filter widget | 0 |

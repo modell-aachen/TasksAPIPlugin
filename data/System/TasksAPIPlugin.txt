@@ -144,6 +144,9 @@ The following ACL types currently exist:
 ---+++ TASKSGRID
 %INCLUDE{"VarTASKSGRID"}%
 
+---+++ TASKINFO
+%INCLUDE{"VarTASKINFO"}%
+
 ---++ Converting actions from previous ActionTrackerPlugin
 TasksAPIPlugin ships with a script called *taskconvert* which allows
 converting actions created by ActionTrackerPlugin. To convert an AT controlled
