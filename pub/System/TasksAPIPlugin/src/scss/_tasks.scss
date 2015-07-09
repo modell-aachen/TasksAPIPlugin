@@ -28,9 +28,7 @@
     position: relative;
     transition: background-color .2s ease-in-out;
 
-    &.prioritized-Yes {
-      border-left-color: $prioritized;
-    }
+    
 
     .expander {
       cursor: pointer;
@@ -60,6 +58,18 @@
   .tasks > .task,
   .tasks > .task-new {
     background-color: $light-blue;
+
+    &.prioritized-Yes {
+      background-color: #ffdddd;
+
+      &:hover {
+        background-color: #edbbbb;
+      }
+
+      &.highlight {
+        background-color: darken(#edbbbb, 5%);
+      }
+    }
 
     &:hover {
       background-color: $hover-bg;
