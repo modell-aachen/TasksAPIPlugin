@@ -184,7 +184,7 @@ $percntENDTWISTY$percnt"}%%{
 }%<table class="tasks-table children">
   <tbody class="tasks">%{
 }%%IF{"'%TASKINFO{meta="FetchedChildCount"}%'" then="$percntTASKINFO{type=\"children\"}$percnt"}%%{
-}%%TMPL:P{"tasksapi::task::children::new"}%%{
+}%%IF{"not context task_readonly" then="$percntTMPL:P{\"tasksapi::task::children::new\"}$percnt"}%%{
 }%</tbody>
 </table>%{
 }%%TMPL:END%
