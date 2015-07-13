@@ -349,7 +349,7 @@ sub restCreate {
     return to_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, $q->param('tasktemplate')),
+        data => _enrich_data($res, $q->param('tasktemplate') || $res->getPref('TASK_TEMPLATE') || 'tasksapi::task'),
     });
 }
 
@@ -385,7 +385,7 @@ sub restUpdate {
 
     return to_json({
         status => 'ok',
-        data => _enrich_data($task, $q->param('tasktemplate')),
+        data => _enrich_data($task, $q->param('tasktemplate') || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task'),
     });
 }
 
@@ -420,7 +420,7 @@ sub _translate {
 # that contains all the information we need
 sub _enrich_data {
     my $task = shift;
-    my $tpl = shift || 'tasksapi::grid::task';
+    my $tpl = shift || 'tasksapi::task';
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
@@ -556,7 +556,7 @@ sub restSearch {
     my $file = $req->{templatefile} || 'TasksAPI';
     Foswiki::Func::loadTemplate( $file );
 
-    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task') } @res;
+    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('TASK_TEMPLATE') || 'tasksapi::task') } @res;
     return to_json({status => 'ok', data => \@res});
 }
 
@@ -566,6 +566,7 @@ sub restLease {
     my $r = from_json($q->param('request') || '{}');
 
     my $meta;
+    my $edtpl;
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $r->{Context});
 
     if ($r->{id}) {
@@ -584,19 +585,27 @@ sub restLease {
         my $ltime = $r->{leaseLength} || $Foswiki::cfg{LeaseLength} || 3600;
         $task->{meta}->setLease( $ltime );
         $meta = $task->{meta};
+        $edtpl = $task->getPref('EDITOR_TEMPLATE');
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
     } else {
         $meta = Foswiki::Meta->new($session, $web, $topic);
-        Foswiki::Func::setPreferencesValue('taskeditor_form', $r->{form} || 'System.TasksAPIDefaultTaskForm');
+        my $f = $r->{form} || 'System.TasksAPIDefaultTaskForm';
+        Foswiki::Func::setPreferencesValue('taskeditor_form', $f);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
+
+        my $m = Foswiki::Meta->new($session, Foswiki::Func::normalizeWebTopicName(undef, $f));
+        if ($m) {
+            $edtpl = $m->getPreference('TASKCFG_EDITOR_TEMPLATE');
+            $m->finish();
+        }
     }
 
     Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
     Foswiki::Func::loadTemplate( $r->{templatefile} || 'TasksAPI' );
-    my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || 'tasksapi::editor' );
+    my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || $edtpl || 'tasksapi::editor' );
     $editor = $meta->expandMacros( $editor );
 
     my @scripts = _getZone($session, $web, $topic, $meta, 'script');
@@ -722,7 +731,7 @@ sub tagGrid {
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $template = $params->{template} || 'tasksapi::grid';
     my $taskTemplate = $params->{tasktemplate};
-    my $editorTemplate = $params->{editortemplate} || 'tasksapi::editor';
+    my $editorTemplate = $params->{editortemplate};
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
@@ -824,7 +833,7 @@ sub tagGrid {
     );
     local $currentExpands = \%tmplAttrs;
     for my $task (@tasks) {
-        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $task);
+        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task', $task);
     }
     $tmplAttrs{tasks} = join('', @tasks);
 
@@ -1014,7 +1023,7 @@ sub tagInfo {
     if ($params->{type} && $params->{type} eq 'children') {
         my @out;
         for my $child (@{$task->cached_children || []}) {
-            push @out, _renderTask($topicObject, $currentOptions->{tasktemplate} || $child->getPref('GRID_TEMPLATE') || 'tasksapi::grid::task', $child);
+            push @out, _renderTask($topicObject, $currentOptions->{tasktemplate} || $child->getPref('TASK_TEMPLATE') || 'tasksapi::task', $child);
         }
         return join($params->{separator} || '', @out);
     }
