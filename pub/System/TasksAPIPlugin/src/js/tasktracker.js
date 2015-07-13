@@ -92,7 +92,7 @@
 
       $status.on( 'change', handleStatusFilterChanged );
       $editor.on( 'afterSave', function( evt, task ) {
-        if ( task.Status !== $status.val() ) {
+        if ( $status.length > 0 && task.Status !== $status.val() ) {
           $tasks.find('.task').each( function() {
             var $t = $(this);
             if ( $t.data('id') === task.id ) {
