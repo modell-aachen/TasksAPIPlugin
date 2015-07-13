@@ -321,14 +321,17 @@
     $('#task-editor').taskEditor(edopts).done(function(type, data) {
       $task.removeClass('highlight');
       if (type === 'save') {
-        var $newTask = $(createTaskElement(data));
-        $task.replaceWith( $newTask );
+        if (data.fields.Status.value === 'deleted') {
+          $task.remove();
+        } else {
+          var $newTask = $(createTaskElement(data));
+          $task.replaceWith( $newTask );
 
-        if (expanded) {
-          // $newTask.addClass('expanded');
-          $newTask.next().remove();
-          var $expander = $newTask.children('.expander');
-          toggleTaskExpand.call($expander);
+          if (expanded) {
+            $newTask.next().remove();
+            var $expander = $newTask.children('.expander');
+            toggleTaskExpand.call($expander);
+          }
         }
 
         applyLevels();
