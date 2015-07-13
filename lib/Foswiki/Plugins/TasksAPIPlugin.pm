@@ -1023,6 +1023,7 @@ sub tagInfo {
     if ($params->{type} && $params->{type} eq 'children') {
         my @out;
         for my $child (@{$task->cached_children || []}) {
+            next if $child->{fields}{Status} eq 'deleted';
             push @out, _renderTask($topicObject, $currentOptions->{tasktemplate} || $child->getPref('TASK_TEMPLATE') || 'tasksapi::task', $child);
         }
         return join($params->{separator} || '', @out);
