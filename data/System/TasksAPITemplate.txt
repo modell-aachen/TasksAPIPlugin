@@ -64,7 +64,7 @@
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Edit description"}%" hidelink="%MAKETEXT{"Hide description"}%" start="hide" linkclass="task-twisty"}%
+}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Edit description"}%" hidelink="%MAKETEXT{"Hide description"}%" start="show" linkclass="task-twisty"}%
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Description"
@@ -172,7 +172,7 @@ $percntENDTWISTY$percnt"}%%{
 </literal>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid::task::children::new"}%
+%TMPL:DEF{"tasksapi::task::children::new"}%
 <tr class="task-new">
   <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
     %MAKETEXT{"Create new subordinate task"}%
@@ -180,16 +180,16 @@ $percntENDTWISTY$percnt"}%%{
 </tr>
 %TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid::task::children"}%%{
+%TMPL:DEF{"tasksapi::task::children"}%%{
 }%<table class="tasks-table children">
   <tbody class="tasks">%{
 }%%IF{"'%TASKINFO{meta="FetchedChildCount"}%'" then="$percntTASKINFO{type=\"children\"}$percnt"}%%{
-}%%TMPL:P{"tasksapi::grid::task::children::new"}%%{
+}%%TMPL:P{"tasksapi::task::children::new"}%%{
 }%</tbody>
 </table>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid::task"}%%{
+%TMPL:DEF{"tasksapi::task"}%%{
 }%<tr class="task prioritized-%TASKINFO{field="Prioritize"}%">
 %IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
@@ -212,16 +212,16 @@ $percntENDTWISTY$percnt"}%%{
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
   <td class="hidden task-controls">
-    <div class="controls">%TMPL:P{"tasksapi::grid::task::controls::right"}%</div>
+    <div class="controls">%TMPL:P{"tasksapi::task::controls::right"}%</div>
   </td>
-  <td class="hidden task-children">%TMPL:P{"tasksapi::grid::task::children"}%</td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid::task::controls::left"}%<span>%ICON{"toggleopen"}%</span>
+%TMPL:DEF{"tasksapi::task::controls::left"}%<span>%ICON{"toggleopen"}%</span>
 <span>%ICON{"toggleclose"}%</span>%TMPL:END%
 
-%TMPL:DEF{"tasksapi::grid::task::controls::right"}%%{
+%TMPL:DEF{"tasksapi::task::controls::right"}%%{
 }%%IF{"context task_canedit and not context task_readonly" then="<span class=\"task-btn btn-close\"><img src=\"$percntJQICONPATH{\"tick\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
 }%<span class="task-btn btn-details"><img src="%JQICONPATH{"eye"}%" alt="" title="%MAKETEXT{"View details"}%"></span>%{
 }%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntJQICONPATH{\"pencil\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
