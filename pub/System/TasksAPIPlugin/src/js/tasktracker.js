@@ -285,6 +285,18 @@
       var self = this;
       $task.children('.task-fullview-container').children('.task-fullview').detach().appendTo(this);
       $task.addClass('highlight');
+
+      var wh = $(window).height();
+      var sy = window.scrollY;
+      var ot = $task.offset().top;
+      var th = $task.height();
+
+      if ( sy + wh < ot + th || sy > ot ) {
+        $('body').animate({
+          scrollTop: ot - th
+        });
+      }
+
       this.find('.btn-next').on('click', function() {
         var $newTask = getTaskSibling.call($task, 'next');
         $tracker.panel.replace.call(self, $newTask);
