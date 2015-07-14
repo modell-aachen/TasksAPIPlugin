@@ -292,7 +292,7 @@
       var th = $task.height();
 
       if ( sy + wh < ot + th || sy > ot ) {
-        $('body').animate({
+        $('body,html').animate({
           scrollTop: ot - th
         });
       }
