@@ -104,11 +104,13 @@
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
 <div>%{
+}%%BUTTON{"%MAKETEXT{"Previous task"}%" class="foswikiLeft btn-prev" icon="arrow_left"}%
+%BUTTON{"%MAKETEXT{"Next task"}%" class="foswikiLeft btn-next" icon="arrow_right"}%%{
 }%%IF{
   "context task_canedit and not context task_readonly"
   then ="$percntBUTTON{\"$percntMAKETEXT{\"Edit\"}$percnt\" class=\"foswikiRight btn-edit-viewer\" icon=\"pencil\"}$percnt$percntCLEAR$percnt"
 }%%{
-}%</div>
+}%<hr></div>
 <table>
   <tbody>
     <tr>

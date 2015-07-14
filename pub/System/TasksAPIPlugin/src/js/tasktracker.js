@@ -135,7 +135,7 @@
 
       $tbl.trigger('update');
       if ( $col.length > 0 ) {
-        var dir = $col.hasClass('.headerSortUp') ? 1 : 0;
+        var dir = $col.hasClass('headerSortUp') ? 1 : 0;
         var index = $col[0].column;
 
         // tablesorter's update event is processed by a timeout of 1.
@@ -246,6 +246,25 @@
     return deferred.promise();
   };
 
+  var getTaskSibling = function(direction) {
+    var sel, func;
+    if ( /^(left|up|prev)$/i.test(direction) ) {
+      sel = '.task:last-child';
+      func = 'prev';
+    } else {
+      sel = '.task:first-child';
+      func = 'next';
+    }
+
+    var $task = $(this);
+    var $sibling = $task[func].call(this);
+    if ( !$sibling.hasClass('task') ) {
+      $sibling = $task.parent().children(sel);
+    }
+
+    return $sibling;
+  };
+
   var hoveredTask;
   var toggleTaskDetails = function(evt) {
     if (!hoveredTask) {
@@ -262,23 +281,49 @@
     var $tracker = $task.closest('.tasktracker');
     $tracker.trigger( e, data );
 
-    $tracker.taskPanel({
-      show: function() {
-        $task.children('.task-fullview-container').children('.task-fullview').detach().appendTo(this);
-        $task.addClass('highlight');
-        this.find('.btn-edit-viewer').on('click', function(evt) {
-          $('#task-panel').children('.close').click();
-          hoveredTask = $task;
-          editClicked();
-          return false;
-        });
-      },
-      hide: function() {
-        this.find('.btn-edit-viewer').off('click');
-        this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
-        $task.removeClass('highlight');
+    var showFunc = function() {
+      var self = this;
+      $task.children('.task-fullview-container').children('.task-fullview').detach().appendTo(this);
+      $task.addClass('highlight');
+      this.find('.btn-next').on('click', function() {
+        var $newTask = getTaskSibling.call($task, 'next');
+        $tracker.panel.replace.call(self, $newTask);
+        return false;
+      });
+
+      this.find('.btn-prev').on('click', function() {
+        var $newTask = getTaskSibling.call($task, 'prev');
+        $tracker.panel.replace.call(self, $newTask);
+        return false;
+      });
+
+      this.find('.btn-edit-viewer').on('click', function(evt) {
+        $('#task-panel').children('.close').click();
+        hoveredTask = $task;
+        editClicked();
+        return false;
+      });
+    };
+
+    var hideFunc = function() {
+      this.find('.btn-edit-viewer').off('click');
+      this.find('.btn-next').off('click');
+      this.find('.btn-prev').off('click');
+      this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
+      $task.removeClass('highlight');
+    };
+
+    $tracker.panel = $tracker.taskPanel({
+      show: showFunc,
+      hide: hideFunc,
+      replace: function( newTask ) {
+        var self = this;
+        hideFunc.call(self);
+        $task = hoveredTask = $(newTask);
+        showFunc.call(self);
       }
-    }).show();
+    });
+    $tracker.panel.show();
   };
 
   var initTaskElement = function($task, task) {
@@ -476,13 +521,16 @@
       return false;
     }
 
+    var $task = $(this);
+    $task.addClass('noselect');
     if ( dclickTimer ) {
-      hoveredTask = $(this);
+      hoveredTask = $task;
       toggleTaskDetails();
     }
 
     dclickTimer = setTimeout(function() {
       dclickTimer = undefined;
+      $task.removeClass('noselect');
     }, 300);
   };
 

@@ -21,18 +21,26 @@
       }, 100);
     };
 
+    var killCKE = function() {
+      if ( CKEDITOR && CKEDITOR.instances ) {
+        for (var p in CKEDITOR.instances) {
+          CKEDITOR.instances[p].destroy();
+        }
+      }
+    };
+
     return {
-      show: function() {
-        toggle.call(opts);
-      },
       hide: function() {
         toggle.call(opts);
-
-        if ( CKEDITOR && CKEDITOR.instances ) {
-          for (var p in CKEDITOR.instances) {
-            CKEDITOR.instances[p].destroy();
-          }
+        killCKE();
+      },
+      replace: function() {
+        if ( typeof opts.replace === 'function') {
+          opts.replace.apply(this, arguments);
         }
+      },
+      show: function() {
+        toggle.call(opts);
       }
     };
   };

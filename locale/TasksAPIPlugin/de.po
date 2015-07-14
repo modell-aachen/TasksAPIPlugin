@@ -219,3 +219,9 @@ msgstr "Aufgabe bearbeiten"
 
 msgid "Do you really want to close the selected task?"
 msgstr "Möchten Sie die ausgewählte Aufgabe wirklich schließen?"
+
+msgid "Previous task"
+msgstr "Vorherige Aufgabe"
+
+msgid "Next task"
+msgstr "Nächste Aufgabe"
