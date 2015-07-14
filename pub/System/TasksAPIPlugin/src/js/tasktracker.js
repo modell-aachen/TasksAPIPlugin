@@ -249,17 +249,22 @@
   var getTaskSibling = function(direction) {
     var sel, func;
     if ( /^(left|up|prev)$/i.test(direction) ) {
-      sel = '.task:last-child';
+      sel = 'last';
       func = 'prev';
     } else {
-      sel = '.task:first-child';
+      sel = 'first';
       func = 'next';
     }
 
     var $task = $(this);
-    var $sibling = $task[func].call(this);
+    var $sibling = $task[func]();
+    if ( $sibling.hasClass('task-children-container') ) {
+      $sibling = $sibling[func]();
+    }
+
     if ( !$sibling.hasClass('task') ) {
-      $sibling = $task.parent().children(sel);
+      var $children = $task.parent().children(sel);
+      $sibling = $task.parent().children('.task')[sel]();
     }
 
     return $sibling;
