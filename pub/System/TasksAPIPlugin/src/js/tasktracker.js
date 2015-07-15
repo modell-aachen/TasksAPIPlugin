@@ -512,22 +512,22 @@
 
   var taskMouseEnter = function(evt) {
     var $task = $(this);
-    if (hoveredTask) {
-      $('body > .controls').detach().appendTo($(hoveredTask).children('.task-controls'));
-    }
+    // if (hoveredTask) {
+    //   $('body > .controls').detach().appendTo($(hoveredTask).children('.task-controls'));
+    // }
 
     hoveredTask = $task;
-    var $ctrl = $task.children('.task-controls').children('div')
-      .detach()
-      .appendTo('body');
+    // var $ctrl = $task.children('.task-controls').children('div')
+    //   .detach()
+    //   .appendTo('body');
 
-    var offset = $task.offset();
-    var left = offset.left + $task.outerWidth() - Math.min($ctrl.outerWidth(), 80);
-    var top = offset.top;
+    // var offset = $task.offset();
+    // var left = offset.left + $task.outerWidth() - Math.min($ctrl.outerWidth(), 80);
+    // var top = offset.top;
 
-    $ctrl
-      .css('position','absolute')
-      .css('left', left).css('top', top);
+    // $ctrl
+    //   .css('position','absolute')
+    //   .css('left', left).css('top', top);
   };
 
   var taskMouseLeave = function(evt) {
@@ -662,10 +662,10 @@
       .on('click', '.expander', toggleTaskExpand)
       .on('click', onDoubleClick);
 
-    $('.controls .btn-close').on('click', closeTask);
-    $('.controls .btn-details').on('click', toggleTaskDetails);
-    $('.controls .btn-edit').on('click', editClicked);
-    $('.controls .task-btn').on('click', resetControls);
+    $('.table-task-actions .btn-close').on('click', closeTask);
+    $('.table-task-actions .btn-details').on('click', toggleTaskDetails);
+    $('.table-task-actions .btn-edit').on('click', editClicked);
+    //$('.table-task-actions .task-btn').on('click', resetControls);
   };
 
   var detachEventHandler = function() {
@@ -675,10 +675,10 @@
       .off('click', '.expander', toggleTaskExpand)
       .off('click', onDoubleClick);
 
-    $('.controls .btn-close').off('click', closeTask);
-    $('.controls .btn-details').off('click', toggleTaskDetails);
-    $('.controls .btn-edit').off('click', editClicked);
-    $('.controls .task-btn').off('click', resetControls);
+    $('.table-task-actions .btn-close').off('click', closeTask);
+    $('.table-task-actions .btn-details').off('click', toggleTaskDetails);
+    $('.table-task-actions .btn-edit').off('click', editClicked);
+    $('.table-task-actions .task-btn').off('click', resetControls);
   };
 
   // due to performance reasons, stop any mutation observers
