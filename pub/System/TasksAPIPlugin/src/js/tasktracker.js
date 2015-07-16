@@ -117,6 +117,12 @@
         } catch(e) {
           error(e);
         }
+      } else {
+        // moved here due to perfomance reasons (tablesorter vs mutation observers)
+        $this.observe('added', 'tr.task', function(record) {
+          detachEventHandler();
+          attachEventHandler();
+        });
       }
 
       return this;
@@ -150,7 +156,10 @@
 
     opts = $tbl.metadata() || {};
     $tbl.data('sortopts', opts);
-    $tbl.tablesorter(opts);
+    $tbl
+      .tablesorter(opts)
+      .bind('sortStart', onSortStart)
+      .bind('sortEnd', onSortEnd);
   };
 
   var unescapeHTML = function(obj) {
@@ -552,6 +561,11 @@
   };
 
   var attachEventHandler = function() {
+    // detach all handlers first
+    // moved here due to performance reasons
+    // (mutation observer's 'removed listener' is pretty slow)
+    detachEventHandler();
+
     $('.tasks .task')
       .on('mouseenter', taskMouseEnter)
       .on('mouseleave', taskMouseLeave)
@@ -577,17 +591,20 @@
     $('.controls .task-btn').off('click', resetControls);
   };
 
+  // due to performance reasons, stop any mutation observers
+  var onSortStart = function() {
+    $('.tasktracker').disconnect();
+  };
+
+  // (re)attach mutation observers
+  var onSortEnd = function() {
+    $('.tasktracker').observe('added', 'tr.task', function(record) {
+      attachEventHandler();
+    });
+  };
+
   $(document).ready( function() {
-    $('.tasktracker')
-      .tasksGrid()
-      .observe('added', 'tr.task', function(record) {
-        detachEventHandler();
-        attachEventHandler();
-      })
-      .observe('removed', 'tr.task', function(record) {
-        detachEventHandler();
-        attachEventHandler();
-      });
+    $('.tasktracker').tasksGrid();
 
     attachEventHandler();
     applyLevels();
