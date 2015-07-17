@@ -32,7 +32,7 @@ msgid "Attach file(s)"
 msgstr "Datei(en) anhängen"
 
 msgid "Hide"
-msgstr "Verstecken"
+msgstr "Verbergen"
 
 msgid "Save"
 msgstr "Speichern"

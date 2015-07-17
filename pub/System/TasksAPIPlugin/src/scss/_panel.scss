@@ -26,7 +26,7 @@
     background-image: url('../assets/close.png');
     background-position: center center; 
     background-repeat: no-repeat;
-    background-size: 24px 24px;
+    background-size: 16px 16px;
     border-bottom-left-radius: 5px;
     color: $white;
     cursor: pointer;
@@ -48,8 +48,6 @@
     height: 100%;
     background-color: $white;
     border-left: 2px solid $light-blue;
-    overflow-x: auto;
-    overflow-y: scroll;
   }
 
   table {

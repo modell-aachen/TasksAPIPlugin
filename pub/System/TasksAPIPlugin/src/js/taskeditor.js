@@ -161,6 +161,9 @@
         task._depth = opts._depth > 0 ? opts._depth : 0;
         if (!task.id) {
           task.Context = opts.context;
+          if ( !task.Status ) {
+            task.Status = 'open';
+          }
 
           $.taskapi.create( task ).fail( error ).always( $.unblockUI ).done( function( response ) {
             task.id = response.id;

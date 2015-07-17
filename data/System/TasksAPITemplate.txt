@@ -7,13 +7,14 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::new"}%%{
-}%<div class="task-editor">%{
+}%<div class="task-editor">
+  <div class="editor">%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   header=""
   footer=""
   hidden="(Created|Author|Parent|TopicType|Context)"
-  fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,Status,DueDate,AssignedTo"
+  fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,DueDate,AssignedTo"
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
 }%%RENDERFOREDIT{
@@ -23,32 +24,29 @@
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%%ENDTWISTY%%{
-}%<div>
-    <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
-    <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+}%</div>
+  <div class="actions">
+    <div>
+      <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+      <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
   </div>
-</div>%{
-}%%TMPL:END%
+</div>
+</div>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::edit"}%%{
 }%<div class="task-editor">
+<div class="editor">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   hidden="(Created|Author|Parent|TopicType|Context)"
   include="(Created|Author|Parent|TopicType|Context)"
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Title"
+  fields="Title,Description"
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%%{
-}%<div class="Comment editor-block">
-  <label>
-    <span>%MAKETEXT{"Add comment"}%</span>
-    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
-  </label>
-</div>%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Type,Status,DueDate,AssignedTo"
@@ -64,31 +62,23 @@
   header=""
   footer=""
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Edit description"}%" hidelink="%MAKETEXT{"Hide description"}%" start="show" linkclass="task-twisty"}%
-%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  fields="Description"
-  header=""
-  footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%
+}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Add comment"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
+<div class="Comment editor-block">
+  <label>
+    <span>%MAKETEXT{"Add comment"}%</span>
+    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
+  </label>
+</div>%ENDTWISTY%
+</div>
+<div class="actions">
   <div>
     <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
     <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
   </div>
+</div>
 </div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::editor::comment"}%%{
-}%<hr>%TWISTY{showlink="%MAKETEXT{"Edit description"}%" hidelink="%MAKETEXT{"Hide description"}%" start="hide"}%
-%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  fields="Title"
-  header=""
-  footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%%{
-}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::upload"}%%{
 }%<div class="editor-block">
@@ -99,18 +89,17 @@
 </div>%{
 }%%TMPL:END%
 
+
 %TMPL:DEF{"tasksapi::viewer"}%%{
 }%<literal>
+<div class="viewer">
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
 <div>%{
-}%%BUTTON{"%MAKETEXT{"Previous task"}%" class="foswikiLeft btn-prev" icon="arrow_left"}%
-%BUTTON{"%MAKETEXT{"Next task"}%" class="foswikiLeft btn-next" icon="arrow_right"}%%{
 }%%IF{
   "context task_canedit and not context task_readonly"
   then ="$percntBUTTON{\"$percntMAKETEXT{\"Edit\"}$percnt\" class=\"foswikiRight btn-edit-viewer\" icon=\"pencil\"}$percnt$percntCLEAR$percnt"
-}%%{
-}%<hr></div>
+}%</div>
 <table>
   <tbody>
     <tr>
@@ -171,6 +160,31 @@ $percntENDTWISTY$percnt"}%%{
   footer="</tbody></table></div>$percntENDTAB$percnt"
 }%%{
 }%%ENDTABPANE%
+</div>
+<div class="comment">
+  <div>
+    <label>
+      <span>%MAKETEXT{"Add comment"}%</span>
+      <textarea class="foswikiTextarea" name="comment" cols="100" rows="12"></textarea>
+    </label>
+    <label>
+      <span>%MAKETEXT{"Close task"}%</span>
+      <input type="checkbox" name="close">
+    </label>
+  </div>
+</div>
+<div class="actions">
+  <div class="active">
+    <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
+    <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a>
+  </div>
+  <div class="hidden">
+    <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-cancel-comment">%MAKETEXT{"Cancel"}%</a>
+  </div>
+</div>
 </literal>%{
 }%%TMPL:END%
 

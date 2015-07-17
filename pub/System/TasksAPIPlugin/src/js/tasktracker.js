@@ -311,17 +311,75 @@
         });
       }
 
-      this.find('.btn-next').on('click', function() {
-        var $newTask = getTaskSibling.call($task, 'next');
-        $tracker.panel.replace.call(self, $newTask);
+      var saveComment = function(evt) {
+        var $self = $(this);
+
+        var $comment= $self.closest('.task-fullview').children('.comment');
+        var txt = $comment.find('textarea').val();
+        var cb = $comment.find('input[name="close"]');
+
+        var opts = $tracker.data('tasktracker_options') || {};
+        var payload = {
+          id: $task.data('id'),
+          comment: txt
+        };
+        $.extend(payload, _.pick(opts, 'form', 'tasktemplate', 'templatefile'));
+        var close = cb.attr('checked');
+        if ( close ) {
+          payload.Status = 'closed';
+        }
+
+        $.blockUI();
+        $.taskapi.update(payload).fail(error).done(function(response) {
+          var expanded = $task.is('.expanded');
+          var $newTask = $(createTaskElement(response.data));
+          $task.replaceWith( $newTask );
+
+          if (expanded) {
+            $newTask.next().remove();
+            var $expander = $newTask.children('.expander');
+            toggleTaskExpand.call($expander);
+          }
+
+          $tracker.panel.replace.call(self, $newTask);
+          if ( close ) {
+            $('.tasks-btn-next:visible').trigger('click');
+          }
+        }).always($.unblockUI);
+
+        return false;
+      };
+
+      var toggleComment = function(evt) {
+        var $self = $(this);
+        var $comment = $self.closest('.task-fullview').children('.comment');
+        $comment.toggleClass('active');
+
+        var $actions = $self.closest('.actions');
+        var $a = $actions.children('.active');
+        var $h = $actions.children('.hidden');
+
+        $a.toggleClass('active').toggleClass('hidden');
+        $h.toggleClass('active').toggleClass('hidden');
+
+        if ( evt.data === true ) {
+          $comment.find('input[name="close"]').prop('checked', true);
+        }
+      };
+
+      this.find('.tasks-btn-next').on('click', function() {
+        hoveredTask = getTaskSibling.call($task, 'next');
+        $tracker.panel.replace.call(self, hoveredTask);
         return false;
       });
 
-      this.find('.btn-prev').on('click', function() {
-        var $newTask = getTaskSibling.call($task, 'prev');
-        $tracker.panel.replace.call(self, $newTask);
+      this.find('.tasks-btn-prev').on('click', function() {
+        hoveredTask = getTaskSibling.call($task, 'prev');
+        $tracker.panel.replace.call(self, hoveredTask);
         return false;
       });
+
+      this.find('.tasks-btn-comment').on('click', toggleComment);
 
       this.find('.btn-edit-viewer').on('click', function(evt) {
         $('#task-panel').children('.close').click();
@@ -329,12 +387,34 @@
         editClicked();
         return false;
       });
+
+      this.find('.tasks-btn-close').on('click', true, toggleComment);
+      this.find('.tasks-btn-save-comment').on('click', saveComment);
+      this.find('.tasks-btn-cancel-comment').on('click', function() {
+        var $self = $(this);
+
+        var $actions = $self.closest('.actions');
+        var $a = $actions.children('.active');
+        var $h = $actions.children('.hidden');
+        $a.toggleClass('active').toggleClass('hidden');
+        $h.toggleClass('active').toggleClass('hidden');
+
+        var $comment = $actions.parent().children('.comment');
+        $comment.find('textarea').val('');
+        $comment.find('input[name="close"]').prop('checked', false);
+        $comment.toggleClass('active');
+
+        return false;
+      });
     };
 
     var hideFunc = function() {
+      this.find('.tasks-btn-save-comment').off('click');
+      this.find('.tasks-btn-cancel-comment').off('click');
       this.find('.btn-edit-viewer').off('click');
-      this.find('.btn-next').off('click');
-      this.find('.btn-prev').off('click');
+      this.find('.tasks-btn-next').off('click');
+      this.find('.tasks-btn-close').off('click');
+      this.find('.tasks-btn-prev').off('click');
       this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
       $task.removeClass('highlight');
     };
@@ -459,7 +539,7 @@
 
     var $cnt = $(hoveredTask).children('.task-controls');
     $('body').children('.controls').detach().appendTo($cnt);
-    hoveredTask = undefined;
+    // hoveredTask = undefined;
   };
 
   var resetControls = function() {
@@ -495,6 +575,16 @@
   };
 
   var closeTask = function(evt) {
+    var $task = hoveredTask;
+    if ( closeTaskEx() ) {
+      return false;
+    }
+
+    $task.removeClass('highlight');
+    return false;
+  };
+
+  var closeTaskEx = function() {
     hoveredTask.addClass('highlight');
 
     var $task = hoveredTask;
@@ -503,7 +593,8 @@
     var $tracker = hoveredTask.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
 
-    if ( confirm(decodeURIComponent(opts.lang.closeTask)) ) {
+    var confirmed = confirm(decodeURIComponent(opts.lang.closeTask));
+    if ( confirmed ) {
       var data = hoveredTask.data('task_data');
       var payload = {
         id: data.id,
@@ -517,12 +608,9 @@
           $next.remove();
         }
       }).always($.unblockUI);
-
-      return false;
     }
 
-    $task.removeClass('highlight');
-    return false;
+    return confirmed;
   };
 
   var applyLevels = function() {
