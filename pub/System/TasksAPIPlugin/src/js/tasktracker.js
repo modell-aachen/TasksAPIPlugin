@@ -365,6 +365,8 @@
         if ( evt.data === true ) {
           $comment.find('input[name="close"]').prop('checked', true);
         }
+
+        return false;
       };
 
       this.find('.tasks-btn-next').on('click', function() {
