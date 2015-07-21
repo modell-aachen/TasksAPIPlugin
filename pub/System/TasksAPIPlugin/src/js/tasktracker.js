@@ -530,7 +530,19 @@
     //   .css('left', left).css('top', top);
   };
 
-  
+  var taskMouseLeave = function(evt) {
+    var $node = $(evt.toElement || evt.relatedTarget);
+    var isCtrl = $node.hasClass('controls') ||
+                  $node.parent().hasClass('controls') ||
+                  $node.parent().parent().hasClass('controls');
+    if ( isCtrl ) {
+      return;
+    }
+
+    var $cnt = $(hoveredTask).children('.task-controls');
+    $('body').children('.controls').detach().appendTo($cnt);
+    // hoveredTask = undefined;
+  };
 
   var resetControls = function() {
     var $ctrl = $(this).parent();
@@ -646,6 +658,7 @@
 
     $('.tasks .task')
       .on('mouseenter', taskMouseEnter)
+      .on('mouseleave', taskMouseLeave)
       .on('click', '.expander', toggleTaskExpand)
       .on('click', onDoubleClick);
 
@@ -658,6 +671,7 @@
   var detachEventHandler = function() {
     $('.tasks .task')
       .off('mouseenter', taskMouseEnter)
+      .off('mouseleave', taskMouseLeave)
       .off('click', '.expander', toggleTaskExpand)
       .off('click', onDoubleClick);
 
