@@ -42,6 +42,7 @@
         var $self = $(this);
         var parent;
         if ( $self.hasClass('task-new') ) {
+          qopts.$table = $self.parent();
           var $parent = $self.closest('.task-children-container').prev();
           parent = $parent.data('id');
           if ( parent ) {
@@ -50,6 +51,8 @@
             var pdata = $parent.data('task_data');
             qopts._depth = parseInt(pdata.depth) - 1;
           }
+        } else {
+          qopts.$table = $(opts.container);
         }
 
         var beforeCreate = $.Event( 'beforeCreate' );
@@ -58,6 +61,7 @@
           return false;
         }
 
+        delete qopts.$table;
         var evtResult = beforeCreate.result;
         if ( _.isObject( evtResult ) ) {
           delete evtResult.id;
