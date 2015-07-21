@@ -225,9 +225,11 @@ $percntENDTWISTY$percnt"}%%{
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%</td>
-  <td class="table-task-actions">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-controls">
+    <div class="controls">%TMPL:P{"tasksapi::task::controls::right"}%</div>
+  </td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -290,7 +292,6 @@ $percntENDTWISTY$percnt"}%%{
   <th>%MAKETEXT{"Title"}%</th>
   <th>%MAKETEXT{"Due date"}%</th>
   <th>%MAKETEXT{"Status"}%</th>
-  <th class="hidden"></th>
   <th class="hidden"></th>
   <th class="hidden"></th>
   <th class="hidden"></th>
