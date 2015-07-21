@@ -83,7 +83,7 @@
 %TMPL:DEF{"tasksapi::editor::upload"}%%{
 }%<div class="editor-block">
   <label>
-    <span>%MAKETEXT{"Attach file(s)"}%</span>
+    <span>%MAKETEXT{"Attach file(s)"}% (%MAKETEXT{"Press 'Save' to start the upload"}%)</span>
     %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
   </label>
 </div>%{
