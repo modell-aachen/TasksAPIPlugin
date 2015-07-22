@@ -66,4 +66,23 @@
       }
     }
   }
+
+  > .upload {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+    height: 0;
+    background-color: #f3f3f3;
+    border-top: 1px solid #aaa;
+    transition: height .3s ease-in-out;
+
+    &.active {
+      height: 250px;
+    }
+
+    > div {
+      padding: 6px;
+    }
+  }
 }

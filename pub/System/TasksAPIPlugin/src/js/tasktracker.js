@@ -354,9 +354,21 @@
         return false;
       };
 
+      var toggleUpload = function(evt) {
+        var $self = $(this);
+        var $upload = $self.closest('.task-fullview').children('.upload');
+        $upload.toggleClass('active');
+        return false;
+      };
+
       var toggleComment = function(evt) {
         var $self = $(this);
         var $comment = $self.closest('.task-fullview').children('.comment');
+        var $upload = $self.closest('.task-fullview').children('.upload');
+        if ( $upload.is('.active') ) {
+          $upload.removeClass('active');
+        }
+
         $comment.toggleClass('active');
 
         var $actions = $self.closest('.actions');
@@ -373,6 +385,31 @@
         return false;
       };
 
+      var editViewer = function(evt) {
+        $('#task-panel').children('.close').click();
+        hoveredTask = $task;
+        editClicked();
+        return false;
+      };
+
+      var uploadFinished = function() {
+        var $dnd = $(this);
+        var web = $dnd.data('web');
+        var topic = $dnd.data('topic');
+        var id = web + '.' + topic;
+
+        $.taskapi.get({query: {id: id}}).done(function(result) {
+          if ( result.status !== 'ok' || result.data.length === 0 ) {
+            return;
+          }
+
+          var $html = $(result.data[0].html);
+          var $viewer = $html.children('.task-fullview-container').find('.viewer').detach();
+          $viewer.find('.btn-edit-viewer').on('click', editViewer);
+          $dnd.closest('.task-fullview').children('.viewer').replaceWith($viewer);
+        });
+      };
+
       this.find('.tasks-btn-next').on('click', function() {
         hoveredTask = getTaskSibling.call($task, 'next');
         $tracker.panel.replace.call(self, hoveredTask);
@@ -386,13 +423,10 @@
       });
 
       this.find('.tasks-btn-comment').on('click', toggleComment);
+      this.find('.tasks-btn-upload').on('click', toggleUpload);
+      this.find('.qw-dnd-upload').on('queueEmpty', uploadFinished);
 
-      this.find('.btn-edit-viewer').on('click', function(evt) {
-        $('#task-panel').children('.close').click();
-        hoveredTask = $task;
-        editClicked();
-        return false;
-      });
+      this.find('.btn-edit-viewer').on('click', editViewer);
 
       this.find('.tasks-btn-close').on('click', true, toggleComment);
       this.find('.tasks-btn-save-comment').on('click', saveComment);

@@ -173,10 +173,14 @@ $percntENDTWISTY$percnt"}%%{
     </label>
   </div>
 </div>
+<div class="upload">
+  <div>%DNDUPLOAD{extraclass="full-width" height="250px" webtopic="%TASKINFO{meta="id"}%"}%</div>
+</div>
 <div class="actions">
   <div class="active">
     <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
     <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a>
   </div>
@@ -238,9 +242,9 @@ $percntENDTWISTY$percnt"}%%{
 <span>%ICON{"toggleclose"}%</span>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::controls::right"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><img src=\"$percntJQICONPATH{\"tick\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
-}%<span class="task-btn btn-details"><img src="%JQICONPATH{"eye"}%" alt="" title="%MAKETEXT{"View details"}%"></span>%{
-}%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntJQICONPATH{\"pencil\"}$percnt\" alt=\"\" title=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><img src=\"$percntPUBURLPATH$percnt/$percntSYSTEMWEB$percnt/TasksAPIPlugin/assets/check_dark.png\" alt=\"\" title=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
+}%<span class="task-btn btn-details"><img src="%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/assets/info.png" alt="" title="%MAKETEXT{"View details"}%"></span>%{
+}%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntPUBURLPATH$percnt/$percntSYSTEMWEB$percnt/TasksAPIPlugin/assets/edit.png\" alt=\"\" title=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::sortopts"}%%{

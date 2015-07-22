@@ -228,3 +228,6 @@ msgstr "Nächste Aufgabe"
 
 msgid "Press 'Save' to start the upload"
 msgstr "Zum Hochladen 'Speichern' drücken"
+
+msgid "Add attachments"
+msgstr "Anhänge hinzufügen"

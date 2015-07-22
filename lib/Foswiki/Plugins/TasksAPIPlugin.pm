@@ -71,6 +71,7 @@ my @schema_updates = (
     ],
 );
 my %singles = (
+    id => 1,
     Context => 1,
     Parent => 1,
     Status => 1,

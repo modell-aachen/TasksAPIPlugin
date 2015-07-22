@@ -85,6 +85,21 @@
     border: 1px solid #cecece;
     color: #222;
     padding: 7px 15px 7px 18px;
+    margin-right: 6px;
+
+    &:hover {
+      background-color: darken(#f3f3f3, 5%);
+      color: maroon;
+    }
+  }
+
+  &.tasks-btn-upload {
+    float: right;
+    background-color: #f3f3f3;
+    background-image: url('../assets/upload.png');
+    border: 1px solid #cecece;
+    color: #222;
+    padding: 7px 15px 7px 18px;
 
     &:hover {
       background-color: darken(#f3f3f3, 5%);
