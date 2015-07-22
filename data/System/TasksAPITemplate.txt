@@ -250,8 +250,8 @@ $percntENDTWISTY$percnt"}%%{
 %TMPL:DEF{"tasksapi::grid::sortopts"}%%{
 }%%IF{
   "context task_showexpandercol"
-  then="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [1,1] ], headers: {0: {sorter: false}, 1: {sorter: 'taskDateSorter'}, 5: {sorter: 'taskDateSorter'}, 6: {sorter:'taskAmpelSorter'}}}"
-  else="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [0,1] ], headers: {0: {sorter: 'taskDateSorter'}, 4: {sorter: 'taskDateSorter'}, 5: {sorter:'taskAmpelSorter'}}}"
+  then="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [1,1] ], headers: {0: {sorter: false}, 1: {sorter: 'taskDateSorter'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'text'} 5: {sorter: 'taskDateSorter'}, 6: {sorter:'taskAmpelSorter'}}}"
+  else="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [0,1] ], headers: {0: {sorter: 'taskDateSorter'}, 1: {sorter: 'text'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'taskDateSorter'}, 5: {sorter:'taskAmpelSorter'}}}"
 }%%{
 }%%TMPL:END%
 
