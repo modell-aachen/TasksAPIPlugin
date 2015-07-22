@@ -821,7 +821,7 @@ sub tagGrid {
         query => $query,
         order => $params->{order},
         desc => $params->{desc},
-        limit => $params->{pagesize},
+        count => $params->{pagesize},
     );
     _deepen(\@tasks, $depth, $params->{order});
 
