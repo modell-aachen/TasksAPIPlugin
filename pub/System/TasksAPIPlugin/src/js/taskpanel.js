@@ -18,6 +18,7 @@
       var self = this;
       setTimeout(function() {
         toggleDetails(self);
+        setLinkTarget();
       }, 100);
     };
 
@@ -37,12 +38,23 @@
       replace: function() {
         if ( typeof opts.replace === 'function') {
           opts.replace.apply(this, arguments);
+          setLinkTarget();
         }
       },
       show: function() {
         toggle.call(opts);
       }
     };
+  };
+
+  var setLinkTarget = function() {
+    var $panel = $('#task-panel').children('.content');
+    $panel.find('a:not(.tasks-btn)').each(function() {
+      var $link = $(this);
+      if ( $link.attr('href') !== '#' ) {
+        $link.attr('target', '_blank');
+      }
+    });
   };
 
   var toggleDetails = function(opts) {
