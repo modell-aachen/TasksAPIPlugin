@@ -481,6 +481,14 @@
           var $viewer = $html.children('.task-fullview-container').find('.viewer').detach();
           $viewer.find('.tasks-btn-edit').on('click', editViewer);
           $dnd.closest('.task-fullview').children('.viewer').replaceWith($viewer);
+
+          if ( window.foswiki.ModacContextMenuPlugin ) {
+            var $table = $viewer.find('div.foswikiAttachments > table');
+            var tds = $table.find('td.foswikiTableCol1');
+            $.each(tds, function(i, e) {
+                foswiki.ModacContextMenuPlugin.attachContextMenu(e);
+            });
+          }
         });
       };
 

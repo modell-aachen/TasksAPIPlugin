@@ -129,13 +129,23 @@
   }
 }
 
-.task-attachments > .foswikiTable {
+.task-attachments.foswikiAttachments > table.foswikiTable {
   thead th {
-    background-color: #003C89;
-    color: $white;
+    background-color: #f0f0f0 !important;
+    height: 1em;
 
     &:first-child {
-      width: 24px;
+      width: 20px;
+    }
+  }
+
+  tbody {
+    tr:nth-child(odd) td {
+      background-color: $white !important;
+    }
+
+    tr:nth-child(even) td {
+      background-color: $light-blue !important;
     }
   }
 }
