@@ -10,7 +10,10 @@
 .tasks-btn {
   background-position: 10px center;
   background-repeat: no-repeat;
+  background-color: #f3f3f3;
+  border: 1px solid #cecece;
   border-radius: 4px;
+  color: #222;
   display: inline-block;
   font-weight: bold;
   padding: 7px 15px 7px 35px;
@@ -18,10 +21,14 @@
   transition: background 0.3s ease-in-out,
               color 0.3s ease-in-out;
 
+  &:hover {
+    background-color: darken(#f3f3f3, 5%);
+    color: maroon;
+  }
+
   &.tasks-btn-create {
     background-color: #fff;
     background-image: url('../assets/add.png');
-    border: 1px solid #cecece;
     color: $blue;
 
     &:hover {
@@ -30,7 +37,7 @@
   }
 
   &.tasks-btn-save, &.tasks-btn-save-comment {
-    background-color: #379B00;
+    background-color: #379b00;
     background-image: url('../assets/check.png');
     border: 1px solid #379b00;
     color: #fff;
@@ -42,97 +49,41 @@
   }
 
   &.tasks-btn-cancel, &.tasks-btn-cancel-comment {
-    background-color: #f3f3f3;
     background-image: url('../assets/cancel.png');
-    border: 1px solid #cecece;
-    color: #222;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
 
   &.tasks-btn-next {
-    background-color: #f3f3f3;
     background-image: url('../assets/next.png');
-    border: 1px solid #cecece;
-    color: #222;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
   &.tasks-btn-edit {
-    background-color: #f3f3f3;
     background-image: url('../assets/edit.png');
-    border: 1px solid #cecece;
-    color: #222;
     float: right;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
   &.tasks-btn-prev {
-    background-color: #f3f3f3;
     background-image: url('../assets/prev.png');
-    border: 1px solid #cecece;
-    color: #222;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
   &.tasks-btn-comment {
     float: right;
-    background-color: #f3f3f3;
     background-image: url('../assets/comment.png');
-    border: 1px solid #cecece;
-    color: #222;
     padding: 7px 15px 7px 18px;
     margin-right: 6px;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
   &.tasks-btn-upload {
     float: right;
-    background-color: #f3f3f3;
     background-image: url('../assets/upload.png');
-    border: 1px solid #cecece;
-    color: #222;
     padding: 7px 15px 7px 18px;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 
   &.tasks-btn-close {
     float: right;
-    background-color: #f3f3f3;
     background-image: url('../assets/check_dark.png');
-    border: 1px solid #cecece;
-    color: #222;
     padding: 7px 15px 7px 18px;
     margin-right: 6px;
-
-    &:hover {
-      background-color: darken(#f3f3f3, 5%);
-      color: maroon;
-    }
   }
 }
 

@@ -831,8 +831,7 @@ sub tagGrid {
     $query->{Parent} = $parent unless $parent eq 'any';
     if ( $req->param('state') ) {
         if ( $req->param('state') eq 'all' ) {
-            my @states = qw(open closed);
-            $query->{Status} = \@states;
+            $query->{Status} = [qw(open closed)];
         } else {
             $query->{Status} = $req->param('state');
         }
