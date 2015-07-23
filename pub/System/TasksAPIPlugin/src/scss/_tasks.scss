@@ -68,16 +68,8 @@
       user-select: none;
     }
 
-    &.prioritized-Yes {
-      background-color: #ffdddd;
-
-      &:hover {
-        background-color: #edbbbb;
-      }
-
-      &.highlight {
-        background-color: darken(#edbbbb, 5%);
-      }
+    &.prioritized-Yes > td:first-child{
+      border-left: 3px solid #b80000;
     }
 
     &:hover {
