@@ -98,7 +98,7 @@
 <div>%{
 }%%IF{
   "context task_canedit and not context task_readonly"
-  then ="$percntBUTTON{\"$percntMAKETEXT{\"Edit\"}$percnt\" class=\"foswikiRight btn-edit-viewer\" icon=\"pencil\"}$percnt$percntCLEAR$percnt"
+  then ="<a href=\"#\" class=\"tasks-btn tasks-btn-edit\">$percntMAKETEXT{\"Edit\"}$percnt</a>"
 }%</div>
 <table>
   <tbody>

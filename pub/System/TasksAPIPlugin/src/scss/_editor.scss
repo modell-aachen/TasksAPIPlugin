@@ -66,6 +66,19 @@
     }
   }
 
+  &.tasks-btn-edit {
+    background-color: #f3f3f3;
+    background-image: url('../assets/edit.png');
+    border: 1px solid #cecece;
+    color: #222;
+    float: right;
+
+    &:hover {
+      background-color: darken(#f3f3f3, 5%);
+      color: maroon;
+    }
+  }
+
   &.tasks-btn-prev {
     background-color: #f3f3f3;
     background-image: url('../assets/prev.png');

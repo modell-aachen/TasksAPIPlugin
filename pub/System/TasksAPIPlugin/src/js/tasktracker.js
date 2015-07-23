@@ -479,7 +479,7 @@
 
           var $html = $(result.data[0].html);
           var $viewer = $html.children('.task-fullview-container').find('.viewer').detach();
-          $viewer.find('.btn-edit-viewer').on('click', editViewer);
+          $viewer.find('.tasks-btn-edit').on('click', editViewer);
           $dnd.closest('.task-fullview').children('.viewer').replaceWith($viewer);
         });
       };
@@ -500,7 +500,7 @@
       this.find('.tasks-btn-upload').on('click', toggleUpload);
       this.find('.qw-dnd-upload').on('queueEmpty', uploadFinished);
 
-      this.find('.btn-edit-viewer').on('click', editViewer);
+      this.find('.tasks-btn-edit').on('click', editViewer);
 
       this.find('.tasks-btn-close').on('click', true, toggleComment);
       this.find('.tasks-btn-save-comment').on('click', saveComment);
@@ -525,7 +525,7 @@
     var hideFunc = function() {
       this.find('.tasks-btn-save-comment').off('click');
       this.find('.tasks-btn-cancel-comment').off('click');
-      this.find('.btn-edit-viewer').off('click');
+      this.find('.tasks-btn-edit').off('click');
       this.find('.tasks-btn-next').off('click');
       this.find('.tasks-btn-close').off('click');
       this.find('.tasks-btn-prev').off('click');
