@@ -171,7 +171,21 @@
     width: 120px;
   }
 
-  &.title {}
+  &.title {
+    > .attachments {
+      background-image: url('../assets/file.png');
+      background-position: center left;
+      background-repeat: no-repeat;
+      color: #999;
+      float: right;
+      padding-left: 18px;
+      padding-right: 12px;
+
+      &.hidden {
+        display: none !important;
+      }
+    }
+  }
 
   &.due {
     width: 100px;

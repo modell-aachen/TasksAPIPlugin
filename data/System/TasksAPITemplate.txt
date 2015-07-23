@@ -224,6 +224,7 @@ $percntENDTWISTY$percnt"}%%{
   </td>
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
+    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
   </td>
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
