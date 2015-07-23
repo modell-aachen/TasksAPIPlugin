@@ -948,11 +948,18 @@ sub _renderChangeset {
         $out = $faddformat if $change->{type} eq 'add';
         $out = $fdeleteformat if $change->{type} eq 'delete';
 
+        my $changeOld = $change->{old};
+        my $changeNew = $change->{new};
+        if ( $f->{type} eq 'date' ) {
+            $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
+            $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
+        }
+
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
         $out =~ s#\$title#_translate($meta, $f->{tooltip}) || $f->{name}#eg;
-        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1)#eg;
-        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1)#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
         $out =~ s#\$new(\(\))?#$change->{new}#g;
         push @fout, $out;
