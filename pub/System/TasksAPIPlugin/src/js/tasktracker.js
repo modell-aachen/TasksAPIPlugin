@@ -82,6 +82,15 @@
 
               isLoading = false;
               $tmp.remove();
+
+              if ( opts.sortable ) {
+                try {
+                  invokeTablesorter.call($this.children('.tasks-table'), false, true);
+                } catch(e) {
+                  error(e);
+                }
+              }
+
               $.unblockUI();
             });
           }
@@ -169,7 +178,7 @@
 
         if ( opts.sortable ) {
           try {
-            sortTable.call($this.children('.tasks-table'), true);
+            invokeTablesorter.call($this.children('.tasks-table'), true);
           } catch(e) {
             error(e);
           }
@@ -178,7 +187,7 @@
 
       if ( opts.sortable ) {
         try {
-          sortTable.call($this.children('.tasks-table'));
+          invokeTablesorter.call($this.children('.tasks-table'));
         } catch(e) {
           error(e);
         }
@@ -207,10 +216,16 @@
     ].join('');
   };
 
-  var sortTable = function(forceSort) {
+  var invokeTablesorter = function(forceSort, updateOnly) {
     var $tbl = $(this);
     if ( !forceSort && $tbl.find('> tbody .task').length === 0 ) {
       return;
+    }
+
+    if ( updateOnly ) {
+      setTimeout(function() {
+        $tbl.trigger('update');
+      }, 10);
     }
 
     var opts = $tbl.data('sortopts');
@@ -492,27 +507,19 @@
         });
       };
 
-      this.find('.tasks-btn-next').on('click', function() {
+      var nextTask = function() {
         hoveredTask = getTaskSibling.call($task, 'next');
         $tracker.panel.replace.call(self, hoveredTask);
         return false;
-      });
+      };
 
-      this.find('.tasks-btn-prev').on('click', function() {
+      var prevTask = function() {
         hoveredTask = getTaskSibling.call($task, 'prev');
         $tracker.panel.replace.call(self, hoveredTask);
         return false;
-      });
+      };
 
-      this.find('.tasks-btn-comment').on('click', toggleComment);
-      this.find('.tasks-btn-upload').on('click', toggleUpload);
-      this.find('.qw-dnd-upload').on('queueEmpty', uploadFinished);
-
-      this.find('.tasks-btn-edit').on('click', editViewer);
-
-      this.find('.tasks-btn-close').on('click', true, toggleComment);
-      this.find('.tasks-btn-save-comment').on('click', saveComment);
-      this.find('.tasks-btn-cancel-comment').on('click', function() {
+      var cancelComment = function() {
         var $self = $(this);
 
         var $actions = $self.closest('.actions');
@@ -527,7 +534,35 @@
         $comment.toggleClass('active');
 
         return false;
-      });
+      };
+
+      this.find('.tasks-btn-next')
+        .off('click', nextTask)
+        .on('click', nextTask);
+      this.find('.tasks-btn-prev')
+        .off('click', prevTask)
+        .on('click', prevTask);
+      this.find('.tasks-btn-comment')
+        .off('click', toggleComment)
+        .on('click', toggleComment);
+      this.find('.tasks-btn-upload')
+        .off('click', toggleUpload)
+        .on('click', toggleUpload);
+      this.find('.qw-dnd-upload')
+        .off('queueEmpty', uploadFinished)
+        .on('queueEmpty', uploadFinished);
+      this.find('.tasks-btn-edit')
+        .off('click', editViewer)
+        .on('click', editViewer);
+      this.find('.tasks-btn-close')
+        .off('click', toggleComment)
+        .on('click', true, toggleComment);
+      this.find('.tasks-btn-save-comment')
+        .off('click', saveComment)
+        .on('click', saveComment);
+      this.find('.tasks-btn-cancel-comment')
+        .off('click', cancelComment)
+        .on('click', cancelComment);
     };
 
     var hideFunc = function() {

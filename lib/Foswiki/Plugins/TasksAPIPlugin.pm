@@ -211,6 +211,7 @@ sub query {
     my $order = $opts{order} || '';
     my @args;
     my $filterprefix = ' WHERE';
+    my %joins;
     for my $q (keys %$query) {
         next unless $q =~ /^\w+$/s;
         my $v = $query->{$q};
@@ -229,7 +230,8 @@ sub query {
 
         # multi field
         my $t = "j_$q";
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')";
+        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
+        $joins{$q} = 1;
         if (defined $v) {
             if (ref $v eq 'ARRAY') {
                 $filter .= "$filterprefix $t.value IN(". join(',', map { '?' } @$v) .")";
@@ -243,8 +245,14 @@ sub query {
         $order = "$t.value" if $order eq $q;
     }
 
+    if ($order && !$singles{$order} && !$joins{$order}) {
+        my $t = "j_$order";
+        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
+        $order = "$t.value";
+    }
     $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
-    $order .= " DESC" if $opts{desc};
+    $order .= " DESC" if $order && $opts{desc};
+
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $limit = " LIMIT $offset, $count" if $count;
     my $group = '';
@@ -772,6 +780,8 @@ sub tagGrid {
 
     my $mand = '%MAKETEXT{"Missing value for mandatory field"}%';
     my $close = '%MAKETEXT{"Do you really want to close the selected task?"}%';
+
+    my $req = $session->{request};
     my %settings = (
         context => $ctx,
         parent => $parent,
@@ -783,7 +793,7 @@ sub tagGrid {
         infinite => $paging ? 0 : $infinite,
         offset => $offset,
         query => $query,
-        order => $order,
+        order => $req->param('order') || $order,
         allowupload => $allowUpload,
         stateless => $stateless,
         sortable => $sortable,
@@ -798,7 +808,6 @@ sub tagGrid {
         }
     );
 
-    my $req = $session->{request};
     my $page = $req->param('page') || 1;
     if ( $pageSize && $page gt 1 ) {
         $offset = (int($page) - 1) * int($pageSize);
@@ -842,8 +851,8 @@ sub tagGrid {
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
-        order => $params->{order},
-        desc => $params->{desc},
+        order => $req->param('order') || $params->{order},
+        desc => $req->param('desc') eq 0 ? 0 : ($req->param('desc') || $params->{desc}),
         count => $params->{pagesize},
         offset => $offset
     );
