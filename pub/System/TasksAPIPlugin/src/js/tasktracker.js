@@ -23,12 +23,72 @@
 
       opts.currentState = 'open';
       $this.data('tasktracker_options', opts);
-      loadTasks( $this, opts.currentState, true );
 
       var $tasks = opts.container;
       var $editor = $('#task-editor');
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
+
+      var params = parseQueryParams();
+      if ( params.state ) {
+        opts.currentState = params.state;
+        $status.val(params.state);
+      }
+
+      loadTasks( $this, opts.currentState, true );
+      if ( opts.infinite ) {
+        var isLoading = false;
+        var infiniteScroll = function() {
+          if ( isLoading ) {
+            return;
+          }
+
+          var top = $(window).scrollTop();
+          var dh = $(document).height();
+          var wh = $(window).height();
+          var  trigger = 0.80;
+
+          if ( (top/(dh-wh)) > trigger ) {
+            var rowCnt = $this.find('> .tasks-table > tbody > tr').length;
+            if ( rowCnt >= opts.totalsize ) {
+              isLoading = false;
+              return false;
+            }
+
+            var url = getViewUrl() + '?page=' + Math.round(rowCnt/opts.pagesize + 0.5);
+            if ( params.state ) {
+              url += '&state=' + params.state;
+            }
+
+            $('<div class="tasks-tmp-container" style="display: none"></div>').appendTo('body');
+            $.blockUI();
+            isLoading = true;
+            $('.tasks-tmp-container').load(url + ' #' + id, function(response) {
+              var $tmp = $(this);
+              var $rows = $tmp.find('#' + id + '> .tasks-table > tbody > tr');
+              if ( $rows.length < opts.pagesize ) {
+                $(window).off('scroll', infiniteScroll);
+              }
+
+              $rows.each(function() {
+                var $task = $(this).detach();
+                var $data = $task.find('> .task-data-container > .task-data');
+                if ( $data.length > 0 ) {
+                  var data = unescapeHTML( $.parseJSON($data.text()) );
+                  data.html = $('<div></div>').append($task).html();
+                  opts.container.append( createTaskElement(data) );
+                }
+              });
+
+              isLoading = false;
+              $tmp.remove();
+              $.unblockUI();
+            });
+          }
+        };
+
+        $(window).on( 'scroll', infiniteScroll);
+      }
 
       var handleCreate = function() {
         var qopts = {};
@@ -62,6 +122,8 @@
         }
 
         delete qopts.$table;
+        delete qopts.container;
+        delete qopts.lang;
         var evtResult = beforeCreate.result;
         if ( _.isObject( evtResult ) ) {
           delete evtResult.id;
@@ -86,9 +148,8 @@
 
       var handleStatusFilterChanged = function() {
         var $select = $(this);
-        opts.currentState = $select.val();
-        opts.container.empty();
-        loadTasks( $this, opts.currentState, false );
+        var url = getViewUrl() + '?state=' + $select.val();
+        window.location = url;
       };
 
       $filter.find('.tasks-btn-create').on('click', handleCreate);
@@ -131,6 +192,19 @@
 
       return this;
     });
+  };
+
+  var getViewUrl = function() {
+    var p = foswiki.preferences;
+    return [
+      p.SCRIPTURL,
+      '/view',
+      p.SCRIPTSUFFIX,
+      '/',
+      p.WEB,
+      '/',
+      p.TOPIC
+    ].join('');
   };
 
   var sortTable = function(forceSort) {
@@ -729,6 +803,22 @@
     $('.tasktracker').observe('added', 'tr.task', function(record) {
       attachEventHandler();
     });
+  };
+
+  var parseQueryParams = function(query) {
+    var q = query || window.location.search || '';
+    if ( /^;|#|\?/.test(q) ) {
+      q = q.substr(1);
+    }
+
+    var retval = {};
+    var arr = q.split('&');
+    for (var i = 0; i < arr.length; ++i) {
+      var p = arr[i].split('=');
+      retval[p[0]] = p[1];
+    }
+
+    return retval;
   };
 
   $(document).ready( function() {

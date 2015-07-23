@@ -250,17 +250,22 @@ sub query {
     my $group = '';
     $group = ' GROUP BY t.id' if $join;
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
+    my $total = db()->selectrow_array("SELECT count(*) FROM tasks t$join$filter", {}, @args);
 
-    return () unless @$ids;
+    return {} unless @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
         Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1])
     } @$ids;
 
-    return @tasks unless $useACL;
-    grep {
+    my $ret = {tasks => \@tasks, total => $total};
+    return $ret unless $useACL;
+    @tasks = grep {
         $_->checkACL('view')
     } @tasks;
+
+    $ret->{tasks} = \@tasks;
+    $ret;
 }
 *_query = \&query; # Backwards compatibility
 
@@ -520,10 +525,10 @@ IMG
 sub tagSearch {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-    my @res;
+    my $res;
     delete $params->{_RAW};
     eval {
-        @res = _query(query => { %$params });
+        $res = _query(query => { %$params });
     };
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
@@ -533,32 +538,32 @@ sub tagSearch {
         Foswiki::Func::loadTemplate( $params->{templatefile} );
     }
 
-    @res = map { _enrich_data($_, $params->{tasktemplate}) } @res;
+    my @res = map { _enrich_data($_, $params->{tasktemplate}) } @{$res->{tasks}};
     return to_json({status => 'ok', data => \@res});
 }
 
 sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
-    my @res;
+    my $res;
     my $req;
     my $q = $session->{request};
 
     eval {
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
-        @res = _query(%$req);
+        $res = _query(%$req);
     };
     if ($@) {
         return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
     }
 
     my $depth = $req->{depth} || 0;
-    _deepen(\@res, $depth, $req->{order});
+    _deepen($res->{tasks}, $depth, $req->{order});
     my $file = $req->{templatefile} || 'TasksAPI';
     Foswiki::Func::loadTemplate( $file );
 
-    @res = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('TASK_TEMPLATE') || 'tasksapi::task') } @res;
-    return to_json({status => 'ok', data => \@res});
+    my @tasks = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('TASK_TEMPLATE') || 'tasksapi::task') } @{$res->{tasks}};
+    return to_json({status => 'ok', data => \@tasks});
 }
 
 sub restLease {
@@ -700,14 +705,15 @@ sub _deepen {
     my $thash = {};
     @{$thash}{map {$_->{id}} @$tasks} = @$tasks;
     my @taskstofetch = @$tasks;
+
     while ($depth > 0) {
         my @ids = map { $_->{id} } grep { $_->getBoolPref('HAS_CHILDREN') } @taskstofetch;
         last unless @ids;
 
         $depth--;
-        my @children = query(query => {Parent => \@ids}, order => $order);
+        my $children = query(query => {Parent => \@ids}, order => $order);
         @taskstofetch = ();
-        for my $c (@children) {
+        for my $c (@{$children->{tasks}}) {
             $c->{_depth} = $depth;
             $thash->{$c->{id}} = $c;
             my $parent = $thash->{$c->{fields}{Parent}};
@@ -736,7 +742,9 @@ sub tagGrid {
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
-    my $pageSize = $params->{pagesize} || 100;
+    my $pageSize = $params->{pagesize};
+    my $paging = $params->{paging} || 0;
+    my $infinite = $params->{infinite} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
     my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
@@ -748,6 +756,7 @@ sub tagGrid {
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
     my $depth = $params->{depth} || 0;
+    my $offset = $params->{offset} || 0;
     my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
@@ -769,7 +778,10 @@ sub tagGrid {
         form => $form,
         id => $id,
         depth => int($depth),
-        pageSize => $pageSize,
+        pagesize => $pageSize || 0,
+        paging => $paging,
+        infinite => $paging ? 0 : $infinite,
+        offset => $offset,
         query => $query,
         order => $order,
         allowupload => $allowUpload,
@@ -786,6 +798,12 @@ sub tagGrid {
         }
     );
 
+    my $req = $session->{request};
+    my $page = $req->param('page') || 1;
+    if ( $pageSize && $page gt 1 ) {
+        $offset = (int($page) - 1) * int($pageSize);
+    }
+
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
     $fctx->{task_stateless} = 1 if $stateless;
@@ -800,10 +818,6 @@ sub tagGrid {
         push(@options, $option);
     }
 
-    my $select = join('\n', @options),
-    my $json = to_json( \%settings );
-    local $currentOptions = \%settings;
-
     eval {
         $query = from_json($query);
     };
@@ -815,15 +829,31 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
-    $query->{Status} = 'open' if !exists $query->{Status};
+    if ( $req->param('state') ) {
+        if ( $req->param('state') eq 'all' ) {
+            my @states = qw(open closed);
+            $query->{Status} = \@states;
+        } else {
+            $query->{Status} = $req->param('state');
+        }
+    } else {
+        $query->{Status} = 'open' if !exists $query->{Status};
+    }
 
-    my @tasks = _query(
+    $settings{query} = to_json($query);
+    my $res = _query(
         query => $query,
         order => $params->{order},
         desc => $params->{desc},
         count => $params->{pagesize},
+        offset => $offset
     );
-    _deepen(\@tasks, $depth, $params->{order});
+    _deepen($res->{tasks}, $depth, $params->{order});
+
+    my $select = join('\n', @options),
+    $settings{totalsize} = $res->{total};
+    my $json = to_json( \%settings );
+    local $currentOptions = \%settings;
 
     my %tmplAttrs = (
         stateoptions => $select,
@@ -833,10 +863,10 @@ sub tagGrid {
         id => $id,
     );
     local $currentExpands = \%tmplAttrs;
-    for my $task (@tasks) {
+    for my $task (@{$res->{tasks}}) {
         $task = _renderTask($topicObject, $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task', $task);
     }
-    $tmplAttrs{tasks} = join('', @tasks);
+    $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
 
@@ -873,6 +903,19 @@ SCRIPT
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
     require Foswiki::Plugins::CKEditorPlugin;
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
+
+    # todo.. templates und so
+    if ( $paging ) {
+        my $prev = $page - 1 || 1;
+        my $next= $page + 1;
+        my $pagination = '';
+        my $state = '&state=' . $req->param('state') if $req->param('state');
+        $pagination .= "<a class=\"prev\" href=\"/$web/$topic?page=$prev$state\">%MAKETEXT{\"prev\"}%</a>" if $page gt 1;
+        $pagination .= "<a class=\"next\" href=\"/$web/$topic?page=$next$state\">%MAKETEXT{\"next\"}%</a>" if ( $pageSize && $pageSize*$page <= $res->{total});
+        $pagination = "<div class=\"tasks-pagination\"><div>$pagination</div></div>";
+        $grid =~ s#</div></noautolink>$#$pagination</div></noautolink>#;
+        return $grid
+    }
 
     return $grid;
 }
