@@ -537,41 +537,35 @@
       };
 
       this.find('.tasks-btn-next')
-        .off('click', nextTask)
         .on('click', nextTask);
       this.find('.tasks-btn-prev')
-        .off('click', prevTask)
         .on('click', prevTask);
       this.find('.tasks-btn-comment')
-        .off('click', toggleComment)
         .on('click', toggleComment);
       this.find('.tasks-btn-upload')
-        .off('click', toggleUpload)
         .on('click', toggleUpload);
       this.find('.qw-dnd-upload')
-        .off('queueEmpty', uploadFinished)
         .on('queueEmpty', uploadFinished);
       this.find('.tasks-btn-edit')
-        .off('click', editViewer)
         .on('click', editViewer);
       this.find('.tasks-btn-close')
-        .off('click', toggleComment)
         .on('click', true, toggleComment);
       this.find('.tasks-btn-save-comment')
-        .off('click', saveComment)
         .on('click', saveComment);
       this.find('.tasks-btn-cancel-comment')
-        .off('click', cancelComment)
         .on('click', cancelComment);
     };
 
     var hideFunc = function() {
       this.find('.tasks-btn-save-comment').off('click');
       this.find('.tasks-btn-cancel-comment').off('click');
+      this.find('.tasks-btn-comment').off('click');
+      this.find('.tasks-btn-upload').off('click');
       this.find('.tasks-btn-edit').off('click');
       this.find('.tasks-btn-next').off('click');
       this.find('.tasks-btn-close').off('click');
       this.find('.tasks-btn-prev').off('click');
+      this.find('.qw-dnd-upload').off('queueEmpty');
       this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
       $task.removeClass('highlight');
     };
