@@ -1,0 +1,393 @@
+%META:TOPICPARENT{name="Plugins"}%
+---+ !TasksAPIPlugin
+
+%SHORTDESCRIPTION%
+
+%TOC%
+
+---++ Introduction
+
+This plugin provides a task management system for Foswiki. It stores each task
+as a separate topic, so that files and arbitrary metadata can be attached to
+it using the standard mechanisms. Tasks are additionally indexed in a
+database.
+
+In addition to the TASKSGRID macro which provides a complete user interface
+out of the box, a JavaScript/REST API is available.
+
+---++ Installation
+%$INSTALL_INSTRUCTIONS%
+
+---+++ Plugin-specific installation instructions
+
+The following Perl packages are required:
+
+   * DBD::SQLite
+   * DBI
+   * Number::Bytes::Human
+   * Date::Manip
+
+Debian packages exist for all of these:
+
+<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl</verbatim>
+
+Before the plugin can be used, a web must created which is used for storing
+the tasks. If you use the default configuration, its name has to be =Tasks=.
+Create it from the =_empty= template, and set its
+=ALLOWWEBVIEW/ALLOWWEBCHANGE/ALLOWWEBRENAME= to something very restrictive,
+e.g. =AdminUser=.
+
+---++ Metadata
+
+Tasks can have an arbitrary form attached to them, but some fields are
+required:
+
+   * =TopicType=: value must be set to =task=. This is a sanity check to make
+     sure the wrong form is not used by accident. We recommend using a hidden
+     field for this.
+   * =Context=: a reference to the topic which "owns" the task (e.g.
+     !Foo.BazProjectMeetingMinutes or !Main.JohnDoe)
+   * =Status=: one of =open=, =closed=, =deleted=. Other values should not be
+     added; instead, a different field can be used to further distinguish
+     between different states of a task.
+
+A number of other fields, if used, should use these standard names:
+
+   * =Parent=: a reference to the parent task (if this is a child task), empty
+     otherwise. This field does not need to exist for tasks which don't ever
+     appear as children.
+   * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
+   * =Created=: the creation time. Set the default value  to
+     =%GMTIME{"$epoch"}=.
+   * =Title=: user-defined title of the task
+   * =AssignedTo=: the user this task is assigned to. This is generally meant
+     to be a single person because with task with multiple assignees, there is
+     a tendency for nobody to actually feel responsible for the task.
+     Nevertheless, lists of users are supported, too.
+   * =Description=: user-defined detail information about the task
+   * =DueDate=: the due date for the task
+
+---++ Configuration
+
+The settings in =/bin/configure= (or lib/LocalSite.cfg) are fairly
+self-explanatory; if you want to use an alternative database, you'll need to
+know how DBI's DSN URIs work.
+
+In addition, tasks can be configured on a per-form basis, simply by adding
+preferences to a task form. The preference values can use macros (which will
+be expanded when evaluating a task's settings) and some special placeholders.
+_These preferences can only be set in the form, not in the task topic itself._
+
+---+++ Available preferences
+
+   * =TASKCFG_GRID_TEMPLATE=: name of a template section used to render the
+     task in a task grid. This can be used to render different types of tasks
+     differently.
+   * =TASKCFG_NOTIFY_(type)=: a list of users to notify by e-mail when a
+     certain type of event happens. Valid events are: =CREATED=, =REASSIGNED=,
+     =CLOSED=, =REOPENED=, =CHANGED=.
+   * =TASKCFG_NOTIFY_(type)_TEMPLATE=: assigns a template section used to
+     render the e-mail notification (see previous preference).
+   * =TASKCFG_SCHEDULE_REOPEN=: a date/time delta specification to
+     automatically re-open a task after it has been closed. For example, if
+     this is set to "2 weeks", the task will be re-opened two weeks after it
+     is closed.
+   * =TASKCFG_HAS_CHILDREN=: set to =true= (or =1= or =on=) to signal that
+     this task can have child tasks nested within it.
+
+---++++ Placeholders in preferences
+
+   * =$curvalue(Field)=: expands to the value of the task's =Field= form
+     field.
+   * =$taskpref(FOO)=: expands to the value of the =TASKCFG_FOO= preference
+     for this task.
+
+---+++ Access permissions
+
+Tasks don't use Foswiki's permissions system because usually the majority of
+the permissions should be inherited from the task's context (the topic that
+"owns" the task) or parent tasks. Instead, task permissions are controlled by
+a mechanism similar to task preferences: add a =TASKACL_(type)= (valid types
+are listed below) preference to the task's form. In this, the same
+placeholders as in task preferences can be used, plus these:
+
+   * =$parentACL=: includes the parent task's ACL
+   * =$contextACL=: applies the context's Foswiki permissions
+   * =$wikiACL(Web.Topic,VIEW)=: applies Foswiki's VIEW permissions for
+     =Web.Topic=
+
+The ACL itself is a comma-separated list of users and/or groups; additionally
+the special value =*= (similar to the new ACL syntax in Foswiki 1.2) refers to
+all logged in users.
+
+Unlike in Foswiki, there is no distinction of ALLOW and DENY. Only users
+covered by the ACL value are granted access.
+
+Due to this difference in how ACLs work, the placeholders =$contextACL= and
+=$wikiACL(...)= have special behaviour: any other entry in a task ACL will
+allow access if it matches the current user, and otherwise the next entry will
+be checked. Foswiki ACLs, however, can actively deny access to someone, so if
+one of the Foswiki ACL placeholders is used, its result is taken as definite
+and the rest of the task ACL will be ignored. Therefore, if you use
+=$contextACL= or =$wikiACL(...)=, always put it last.
+
+If an ACL is not set, or set to an empty value, it defaults to no restrictions
+whatsoever, i.e. anyone, including guests, can view and edit.
+
+The following ACL types currently exist:
+
+   * =VIEW=: see the task (it will not show up anywhere if this is not set)
+   * =CHANGE=: edit the task
+
+---++ Macros
+
+---+++ TASKSGRID
+%INCLUDE{"VarTASKSGRID"}%
+
+---+++ TASKINFO
+%INCLUDE{"VarTASKINFO"}%
+
+---++ Converting actions from previous ActionTrackerPlugin
+TasksAPIPlugin ships with a script called *taskconvert* which allows
+converting actions created by ActionTrackerPlugin. To convert an AT controlled
+topic just execute *taskconvert* as web server user. You will be prompted for
+all necessary parameters during the convertion process. Alternatively you may
+supply those parameters as command line arguments:
+
+| *Parameter* | *Description* | *Default* |
+| web | The source web name to read from | |
+| topic | The source topic name ro read from | |
+| form | The TasksAPIPlugin compatibly form to use for converted tasks | System.TasksAPIDefaultTaskForm |
+| context | The context for the newly created task | web.topic |
+| mapping | A comma separated list of key-value pairs to map AT fields to TasksAPI form fields | who=AssignedTo,creator=Author,created=Created,text=Description,due=DueDate,result=Result,state=Status,task=Title |
+| dateformat | A comma separated list of key-value pairs to map AT fields to a date representation. This is useful to convert epoch time strings to date strings | due="$day $month $year" |
+| verbose | Flag. Output some information about converted tasks | 0 |
+| reindex | Flag. Trigger a reindex when the convertion has finished | 0 |
+| ignoreErrors | Flag. Ignore errors during convertion. Forces the creation of a task | 0 |
+| skipErrors | Flag. Skips all tasks for which an error occurred during convertion. | 0 |
+
+*Examples:* <br />
+Run the script without any parameters (you will be prompted instead)
+<verbatim>sudo -u www-data ./taskconvert</verbatim>
+Run the script and supply the source web and topic. Also print some verbose messages and force a reindex of all tasks.
+<verbatim>sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
+
+---++ RESTful API
+Load the jQuery plugin by adding the following macro to your page. Make sure
+it's enabled in _configure_.
+<verbatim>
+%JQREQUIRE{"tasksapi"}%
+</verbatim>
+
+---+++ create
+*$.taskapi.create( data )*
+
+Creates a new task.
+
+<verbatim>
+var task = {
+  form: 'Web.FooForm',
+  Field1: 'value',
+  Field2: 'value'
+};
+
+$.taskapi.create(task).done( function( response ) {
+  console.log( response.id ); // prints the id of the newly created task.
+}).fail( function( err ) {
+  console.log( err );
+});
+</verbatim>
+
+
+---+++ get
+*$.taskapi.get( query, limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
+
+Retrieves tasks by a given query.
+
+<verbatim>
+$.taskapi.get({Responsible: "AdminUser"}).done( function( res ) {
+  _.each( res.data, function( result ) {
+    console.log( result );
+  });
+});
+</verbatim>
+
+
+---+++ getAll
+*$.taskapi.getAll( limit [optional, defaults to 9999], offset [optional, defaults to 0], sort [optional] )*
+
+Retrieves all tasks.
+
+<verbatim>
+$.taskapi.getAll().done( function( res ) {
+  _.each( res.data, function( result ) {
+    console.log( result );
+  });
+});
+</verbatim>
+
+
+---+++ update
+*$.taskapi.update( task )*
+
+Updates an existing task identified by its id.
+
+<verbatim>
+var taskToUpdate = {
+  id: 'Tasks.Task-134n213kj4hjk',
+  UpdatedField: 'updatedValue'
+};
+
+$.taskapi.update( taskToUpdate ).done( function( response ) {
+  console.log( response );
+});
+</verbatim>
+
+
+---+++ multiupdate
+*$.taskapi.multiupdate( tasks )*
+
+Same as *update* but takes multiple tasks identified by their id.
+
+<verbatim>
+var tasksToUpdate = {
+  'Tasks.Task-1': {
+    UpdatedField: 'updatedValue'
+  },
+  'Tasks.Task-2': {
+    UpdatedField: 'updatedValue'
+  }
+};
+
+$.taskapi.multiupdate( tasksToUpdate ).done( function( response ) {
+  for( var id in response ) {
+    console.log( 'Updated task ' + id + ' with result' );
+    console.log( response[id] );
+  }
+});
+</verbatim>
+
+<br />
+---++ Events
+---+++ beforeCreate
+*cancelable.* Fired after the user clicked the 'create new task' button.
+The task editor is not yet visible to the user and might still hold data from the previous edit/create action.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeCreate', function( evt ) {
+  if ( someState === state.invalid ) {
+    return false; // cancel creation of a new task...
+  }
+});
+</verbatim>
+
+
+---+++ afterCreate
+Fired after the editor has been cleaned and is shown to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterCreate', function( evt ) {
+  // whatever
+});
+</verbatim>
+
+
+---+++ beforeEdit
+*cancelable.* Fired after the user clicked the 'edit task' button. The selected task is passed into the event handler.
+The editor is not yet visible to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeEdit', function( evt, task ) {
+  if ( someState === state.invalid ) {
+    return false; // cancel edit request...
+  }
+
+  // manipulate task
+});
+</verbatim>
+
+
+---+++ afterEdit
+Fired after *beforeEdit*. The editor is prepared and shown to the user.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterEdit', function( evt ) {
+  console.log( 'task edited...' );
+});
+</verbatim>
+
+
+---+++beforeSave
+*cancelable.* Fired after the user clicked the 'save task' button. The selected task is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'beforeSave', function( evt, task ) {
+  if ( task === null ) {
+    // error or missing mandatory field
+    return false; // stop propagation
+  }
+</verbatim>
+
+
+---+++afterSave
+Fired after a task has been saved. The according task is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'afterSave', function( evt, task ) {
+  console.log( task );
+});
+</verbatim>
+
+---+++editCanceled
+Fired after the user clicked the editor's cancel button.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'editCanceled', function( evt ) {
+  console.log( 'canceled' );
+});
+</verbatim>
+
+---+++ taskClick
+Fired after a task has been clicked by the user. The task's DOM node is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'taskClick', function( evt, cnt ) {
+  var $cnt = $(cnt);
+  var taskId = $cnt.data('id');
+  // ...
+});
+</verbatim>
+
+
+---+++ taskDoubleClick
+Fired after a task has been double clicked by the user. The task's DOM node is passed into the event handler.
+
+<verbatim>
+var $tracker = $('.tasktracker');
+$tracker.on( 'taskDoubleClick', function( evt, cnt ) {
+  var $cnt = $(cnt);
+  var taskId = $cnt.data('id');
+  // ...
+});
+</verbatim>
+
+<br />
+---++ Plugin Info
+
+| Author: | Foswiki:Main.JanKrueger, Foswiki:Main.SvenMeyer |
+| Copyright: | &copy; 2015, Modell Aachen GmbH |
+| License: | GPL ([[http://www.gnu.org/copyleft/gpl.html][GNU General Public License]]) |
+| Release: | %$RELEASE% |
+| Version: | %$VERSION% |
+| Home: | http://www.modell-aachen.de |
+| Support: | http://www.modell-aachen.de |
+
+

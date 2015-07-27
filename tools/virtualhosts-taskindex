@@ -1,0 +1,42 @@
+#! /usr/bin/perl
+
+use strict;
+use warnings;
+
+BEGIN {
+  if (-e './setlib.cfg') {
+    unshift @INC, '.';
+  } elsif (-e '../bin/setlib.cfg') {
+    unshift @INC, '../bin';
+  }
+
+  require 'setlib.cfg';
+}
+
+use Foswiki ();
+use Foswiki::UI ();
+use Foswiki::Contrib::VirtualHostingContrib::VirtualHost ();
+
+my $hostname = '';
+foreach my $arg (@ARGV) {
+  if ($arg =~ /^(.*)=(.*)$/) {
+    if ($1 eq 'host') {
+      $hostname = $2;
+    }
+  }
+}
+
+if ($hostname && $hostname ne 'all') {
+  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($hostname, \&index);
+} else {
+  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(\&index);
+}
+
+sub index {
+  printf("=> Processing %s\n\n", $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT);
+  new Foswiki('admin');
+  require Foswiki::Plugins::TasksAPIPlugin;
+  Foswiki::Plugins::TasksAPIPlugin::_fullindex();
+}
+
+1;

@@ -1,0 +1,11 @@
+%TMPL:INCLUDE{"TasksAPIDefaultMail"}%
+
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task reassigned: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
+
+%TMPL:DEF{"ModacMailContents"}%
+%MAKETEXT{"[_1] reassigned a task in [_2]:" args="%TASKSAPI_ACTOR%,%SCRIPTURL{view}%/%WEB%/%TOPIC%"}%
+
+%TMPL:P{"ModacMailTitle"}%
+
+%TASKINFO{type="changeset"}%
+%TMPL:END%

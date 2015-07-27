@@ -1,0 +1,6 @@
+Date::Manip,>=6.0,cpan,Required.
+Foswiki::Plugins::JQueryPlugin,>=1.0,perl,Required.
+Foswiki::Contrib::JQPluginContrib,>=1.0,perl,Required.
+Foswiki::Contrib::MailTemplatesContrib,>=1.0,perl,Required.
+Foswiki::Plugins::DnDUploadPlugin,>=1.0,perl,Required.
+Number::Bytes::Human,>=0.07,CPAN,Required.
