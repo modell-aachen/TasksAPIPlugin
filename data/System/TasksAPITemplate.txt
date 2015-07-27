@@ -16,7 +16,7 @@
   hidden="(Created|Author|Parent|TopicType|Context)"
   fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,DueDate,AssignedTo"
   format="<div id=\"Input$name\" class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
+}%<hr>%TWISTY{showlink="%MAKETEXT{"Reminders and notifications"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Prioritize,Reminder,Informees"
@@ -55,7 +55,7 @@
   format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%<br />%{
 }%%IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%%{
-}%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
+}%<hr>%TWISTY{showlink="%MAKETEXT{"Reminders and notifications"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Prioritize,Reminder,Informees"

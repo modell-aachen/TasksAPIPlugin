@@ -22,6 +22,9 @@ msgstr "Kommentar hinzufügen"
 msgid "More options"
 msgstr "Weitere Optionen"
 
+msgid "Reminders and notifications"
+msgstr "Erinnerungen und Benachrichtigungen"
+
 msgid "Show attachments"
 msgstr "Anhänge anzeigen"
 
