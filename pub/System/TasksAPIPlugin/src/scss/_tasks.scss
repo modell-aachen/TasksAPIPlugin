@@ -72,25 +72,43 @@
       border-left: 3px solid #b80000;
     }
 
-    &:hover {
-      background-color: $hover-bg;
+    
+
+    &:nth-child(even) {
+        background-color: $light-blue;
+        
+        &:hover {
+      background-color: darken($hover-bg, 10%);
     }
 
     &.highlight {
       background-color: darken($light-blue, 10%);
     }
 
-    &.alternate {
-      background-color: $alternate;
+    & .table-task-actions {
+   
+    border-left: 4px solid $light-blue;
+  }
 
-      &:hover {
-        background-color: $alternate-hover;
+    }
+
+     &:nth-child(odd) {
+        background-color: $alternate;
+
+        &:hover {
+        background-color: darken($alternate, 10%);
       }
 
       &.highlight {
         background-color: $alternate-active;
       }
+
+      & .table-task-actions {
+   
+    border-left: 4px solid $alternate;
+  }
     }
+
   }
 
   .tasks > .task-new {
@@ -156,7 +174,8 @@
   }
 
   &.type {
-    width: 100px;
+    width: 30px;
+    text-align: center;
   }
 
   &.assigned {
@@ -164,6 +183,7 @@
   }
 
   &.title {
+    font-weight:bold;
     > .attachments {
       background-image: url('../assets/file.png');
       background-position: center left;
@@ -189,14 +209,46 @@
   }
 
    &.table-task-actions {
+    width: 50px;
     text-align: center;
-    width: 80px;
+    transition: background-color 0.5s ease;
+    transition: border 0.5s ease;
+   
   }
 
   &.controls {
     width: 0;
     max-width: 0;
   }
+}
+
+.tasks > .task:hover .table-task-actions {
+  background-color: darken($light-blue, 35%);
+  border-left: 4px solid darken($light-blue, 55%) !important;
+
+  & i {
+    color:#fff;
+
+    &:hover {
+      font-weight:bold;
+    }
+  }
+}
+
+.table-task-actions i {
+    color: darken($light-blue, 25%);
+    transition: color 0.5s ease;
+    font-size: 2em;
+    cursor: pointer;
+
+    &.closed {
+      color: #6CCE86;
+    }
+}
+
+.type i {
+  color: #7C7E7F;
+    font-size: 1.6em;
 }
 
 .task-children-container {

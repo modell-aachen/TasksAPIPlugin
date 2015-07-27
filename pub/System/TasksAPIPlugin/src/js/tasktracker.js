@@ -37,12 +37,6 @@
 
       loadTasks( $this, opts.currentState, true );
 
-      $(document).keypress(function(e) {
-        if(e.charCode == 110) {
-          handleCreate();
-        }
-      });
-
       if ( opts.infinite ) {
         var isLoading = false;
         var infiniteScroll = function() {

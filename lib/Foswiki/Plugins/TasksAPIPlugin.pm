@@ -892,9 +892,15 @@ sub tagGrid {
     my $suffix = $debug ? '' : '.min';
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
 
+     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::FONTAWESOME', <<STYLE );
+<link rel='stylesheet' href='//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'>
+STYLE
+
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE
+
+
 
     if ($sortable) {
         $scriptDeps .= ', JQTABLESORTERPLUGIN::Scripts';
