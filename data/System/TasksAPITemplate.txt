@@ -95,11 +95,6 @@
 <div class="viewer">
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
-<div>%{
-}%%IF{
-  "context task_canedit and not context task_readonly"
-  then ="<a href=\"#\" class=\"tasks-btn tasks-btn-edit\">$percntMAKETEXT{\"Edit\"}$percnt</a>"
-}%</div>
 <table>
   <tbody>
     <tr>
@@ -180,6 +175,7 @@ $percntENDTWISTY$percnt"}%%{
   <div class="active">
     <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
     <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-edit" title="%MAKETEXT{"Edit task"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a>
@@ -245,7 +241,7 @@ $percntENDTWISTY$percnt"}%%{
 
 %TMPL:DEF{"tasksapi::task::controls::right"}%%{
 }%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-square-o\"></i></span>"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span class=\"task-btn btn-close\"><i class=\"closed fa fa-check-square\"></i></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::sortopts"}%%{

@@ -737,33 +737,51 @@
   };
 
   var closeTaskEx = function() {
-    hoveredTask.addClass('highlight');
+      hoveredTask.addClass('highlight');
 
-    var $task = hoveredTask;
-    var $next = $task.next();
+      var $task = hoveredTask;
+      var $next = $task.next();
 
-    var $tracker = hoveredTask.closest('.tasktracker');
-    var opts = $tracker.data('tasktracker_options');
+      var $tracker = hoveredTask.closest('.tasktracker');
+      var opts = $tracker.data('tasktracker_options');
 
-    var confirmed = confirm(decodeURIComponent(opts.lang.closeTask));
-    if ( confirmed ) {
-      var data = hoveredTask.data('task_data');
-      var payload = {
-        id: data.id,
-        Status: 'closed'
-      };
+      swal({
+          title: 'Sind Sie sicher?',
+          text: 'Möchten Sie diesen Protokollpunkt schließen?',
+          type: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#6CCE86',
+          cancelButtonColor: '#BDBDBD',
+          confirmButtonText: 'Ja',
+          cancelButtonText: 'Nein',
+          closeOnConfirm: false
+      }, function(confirmed) {
+          if (confirmed) {
+              var data = hoveredTask.data('task_data');
+              var payload = {
+                  id: data.id,
+                  Status: 'closed'
+              };
 
-      $.blockUI();
-      $.taskapi.update(payload).fail(error).done(function(response) {
-        $task.remove();
-        if ( $next.hasClass('task-children-container') ) {
-          $next.remove();
-        }
-      }).always($.unblockUI);
-    }
+              $.blockUI();
+              $.taskapi.update(payload).fail(error).done(function(response) {
+                  $task.remove();
+                  if ($next.hasClass('task-children-container')) {
+                      $next.remove();
+                  }
+                  swal('Erledigt!', 'Protokollpunkt wurde als geschlossen markiert.', 'success');
 
-    return confirmed;
+              }).always($.unblockUI);
+
+          }
+
+          return confirmed;
+      });
+
+
+
   };
+
 
   var applyLevels = function() {
     $('.task:visible, .task-new:visible').each(function(i,e) {
