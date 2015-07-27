@@ -83,6 +83,7 @@
           var $panel = this;
           $this.find('.ignoreObserver').removeClass('ignoreObserver');
           $this.detach().appendTo($panel);
+          $('#InputTitle input').focus();
         },
         hide: function() {
           handleCancel();
