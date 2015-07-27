@@ -15,7 +15,7 @@
   footer=""
   hidden="(Created|Author|Parent|TopicType|Context)"
   fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,DueDate,AssignedTo"
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+  format="<div id=\"Input$name\" class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
@@ -45,7 +45,7 @@
   fields="Title,Description"
   header=""
   footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+  format="<div  class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
 }%%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"

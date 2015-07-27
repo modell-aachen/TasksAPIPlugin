@@ -5,11 +5,13 @@
     if ( $('#task-panel').length === 0 ) {
       $('<div id="task-panel"><div class="close"></div><div class="content"></div></div>').appendTo('body');
       $('<div id="task-overlay"></div>').appendTo('body');
-      $('#task-overlay').on('click', function() {
-        toggle.call(opts);
-        killCKE();
-      });
+      
     }
+
+    $('#task-overlay').off('click').on('click', function() {  
+        toggleDetails(opts);
+
+      });
 
     $('#task-panel > .close').off('click').on('click', function() {
       toggleDetails(opts);
