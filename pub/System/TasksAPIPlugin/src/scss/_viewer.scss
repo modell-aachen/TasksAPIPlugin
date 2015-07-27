@@ -86,3 +86,52 @@
     }
   }
 }
+
+#viewerHead {
+    margin-bottom: 40px;
+    padding: 15px 0;
+    border-bottom: 3px solid #eee;
+}
+
+#titleBox {
+  width: 85%;
+  float:left;
+}
+
+#HeadControls {
+  width: 10%;
+  float:right;
+  text-align: center;
+}
+
+#HeadControls .tasks-btn-close {
+  background-image: none !important;
+  float:none !important;
+  background:none !important;
+  border:none !important;
+  padding: 0px !important;
+}
+
+#HeadControls i {
+    color: darken($light-blue, 25%);
+    transition: color 0.5s ease;
+    font-size: 3.5em;
+    cursor: pointer;
+
+    &.closed {
+      color: #6CCE86;
+      cursor: default;
+    }
+}
+
+#viewerHead .title {
+      text-transform: uppercase;
+    color: grey;
+    font-size: 0.8em;
+}
+
+#title {
+      margin-top: 5px;
+    display: block;
+    font-size: 16pt;
+}

@@ -95,14 +95,18 @@
 <div class="viewer">
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
+<div id="viewerHead">
+<div id="titleBox"><span class="title">%MAKETEXT{"Title"}%</span><br>
+<span id="title">%TASKINFO{field="Title"}%</span></div>
+<div id="HeadControls">
+%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
+}%
+</div>
+<div class="clear"></div>
+  </div>
 <table>
   <tbody>
-    <tr>
-      <td colspan="2">
-        <span class="title">%MAKETEXT{"Title"}%</span>
-        <span>%TASKINFO{field="Title"}%</span>
-      </td>
-    </tr>
     <tr>
       <td>
         <span class="title">%MAKETEXT{"Created"}%</span>
