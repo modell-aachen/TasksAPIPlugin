@@ -78,29 +78,55 @@ preferences to a task form. The preference values can use macros (which will
 be expanded when evaluating a task's settings) and some special placeholders.
 _These preferences can only be set in the form, not in the task topic itself._
 
----+++ Available preferences
-
-   * =TASKCFG_GRID_TEMPLATE=: name of a template section used to render the
-     task in a task grid. This can be used to render different types of tasks
-     differently.
-   * =TASKCFG_NOTIFY_(type)=: a list of users to notify by e-mail when a
-     certain type of event happens. Valid events are: =CREATED=, =REASSIGNED=,
-     =CLOSED=, =REOPENED=, =CHANGED=.
-   * =TASKCFG_NOTIFY_(type)_TEMPLATE=: assigns a template section used to
-     render the e-mail notification (see previous preference).
-   * =TASKCFG_SCHEDULE_REOPEN=: a date/time delta specification to
-     automatically re-open a task after it has been closed. For example, if
-     this is set to "2 weeks", the task will be re-opened two weeks after it
-     is closed.
-   * =TASKCFG_HAS_CHILDREN=: set to =true= (or =1= or =on=) to signal that
-     this task can have child tasks nested within it.
-
----++++ Placeholders in preferences
+---+++ Placeholders in preferences
 
    * =$curvalue(Field)=: expands to the value of the task's =Field= form
      field.
    * =$taskpref(FOO)=: expands to the value of the =TASKCFG_FOO= preference
      for this task.
+
+---+++ Available preferences
+
+---++++ =TASKCFG_GRID_TEMPLATE=
+
+Name of a template section used to render the task in a task grid. This can be
+used to render different types of tasks differently, by setting this to
+different template sections in different task forms.
+
+---++++ =TASKCFG_NOTIFY_(type)=
+
+A list of users to notify by e-mail when a certain type of event happens. The
+following events exist:
+
+   * =CREATED= - triggered when a new task is created.
+   * =REASSIGNED= - triggered when the =AssignedTo= field is changed as part of an update.
+   * =CLOSED= - triggered when the task's status changes to 'closed'.
+   * =REOPENED= - triggered when the task's status changes from 'closed' to 'open'.
+   * =CHANGED= - triggered when a task is changed and none of the other events apply.
+
+Examples:
+
+   * <code>Set TASKCFG_NOTIFY_CREATED = AdminUser</code> - notify the administrator when a task is created.
+   * <code>Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(AssignedTo)</code> - notify the new assignee when a task is reassigned.
+   * <code>Set TASKCFG_NOTIFY_CHANGED = $curvalue(AssignedTo), $curvalue(Informees)</code> - notify the assignee and users on the notification list on any normal changes to the task.
+
+---++++ =TASKCFG_NOTIFY_(type)_TEMPLATE=
+
+Assigns a template used to render the e-mail notification (see previous
+preference). By default, e.g. the =CREATED= event will use the
+!TasksAPICreatedMailTemplate.
+
+---++++ =TASKCFG_SCHEDULE_REOPEN=
+
+A date/time delta specification to automatically re-open a task after it has
+been closed. For example, if this is set to "2 weeks", the task will be
+re-opened two weeks after it is closed. By default, tasks are not reopened
+automatically.
+
+---++++ =TASKCFG_HAS_CHILDREN=
+
+Set to =true= (or =1= or =on=) to signal that this task can have child tasks
+nested within it.
 
 ---+++ Access permissions
 
