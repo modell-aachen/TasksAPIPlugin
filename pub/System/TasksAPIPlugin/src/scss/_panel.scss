@@ -76,13 +76,17 @@
 
   .task-changeset {
         margin-top: 20px;
-    border: 1px dashed lightgrey;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    border: 1px solid #E4E4E4;
     background-color: lighten(rgb(233, 239, 245), 2%);
     padding: 10px;
 
     > .task-changeset-header {
-      border-bottom: dotted 1px $changeset-border;
-      font-weight: bold;
+      border-bottom: dashed 1px #B1B1B1;
+    font-weight: bold;
+    padding-bottom: 5px;
 
       > .task-changeset-id {
         float: right;

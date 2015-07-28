@@ -130,9 +130,17 @@
     font-size: 3em;
     cursor: pointer;
 
+    &:hover {
+      color: darken($light-blue, 45%);
+    }
+
     &.closed {
       color: #6CCE86;
       cursor: default;
+
+      &:hover{
+        color: darken(#6CCE86, 25%);
+      }
     }
 }
 
