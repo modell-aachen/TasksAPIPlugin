@@ -89,14 +89,19 @@
 
 #viewerHead {
     margin-bottom: 20px;
-    padding: 8px 2%;
-    padding-right: 3%;
-    border-bottom: 3px solid #eee;
+    background-color: #39526D;
+    color: #fff;
+
+    &.prioritized-Yes{
+      border-left:4px solid #B80000;
+    }
 }
 
 #titleBox {
   width: 85%;
   float:left;
+      padding: 18px 2%;
+    padding-right: 3%;
 }
 
 #titleBox .label{
@@ -106,10 +111,12 @@
 }
 
 #HeadControls {
-  width: 10%;
-  float:right;
+  width: 5%;
+  float: right;
   text-align: right;
-  padding-top: 17px;
+    padding: 18px 2%;
+    padding-right: 3%;
+    padding-top: 40px;
 
   & .tasks-btn-close{
     margin-right:0px;
@@ -127,11 +134,11 @@
 #HeadControls i {
     color: darken($light-blue, 25%);
     transition: color 0.5s ease;
-    font-size: 3em;
+    font-size: 2.5em;
     cursor: pointer;
 
     &:hover {
-      color: darken($light-blue, 45%);
+      color: #fff;
     }
 
     &.closed {
@@ -139,7 +146,7 @@
       cursor: default;
 
       &:hover{
-        color: darken(#6CCE86, 25%);
+        color: #fff;
       }
     }
 }
@@ -227,6 +234,92 @@
   padding-right:3%;
 }
 
-div.task-attachments table th{
+div.task-attachments {
+ padding:3%;
+ & table th{
   color:#000 !important;
+}
+}
+
+div.viewer .jqTab{
+  border: 0px !important;
+}
+
+div.viewer .jqTabGroup {
+
+  border-left: 0px;
+
+  & li {
+    margin: 0px !important;
+  }
+
+  & a {
+    border-bottom: none !important;
+        border: none !important;
+        background-color:#fff;
+  }
+
+  & .current a{
+        color: #fff !important;
+        border-bottom: none !important;
+        border: none !important;
+        background: #39526D !important;
+        text-shadow: none !important;
+  }
+}
+
+.viewer .jqTabContents {
+  padding: 0px !important;
+}
+.viewer .changes {
+  padding-left: 3%;
+  padding-right: 3%;
+  padding-bottom: 20px;
+}
+
+#task-panel .task-changeset ins {
+    color: #578DCA !important;
+}
+
+#task-panel .task-changeset del {
+    color: #868686 !important;
+}
+
+.task-fullview {
+  & .comment.active, .upload.active{
+    padding: 1%;
+  }
+
+  & .upload.active {
+    height: 150px;
+    &>div{
+      padding: 18px;
+    }
+  }
+}
+
+.tasks-btn.tasks-btn-save, .tasks-btn.tasks-btn-save-comment {
+    background-color: #78C5FF !important;
+    background-image: url('../assets/check.png');
+    border: 1px solid #F3F3F3;
+    color: #fff;
+    margin-right: 15px;
+    transition: background-color 0.5s ease;
+}
+
+.tasks-btn.tasks-btn-save:hover, .tasks-btn.tasks-btn-save-comment:hover {
+    background-color: darken(#78C5FF, 25%) !important;
+    
+}
+
+.task-fullview div.qw-dnd-upload.full-width {
+    width: 50%;
+    margin: 0 auto;
+    background-color: #fff;
+    height: 125px;
+    border-radius: 8px;
+
+    & .hint {
+      padding-top: 35px;
+    }
 }

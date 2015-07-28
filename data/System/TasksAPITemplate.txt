@@ -95,7 +95,7 @@
 <div class="viewer">
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
-<div id="viewerHead">
+<div id="viewerHead" class="prioritized-%TASKINFO{field="Prioritize"}%">
 <div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
 <span id="title">%TASKINFO{field="Title"}%</span></div>
 <div id="HeadControls">
@@ -185,7 +185,7 @@ $percntENDTWISTY$percnt"}%%{
   </div>
 </div>
 <div class="upload">
-  <div>%DNDUPLOAD{extraclass="full-width" height="250px" webtopic="%TASKINFO{meta="id"}%"}%</div>
+  <div>%DNDUPLOAD{extraclass="full-width" webtopic="%TASKINFO{meta="id"}%"}%</div>
 </div>
 <div class="actions">
   <div class="active">

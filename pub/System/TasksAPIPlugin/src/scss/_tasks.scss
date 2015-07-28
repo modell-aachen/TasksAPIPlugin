@@ -238,7 +238,7 @@
 .table-task-actions i {
     color: darken($light-blue, 25%);
     transition: color 0.5s ease;
-    font-size: 2em;
+    font-size: 1.6em;
     cursor: pointer;
 
     &.closed {
@@ -267,11 +267,11 @@ span.label {
     border-radius: .25em;
 
   &.label-default{
-  background-color: #777;
+  background-color: #337ab7;
   }
 
   &.label-primary{
-  background-color: #337ab7;
+  background-color: #f0ad4e;
   }
    &.label-info{
   background-color: #5cb85c;
