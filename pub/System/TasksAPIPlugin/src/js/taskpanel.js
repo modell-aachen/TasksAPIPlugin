@@ -39,23 +39,38 @@
     };
 
     return {
-      hide: function() {
+    hide: function() {
         toggle.call(opts);
         killCKE();
-        
-      },
-      replace: function() {
-        if ( typeof opts.replace === 'function') {
-          opts.replace.apply(this, arguments);
-          setLinkTarget();
+
+    },
+    replace: function() {
+        if (typeof opts.replace === 'function') {
+
+            $("#more-changeset").off('click');
+            $("#more-changeset").remove();
+
+            opts.replace.apply(this, arguments);
+            setLinkTarget();
+            $("#task-panel .task-changeset").slice(3).hide();
+            if ($("#task-panel .task-changeset").length > 3) {
+                $('<a id="more-changeset" href="">Weitere Änderungen anzeigen</a>').insertAfter("#task-panel .task-changeset:last");
+                $("#more-changeset").on('click', function() {
+                    $("#task-panel .task-changeset").fadeIn('slow');
+                    $("#more-changeset").off('click');
+                    $("#more-changeset").remove();
+                    return false;
+                });
+            }
         }
-      },
-      show: function() {
+    },
+    show: function() {
 
         toggle.call(opts);
-        
-      }
-    };
+
+    }
+};
+
   };
 
   var setLinkTarget = function() {
