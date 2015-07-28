@@ -20,6 +20,8 @@
     var $container = $('#task-panel');
     var $panel = $container.children('.content');
 
+    
+
     var toggle = function() {
       var self = this;
       setTimeout(function() {
@@ -40,6 +42,7 @@
       hide: function() {
         toggle.call(opts);
         killCKE();
+        
       },
       replace: function() {
         if ( typeof opts.replace === 'function') {
@@ -48,7 +51,9 @@
         }
       },
       show: function() {
+
         toggle.call(opts);
+        
       }
     };
   };
@@ -73,11 +78,29 @@
       $body.css('overflow', 'hidden');
       $overlay.show();
 
+
       if ( typeof opts.show === 'function' ) {
         opts.show.call($panel);
       }
+
+      $("#task-panel .task-changeset").slice(3).hide();
+      if($("#task-panel .task-changeset").length > 3){
+        $('<a id="more-changeset" href="">Weitere Änderungen anzeigen</a>').insertAfter("#task-panel .task-changeset:last");
+        $("#more-changeset").on('click', function(){
+          $("#task-panel .task-changeset").fadeIn('slow');
+          $("#more-changeset").off('click');
+          $("#more-changeset").remove();
+          return false;
+        });
+      }
+
+
     } else {
+      $("#task-panel .task-changeset").show();
+      $("#more-changeset").off('click');
+      $("#more-changeset").remove();
       $overlay.hide();
+
       $body.css('overflow', '');
 
       if ( typeof opts.hide === 'function' ) {

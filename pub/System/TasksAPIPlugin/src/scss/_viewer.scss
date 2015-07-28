@@ -135,3 +135,14 @@
     display: block;
     font-size: 16pt;
 }
+
+#more-changeset {
+  display: block;
+  text-align: center;
+  margin-top:10px;
+  color: grey;
+  text-decoration: none;
+}
+#more-changeset:hover {
+  text-decoration: underline;
+}

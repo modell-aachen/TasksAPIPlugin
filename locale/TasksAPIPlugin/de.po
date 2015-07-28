@@ -118,8 +118,8 @@ msgstr "Nov"
 msgid "Dec"
 msgstr "Dez"
 
-msgid "Updated by %1 on %2"
-msgstr "Aktualisiert von %1 am %2"
+msgid "%1 on %2"
+msgstr "%1 am %2"
 
 msgid "Decision"
 msgstr "Beschluss"

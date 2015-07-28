@@ -76,7 +76,10 @@
   }
 
   .task-changeset {
-    margin-top: 30px;
+        margin-top: 20px;
+    border: 1px dashed lightgrey;
+    background-color: lighten(rgb(233, 239, 245), 2%);
+    padding: 10px;
 
     > .task-changeset-header {
       border-bottom: dotted 1px $changeset-border;
