@@ -78,7 +78,7 @@
         background-color: $light-blue;
         
         &:hover {
-      background-color: darken($hover-bg, 10%);
+      background-color: darken($light-blue, 10%);
     }
 
     &.highlight {
@@ -96,16 +96,16 @@
         background-color: $alternate;
 
         &:hover {
-        background-color: darken($alternate, 10%);
+        background-color: darken($light-blue, 10%);
       }
 
       &.highlight {
-        background-color: $alternate-active;
+        background-color: darken($light-blue, 10%);
       }
 
       & .table-task-actions {
    
-    border-left: 4px solid $alternate;
+    border-left: 4px solid $light-blue;
   }
     }
 
@@ -223,8 +223,8 @@
 }
 
 .tasks > .task:hover .table-task-actions {
-  background-color: darken($light-blue, 35%);
-  border-left: 4px solid darken($light-blue, 55%) !important;
+  background-color: darken($light-blue, 25%);
+  border-left: 4px solid darken($light-blue, 35%) !important;
 
   & i {
     color:#fff;
@@ -250,6 +250,31 @@
 .type i {
   color: #7C7E7F;
     font-size: 1.6em;
+}
+
+span.label {
+
+      display: inline;
+    padding: .2em .6em .3em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
+
+  &.label-default{
+  background-color: #777;
+  }
+
+  &.label-primary{
+  background-color: #337ab7;
+  }
+   &.label-info{
+  background-color: #5bc0de;
+  }
 }
 
 .task-children-container {

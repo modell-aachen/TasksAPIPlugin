@@ -897,7 +897,7 @@ sub tagGrid {
 STYLE
 
  Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::sweetalert', <<STYLE );
-<link rel='stylesheet' href='//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'>
+<link rel='stylesheet' href='//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css'>
 STYLE
 
 Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::sweetalert', <<SCRIPT, $scriptDeps );

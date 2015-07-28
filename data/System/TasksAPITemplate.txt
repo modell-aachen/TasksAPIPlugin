@@ -96,57 +96,69 @@
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
 <div id="viewerHead">
-<div id="titleBox"><span class="title">%MAKETEXT{"Title"}%</span><br>
+<div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
 <span id="title">%TASKINFO{field="Title"}%</span></div>
 <div id="HeadControls">
 %IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
 }%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
 }%
-</div>
+<!-- <span class="title">%MAKETEXT{"Prioritize"}%</span>
+        <span>%MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%</span>-->
+</div> 
 <div class="clear"></div>
   </div>
-<table>
+  <div class="border_bottom_box">
+  <div id="task_detail_box">
+<table class="task_details">
   <tbody>
     <tr>
+    <td class="icon_column">
+      <i class="fa fa-calendar-plus-o"></i>
+    </td>
       <td>
         <span class="title">%MAKETEXT{"Created"}%</span>
         <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
       </td>
+      </tr>
+      <tr>
+      <td class="icon_column">
+      <i class="fa fa-user"></i>
+    </td>
       <td>
         <span class="title">%MAKETEXT{"Author"}%</span>
         <span>%TASKINFO{field="Author"}%</span>
       </td>
     </tr>
     <tr>
-      <td>
-        <span class="title">%MAKETEXT{"Due date"}%</span>
-        <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
-      </td>
+      <td class="icon_column">
+      <i class="fa fa-angle-double-right"></i>
+    </td>
       <td>
         <span class="title">%MAKETEXT{"Assigned to"}%</span>
         <span>%TASKINFO{field="AssignedTo"}%</span>
       </td>
     </tr>
     <tr>
+    <td class="icon_column">
+      <i class="fa fa-calendar"></i>
+    </td>
       <td>
-        <span class="title">%MAKETEXT{"Type"}%</span>
-        <span>%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>
+        <span class="title">%MAKETEXT{"Due date"}%</span>
+        <span>%TASKINFO{field="DueDate" format="$day $month $year"}%&nbsp;</span>
       </td>
-      <td>
-        <span class="title">%MAKETEXT{"Prioritize"}%</span>
-        <span>%MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%</span>
-      </td>
-    </tr>
+      </tr>
+    
   </tbody>
 </table>
-<hr />
-<div class="full-description">%{
-}%%TWISTY{hidelink="%MAKETEXT{"Hide description"}%" showlink="%MAKETEXT{"Show description"}%" start="show" linkclass="task-twisty"}%
+</div>
+<div id="task_desc_box">
 %TASKINFO{field="Description"}%
-%ENDTWISTY%%{
-}%</div>
+</div>
+<div class="clear"></div>
+</div>
+
 <div class="changes">%{
-}%%IF{"'%TASKINFO{meta="ChangesetCount"}%'='0'" else="<hr />$percntTWISTY{hidelink=\"$percntMAKETEXT{\"Hide recent changes\"}$percnt\" showlink=\"$percntMAKETEXT{\"Show recent changes\"}$percnt\" start=\"show\" linkclass=\"task-twisty\"}$percnt
+}%%IF{"'%TASKINFO{meta="ChangesetCount"}%'='0'" else="$percntTWISTY{hidelink=\"$percntMAKETEXT{\"Hide recent changes\"}$percnt\" showlink=\"$percntMAKETEXT{\"Show recent changes\"}$percnt\" start=\"show\" linkclass=\"task-twisty\"}$percnt
 $percntTASKINFO{type=\"changesets\"}$percnt
 $percntENDTWISTY$percnt"}%%{
 }%
@@ -218,7 +230,7 @@ $percntENDTWISTY$percnt"}%%{
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
   </td>
-  <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span ><i class=\"fa fa-exclamation\"></i></span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span ><i class=\"fa fa-check\"></i></span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span ><i class=\"fa fa-info\"></i></span>"}%</td>
+  <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   
   <td class="assigned">
     <span>%TASKINFO{field="AssignedTo"}%</span>

@@ -88,8 +88,8 @@
 }
 
 #viewerHead {
-    margin-bottom: 40px;
-    padding: 15px 0;
+    margin-bottom: 20px;
+    padding: 8px 0;
     border-bottom: 3px solid #eee;
 }
 
@@ -98,10 +98,17 @@
   float:left;
 }
 
+#titleBox .label{
+  margin-bottom:5px;
+  padding-top:.4em;
+  display:inline-block;
+}
+
 #HeadControls {
   width: 10%;
   float:right;
   text-align: center;
+  padding-top: 17px;
 }
 
 #HeadControls .tasks-btn-close {
@@ -115,7 +122,7 @@
 #HeadControls i {
     color: darken($light-blue, 25%);
     transition: color 0.5s ease;
-    font-size: 3.5em;
+    font-size: 3em;
     cursor: pointer;
 
     &.closed {
@@ -145,4 +152,56 @@
 }
 #more-changeset:hover {
   text-decoration: underline;
+}
+
+.viewer .jqTabGroup a{
+   text-transform: uppercase;
+    color: grey !important;
+    font-size: 0.8em;
+    padding: 10px 15px !important;
+}
+
+.task_details {
+  
+  padding-bottom: 20px;
+& td{
+  background-color:#fff !important;
+  width:100% !important;
+  min-width:none !important;
+  max-width:none !important;
+  padding-bottom:10px;
+  & span {
+    font-size:1.2em;
+  }
+}
+}
+
+.task_details td.icon_column {
+  width:20px !important;
+
+  & i {
+    color:grey;
+    font-size: 1.5em;
+  }
+}
+
+
+#task_detail_box{
+  float:left;
+  width: 25%;
+} 
+
+#task_desc_box{
+  float:right;
+  width: 68%;
+  & p{
+    color: grey;
+  padding-bottom: 20px;
+  text-align:justify;
+  }
+}
+
+.border_bottom_box{
+  border-bottom: 3px solid #eee;
+  margin-bottom:20px;
 }
