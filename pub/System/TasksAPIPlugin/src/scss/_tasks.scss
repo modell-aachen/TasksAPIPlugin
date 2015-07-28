@@ -254,8 +254,9 @@
 
 span.label {
 
-      display: inline;
-    padding: .2em .6em .3em;
+    width:65px;
+      display: inline-block;
+    padding: .4em .6em .3em;
     font-size: 75%;
     font-weight: 700;
     line-height: 1;
@@ -273,7 +274,7 @@ span.label {
   background-color: #337ab7;
   }
    &.label-info{
-  background-color: #5bc0de;
+  background-color: #5cb85c;
   }
 }
 

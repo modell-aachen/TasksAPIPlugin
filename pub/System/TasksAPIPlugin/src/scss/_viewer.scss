@@ -89,7 +89,8 @@
 
 #viewerHead {
     margin-bottom: 20px;
-    padding: 8px 0;
+    padding: 8px 2%;
+    padding-right: 3%;
     border-bottom: 3px solid #eee;
 }
 
@@ -107,8 +108,12 @@
 #HeadControls {
   width: 10%;
   float:right;
-  text-align: center;
+  text-align: right;
   padding-top: 17px;
+
+  & .tasks-btn-close{
+    margin-right:0px;
+  }
 }
 
 #HeadControls .tasks-btn-close {
@@ -169,7 +174,12 @@
   width:100% !important;
   min-width:none !important;
   max-width:none !important;
-  padding-bottom:10px;
+  padding-bottom:12px !important;
+
+  & span.title{
+    margin:0px !important;
+    margin-bottom:3px !important;
+  }
   & span {
     font-size:1.2em;
   }
@@ -195,6 +205,7 @@
   float:right;
   width: 68%;
   & p{
+    margin-top:7px;
     color: grey;
   padding-bottom: 20px;
   text-align:justify;
@@ -204,4 +215,10 @@
 .border_bottom_box{
   border-bottom: 3px solid #eee;
   margin-bottom:20px;
+  padding-left:2%;
+  padding-right:3%;
+}
+
+div.task-attachments table th{
+  color:#000 !important;
 }
