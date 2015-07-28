@@ -892,12 +892,12 @@ sub tagGrid {
     my $suffix = $debug ? '' : '.min';
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
 
-     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::FONTAWESOME', <<STYLE );
+     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::sweetalert', <<STYLE );
 <link rel='stylesheet' href='$pluginURL/css/sweetalert2.css'>
 STYLE
 
- Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::sweetalert', <<STYLE );
-<link rel='stylesheet' href='//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css'>
+ Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::fontawesome', <<STYLE );
+<link rel='stylesheet' href='$pluginURL/css/font-awesome.min.css'>
 STYLE
 
 Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::sweetalert', <<SCRIPT, $scriptDeps );
