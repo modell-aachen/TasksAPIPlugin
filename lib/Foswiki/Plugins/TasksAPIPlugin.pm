@@ -904,6 +904,10 @@ Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::sweetalert', <<SCRIPT, $
 <script type="text/javascript" src="$pluginURL/js/sweetalert2.min.js"></script>
 SCRIPT
 
+Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::readmore', <<SCRIPT, $scriptDeps );
+<script type="text/javascript" src="$pluginURL/js/readmore.min.js"></script>
+SCRIPT
+
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE

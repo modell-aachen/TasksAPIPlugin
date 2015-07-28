@@ -91,16 +91,31 @@
     margin-bottom: 20px;
     background-color: #39526D;
     color: #fff;
-
-    &.prioritized-Yes{
-      border-left:4px solid #B80000;
+    & table {
+        border-spacing: 0px !important;
+        & td {
+            background-color: #39526D !important;
+            padding: 3% 2% !important;
+            &#HeadControls {
+                width: 2% !important;
+                text-align: center;
+                background-color: lighten(#39526D, 10%) !important;
+                border-left: 3px solid #628DBD;
+                & .tasks-btn-close {
+                    margin-right: 0px;
+                }
+            }
+        }
+    }
+    &.prioritized-Yes {
+        border-left: 7px solid #F10909;
     }
 }
 
+
 #titleBox {
-  width: 85%;
-  float:left;
-      padding: 18px 2%;
+  width: 80%;
+    padding: 18px 2%;
     padding-right: 3%;
 }
 
@@ -110,18 +125,7 @@
   display:inline-block;
 }
 
-#HeadControls {
-  width: 5%;
-  float: right;
-  text-align: right;
-    padding: 18px 2%;
-    padding-right: 3%;
-    padding-top: 40px;
 
-  & .tasks-btn-close{
-    margin-right:0px;
-  }
-}
 
 #HeadControls .tasks-btn-close {
   background-image: none !important;
@@ -219,6 +223,12 @@
 #task_desc_box{
   float:right;
   width: 68%;
+
+  & .readmore_link{
+        margin-top: 10px;
+    margin-bottom: 20px;
+    color: #578DCA;
+  }
   & p{
     margin-top:7px;
     color: grey;

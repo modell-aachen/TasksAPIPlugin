@@ -83,6 +83,13 @@
         opts.show.call($panel);
       }
 
+      $('#task_desc_box article').readmore({
+        collapsedHeight: 150,
+        speed: 200,
+        lessLink: '<a class="readmore_link" href="#">Weniger anzeigen</a>',
+        moreLink: '<a class="readmore_link" href="#">Mehr anzeigen</a>'
+      });
+
       $("#task-panel .task-changeset").slice(3).hide();
       if($("#task-panel .task-changeset").length > 3){
         $('<a id="more-changeset" href="">Weitere Änderungen anzeigen</a>').insertAfter("#task-panel .task-changeset:last");
@@ -99,6 +106,7 @@
       $("#task-panel .task-changeset").show();
       $("#more-changeset").off('click');
       $("#more-changeset").remove();
+      $('#task_desc_box article').readmore('destroy');
       $overlay.hide();
 
       $body.css('overflow', '');

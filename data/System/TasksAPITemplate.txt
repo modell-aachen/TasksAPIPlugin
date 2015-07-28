@@ -96,16 +96,23 @@
 %TABPANE{class="simple"}%
 %TAB{"%MAKETEXT{"Details"}%"}%
 <div id="viewerHead" class="prioritized-%TASKINFO{field="Prioritize"}%">
-<div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
+<table>
+  <tr>
+    <td id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%
+<span id="title">%TASKINFO{field="Title"}%</span></td>
+    <td id="HeadControls">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
+}%</td>
+  </tr>
+</table>
+<!-- <div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
 <span id="title">%TASKINFO{field="Title"}%</span></div>
 <div id="HeadControls">
 %IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
 }%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
 }%
-<!-- <span class="title">%MAKETEXT{"Prioritize"}%</span>
-        <span>%MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%</span>-->
 </div> 
-<div class="clear"></div>
+<div class="clear"></div> -->
   </div>
   <div class="border_bottom_box">
   <div id="task_detail_box">
@@ -152,7 +159,9 @@
 </table>
 </div>
 <div id="task_desc_box">
+<article>
 %TASKINFO{field="Description"}%
+</article>
 </div>
 <div class="clear"></div>
 </div>
@@ -194,7 +203,7 @@ $percntENDTWISTY$percnt"}%%{
     <a href="#" class="tasks-btn tasks-btn-edit" title="%MAKETEXT{"Edit task"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
     <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
-    <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a>
+    <!-- <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a> -->
   </div>
   <div class="hidden">
     <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
