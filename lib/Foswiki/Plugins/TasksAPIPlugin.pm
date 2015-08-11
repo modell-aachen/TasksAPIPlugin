@@ -603,11 +603,16 @@ sub restLease {
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
+        Foswiki::Func::setPreferencesValue('taskeditor_taskid', $r->{id});
     } else {
         $meta = Foswiki::Meta->new($session, $web, $topic);
         my $f = $r->{form} || 'System.TasksAPIDefaultTaskForm';
         Foswiki::Func::setPreferencesValue('taskeditor_form', $f);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
+
+        if ($r->{parent}) {
+            Foswiki::Func::setPreferencesValue('taskeditor_parentid', $r->{parent});
+        }
 
         my $m = Foswiki::Meta->new($session, Foswiki::Func::normalizeWebTopicName(undef, $f));
         if ($m) {
