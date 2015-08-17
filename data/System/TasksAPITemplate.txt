@@ -1,0 +1,310 @@
+%TMPL:DEF{"tasksapi::editor"}%%{
+}%%IF{
+  "'%taskeditor_isnew%'='0'"
+  then="$percntTMPL:P{\"tasksapi::editor::edit\"}$percnt"
+  else="$percntTMPL:P{\"tasksapi::editor::new\"}$percnt"
+}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::editor::new"}%%{
+}%<div class="task-editor">
+  <div class="editor">%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  header=""
+  footer=""
+  hidden="(Created|Author|Parent|TopicType|Context)"
+  fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,DueDate,AssignedTo"
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Prioritize,Reminder,Informees"
+  header=""
+  footer=""
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%%ENDTWISTY%%{
+}%</div>
+  <div class="actions">
+    <div>
+      <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+      <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+  </div>
+</div>
+</div>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::editor::edit"}%%{
+}%<div class="task-editor">
+<div class="editor">
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  hidden="(Created|Author|Parent|TopicType|Context)"
+  include="(Created|Author|Parent|TopicType|Context)"
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Title,Description"
+  header=""
+  footer=""
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Type,Status,DueDate,AssignedTo"
+  header=""
+  footer=""
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%<br />%{
+}%%IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%%{
+}%<hr>%TWISTY{showlink="%MAKETEXT{"More options"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Prioritize,Reminder,Informees"
+  header=""
+  footer=""
+  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
+}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Add comment"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
+<div class="Comment editor-block">
+  <label>
+    <span>%MAKETEXT{"Add comment"}%</span>
+    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
+  </label>
+</div>%ENDTWISTY%
+</div>
+<div class="actions">
+  <div>
+    <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+  </div>
+</div>
+</div>%{
+}%%TMPL:END%
+
+
+%TMPL:DEF{"tasksapi::editor::upload"}%%{
+}%<div class="editor-block">
+  <label>
+    <span>%MAKETEXT{"Attach file(s)"}% (%MAKETEXT{"Press 'Save' to start the upload"}%)</span>
+    %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
+  </label>
+</div>%{
+}%%TMPL:END%
+
+
+%TMPL:DEF{"tasksapi::viewer"}%%{
+}%<literal>
+<div class="viewer">
+%TABPANE{class="simple"}%
+%TAB{"%MAKETEXT{"Details"}%"}%
+<div>%{
+}%%IF{
+  "context task_canedit and not context task_readonly"
+  then ="<a href=\"#\" class=\"tasks-btn tasks-btn-edit\">$percntMAKETEXT{\"Edit\"}$percnt</a>"
+}%</div>
+<table>
+  <tbody>
+    <tr>
+      <td colspan="2">
+        <span class="title">%MAKETEXT{"Title"}%</span>
+        <span>%TASKINFO{field="Title"}%</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="title">%MAKETEXT{"Created"}%</span>
+        <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+      </td>
+      <td>
+        <span class="title">%MAKETEXT{"Author"}%</span>
+        <span>%TASKINFO{field="Author"}%</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="title">%MAKETEXT{"Due date"}%</span>
+        <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+      </td>
+      <td>
+        <span class="title">%MAKETEXT{"Assigned to"}%</span>
+        <span>%TASKINFO{field="AssignedTo"}%</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <span class="title">%MAKETEXT{"Type"}%</span>
+        <span>%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>
+      </td>
+      <td>
+        <span class="title">%MAKETEXT{"Prioritize"}%</span>
+        <span>%MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<div class="full-description">%{
+}%%TWISTY{hidelink="%MAKETEXT{"Hide description"}%" showlink="%MAKETEXT{"Show description"}%" start="show" linkclass="task-twisty"}%
+%TASKINFO{field="Description"}%
+%ENDTWISTY%%{
+}%</div>
+<div class="changes">%{
+}%%IF{"'%TASKINFO{meta="ChangesetCount"}%'='0'" else="<hr />$percntTWISTY{hidelink=\"$percntMAKETEXT{\"Hide recent changes\"}$percnt\" showlink=\"$percntMAKETEXT{\"Show recent changes\"}$percnt\" start=\"show\" linkclass=\"task-twisty\"}$percnt
+$percntTASKINFO{type=\"changesets\"}$percnt
+$percntENDTWISTY$percnt"}%%{
+}%
+</div>
+%ENDTAB%%{
+}%%ATTACHMENTLIST{
+  topic="%TASKINFO{meta="id"}%"
+  header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments foswikiAttachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th></tr></thead><tbody>"
+  format="<tr><td>$fileIcon</td><td class='foswikiTableCol1'><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td></tr>"
+  footer="</tbody></table></div>$percntENDTAB$percnt"
+}%%{
+}%%ENDTABPANE%
+</div>
+<div class="comment">
+  <div>
+    <label>
+      <span>%MAKETEXT{"Add comment"}%</span>
+      <textarea class="foswikiTextarea" name="comment" cols="100" rows="12"></textarea>
+    </label>
+    <label>
+      <span>%MAKETEXT{"Close task"}%</span>
+      <input type="checkbox" name="close">
+    </label>
+  </div>
+</div>
+<div class="upload">
+  <div>%DNDUPLOAD{extraclass="full-width" height="250px" webtopic="%TASKINFO{meta="id"}%"}%</div>
+</div>
+<div class="actions">
+  <div class="active">
+    <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
+    <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
+    <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a>
+  </div>
+  <div class="hidden">
+    <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
+    <a href="#" class="tasks-btn tasks-btn-cancel-comment">%MAKETEXT{"Cancel"}%</a>
+  </div>
+</div>
+</literal>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task::children::new"}%
+<tr class="task-new">
+  <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
+    %MAKETEXT{"Create new subordinate task"}%
+  </td>
+</tr>
+%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task::children"}%%{
+}%<table class="tasks-table children">
+  <tbody class="tasks">%{
+}%%IF{"'%TASKINFO{meta="FetchedChildCount"}%'" then="$percntTASKINFO{type=\"children\"}$percnt"}%%{
+}%%IF{"not context task_readonly" then="$percntTMPL:P{\"tasksapi::task::children::new\"}$percnt"}%%{
+}%</tbody>
+</table>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task"}%%{
+}%<tr class="task prioritized-%TASKINFO{field="Prioritize"}%">
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
+    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+    <span>%TASKINFO{field="Author"}%</span>
+  </td>
+  <td class="type">
+    <span>%MAKETEXT{%TASKINFO{field="Type"}%}%</span>
+  </td>
+  <td class="assigned">
+    <span>%TASKINFO{field="AssignedTo"}%</span>
+  </td>
+  <td class="title">
+    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
+    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
+  </td>
+  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
+    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+  </td>
+  <td class="ampel">%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%</td>
+  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-controls">
+    <div class="controls">%TMPL:P{"tasksapi::task::controls::right"}%</div>
+  </td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
+</tr>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task::controls::left"}%<span>%ICON{"toggleopen"}%</span>
+<span>%ICON{"toggleclose"}%</span>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task::controls::right"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><img src=\"$percntPUBURLPATH$percnt/$percntSYSTEMWEB$percnt/TasksAPIPlugin/assets/check_dark.png\" alt=\"\" title=\"$percntMAKETEXT{\"Close task\"}$percnt\"></span>"}%%{
+}%<span class="task-btn btn-details"><img src="%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/assets/info.png" alt="" title="%MAKETEXT{"View details"}%"></span>%{
+}%%IF{"context task_canedit  and not context task_readonly" then="<span class=\"task-btn btn-edit\"><img src=\"$percntPUBURLPATH$percnt/$percntSYSTEMWEB$percnt/TasksAPIPlugin/assets/edit.png\" alt=\"\" title=\"$percntMAKETEXT{\"Edit task\"}$percnt\"></span>"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::sortopts"}%%{
+}%%IF{
+  "context task_showexpandercol"
+  then="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [1,1] ], headers: {0: {sorter: false}, 1: {sorter: 'taskDateSorter'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'text'} 5: {sorter: 'taskDateSorter'}, 6: {sorter:'taskAmpelSorter'}}}"
+  else="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [0,1] ], headers: {0: {sorter: 'taskDateSorter'}, 1: {sorter: 'text'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'taskDateSorter'}, 5: {sorter:'taskAmpelSorter'}}}"
+}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">
+  %TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%
+  <table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table %TMPL:P{"tasksapi::grid::sortopts"}%">
+    <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
+    <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
+  </table>
+  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
+</div></noautolink>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::filter"}%
+<div class="filter">
+  <div>
+    <div class="options">
+      <span class="title">%MAKETEXT{"Tasks"}%</span>
+      %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
+    </div>
+    %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%
+  </div>
+</div>
+%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::filter::status"}%%{
+}%<label>
+  <select name="status">%TASKINFO{expand="stateoptions"}%</select>
+</label>%{
+}%%TMPL:END%
+%TMPL:DEF{"tasksapi::grid::filter::create"}%%{
+}%<div class="create">
+  <a href="#" class="tasks-btn tasks-btn-create">%MAKETEXT{"Add task"}%</a>
+</div>%{
+}%%TMPL:END%
+
+
+%TMPL:DEF{"tasksapi::grid::caption"}%<tr>
+%IF{"context task_showexpandercol" then="<th></th>"}%
+  <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Assigned to"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Status"}%</th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::addnew"}%%{
+}%<a class="task-subbtn-template task-child-add tasks-btn tasks-btn-create" href="#">%MAKETEXT{"Add sub-task"}%</a>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::empty"}%%TMPL:END%

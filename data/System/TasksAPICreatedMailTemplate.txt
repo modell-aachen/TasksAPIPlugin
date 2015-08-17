@@ -1,0 +1,12 @@
+%TMPL:INCLUDE{"TasksAPIDefaultMail"}%
+
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
+
+%TMPL:DEF{"ModacMailContents"}%
+%MAKETEXT{"[_1] created a task in [_2]:" args="%TASKSAPI_ACTOR%,%SCRIPTURL{view}%/%WEB%/%TOPIC%"}%
+
+%TMPL:P{"ModacMailTitle"}%
+
+%MAKETEXT{"Description"}%:
+%TASKINFO{field="Description"}%
+%TMPL:END%

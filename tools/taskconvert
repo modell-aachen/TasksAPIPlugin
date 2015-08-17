@@ -1,0 +1,192 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+do '../bin/setlib.cfg';
+require Foswiki;
+new Foswiki('admin');
+
+require Foswiki::Func;
+require Foswiki::Time;
+
+require Foswiki::Plugins::ActionTrackerPlugin;
+require Foswiki::Plugins::ActionTrackerPlugin::Action;
+require Foswiki::Plugins::ActionTrackerPlugin::ActionSet;
+require Foswiki::Plugins::ActionTrackerPlugin::Format;
+require Foswiki::Plugins::TasksAPIPlugin;
+
+my %defaultMap = (
+  who => 'AssignedTo',
+  creator => 'Author',
+  created => 'Created',
+  text => 'Description',
+  due => 'DueDate',
+  result => 'Type',
+  state => 'Status',
+  task => 'Title'
+);
+
+my %defaultDate = (
+  due => '$epoch'
+);
+
+my ($form, $web, $topic, $context, $mapping, $dateformat, $verbose, $reindex, $ignoreErrors, $skipErrors, $help);
+foreach my $arg (@ARGV) {
+  if ($arg =~ /^([^=]*)=(.*)$/) {
+    my ($k, $v) = ($1, $2);
+    $form = $v if $k =~ /^form$/i;
+    $web = $v if $k =~ /^web$/i;
+    $topic = $v if $k =~ /^topic$/i;
+    $context = $v if $k =~ /^context$/i;
+    $mapping = $v if $k =~ /^mapping$/i;
+    $dateformat = $v if $k =~ /^dateformat$/i;
+  } elsif ($arg =~ /^--(.*)$/) {
+    my $k = $1;
+    $verbose = 1 if $k =~ /^verbose$/i;
+    $reindex = 1 if $k =~ /^reindex$/i;
+    $ignoreErrors = 1 if $k =~ /^ignoreErrors$/i;
+    $skipErrors = 1 if $k =~ /^skipErrors$/i;
+  }
+}
+
+unless ($web) {
+  print "Source web: ";
+  $web = <STDIN>;
+  chomp($web);
+  exit 1 unless $web;
+}
+
+unless ($topic) {
+  print "Source topic: ";
+  $topic = <STDIN>;
+  chomp($topic);
+  exit 1 unless $topic;
+}
+
+($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
+unless ( Foswiki::Func::topicExists($web, $topic) ) {
+  print STDERR "Specified webtopic doesn't exist!\n";
+  exit 1;
+}
+
+unless ($form) {
+  print "Task form to use [System.TasksAPIDefaultTaskForm]: ";
+  $form = <STDIN>;
+  chomp($form);
+  $form = "System.TasksAPIDefaultTaskForm" unless $form;
+}
+
+my ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $form);
+unless ( $form && Foswiki::Func::topicExists($fweb, $ftopic) ) {
+  print STDERR "Specified form doesn't exist!\n";
+  exit 1;
+}
+
+unless ($context) {
+  print "Task context to use [$web.$topic]: ";
+  $context = <STDIN>;
+  chomp($context);
+  $context = "$web.$topic" unless $context;
+}
+
+my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
+my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
+unless (scalar @{$set->{ACTIONS}}) {
+  print "No actions found!\n";
+  exit 0;
+}
+
+my %mapping = %defaultMap;
+unless ($mapping) {
+  $mapping = join(",", map {"$_=$mapping{$_}"} keys %mapping);
+  print "Mapping [$mapping]: ";
+  $mapping = <STDIN>;
+  chomp($mapping);
+  %mapping = %defaultMap unless $mapping;
+}
+
+if ($mapping) {
+  $mapping =~ s/\s//g;
+  my @maps = split(',', $mapping);
+  %mapping = ();
+  for my $map (@maps) {
+    if ( $map =~ /^(.*)=(.*)$/ ) {
+      $mapping{$1} = $2;
+    }
+  }
+}
+
+my %format = %defaultDate;
+unless ($dateformat) {
+  $dateformat = join(",", map {"$_=$format{$_}"} keys %format);
+  print "Convert dates [$dateformat]: ";
+  $dateformat = <STDIN>;
+  chomp($dateformat);
+  %format = %defaultDate unless $dateformat;
+}
+
+if ($dateformat) {
+  my @dates = split(',', $dateformat);
+  %format = ();
+  for my $date (@dates) {
+    if ( $date =~ /^(.*)=(.*)$/ ) {
+      $format{$1} = $2;
+    }
+  }
+}
+
+foreach my $a (@{$set->{ACTIONS}}) {
+  next unless $a && ref($a) && $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+  my %data = ();
+  my $err = 0;
+  my @map =();
+
+  while (my ($k, $v) = each %mapping) {
+    my $val;
+    if ($a->{$k}) {
+      $val = $a->{$k};
+    } elsif ($a->{unloaded_fields}->{$k}) {
+      $val = $a->{unloaded_fields}->{$k};
+    } else {
+      push(@map,$k);
+      $err = 1;
+      next;
+    }
+
+    if ( $format{$k} ) {
+      $data{$v} = Foswiki::Time::formatTime($val, ''.$format{$k});
+    } else {
+      $data{$v} = $val;
+    }
+  }
+
+  next if $err && $skipErrors;
+
+  if ($err && $ignoreErrors ne 1) {
+    $err = 0;
+    print "Missing keys: '" . join(',', @map) . "'\nAction:\n" . $a->stringify() . "\nSkip task? [YES|no|quit] ";
+    my $continue = <STDIN>;
+    chomp($continue);
+    exit 0 if $continue =~ /q|quit/i;
+    next if $continue =~ /y|yes/i;
+  }
+
+  $data{Context} = $context;
+  $data{form} = $form;
+  my $task = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
+
+  if ($verbose) {
+    print "Created task:\nid -> $task->{id}\n";
+    while (my ($k, $v) = each %data) {
+      print "$k -> $v\n"
+    }
+    print "---------------------------\n\n";
+  }
+}
+
+if ($reindex) {
+  Foswiki::Plugins::TasksAPIPlugin::_fullindex();
+}
+
+1;
