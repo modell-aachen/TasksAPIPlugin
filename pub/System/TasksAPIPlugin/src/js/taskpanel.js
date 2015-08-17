@@ -98,7 +98,7 @@
         opts.show.call($panel);
       }
 
-      $('#task_desc_box article').readmore({
+      $('.task-details > .content article').readmore({
         collapsedHeight: 150,
         speed: 200,
         lessLink: '<a class="readmore_link" href="#">Weniger anzeigen</a>',
@@ -121,6 +121,7 @@
       $("#task-panel .task-changeset").show();
       $("#more-changeset").off('click');
       $("#more-changeset").remove();
+      $('.task-details > .content article').readmore('destroy');
       $('#task_desc_box article').readmore('destroy');
       $overlay.hide();
 
