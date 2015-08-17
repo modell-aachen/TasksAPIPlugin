@@ -12,7 +12,6 @@
 
     overflow-x: auto;
     overflow-y: scroll;
-    // padding: 15px;
   }
 
   > .actions {
@@ -87,249 +86,242 @@
   }
 }
 
-#viewerHead {
+#task-panel .task-details {
+  > .head {
     margin-bottom: 20px;
-    background-color: #39526D;
-    color: #fff;
-    & table {
-        border-spacing: 0px !important;
-        & td {
-            background-color: #39526D !important;
-            padding: 3% 2% !important;
-            &#HeadControls {
-                width: 2% !important;
-                text-align: center;
-                background-color: lighten(#39526D, 10%) !important;
-                border-left: 3px solid #628DBD;
-                & .tasks-btn-close {
-                    margin-right: 0px;
-                }
-            }
-        }
-    }
+    background-color: $dark-blue;
+    border-left: 7px solid transparent;
+    color: $white;
+
     &.prioritized-Yes {
-        border-left: 7px solid #F10909;
+      border-left: 7px solid $prioritized;
     }
-}
+  }
 
-
-#titleBox {
-  width: 80%;
-    padding: 18px 2%;
+  > .content {
+    border-bottom: 3px solid #eee;
+    margin-bottom: 20px;
+    padding-left: 2%;
     padding-right: 3%;
-}
 
-#titleBox .label{
-  margin-bottom:5px;
-  padding-top:.4em;
-  display:inline-block;
-}
-
-
-
-#HeadControls .tasks-btn-close {
-  background-image: none !important;
-  float:none !important;
-  background:none !important;
-  border:none !important;
-  padding: 0px !important;
-}
-
-#HeadControls i {
-    color: darken($light-blue, 25%);
-    transition: color 0.5s ease;
-    font-size: 2.5em;
-    cursor: pointer;
-
-    &:hover {
-      color: #fff;
+    > div:first-child {
+      float:left;
+      width: 25%;
     }
 
-    &.closed {
-      color: #6CCE86;
-      cursor: default;
+    > div:last-child {
+      float:right;
+      width: 68%;
+    }
 
-      &:hover{
-        color: #fff;
+    article p {
+      color: $grey;
+      margin-top: 7px;
+      padding-bottom: 20px;
+      text-align: justify;
+    }
+  }
+}
+
+#task-panel table.details-table-head {
+  border-spacing: 0;
+
+  td {
+    background-color: $dark-blue;
+    padding: 3% 2%;
+
+    &:first-child {
+      width: 80%;
+      padding: 18px 2%;
+      padding-right: 3%;
+
+      .label {
+        margin-bottom:5px;
+        padding-top:.4em;
+        display:inline-block;
+      }
+
+      .title {
+        color: $white;
+        display: block;
+        font-size: 16pt;
+        margin-top: 5px;
+        text-transform: none;
       }
     }
+
+    &:last-child {
+      background-color: lighten($dark-blue, 10%);
+      border-left: 3px solid $mid-blue;
+      width: 2%;
+      text-align: center;
+
+      // ToDo:
+      // move to .tasks-btn-close default definition
+      .tasks-btn-close {
+        background: none;
+        background-image: none;
+        border: none;
+        float: none;
+        margin-right: 0;
+        padding: 0;
+      }
+
+      // ToDo: use dedicated class
+      i {
+        color: darken($light-blue, 25%);
+        transition: color 0.5s ease;
+        font-size: 2.5em;
+        cursor: pointer;
+
+        &:hover {
+          color: $white;
+        }
+
+        &.closed {
+          color: $light-green;
+          cursor: default;
+
+          &:hover{
+            color: $white;
+          }
+        }
+      }
+    }
+  }
 }
 
-#viewerHead .title {
-      text-transform: uppercase;
-    color: grey;
-    font-size: 0.8em;
-}
+#task-panel table.details-table {
+  padding-bottom: 20px;
 
-#title {
-      margin-top: 5px;
-    display: block;
-    font-size: 16pt;
+  td {
+    background-color: $white;
+    width: 100%;
+    min-width: none;
+    max-width: none;
+    padding-bottom: 12px;
+
+    &.icon_column {
+      width:20px;
+
+      & i {
+        color:$grey;
+        font-size: 1.5em;
+      }
+    }
+
+    span {
+      font-size:1.2em;
+
+      .title {
+        color: $grey;
+        font-size: 0.8em;
+        margin: 0 3px 0 0;
+        text-transform: uppercase;
+      }
+    }
+  }
 }
 
 #more-changeset {
+  color: $grey;
   display: block;
+  margin-top: 10px;
   text-align: center;
-  margin-top:10px;
-  color: grey;
   text-decoration: none;
-}
-#more-changeset:hover {
-  text-decoration: underline;
-}
 
-.viewer .jqTabGroup a{
-   text-transform: uppercase;
-    color: grey !important;
-    font-size: 0.8em;
-    padding: 10px 15px !important;
-}
-
-.task_details {
-  
-  padding-bottom: 20px;
-& td{
-  background-color:#fff !important;
-  width:100% !important;
-  min-width:none !important;
-  max-width:none !important;
-  padding-bottom:12px !important;
-
-  & span.title{
-    margin:0px !important;
-    margin-bottom:3px !important;
-  }
-  & span {
-    font-size:1.2em;
-  }
-}
-}
-
-.task_details td.icon_column {
-  width:20px !important;
-
-  & i {
-    color:grey;
-    font-size: 1.5em;
+  &:hover {
+    text-decoration: underline;
   }
 }
 
-
-#task_detail_box{
-  float:left;
-  width: 25%;
-} 
-
-#task_desc_box{
-  float:right;
-  width: 68%;
-
-  & .readmore_link{
-        margin-top: 10px;
-    margin-bottom: 20px;
-    color: #578DCA;
+#task-panel .viewer {
+  .jqTab {
+    border: 0;
   }
-  & p{
-    margin-top:7px;
-    color: grey;
-  padding-bottom: 20px;
-  text-align:justify;
-  }
-}
 
-.border_bottom_box{
-  border-bottom: 3px solid #eee;
-  margin-bottom:20px;
-  padding-left:2%;
-  padding-right:3%;
+  .jqTabGroup {
+    border-left: 0;
+
+    li {
+      margin: 0;
+    }
+
+    a {
+      background-color: $white;
+      border: none;
+      color: $grey;
+      font-size: 0.8em;
+      padding: 10px 15px;
+      text-transform: uppercase;
+    }
+
+    .current a {
+      color: $white;
+      border: none;
+      background: $dark-blue;
+      text-shadow: none;
+    }
+  }
+
+  .jqTabContents {
+    padding: 0;
+  }
+
+  .changes {
+    padding-left: 3%;
+    padding-right: 3%;
+    padding-bottom: 20px;
+  }
 }
 
 div.task-attachments {
- padding:3%;
- & table th{
-  color:#000 !important;
-}
-}
+  padding:3%;
 
-div.viewer .jqTab{
-  border: 0px !important;
-}
-
-div.viewer .jqTabGroup {
-
-  border-left: 0px;
-
-  & li {
-    margin: 0px !important;
+  table th {
+    color: $black !important;
   }
-
-  & a {
-    border-bottom: none !important;
-        border: none !important;
-        background-color:#fff;
-  }
-
-  & .current a{
-        color: #fff !important;
-        border-bottom: none !important;
-        border: none !important;
-        background: #39526D !important;
-        text-shadow: none !important;
-  }
-}
-
-.viewer .jqTabContents {
-  padding: 0px !important;
-}
-.viewer .changes {
-  padding-left: 3%;
-  padding-right: 3%;
-  padding-bottom: 20px;
-}
-
-#task-panel .task-changeset ins {
-    color: #578DCA !important;
-}
-
-#task-panel .task-changeset del {
-    color: #868686 !important;
 }
 
 .task-fullview {
-  & .comment.active, .upload.active{
+  .comment.active,
+  .upload.active {
     padding: 1%;
   }
 
-  & .upload.active {
+  .upload.active {
     height: 150px;
-    &>div{
+
+    > div {
       padding: 18px;
     }
   }
 }
 
-.tasks-btn.tasks-btn-save, .tasks-btn.tasks-btn-save-comment {
-    background-color: #78C5FF !important;
+.tasks-btn {
+  &.tasks-btn-save,
+  &.tasks-btn-save-comment {
+    background-color: #78C5FF;
     background-image: url('../assets/check.png');
     border: 1px solid #F3F3F3;
-    color: #fff;
+    color: $white;
     margin-right: 15px;
     transition: background-color 0.5s ease;
-}
 
-.tasks-btn.tasks-btn-save:hover, .tasks-btn.tasks-btn-save-comment:hover {
-    background-color: darken(#78C5FF, 25%) !important;
-    
-}
-
-.task-fullview div.qw-dnd-upload.full-width {
-    width: 50%;
-    margin: 0 auto;
-    background-color: #fff;
-    height: 125px;
-    border-radius: 8px;
-
-    & .hint {
-      padding-top: 35px;
+    &:hover {
+      background-color: darken(#78C5FF, 25%);
     }
+  }
+}
+
+.qw-dnd-upload.task-dnd {
+  width: 50%;
+  margin: 0 auto;
+  background-color: $white;
+  height: 125px;
+  border-radius: 8px;
+
+  .hint {
+    padding-top: 35px;
+  }
 }

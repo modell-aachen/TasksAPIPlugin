@@ -92,125 +92,140 @@
 
 %TMPL:DEF{"tasksapi::viewer"}%%{
 }%<literal>
-<div class="viewer">
-%TABPANE{class="simple"}%
-%TAB{"%MAKETEXT{"Details"}%"}%
-<div id="viewerHead" class="prioritized-%TASKINFO{field="Prioritize"}%">
-<table>
-  <tr>
-    <td id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%
-<span id="title">%TASKINFO{field="Title"}%</span></td>
-    <td id="HeadControls">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
-}%</td>
-  </tr>
-</table>
-<!-- <div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
-<span id="title">%TASKINFO{field="Title"}%</span></div>
-<div id="HeadControls">
-%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
-}%
-</div> 
-<div class="clear"></div> -->
+  <div class="viewer">
+  %TABPANE{class="simple"}%
+  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::viewer::details"}%%ENDTAB%
+  %TMPL:P{"tasksapi::viewer::attachments"}%
+  %ENDTABPANE%
   </div>
-  <div class="border_bottom_box">
-  <div id="task_detail_box">
-<table class="task_details">
-  <tbody>
-    <tr>
-    <td class="icon_column">
-      <i class="fa fa-calendar-plus-o"></i>
-    </td>
-      <td>
-        <span class="title">%MAKETEXT{"Created"}%</span>
-        <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
-      </td>
-      </tr>
-      <tr>
-      <td class="icon_column">
-      <i class="fa fa-user"></i>
-    </td>
-      <td>
-        <span class="title">%MAKETEXT{"Author"}%</span>
-        <span>%TASKINFO{field="Author"}%</span>
-      </td>
-    </tr>
-    <tr>
-      <td class="icon_column">
-      <i class="fa fa-angle-double-right"></i>
-    </td>
-      <td>
-        <span class="title">%MAKETEXT{"Assigned to"}%</span>
-        <span>%TASKINFO{field="AssignedTo"}%</span>
-      </td>
-    </tr>
-    <tr>
-    <td class="icon_column">
-      <i class="fa fa-calendar"></i>
-    </td>
-      <td>
-        <span class="title">%MAKETEXT{"Due date"}%</span>
-        <span>%TASKINFO{field="DueDate" format="$day $month $year"}%&nbsp;</span>
-      </td>
-      </tr>
-    
-  </tbody>
-</table>
-</div>
-<div id="task_desc_box">
-<article>
-%TASKINFO{field="Description"}%
-</article>
-</div>
-<div class="clear"></div>
-</div>
+  <div class="comment">%TMPL:P{"tasksapi::viewer::comments"}%</div>
+  <div class="upload">%TMPL:P{"tasksapi::viewer::upload"}%</div>
+  <div class="actions">%TMPL:P{"tasksapi::viewer::actions"}%</div>
+</literal>%{
+}%%TMPL:END%
 
-<div class="changes">%{
-}%%IF{"'%TASKINFO{meta="ChangesetCount"}%'='0'" else="$percntTWISTY{hidelink=\"$percntMAKETEXT{\"Hide recent changes\"}$percnt\" showlink=\"$percntMAKETEXT{\"Show recent changes\"}$percnt\" start=\"show\" linkclass=\"task-twisty\"}$percnt
-$percntTASKINFO{type=\"changesets\"}$percnt
-$percntENDTWISTY$percnt"}%%{
-}%
-</div>
-%ENDTAB%%{
+%TMPL:DEF{"tasksapi::viewer::details"}%%{
+}%<div class="task-details">
+  <div class="head prioritized-%TASKINFO{field="Prioritize"}%">
+    <table class="details-table-head">
+      <tr>
+        <td>%{
+          }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+          }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+          }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+          }%<span class="title">%TASKINFO{field="Title"}%</span>
+        </td>
+        <td id="HeadControls">%{
+          }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
+          }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
+        }%</td>
+      </tr>
+    </table>
+  <!-- <div id="titleBox">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%<br>
+  <span id="title">%TASKINFO{field="Title"}%</span></div>
+  <div id="HeadControls">
+  %IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a>"}%%{
+  }%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-check-square\"></i></span>"}%%{
+  }%
+  </div> 
+  <div class="clear"></div> -->
+  </div>
+  <div class="content">
+    <div>
+      <table class="details-table">
+        <tbody>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-calendar-plus-o"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Created"}%</span>
+              <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-user"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Author"}%</span>
+              <span>%TASKINFO{field="Author"}%</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-angle-double-right"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Assigned to"}%</span>
+              <span>%TASKINFO{field="AssignedTo"}%</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-calendar"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Due date"}%</span>
+              <span>%TASKINFO{field="DueDate" format="$day $month $year"}%&nbsp;</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <article>%TASKINFO{field="Description"}%</article>
+    </div>
+  </div>
+  <div class="clear"></div>
+  <div class="changes">%{
+  }%%IF{"'%TASKINFO{meta="ChangesetCount"}%'='0'" else="$percntTWISTY{hidelink=\"$percntMAKETEXT{\"Hide recent changes\"}$percnt\" showlink=\"$percntMAKETEXT{\"Show recent changes\"}$percnt\" start=\"show\" linkclass=\"task-twisty\"}$percnt
+  $percntTASKINFO{type=\"changesets\"}$percnt
+  $percntENDTWISTY$percnt"}%%{
+  }%
+  </div>
+</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer::attachments"}%%{
 }%%ATTACHMENTLIST{
   topic="%TASKINFO{meta="id"}%"
   header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments foswikiAttachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th></tr></thead><tbody>"
   format="<tr><td>$fileIcon</td><td class='foswikiTableCol1'><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td></tr>"
   footer="</tbody></table></div>$percntENDTAB$percnt"
 }%%{
-}%%ENDTABPANE%
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer::comments"}%%{
+}%<div>
+  <label>
+    <span>%MAKETEXT{"Add comment"}%</span>
+    <textarea class="foswikiTextarea" name="comment" cols="100" rows="12"></textarea>
+  </label>
+  <label>
+    <span>%MAKETEXT{"Close task"}%</span>
+    <input type="checkbox" name="close">
+  </label>
+</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer::upload"}%%{
+}%<div>%DNDUPLOAD{extraclass="task-dnd" webtopic="%TASKINFO{meta="id"}%"}%</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer::actions"}%%{
+}%<div class="active">
+  <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
+  <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
+  <a href="#" class="tasks-btn tasks-btn-edit" title="%MAKETEXT{"Edit task"}%">&nbsp;</a>
+  <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
+  <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
+  <!-- <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a> -->
 </div>
-<div class="comment">
-  <div>
-    <label>
-      <span>%MAKETEXT{"Add comment"}%</span>
-      <textarea class="foswikiTextarea" name="comment" cols="100" rows="12"></textarea>
-    </label>
-    <label>
-      <span>%MAKETEXT{"Close task"}%</span>
-      <input type="checkbox" name="close">
-    </label>
-  </div>
-</div>
-<div class="upload">
-  <div>%DNDUPLOAD{extraclass="full-width" webtopic="%TASKINFO{meta="id"}%"}%</div>
-</div>
-<div class="actions">
-  <div class="active">
-    <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
-    <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
-    <a href="#" class="tasks-btn tasks-btn-edit" title="%MAKETEXT{"Edit task"}%">&nbsp;</a>
-    <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
-    <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
-    <!-- <a href="#" class="tasks-btn tasks-btn-close" title="%MAKETEXT{"Close task"}%">&nbsp;</a> -->
-  </div>
-  <div class="hidden">
-    <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
-    <a href="#" class="tasks-btn tasks-btn-cancel-comment">%MAKETEXT{"Cancel"}%</a>
-  </div>
-</div>
-</literal>%{
+<div class="hidden">
+  <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
+  <a href="#" class="tasks-btn tasks-btn-cancel-comment">%MAKETEXT{"Cancel"}%</a>
+</div>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::children::new"}%
