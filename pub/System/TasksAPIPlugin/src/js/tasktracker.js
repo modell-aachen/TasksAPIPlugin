@@ -133,7 +133,7 @@
 
         delete qopts.$table;
         delete qopts.container;
-        delete qopts.lang;
+
         var evtResult = beforeCreate.result;
         if ( _.isObject( evtResult ) ) {
           delete evtResult.id;
