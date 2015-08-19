@@ -34,6 +34,100 @@
 </div>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::edit"}%%{
+}%
+<div class="task-editor task-details">
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  hidden="(Created|Author|Parent|TopicType|Context)"
+  include="(Created|Author|Parent|TopicType|Context)"
+}%
+  <div class="head prioritized-%TASKINFO{field="Prioritize"}%">
+    <table class="details-table-head">
+      <tr>
+        <td>%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Type"
+  format="<span class=\"label label-primary title $name editor-block\">$edit</span>"
+}%%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Title"
+  format="<span class=\"title $name editor-block\">$edit</span>"
+}%%{
+      }%</td>
+        <td id="HeadControls"></td>
+      </tr>
+    </table>
+  </div>
+  <div class="content">
+    <div>
+      <table class="details-table">
+        <tbody>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-calendar-plus-o"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Created"}%</span>
+              <span>%{
+}%%RENDERFORDISPLAY{
+  form="%taskeditor_form%"
+  fields="Created"
+  format="$value"
+}%%{
+            }%</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-user"></i>
+            </td>
+            <td>
+              <span class="title">%MAKETEXT{"Author"}%</span>
+              <span>%{
+}%%RENDERFORDISPLAY{
+  form="%taskeditor_form%"
+  fields="Author"
+  format="$value"
+}%%{
+            }%</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-angle-double-right"></i>
+            </td>%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="AssignedTo"
+  format="<td class=\"$name editor-block\"><span class=\"title\">$xlatedescription$mandatory</span><span>$edit</span></td>"
+}%%{
+          }%</tr>
+          <tr>
+            <td class="icon_column">
+              <i class="fa fa-calendar"></i>
+            </td>%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="DueDate"
+  format="<td class=\"$name editor-block\"><span class=\"title\">$xlatedescription$mandatory</span><span>$edit</span></td>"
+}%%{
+          }%</tr>
+        </tbody>
+      </table>
+    </div>%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Description"
+  format="<div class=\"$name editor-block\"><article>$edit</article></div>"
+}%%{
+  }%</div>
+  <div class="clear"></div>
+</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::editor::edit::6022"}%%{
 }%<div class="task-editor">
 <div class="editor">
 %RENDERFOREDIT{
