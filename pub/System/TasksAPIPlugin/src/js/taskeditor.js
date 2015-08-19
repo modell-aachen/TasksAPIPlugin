@@ -35,11 +35,25 @@
       updateHead( response.scripts );
       updateHead( response.styles );
 
-      var $ed = $('<div>' + response.editor + '</div>');
+      //meyer: #9057:
+      var $ed = $(response.editor);
       $ed.find('.ma-taskeditor-cke').addClass('ignoreObserver');
-      $this.html($ed.html());
-      $this.find('.tasks-btn-save').click(handleSave);
-      $this.find('.tasks-btn-cancel').click(handleCancel);
+      var $details = $('#task-panel .task-details');
+      var $tab = $details.parent();
+
+      // meyer: #9057
+      // replace view with edit area
+      // possible animation should be made here...
+      // todo:
+      // save a reference for later use (replace back)
+      // 
+      $details.detach();
+      $ed.appendTo($tab);
+
+      // meyer: #9057
+      // todo.
+      // $this.find('.tasks-btn-save').click(handleSave);
+      // $this.find('.tasks-btn-cancel').click(handleCancel);
       writeEditor( data );
 
       if ( opts.autoassign && opts.autoassignTarget ) {
@@ -78,20 +92,23 @@
         setAssignee.call($type);
       }
 
-      $this.panel = $this.taskPanel({
-        show: function() {
-          var $panel = this;
-          $this.find('.ignoreObserver').removeClass('ignoreObserver');
-          $this.detach().appendTo($panel);
-          $('#InputTitle input').focus();
-        },
-        hide: function() {
-          handleCancel();
-          $this.detach().empty().appendTo($('body'));
-        }
-      });
+      // meyer: #9057
+      // not required if we're going to just replace the contents of this panel.
 
-      $this.panel.show();
+      // $this.panel = $this.taskPanel({
+      //   show: function() {
+      //     var $panel = this;
+      //     $this.find('.ignoreObserver').removeClass('ignoreObserver');
+      //     $this.detach().appendTo($panel);
+      //     $('#InputTitle input').focus();
+      //   },
+      //   hide: function() {
+      //     handleCancel();
+      //     $this.detach().empty().appendTo($('body'));
+      //   }
+      // });
+
+      // $this.panel.show();
 
       var afterEdit = $.Event( 'afterEdit' );
       $this.trigger( afterEdit );
@@ -99,12 +116,16 @@
       def.reject('lease', msg);
     }).always($.unblockUI);
 
+    // meyer: #9057
+    // needs to be reassigned
     var closeEditor = function() {
       if ( !_.isUndefined(this) ) {
         $this.panel.hide();
       }
     };
 
+    // meyer: #9057
+    // needs to be reassigned
     var handleCancel = function() {
       var self = this;
       var $up = $this.find('.qw-dnd-upload');
@@ -131,6 +152,8 @@
       return false;
     };
 
+    // meyer: #9057
+    // needs to be reassigned
     var handleSave = function() {
       var task = readEditor();
 

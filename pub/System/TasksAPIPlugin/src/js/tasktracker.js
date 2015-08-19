@@ -476,7 +476,10 @@
       };
 
       var editViewer = function(evt) {
-        $('#task-panel').children('.close').click();
+        // meyer: #9057
+        // don't close the task-panel if an edit request was made.
+
+        // $('#task-panel').children('.close').click();
         hoveredTask = $task;
         editClicked();
         return false;
