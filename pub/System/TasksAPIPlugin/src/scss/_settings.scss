@@ -1,0 +1,36 @@
+$global-radius: 3px;
+
+$editor-padding: 12px;
+$editor-width: 400px;
+
+$filter-padding: 12px;
+$filter-bg: #fefefe;
+$filter-height: 50px;
+
+$input-padding: 6px;
+$input-inactive-bg: #f0f0f0;
+$input-inactive-border-color: $input-inactive-bg;
+$input-inactive-color: #222;
+
+$label-color: #999;
+$shadow-color: #ccc;
+$dash-color: #ddd;
+$label-font-size: 10px;
+$label-font-weight: bold;
+$label-text-transform: uppercase;
+
+$task-min-height: 55px;
+$alternate: #f3f3f3;
+$alternate-hover: darken($alternate, 5%);
+$alternate-active: darken($alternate, 20%);
+
+$blue: #6494c9;
+$light-blue: #f8fcff;
+$dark-red: #b80000;
+$hover-bg: #e8f7ff;
+$white: #fff;
+$black: #000;
+$prioritized: #f40;
+$del-color: #c00;
+$ins-color: #080;
+$changeset-border: #88a;

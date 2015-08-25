@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+do '../bin/setlib.cfg';
+require Foswiki;
+new Foswiki('admin');
+
+require Foswiki::Plugins::TasksAPIPlugin;
+Foswiki::Plugins::TasksAPIPlugin::Job::process();
+

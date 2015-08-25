@@ -1,0 +1,41 @@
+%META:TOPICPARENT{name="TasksAPIPlugin"}%
+---+ TASKSGRID macro
+
+_This is a macro from [[TasksAPIPlugin]], used to query/display various pieces of information related to tasks and task grids._
+
+%STARTINCLUDE%
+A kitchen sink macro for rendering information related to tasks.
+
+There are two types of invocations of this macro: one to get data from a specific task, and one to get data about a displaying task grid. The latter only works inside templates used by the task grid; for the former, if it is used as part of a task template it will automatically know which task to process. In any other case you have to pass the task ID as a =task= parameter.
+
+The standard template for this plugin makes extensive use of this macro, so there are plenty of examples in it.
+
+---++++ Get information about tasks
+
+The following types of requests for information about tasks are supported:
+
+   * <code>field=Foo</code>: display the value from the task's =Foo= field
+   * <code>type=changeset cid=123 checkfield=Foo</code>: render changeset #123 for the task. If cid is omitted, a changeset previously selected by the engine will be rendered. If =checkfield= is given, instead of rendering a changeset, the macro will render =1= or =0= depending on whether a value exists for =Foo=.
+   * <code>type=changesets separator=x</code>: render all changesets for the task, separated by =x= (defaults to newline).
+   * <code>type=children</code>: render the task's children in this place; this only works from within a task template in a task grid.
+   * <code>taskcfg=FOO</code>: gets the =TASKCFG_FOO= value for the task.
+   * <code>meta=...</code>: returns various pieces of metadata for the task. =...= can be one of the following:
+      * =json=: return detailed information about the task as a JSON string.
+      * =AttachCount=: returns the number of file attachments.
+      * =ChangesetCount=: returns the number of changesets.
+      * =FetchedChildCount=: returns the number of child tasks (limited to those fetched by the surrounding task grid, for performance reasons).
+   * <code>template=foo</code>: renders the task using the template section =foo=.
+
+---++++ Get information about the task grid
+
+The following types of requests for information about task grids are available:
+
+   * <code>option=foo</code>: Returns grid-level option =foo=. This is used to make grid parameters accessible in templates. The following parameters currently exist: =context=, =parent=, =form=, =id=, =depth=, =pageSize=, =query=, =order=, =allowupload=, =stateless=, =sortable=, =templatefile=, =tasktemplate=, =editortemplate=, =autoassign=, =autoassignTarget=.
+   * <code>expand=foo</code>: Returns a template value. Template values are additional pieces of information used for rendering grids, passed through from the grid macro. The following template values currently exist:
+      * =stateoptions=: the =&lt;option&gt;= tags for a =&lt;select&gt;= widget used for filtering tasks by status.
+      * =settings=: the complete structure of options (see above) in JSON format, used in templates for passing through options to !JavaScript code.
+      * =captiontemplate=: the name of the template section which contains the grid's caption section (title, filter widget, "create" button).
+      * =filtertemplate=: the name of the template section which contains the filter widget(s).
+      * =id=: the ID of the grid.
+   * <code>expandtemplate=foo</code>: expands a template section, exactly like =%<nop>TMPL:P%=; the difference is that this is expanded like normal macros and so you can use nested macros to determine the name of the section.
+

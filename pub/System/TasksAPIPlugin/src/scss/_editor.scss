@@ -1,0 +1,197 @@
+#task-editor {
+  height: 100%;
+  width: 100%;
+
+  .cke_chrome {
+    box-shadow: none;
+  }
+}
+
+.tasks-btn {
+  background-position: 10px center;
+  background-repeat: no-repeat;
+  background-color: #f3f3f3;
+  border: 1px solid #cecece;
+  border-radius: 4px;
+  color: #222;
+  display: inline-block;
+  font-weight: bold;
+  padding: 7px 15px 7px 35px;
+  text-decoration: none !important;
+  transition: background 0.3s ease-in-out,
+              color 0.3s ease-in-out;
+
+  &:hover {
+    background-color: darken(#f3f3f3, 5%);
+    color: maroon;
+  }
+
+  &.tasks-btn-create {
+    background-color: #fff;
+    background-image: url('../assets/add.png');
+    color: $blue;
+
+    &:hover {
+      background-color: $light-blue;
+    }
+  }
+
+  &.tasks-btn-save, &.tasks-btn-save-comment {
+    background-color: #379b00;
+    background-image: url('../assets/check.png');
+    border: 1px solid #379b00;
+    color: #fff;
+    margin-right: 15px;
+
+    &:hover {
+      background-color: darken(#379b00, 10%);
+    }
+  }
+
+  &.tasks-btn-cancel, &.tasks-btn-cancel-comment {
+    background-image: url('../assets/cancel.png');
+  }
+
+
+  &.tasks-btn-next {
+    background-image: url('../assets/next.png');
+  }
+
+  &.tasks-btn-edit {
+    background-image: url('../assets/edit.png');
+    float: right;
+  }
+
+  &.tasks-btn-prev {
+    background-image: url('../assets/prev.png');
+  }
+
+  &.tasks-btn-comment {
+    float: right;
+    background-image: url('../assets/comment.png');
+    padding: 7px 15px 7px 18px;
+    margin-right: 6px;
+  }
+
+  &.tasks-btn-upload {
+    float: right;
+    background-image: url('../assets/upload.png');
+    padding: 7px 15px 7px 18px;
+  }
+
+  &.tasks-btn-close {
+    float: right;
+    background-image: url('../assets/check_dark.png');
+    padding: 7px 15px 7px 18px;
+    margin-right: 6px;
+  }
+}
+
+.task-editor {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.task-editor > .actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: #f3f3f3;
+
+  > div {
+    padding: 10px;
+  }
+}
+
+.task-editor > .editor {
+  position: absolute;
+  top: 0;
+  bottom: 50px;
+  left: 0;
+  right: 0;
+
+  overflow-x: auto;
+  overflow-y: scroll;
+  padding: 15px;
+
+  > div {
+    margin-bottom: 3px;
+
+    &:last-child {
+      margin-top: 30px;
+    }
+  }
+
+  .editor-block {
+    margin-bottom: 12px;
+
+    label > span {
+      margin-bottom: 3px;
+    }
+
+    &.Description, &.Comment {
+      min-height: 240px;
+    }
+
+    &.Type, &.Status, &.DueDate, &.StartDate, &.Start, &.Due, &.IsMilestone {
+      display: inline-block;
+      max-width: 33%;
+      min-width: 33%;
+    }
+
+    &.Prioritize, &.Reminder {
+      display: inline-block;
+      max-width: 50%;
+      min-width: 50%;
+    }
+  }
+
+  .foswikiEditFormDateField {
+    width: 50%;
+  }
+
+  label {
+    padding: 0;
+
+    > span:first-child {
+      color: #727272;
+      display: block;
+      font-size: 13px;
+      font-weight: $label-font-weight;
+    }
+  }
+
+  input, select, textarea {
+    border-color: #cecece;
+    border-radius: 0;
+    border-width: 1px;
+    color: $input-inactive-color;
+    padding: $input-padding;
+
+    &:focus {
+      background: #fff;
+    }
+  }
+
+  input, textarea {
+    width: 515px;
+  }
+
+  .jqTextboxListValue {
+    background-color: $light-blue;
+    background-image: url('../assets/user.png');
+    background-position: 6px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+    border-radius: $global-radius;
+    color: $blue;
+    padding: 5px 15px 5px 25px;
+  }
+}
+
+div.qw-dnd-upload.full-width {
+  width: 100%;
+}

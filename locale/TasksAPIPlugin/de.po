@@ -1,0 +1,233 @@
+msgid "open"
+msgstr "offen"
+
+msgid "closed"
+msgstr "geschlossen"
+
+msgid "all"
+msgstr "alle"
+
+msgid "deleted"
+msgstr "gelöscht"
+
+msgid "Tasks"
+msgstr "Aufgaben"
+
+msgid "Add task"
+msgstr "Aufgabe hinzufügen"
+
+msgid "Add comment"
+msgstr "Kommentar hinzufügen"
+
+msgid "More options"
+msgstr "Weitere Optionen"
+
+msgid "Show attachments"
+msgstr "Anhänge anzeigen"
+
+msgid "Hide attachments"
+msgstr "Anhänge verbergen"
+
+msgid "Attach file(s)"
+msgstr "Datei(en) anhängen"
+
+msgid "Hide"
+msgstr "Verbergen"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Prioritize"
+msgstr "Priorisieren"
+
+msgid "Reminder"
+msgstr "Erinnerung"
+
+msgid "Informees"
+msgstr "Zu informierende Personen"
+
+msgid "never"
+msgstr "nie"
+
+msgid "daily"
+msgstr "täglich"
+
+msgid "weekly"
+msgstr "wöchentlich"
+
+msgid "monthly"
+msgstr "monatlich"
+
+msgid "yes"
+msgstr "ja"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "no"
+msgstr "nein"
+
+msgid "No"
+msgstr "Nein"
+
+msgid "Assigned to"
+msgstr "Zugewiesen an"
+
+msgid "Missing value for mandatory field"
+msgstr "Fehlender Wert für Pflichtfeld"
+
+msgid "Jan"
+msgstr "Jan"
+
+msgid "Feb"
+msgstr "Feb"
+
+msgid "Mar"
+msgstr "Mär"
+
+msgid "Apr"
+msgstr "Apr"
+
+msgid "May"
+msgstr "Mai"
+
+msgid "Jun"
+msgstr "Jun"
+
+msgid "Jul"
+msgstr "Jul"
+
+msgid "Aug"
+msgstr "Aug"
+
+msgid "Sep"
+msgstr "Sep"
+
+msgid "Oct"
+msgstr "Okt"
+
+msgid "Nov"
+msgstr "Nov"
+
+msgid "Dec"
+msgstr "Dez"
+
+msgid "Updated by %1 on %2"
+msgstr "Aktualisiert von %1 am %2"
+
+msgid "Decision"
+msgstr "Beschluss"
+
+msgid "Task"
+msgstr "Aufgabe"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "High priority"
+msgstr "Hohe Priorität"
+
+msgid "Persons to notify on changes"
+msgstr "Personen bei Änderungen benachrichtigen"
+
+msgid "Send reminder"
+msgstr "Erinnerung verschicken"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Task created: %1"
+msgstr "Aufgabe erstellt: %1"
+
+msgid "Task updated: %1"
+msgstr "Aufgabe aktualisiert: %1"
+
+msgid "Task closed: %1"
+msgstr "Aufgabe geschlossen: %1"
+
+msgid "Task reopened: %1"
+msgstr "Aufgabe wieder eröffnet: %1"
+
+msgid "Task reassigned: %1"
+msgstr "Aufgabe neu zugewiesen: %1"
+
+msgid "%1 created a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 erstellt:"
+
+msgid "%1 updated a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 aktualisiert:"
+
+msgid "%1 closed a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 geschlossen:"
+
+msgid "%1 reopened a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 wieder geöffnet:"
+
+msgid "%1 reassigned a task in %2:"
+msgstr "%1 hat eine Aufgabe in %2 neu zugewiesen:"
+
+msgid "Edit description"
+msgstr "Beschreibung bearbeiten"
+
+msgid "Show description"
+msgstr "Beschreibung anzeigen"
+
+msgid "Hide description"
+msgstr "Beschreibung verbergen"
+
+msgid "Show recent changes"
+msgstr "Letzte Änderungen anzeigen"
+
+msgid "Hide recent changes"
+msgstr "Letzte Änderungen verbergen"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Create new subordinate task"
+msgstr "Neue untergeordnete Aufgabe hinzufügen"
+
+msgid "Unknown status"
+msgstr "Unbekannter Status"
+
+msgid "In one day"
+msgstr "In einem Tag"
+
+msgid "One day over due"
+msgstr "Seit einem Tag abgelaufen"
+
+msgid "In %1 days"
+msgstr "In %1 Tagen"
+
+msgid "%1 days over due"
+msgstr "Seit %1 Tagen abgelaufen"
+
+msgid "Close task"
+msgstr "Aufgabe schließen"
+
+msgid "View details"
+msgstr "Details anzeigen"
+
+msgid "Edit task"
+msgstr "Aufgabe bearbeiten"
+
+msgid "Do you really want to close the selected task?"
+msgstr "Möchten Sie die ausgewählte Aufgabe wirklich schließen?"
+
+msgid "Previous task"
+msgstr "Vorherige Aufgabe"
+
+msgid "Next task"
+msgstr "Nächste Aufgabe"
+
+msgid "Press 'Save' to start the upload"
+msgstr "Zum Hochladen 'Speichern' drücken"
+
+msgid "Add attachments"
+msgstr "Anhänge hinzufügen"

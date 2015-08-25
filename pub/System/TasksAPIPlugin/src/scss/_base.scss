@@ -1,0 +1,90 @@
+.tasktracker {
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  position: relative;
+
+  > .settings {
+    display: none;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  .tasks-table {
+    th.header {
+      background-image: url(../assets/sort_bg.gif);
+      background-position: center right;
+      background-repeat: no-repeat;
+      cursor: pointer;
+
+      &:hover {
+        color: #333;
+      }
+
+      &.headerSortDown {
+        background-image: url(../assets/sort_desc.gif);
+        color: #333;
+      }
+
+      &.headerSortUp {
+        background-image: url(../assets/sort_asc.gif);
+        color: #333;
+      }
+    }
+  }
+}
+
+.float-right {
+  float: right;
+}
+
+.float-left {
+  float: left;
+}
+
+.tasks-pagination {
+  height: 32px;
+  background-color: $light-blue;
+  border: 1px solid $input-inactive-bg;
+  border-top: none;
+
+  > div {
+    padding: 6px 3px;
+  }
+
+  a {
+    background-color: $white;
+    background-repeat: no-repeat;
+    border-radius: 4px;
+    color: #222 !important;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+    padding: 5px;
+    text-align: center;
+
+    &:hover {
+      background-color: #f3f3f3;
+      color: $white;
+      text-decoration: none;
+    }
+
+    &:active {
+      background-color: darken(#f3f3f3, 5%);
+      text-decoration: none;
+    }
+
+    &.next {
+      background-image: url('../assets/next.png');
+      background-position: center right;
+      padding-right: 18px;
+    }
+
+    &.prev {
+      background-image: url('../assets/prev.png');
+      background-position: center left;
+      padding-left: 18px;
+    }
+  }
+}
