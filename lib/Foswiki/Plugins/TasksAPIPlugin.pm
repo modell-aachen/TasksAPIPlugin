@@ -105,6 +105,9 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
+    my %attachopts = (authenticate => 1, validate => 0, http_allow => 'POST');
+    Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %attachopts );
+
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
@@ -344,6 +347,68 @@ sub _cacheContextACL {
     $caclCache->{$_[0]} = $_[1];
 }
 
+sub restAttach {
+    my ( $session, $subject, $verb, $response ) = @_;
+    my $q = Foswiki::Func::getCgiQuery();
+
+    my $name = $q->param('filename');
+    my $path = $q->param('filepath');
+
+    my $id = $q->param('id') || '';
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, "$id");
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+    unless ($task->checkACL('change')) {
+        $response->header(-status => 403);
+        return to_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to attach files to this task'
+        });
+    }
+
+    eval {
+        my $q = Foswiki::Func::getCgiQuery();
+        my $stream = $q->upload('filepath');
+        unless ($stream) {
+            $response->header(-status => 405);
+            return to_json({
+                status => 'error',
+                code => 'server_error',
+                msg => 'Attachment has zero size'
+            });
+        }
+
+        my @stats = stat $stream;
+        my $origName = $name;
+        ($name, $origName) = Foswiki::Sandbox::sanitizeAttachmentName($name);
+        $task->{meta}->attach(
+            filedate => $stats[9],
+            filepath => $path,
+            filesize => $stats[7],
+            name => $name,
+            nohandlers => 1,
+            stream => $stream
+        );
+
+        close($stream);
+    };
+    if ($@) {
+        Foswiki::Func::writeWarning( $@ );
+        $response->header(-status => 500);
+        return to_json({
+            status => 'error',
+            'code' => 'server_error',
+            msg => "Server error: $@"
+        });
+    }
+
+    my ($date, $user, $rev, $comment) = Foswiki::Func::getRevisionInfo($web, $topic, 0, $name);
+    return to_json({
+        status => 'ok',
+        filedate => $date,
+        filerev => $rev
+    });
+}
 
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
