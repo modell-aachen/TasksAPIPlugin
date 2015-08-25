@@ -174,7 +174,7 @@ $percntENDTWISTY$percnt"}%%{
   </div>
 </div>
 <div class="upload">
-  <div>%DNDUPLOAD{extraclass="full-width" height="250px" webtopic="%TASKINFO{meta="id"}%"}%</div>
+  <div>%DNDUPLOAD{extraclass="full-width" height="250px" tasksgrid="1" webtopic="%TASKINFO{meta="id"}%"}%</div>
 </div>
 <div class="actions">
   <div class="active">
