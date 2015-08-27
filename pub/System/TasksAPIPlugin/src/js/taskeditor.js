@@ -38,17 +38,13 @@
       //meyer: #9057:
       var $ed = $(response.editor);
       $ed.find('.ma-taskeditor-cke').addClass('ignoreObserver');
-      var $details = $('#task-panel .task-details');
-      var $tab = $details.parent();
 
       // meyer: #9057
       // replace view with edit area
       // possible animation should be made here...
       // todo:
       // save a reference for later use (replace back)
-      // 
-      $details.detach();
-      $ed.appendTo($tab);
+      toggleDetails(opts.id, $ed);
 
       // meyer: #9057
       // todo.
@@ -95,20 +91,22 @@
       // meyer: #9057
       // not required if we're going to just replace the contents of this panel.
 
-      // $this.panel = $this.taskPanel({
-      //   show: function() {
-      //     var $panel = this;
-      //     $this.find('.ignoreObserver').removeClass('ignoreObserver');
-      //     $this.detach().appendTo($panel);
-      //     $('#InputTitle input').focus();
-      //   },
-      //   hide: function() {
-      //     handleCancel();
-      //     $this.detach().empty().appendTo($('body'));
-      //   }
-      // });
+      if ( !opts.id ) {
+        $this.panel = $this.taskPanel({
+          show: function() {
+            var $panel = this;
+            $this.find('.ignoreObserver').removeClass('ignoreObserver');
+            $this.detach().appendTo($panel);
+            $('#InputTitle input').focus();
+          },
+          hide: function() {
+            handleCancel();
+            $this.detach().empty().appendTo($('body'));
+          }
+        });
 
-      // $this.panel.show();
+        $this.panel.show();
+      }
 
       var afterEdit = $.Event( 'afterEdit' );
       $this.trigger( afterEdit );
@@ -121,6 +119,29 @@
     var closeEditor = function() {
       if ( !_.isUndefined(this) ) {
         $this.panel.hide();
+      }
+
+      toggleDetails();
+    };
+
+    var $details = null;
+    var $tab = null;
+    var toggleDetails = function(id, $ed) {
+      if ( $details === null ) {
+        $details = $('#task-panel .task-details');
+
+        if (id) {
+          $tab = $details.parent();
+          $details.detach();
+          $ed.appendTo($tab);
+        } else {
+          $ed.appendTo($('#task-editor'));
+        }
+      } else {
+        $tab.empty();
+        $details.appendTo($tab);
+        $details = null;
+        $tab = null;
       }
     };
 
@@ -147,6 +168,7 @@
         def.resolve('cancel', taskid);
       }).always(function() {
         closeEditor.call(self);
+        toggleDetails();
       });
 
       return false;
@@ -194,6 +216,7 @@
             var afterSave = $.Event( 'afterSave' );
             $this.trigger( afterSave, task );
             closeEditor.call(1);
+            toggleDetails();
             def.resolve('save', response.data);
           });
 
@@ -204,7 +227,7 @@
           var afterSave = $.Event( 'afterSave' );
           $this.trigger( afterSave, task );
 
-          closeEditor.call(1);
+          toggleDetails();
           def.resolve('save', response.data);
         }).always( $.unblockUI );
       };

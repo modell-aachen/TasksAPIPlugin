@@ -108,7 +108,6 @@
                 }
                 delete qopts.$table;
                 delete qopts.container;
-                delete qopts.lang;
                 var evtResult = beforeCreate.result;
                 if (_.isObject(evtResult)) {
                     delete evtResult.id;
@@ -380,7 +379,9 @@
                 return false;
             };
             var editViewer = function(evt) {
-                $("#task-panel").children(".close").click();
+                // meyer: #9057
+                // don't close the task-panel if an edit request was made.
+                // $('#task-panel').children('.close').click();
                 hoveredTask = $task;
                 editClicked();
                 return false;
@@ -718,11 +719,19 @@
         leaseTopic(opts).done(function(response) {
             updateHead(response.scripts);
             updateHead(response.styles);
-            var $ed = $("<div>" + response.editor + "</div>");
+            //meyer: #9057:
+            var $ed = $(response.editor);
             $ed.find(".ma-taskeditor-cke").addClass("ignoreObserver");
-            $this.html($ed.html());
-            $this.find(".tasks-btn-save").click(handleSave);
-            $this.find(".tasks-btn-cancel").click(handleCancel);
+            // meyer: #9057
+            // replace view with edit area
+            // possible animation should be made here...
+            // todo:
+            // save a reference for later use (replace back)
+            toggleDetails(opts.id, $ed);
+            // meyer: #9057
+            // todo.
+            // $this.find('.tasks-btn-save').click(handleSave);
+            // $this.find('.tasks-btn-cancel').click(handleCancel);
             writeEditor(data);
             if (opts.autoassign && opts.autoassignTarget) {
                 var $type = $this.find('select[name="Type"]');
@@ -756,29 +765,57 @@
                 $type.on("change", setAssignee);
                 setAssignee.call($type);
             }
-            $this.panel = $this.taskPanel({
-                show: function() {
-                    var $panel = this;
-                    $this.find(".ignoreObserver").removeClass("ignoreObserver");
-                    $this.detach().appendTo($panel);
-                    $("#InputTitle input").focus();
-                },
-                hide: function() {
-                    handleCancel();
-                    $this.detach().empty().appendTo($("body"));
-                }
-            });
-            $this.panel.show();
+            // meyer: #9057
+            // not required if we're going to just replace the contents of this panel.
+            if (!opts.id) {
+                $this.panel = $this.taskPanel({
+                    show: function() {
+                        var $panel = this;
+                        $this.find(".ignoreObserver").removeClass("ignoreObserver");
+                        $this.detach().appendTo($panel);
+                        $("#InputTitle input").focus();
+                    },
+                    hide: function() {
+                        handleCancel();
+                        $this.detach().empty().appendTo($("body"));
+                    }
+                });
+                $this.panel.show();
+            }
             var afterEdit = $.Event("afterEdit");
             $this.trigger(afterEdit);
         }).fail(function(msg) {
             def.reject("lease", msg);
         }).always($.unblockUI);
+        // meyer: #9057
+        // needs to be reassigned
         var closeEditor = function() {
             if (!_.isUndefined(this)) {
                 $this.panel.hide();
             }
+            toggleDetails();
         };
+        var $details = null;
+        var $tab = null;
+        var toggleDetails = function(id, $ed) {
+            if ($details === null) {
+                $details = $("#task-panel .task-details");
+                if (id) {
+                    $tab = $details.parent();
+                    $details.detach();
+                    $ed.appendTo($tab);
+                } else {
+                    $ed.appendTo($("#task-editor"));
+                }
+            } else {
+                $tab.empty();
+                $details.appendTo($tab);
+                $details = null;
+                $tab = null;
+            }
+        };
+        // meyer: #9057
+        // needs to be reassigned
         var handleCancel = function() {
             var self = this;
             var $up = $this.find(".qw-dnd-upload");
@@ -800,9 +837,12 @@
                 def.resolve("cancel", taskid);
             }).always(function() {
                 closeEditor.call(self);
+                toggleDetails();
             });
             return false;
         };
+        // meyer: #9057
+        // needs to be reassigned
         var handleSave = function() {
             var task = readEditor();
             // missing value for mandatory field
@@ -837,6 +877,7 @@
                         var afterSave = $.Event("afterSave");
                         $this.trigger(afterSave, task);
                         closeEditor.call(1);
+                        toggleDetails();
                         def.resolve("save", response.data);
                     });
                     return;
@@ -844,7 +885,7 @@
                 $.taskapi.update(task).fail(error).done(function(response) {
                     var afterSave = $.Event("afterSave");
                     $this.trigger(afterSave, task);
-                    closeEditor.call(1);
+                    toggleDetails();
                     def.resolve("save", response.data);
                 }).always($.unblockUI);
             };
@@ -1067,7 +1108,7 @@
             if (typeof opts.show === "function") {
                 opts.show.call($panel);
             }
-            $("#task_desc_box article").readmore({
+            $(".task-details > .content article").readmore({
                 collapsedHeight: 150,
                 speed: 200,
                 lessLink: '<a class="readmore_link" href="#">Weniger anzeigen</a>',
@@ -1087,6 +1128,7 @@
             $("#task-panel .task-changeset").show();
             $("#more-changeset").off("click");
             $("#more-changeset").remove();
+            $(".task-details > .content article").readmore("destroy");
             $("#task_desc_box article").readmore("destroy");
             $overlay.hide();
             $body.css("overflow", "");

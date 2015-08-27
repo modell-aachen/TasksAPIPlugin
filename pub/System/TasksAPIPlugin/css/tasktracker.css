@@ -508,9 +508,9 @@ span.label {
       #task-panel .task-changeset > .task-changeset-header > .task-changeset-id {
         float: right; }
     #task-panel .task-changeset del {
-      color: #c00; }
+      color: #868686; }
     #task-panel .task-changeset ins {
-      color: #080; }
+      color: #578dca; }
 
 #task-overlay {
   position: fixed;
@@ -605,160 +605,133 @@ span.label {
     .task-fullview > .upload > div {
       padding: 6px; }
 
-#viewerHead {
+#task-panel .task-details > .head {
   margin-bottom: 20px;
-  background-color: #39526D;
+  background-color: #39526d;
+  border-left: 7px solid transparent;
   color: #fff; }
-  #viewerHead table {
-    border-spacing: 0px !important; }
-    #viewerHead table td {
-      background-color: #39526D !important;
-      padding: 3% 2% !important; }
-      #viewerHead table td#HeadControls {
-        width: 2% !important;
-        text-align: center;
-        background-color: #4b6b8e !important;
-        border-left: 3px solid #628DBD; }
-        #viewerHead table td#HeadControls .tasks-btn-close {
-          margin-right: 0px; }
-  #viewerHead.prioritized-Yes {
-    border-left: 7px solid #F10909; }
-
-#titleBox {
-  width: 80%;
-  padding: 18px 2%;
-  padding-right: 3%; }
-
-#titleBox .label {
-  margin-bottom: 5px;
-  padding-top: .4em;
-  display: inline-block; }
-
-#HeadControls .tasks-btn-close {
-  background-image: none !important;
-  float: none !important;
-  background: none !important;
-  border: none !important;
-  padding: 0px !important; }
-
-#HeadControls i {
-  color: #78c5ff;
-  transition: color 0.5s ease;
-  font-size: 2.5em;
-  cursor: pointer; }
-  #HeadControls i:hover {
-    color: #fff; }
-  #HeadControls i.closed {
-    color: #6CCE86;
-    cursor: default; }
-    #HeadControls i.closed:hover {
-      color: #fff; }
-
-#viewerHead .title {
-  text-transform: uppercase;
-  color: grey;
-  font-size: 0.8em; }
-
-#title {
-  margin-top: 5px;
-  display: block;
-  font-size: 16pt; }
-
-#more-changeset {
-  display: block;
-  text-align: center;
-  margin-top: 10px;
-  color: grey;
-  text-decoration: none; }
-
-#more-changeset:hover {
-  text-decoration: underline; }
-
-.viewer .jqTabGroup a {
-  text-transform: uppercase;
-  color: grey !important;
-  font-size: 0.8em;
-  padding: 10px 15px !important; }
-
-.task_details {
-  padding-bottom: 20px; }
-  .task_details td {
-    background-color: #fff !important;
-    width: 100% !important;
-    min-width: none !important;
-    max-width: none !important;
-    padding-bottom: 12px !important; }
-    .task_details td span.title {
-      margin: 0px !important;
-      margin-bottom: 3px !important; }
-    .task_details td span {
-      font-size: 1.2em; }
-
-.task_details td.icon_column {
-  width: 20px !important; }
-  .task_details td.icon_column i {
-    color: grey;
-    font-size: 1.5em; }
-
-#task_detail_box {
-  float: left;
-  width: 25%; }
-
-#task_desc_box {
-  float: right;
-  width: 68%; }
-  #task_desc_box .readmore_link {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    color: #578DCA; }
-  #task_desc_box p {
-    margin-top: 7px;
-    color: grey;
-    padding-bottom: 20px;
-    text-align: justify; }
-
-.border_bottom_box {
+  #task-panel .task-details > .head.prioritized-Yes {
+    border-left: 7px solid #f10909; }
+#task-panel .task-details > .content {
   border-bottom: 3px solid #eee;
   margin-bottom: 20px;
   padding-left: 2%;
   padding-right: 3%; }
+  #task-panel .task-details > .content > div:first-child {
+    float: left;
+    width: 25%; }
+  #task-panel .task-details > .content > div:last-child {
+    float: right;
+    width: 68%; }
+  #task-panel .task-details > .content article p {
+    color: grey;
+    margin-top: 7px;
+    padding-bottom: 20px;
+    text-align: justify; }
+
+#task-panel table.details-table-head {
+  border-spacing: 0; }
+  #task-panel table.details-table-head td {
+    background-color: #39526d;
+    padding: 3% 2%; }
+    #task-panel table.details-table-head td:first-child {
+      width: 80%;
+      padding: 18px 2%;
+      padding-right: 3%; }
+      #task-panel table.details-table-head td:first-child .label {
+        margin-bottom: 5px;
+        padding-top: .4em;
+        display: inline-block; }
+      #task-panel table.details-table-head td:first-child .title {
+        color: #fff;
+        display: block;
+        font-size: 16pt;
+        margin-top: 5px;
+        text-transform: none; }
+    #task-panel table.details-table-head td:last-child {
+      background-color: #4b6b8e;
+      border-left: 3px solid #628dbd;
+      width: 2%;
+      text-align: center; }
+      #task-panel table.details-table-head td:last-child .tasks-btn-close {
+        background: none;
+        background-image: none;
+        border: none;
+        float: none;
+        margin-right: 0;
+        padding: 0; }
+      #task-panel table.details-table-head td:last-child i {
+        color: #78c5ff;
+        transition: color 0.5s ease;
+        font-size: 2.5em;
+        cursor: pointer; }
+        #task-panel table.details-table-head td:last-child i:hover {
+          color: #fff; }
+        #task-panel table.details-table-head td:last-child i.closed {
+          color: #6cce86;
+          cursor: default; }
+          #task-panel table.details-table-head td:last-child i.closed:hover {
+            color: #fff; }
+
+#task-panel table.details-table {
+  padding-bottom: 20px; }
+  #task-panel table.details-table td {
+    background-color: #fff;
+    width: 100%;
+    min-width: none;
+    max-width: none;
+    padding-bottom: 12px; }
+    #task-panel table.details-table td.icon_column {
+      width: 20px; }
+      #task-panel table.details-table td.icon_column i {
+        color: grey;
+        font-size: 1.5em; }
+    #task-panel table.details-table td span {
+      font-size: 1.2em; }
+      #task-panel table.details-table td span .title {
+        color: grey;
+        font-size: 0.8em;
+        margin: 0 3px 0 0;
+        text-transform: uppercase; }
+
+#more-changeset {
+  color: grey;
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  text-decoration: none; }
+  #more-changeset:hover {
+    text-decoration: underline; }
+
+#task-panel .viewer .jqTab {
+  border: 0; }
+#task-panel .viewer .jqTabGroup {
+  border-left: 0; }
+  #task-panel .viewer .jqTabGroup li {
+    margin: 0; }
+  #task-panel .viewer .jqTabGroup a {
+    background-color: #fff;
+    border: none;
+    color: grey;
+    font-size: 0.8em;
+    padding: 10px 15px;
+    text-transform: uppercase; }
+  #task-panel .viewer .jqTabGroup .current a {
+    color: #fff;
+    border: none;
+    background: #39526d;
+    text-shadow: none; }
+#task-panel .viewer .jqTabContents {
+  padding: 0; }
+#task-panel .viewer .changes {
+  padding-left: 3%;
+  padding-right: 3%;
+  padding-bottom: 20px; }
 
 div.task-attachments {
   padding: 3%; }
   div.task-attachments table th {
     color: #000 !important; }
-
-div.viewer .jqTab {
-  border: 0px !important; }
-
-div.viewer .jqTabGroup {
-  border-left: 0px; }
-  div.viewer .jqTabGroup li {
-    margin: 0px !important; }
-  div.viewer .jqTabGroup a {
-    border-bottom: none !important;
-    border: none !important;
-    background-color: #fff; }
-  div.viewer .jqTabGroup .current a {
-    color: #fff !important;
-    border-bottom: none !important;
-    border: none !important;
-    background: #39526D !important;
-    text-shadow: none !important; }
-
-.viewer .jqTabContents {
-  padding: 0px !important; }
-
-.viewer .changes {
-  padding-left: 3%;
-  padding-right: 3%;
-  padding-bottom: 20px; }
-
-#task-panel .task-changeset ins {
-  color: #578DCA !important; }
-
-#task-panel .task-changeset del {
-  color: #868686 !important; }
 
 .task-fullview .comment.active, .task-fullview .upload.active {
   padding: 1%; }
@@ -768,21 +741,20 @@ div.viewer .jqTabGroup {
     padding: 18px; }
 
 .tasks-btn.tasks-btn-save, .tasks-btn.tasks-btn-save-comment {
-  background-color: #78C5FF !important;
+  background-color: #78C5FF;
   background-image: url('../assets/check.png');
   border: 1px solid #F3F3F3;
   color: #fff;
   margin-right: 15px;
   transition: background-color 0.5s ease; }
+  .tasks-btn.tasks-btn-save:hover, .tasks-btn.tasks-btn-save-comment:hover {
+    background-color: #008df8; }
 
-.tasks-btn.tasks-btn-save:hover, .tasks-btn.tasks-btn-save-comment:hover {
-  background-color: #008df8 !important; }
-
-.task-fullview div.qw-dnd-upload.full-width {
+.qw-dnd-upload.task-dnd {
   width: 50%;
   margin: 0 auto;
   background-color: #fff;
   height: 125px;
   border-radius: 8px; }
-  .task-fullview div.qw-dnd-upload.full-width .hint {
+  .qw-dnd-upload.task-dnd .hint {
     padding-top: 35px; }
