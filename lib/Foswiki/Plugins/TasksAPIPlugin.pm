@@ -882,7 +882,7 @@ sub tagGrid {
     delete $fctx->{task_stateless};
     delete $fctx->{task_showexpandercol};
 
-    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog", "jqp::readmore", "jqp::sweetalert2");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
@@ -892,24 +892,10 @@ sub tagGrid {
     my $suffix = $debug ? '' : '.min';
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
 
-     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES::sweetalert', <<STYLE );
-<link rel='stylesheet' href='$pluginURL/css/sweetalert2.css'>
-STYLE
-
-Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::sweetalert', <<SCRIPT, $scriptDeps );
-<script type="text/javascript" src="$pluginURL/js/sweetalert2.min.js"></script>
-SCRIPT
-
-Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::readmore', <<SCRIPT, $scriptDeps );
-<script type="text/javascript" src="$pluginURL/js/readmore.min.js"></script>
-SCRIPT
-
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE
-
-
 
     if ($sortable) {
         $scriptDeps .= ', JQTABLESORTERPLUGIN::Scripts';
