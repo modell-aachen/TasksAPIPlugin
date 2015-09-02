@@ -3,7 +3,6 @@
   border-spacing: 0 3px;
   width: 100%;
 
-
   td {
     padding: 2px 10px;
   }
@@ -21,14 +20,13 @@
     display: none !important;
   }
 
-  .task, .task-new {
+  .task,
+  .task-new {
     border-left: 5px solid transparent;
     border-bottom: 3px solid $white;
     border-radius: $global-radius;
     position: relative;
     transition: background-color .2s ease-in-out;
-
-    
 
     .expander {
       cursor: pointer;
@@ -69,33 +67,29 @@
     }
 
     &.prioritize > td:first-child{
-      border-left: 3px solid #b80000;
+      border-left: 3px solid $prioritized;
     }
-
-    
 
     &:nth-child(even) {
-        background-color: $light-blue;
-        
-        &:hover {
-      background-color: darken($light-blue, 10%);
-    }
+      background-color: $light-blue;
 
-    &.highlight {
-      background-color: darken($light-blue, 10%);
-    }
+      &:hover {
+        background-color: darken($light-blue, 10%);
+      }
 
-    & .table-task-actions {
-   
-    border-left: 4px solid $light-blue;
-  }
+      &.highlight {
+        background-color: darken($light-blue, 10%);
+      }
 
+      &.table-task-actions {
+        border-left: 4px solid $light-blue;
+      }
     }
 
      &:nth-child(odd) {
-        background-color: $alternate;
+      background-color: $alternate;
 
-        &:hover {
+      &:hover {
         background-color: darken($light-blue, 10%);
       }
 
@@ -104,11 +98,9 @@
       }
 
       & .table-task-actions {
-   
-    border-left: 4px solid $light-blue;
-  }
+        border-left: 4px solid $light-blue;
+      }
     }
-
   }
 
   .tasks > .task-new {
@@ -130,33 +122,6 @@
     }
   }
 }
-
-// .controls {
-//   background-color: $white;
-//   border-bottom-left-radius: 2 * $global-radius;
-//   border-bottom: 1px solid darken($light-blue, 5%);
-//   border-left: 1px solid darken($light-blue, 5%);
-
-//   span {
-//     display: inline-block;
-//     cursor: pointer;
-//     height: 24px;
-//     width: 24px;
-//     text-align: center;
-
-//     &:hover {
-//       background-color: $light-blue;
-//     }
-
-//     &:active {
-//       background-color: darken($light-blue, 5%);
-//     }
-
-//     img {
-//       margin-top: 4px;
-//     }
-//   }
-// }
 
 .tasks > .task td {
   &.expander {
@@ -183,7 +148,8 @@
   }
 
   &.title {
-    font-weight:bold;
+    font-weight: bold;
+
     > .attachments {
       background-image: url('../assets/file.png');
       background-position: center left;
@@ -235,46 +201,47 @@
   }
 }
 
+// meyer todo.
 .table-task-actions i {
-    color: darken($light-blue, 25%);
-    transition: color 0.5s ease;
-    font-size: 1.6em;
-    cursor: pointer;
+  color: darken($light-blue, 25%);
+  transition: color 0.5s ease;
+  font-size: 1.6em;
+  cursor: pointer;
 
-    &.closed {
-      color: #6CCE86;
-      cursor: default;
-    }
+  &.closed {
+    color: #6CCE86;
+    cursor: default;
+  }
 }
 
 .type i {
   color: #7C7E7F;
-    font-size: 1.6em;
+  font-size: 1.6em;
 }
 
 span.label {
-
-    width:65px;
-      display: inline-block;
-    padding: .4em .6em .3em;
-    font-size: 75%;
-    font-weight: 700;
-    line-height: 1;
-    color: #fff;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: .25em;
+  width:65px;
+  display: inline-block;
+  padding: .4em .6em .3em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em;
 
   &.label-default{
-  background-color: #337ab7;
+    background-color: #337ab7;
   }
 
   &.label-primary{
-  background-color: #f0ad4e;
+    background-color: #f0ad4e;
   }
-   &.label-info{
-  background-color: #5cb85c;
+
+  &.label-info{
+    background-color: #5cb85c;
   }
 }
 
