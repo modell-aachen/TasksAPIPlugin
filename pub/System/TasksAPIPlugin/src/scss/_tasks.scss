@@ -68,7 +68,7 @@
       user-select: none;
     }
 
-    &.prioritized-Yes > td:first-child{
+    &.prioritize > td:first-child{
       border-left: 3px solid #b80000;
     }
 
@@ -131,32 +131,32 @@
   }
 }
 
-.controls {
-  background-color: $white;
-  border-bottom-left-radius: 2 * $global-radius;
-  border-bottom: 1px solid darken($light-blue, 5%);
-  border-left: 1px solid darken($light-blue, 5%);
+// .controls {
+//   background-color: $white;
+//   border-bottom-left-radius: 2 * $global-radius;
+//   border-bottom: 1px solid darken($light-blue, 5%);
+//   border-left: 1px solid darken($light-blue, 5%);
 
-  span {
-    display: inline-block;
-    cursor: pointer;
-    height: 24px;
-    width: 24px;
-    text-align: center;
+//   span {
+//     display: inline-block;
+//     cursor: pointer;
+//     height: 24px;
+//     width: 24px;
+//     text-align: center;
 
-    &:hover {
-      background-color: $light-blue;
-    }
+//     &:hover {
+//       background-color: $light-blue;
+//     }
 
-    &:active {
-      background-color: darken($light-blue, 5%);
-    }
+//     &:active {
+//       background-color: darken($light-blue, 5%);
+//     }
 
-    img {
-      margin-top: 4px;
-    }
-  }
-}
+//     img {
+//       margin-top: 4px;
+//     }
+//   }
+// }
 
 .tasks > .task td {
   &.expander {

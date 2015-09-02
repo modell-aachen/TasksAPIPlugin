@@ -38,3 +38,48 @@ $del-color: #868686;
 $ins-color: #578dca;
 $changeset-border: #88a;
 $grey: grey;
+
+
+@mixin flex-container($direction:row, $align:flex-start, $justify:flex-start, $wrap:nowrap) {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: $direction;
+  flex-direction: $direction;
+  @if $align == flex-start {
+    -ms-flex-align: start;
+  } @else if $align == flex-end {
+    -ms-flex-align: end;
+  } @else {
+    -ms-flex-align: $align;
+  }
+  align-items: $align;
+  @if $justify == flex-start {
+    -ms-flex-pack: start;
+  } @else if $justify == flex-end {
+    -ms-flex-pack: end;
+  } @else if $justify == space-between {
+    -ms-flex-pack: justify;
+  } @else if $justify == space-around {
+    -ms-flex-pack: distribute;
+  }
+  justify-content: $justify;
+  -ms-flex-wrap: $wrap;
+  flex-wrap: $wrap;
+}
+
+@mixin flex($grow:0, $shrink:1, $basis:auto, $order:0, $align:none) {
+  -ms-flex: $grow $shrink $basis;
+  flex: $grow $shrink $basis;
+  -ms-flex-order: $order;
+  order: $order;
+  @if $align == flex-start {
+    -ms-flex-item-align: start;
+  } @else if $align == flex-end {
+    -ms-flex-item-align: end;
+  } @else if $align != none {
+    -ms-flex-item-align: $align;
+  }
+  @if $align != none {
+    align-self: $align;
+  }
+}

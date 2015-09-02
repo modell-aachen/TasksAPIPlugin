@@ -10,8 +10,8 @@
     left: 0;
     right: 0;
 
-    overflow-x: auto;
-    overflow-y: scroll;
+    // overflow-x: auto;
+    // overflow-y: scroll;
   }
 
   > .actions {
@@ -86,44 +86,34 @@
   }
 }
 
-#task-panel .task-details {
-  > .head {
-    margin-bottom: 20px;
-    background-color: $dark-blue;
-    border-left: 7px solid transparent;
-    color: $white;
+.task-details {
 
-    &.prioritized-Yes {
-      border-left: 7px solid $prioritized;
-    }
-  }
+  // > .content {
+  //   border-bottom: 3px solid #eee;
+  //   margin-bottom: 20px;
+  //   padding-left: 2%;
+  //   padding-right: 3%;
 
-  > .content {
-    border-bottom: 3px solid #eee;
-    margin-bottom: 20px;
-    padding-left: 2%;
-    padding-right: 3%;
+  //   > div:first-child {
+  //     float:left;
+  //     width: 25%;
+  //   }
 
-    > div:first-child {
-      float:left;
-      width: 25%;
-    }
+  //   > div:last-child {
+  //     float:right;
+  //     width: 68%;
+  //   }
 
-    > div:last-child {
-      float:right;
-      width: 68%;
-    }
-
-    article p {
-      color: $grey;
-      margin-top: 7px;
-      padding-bottom: 20px;
-      text-align: justify;
-    }
-  }
+  //   article p {
+  //     color: $grey;
+  //     margin-top: 7px;
+  //     padding-bottom: 20px;
+  //     text-align: justify;
+  //   }
+  // }
 }
 
-#task-panel table.details-table-head {
+table.details-table-head {
   border-spacing: 0;
 
   td {
@@ -191,7 +181,7 @@
   }
 }
 
-#task-panel table.details-table {
+table.details-table {
   padding-bottom: 20px;
 
   td {
@@ -213,7 +203,8 @@
     span {
       font-size:1.2em;
 
-      .title {
+      &.title {
+        display: block;
         color: $grey;
         font-size: 0.8em;
         margin: 0 3px 0 0;
@@ -232,46 +223,6 @@
 
   &:hover {
     text-decoration: underline;
-  }
-}
-
-#task-panel .viewer {
-  .jqTab {
-    border: 0;
-  }
-
-  .jqTabGroup {
-    border-left: 0;
-
-    li {
-      margin: 0;
-    }
-
-    a {
-      background-color: $white;
-      border: none;
-      color: $grey;
-      font-size: 0.8em;
-      padding: 10px 15px;
-      text-transform: uppercase;
-    }
-
-    .current a {
-      color: $white;
-      border: none;
-      background: $dark-blue;
-      text-shadow: none;
-    }
-  }
-
-  .jqTabContents {
-    padding: 0;
-  }
-
-  .changes {
-    padding-left: 3%;
-    padding-right: 3%;
-    padding-bottom: 20px;
   }
 }
 

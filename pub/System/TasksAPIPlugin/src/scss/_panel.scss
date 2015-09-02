@@ -1,104 +1,44 @@
-#task-panel {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: calc(40% + 48px);
-  min-width: 748px;
-  z-index: 1000;
-
-  background-color: transparent;
-  overflow: hidden;
-  transform: translate3d(100%, 0, 0);
-  transition: transform .3s ease-in-out;
-
-  &.active {
-    transform: translate3d(0, 0, 0);
+.task-overlay .viewer {
+  .jqTab {
+    border: 0;
   }
 
-  > .close {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 48px;
-    height: 48px;
-    background-color: $blue;
-    background-image: url('../assets/close.png');
-    background-position: center center; 
-    background-repeat: no-repeat;
-    background-size: 16px 16px;
-    border-bottom-left-radius: 5px;
-    color: $white;
-    cursor: pointer;
+  .jqTabGroup {
+    border-left: 0;
 
-    &:hover {
-      background-color: darken($blue, 5%);
+    li {
+      margin: 0;
     }
 
-    &:active {
-      background-color: darken($blue, 10%);
+    a {
+      background-color: $white;
+      border: none;
+      color: $grey;
+      font-size: 0.8em;
+      padding: 10px 15px;
+      text-transform: uppercase;
+    }
+
+    .current a {
+      color: $white;
+      border: none;
+      background: $dark-blue;
+      text-shadow: none;
     }
   }
 
-  > .content {
-    position: absolute;
-    top: 0;
-    left: 48px;
-    width: calc(100% - 48px);
-    height: 100%;
-    background-color: $white;
+  .jqTabContents {
+    padding: 0;
   }
 
-  table {
-    border-spacing: 2px;
-    width: 100%;
-  }
-
-  table:not(.foswikiTable) td {
-    background-color: $light-blue;
-    padding: 3px 6px;
-    min-width: 50%;
-    max-width: 50%;
-    width: 50%;
-
-    span {
-      display: block;
-
-      &.title {
-        text-transform: uppercase;
-        font-weight: bold;
-        color: $label-color;
-        font-size: 10px;
-        margin: 3px 0;
-      }
-    }
-  }
-
-  .task-changeset {
-        margin-top: 20px;
-    -webkit-border-radius: 8px;
-    -moz-border-radius: 8px;
-    border-radius: 8px;
-    border: 1px solid #E4E4E4;
-    background-color: lighten(rgb(233, 239, 245), 2%);
-    padding: 10px;
-
-    > .task-changeset-header {
-      border-bottom: dashed 1px #B1B1B1;
-    font-weight: bold;
-    padding-bottom: 5px;
-
-      > .task-changeset-id {
-        float: right;
-      }
-    }
-
-    del {color: $del-color}
-    ins {color: $ins-color;}
+  .changes {
+    padding-left: 3%;
+    padding-right: 3%;
+    padding-bottom: 20px;
   }
 }
 
-#task-overlay {
+.task-overlay {
   position: fixed;
   top: 0;
   bottom: 0;
@@ -106,15 +46,336 @@
   right: 0;
   z-index: 999;
 
-  opacity: 0;
-  background-color: $black;
+  background-color: rgba(0, 0, 0, .3);
   display: none;
-  transition: opacity .3s ease-in-out;
 
-  &.active {
-    opacity: .2;
+  > .panel-wrapper {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+
+    background-color: transparent;
+    min-width: 748px;
+    width: calc(40% + 48px);
+
+    transform: translate3d(100%, 0, 0);
+    transition: transform .5s ease-in-out;
+
+    &.active {
+      transform: translate3d(0, 0, 0);
+    }
+
+    > .close {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 48px;
+      height: 48px;
+      background-color: $blue;
+      background-image: url('../assets/close.png');
+      background-position: center center; 
+      background-repeat: no-repeat;
+      background-size: 16px 16px;
+      border-bottom-left-radius: 5px;
+      color: $white;
+      cursor: pointer;
+
+      &:hover {
+        background-color: darken($blue, 5%);
+      }
+
+      &:active {
+        background-color: darken($blue, 10%);
+      }
+    }
+
+    > .panel {
+      position: absolute;
+      top: 0;
+      bottom: 48px;
+      left: 48px;
+
+      background-color: $white;
+      width: calc(100% - 48px);
+      overflow-x: hidden;
+    }
+
+    > .buttons {
+      position: absolute;
+      bottom: 0;
+      left: 48px;
+      z-index: 2;
+
+      background-color: #39526d;
+      height: 48px;
+      width: calc(100% - 48px);
+
+      > .edit, > .view {
+        position: inherit;
+        bottom: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        transform: translate3d(0, 100%, 0);
+        transition: transform .3s ease-in-out;
+
+        > div {
+          position: absolute;
+          bottom: 0;
+
+          display: inline-block;
+          height: 48px;
+          width: auto;
+
+          &:first-child {
+            left: 0;
+          }
+
+          &:last-child:not(:first-child) {
+            right: 0;
+          }
+        }
+
+        &.active {
+          transform: translate3d(0, 0, 0);
+        }
+      }
+    }
+
+    > .textarea {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      z-index: 1;
+
+      $pad: 10px;
+      background-color: #39526d;
+      padding: $pad;
+      height: auto;
+      width: calc(100% - 48px);
+
+      $offset: calc(100% + 48px);
+      transform: translate3d(0, $offset, 0);
+      transition: transform .3s ease-in-out;
+
+      &.active {
+        transform: translate3d(0, 0, 0);
+      }
+
+      textarea {
+        width: calc(100% - 2.5 * #{$pad});
+      }
+
+      label {
+        color: $white;
+      }
+    }
+
+    > .upload {
+      position: absolute;
+      bottom: 48px;
+      left: 48px;
+      width: calc(100% - 48px);
+      z-index: 1;
+
+      background-color: #39526d;
+      padding: 10px;
+
+      $offset: calc(100% + 48px);
+      transform: translate3d(0, $offset, 0);
+      transition: transform .3s ease-in-out;
+
+      &.active {
+        transform: translate3d(0, 0, 0);
+      }
+    }
+  }
+
+  .cke_chrome {
+    box-shadow: none;
+  }
+
+  .jqTextboxListValue {
+    background-color: $light-blue;
+    background-image: url('../assets/user.png');
+    background-position: 6px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+    border-radius: $global-radius;
+    color: $blue;
+    padding: 5px 15px 5px 25px;
   }
 }
+
+.panel-btn {
+  transition: color .3s ease-in-out;
+
+  color: $white;
+  > i {
+    color: white;
+    font-size: 1.5em;
+    line-height: 48px;
+    text-align: center;
+    width: 38px
+  }
+
+  &:hover {
+    color: #78c5ff;
+    > i {
+      color: #78c5ff;
+    }
+  }
+}
+
+.panel-wrapper > .panel > .content {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: $white;
+
+  transform: translate3d(100%, 0, 0);
+  transition: transform .5s ease-in-out;
+
+  &.slide-in {
+    transform: translate3d(0, 0, 0);
+  }
+
+  &.slide-out {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+.task-changeset {
+  margin-top: 20px;
+  border-radius: 8px;
+  border: 1px solid #e4e4e4;
+  background-color: lighten(#e9eff5, 2%);
+  padding: 10px;
+  transition: background-color .3s ease-in-out;
+
+  > .task-changeset-header {
+    border-bottom: dashed 1px #b1b1b1;
+    font-weight: bold;
+    padding-bottom: 5px;
+
+    > .task-changeset-edit {
+      float: right;
+
+      i {
+        color: #aaa;
+      }
+
+      &:hover i {
+        color: #39526d;
+      }
+    }
+
+    > .task-changeset-id {
+      color: #aaa;
+    }
+  }
+
+  > .task-changeset-comment {
+    background-color: inherit;
+    height: auto;
+    min-height: 1px;
+    padding: 3px;
+    transition: background-color .3s ease-in-out,
+                min-height .3s ease-in-out;
+
+    &[contenteditable="true"] {
+      background-color: $white;
+      border-radius: 4px;
+      min-height: 40px;
+    }
+  }
+
+  del {color: $del-color}
+  ins {color: $ins-color;}
+}
+
+
+// #task-panel {
+//   position: fixed;
+//   top: 0;
+//   bottom: 0;
+//   right: 0;
+//   width: calc(40% + 48px);
+//   min-width: 748px;
+//   z-index: 1000;
+
+//   background-color: transparent;
+//   overflow: hidden;
+//   transform: translate3d(100%, 0, 0);
+//   transition: transform .3s ease-in-out;
+
+//   &.active {
+//     transform: translate3d(0, 0, 0);
+//   }
+
+//   > .close {
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     width: 48px;
+//     height: 48px;
+//     background-color: $blue;
+//     background-image: url('../assets/close.png');
+//     background-position: center center; 
+//     background-repeat: no-repeat;
+//     background-size: 16px 16px;
+//     border-bottom-left-radius: 5px;
+//     color: $white;
+//     cursor: pointer;
+
+//     &:hover {
+//       background-color: darken($blue, 5%);
+//     }
+
+//     &:active {
+//       background-color: darken($blue, 10%);
+//     }
+//   }
+
+//   > .content {
+//     position: absolute;
+//     top: 0;
+//     left: 48px;
+//     width: calc(100% - 48px);
+//     height: 100%;
+//     background-color: $white;
+//   }
+
+//   table {
+//     border-spacing: 2px;
+//     width: 100%;
+//   }
+
+//   table:not(.foswikiTable) td {
+//     background-color: $light-blue;
+//     padding: 3px 6px;
+//     min-width: 50%;
+//     max-width: 50%;
+//     width: 50%;
+
+//     span {
+//       display: block;
+
+//       &.title {
+//         text-transform: uppercase;
+//         font-weight: bold;
+//         color: $label-color;
+//         font-size: 10px;
+//         margin: 3px 0;
+//       }
+//     }
+//   }
+// }
 
 .task-twisty {
   display: block;
@@ -152,3 +413,129 @@
   }
 }
 
+.task-details {
+  > .caption {
+    @include flex-container($align: stretch, $justify: space-between);
+
+    background-color: $dark-blue;
+    border-left: 7px solid transparent;
+    clear: left;
+    color: $white;
+    margin-bottom: 20px;
+
+    &.prioritize {
+      border-left: 7px solid $prioritized;
+    }
+
+    > .title {
+      @include flex($align: center);
+      padding: 10px;
+
+      span.label {
+        display: block;
+      }
+
+      span.title {
+        color: $white;
+        display: block;
+        font-size: 1.2em;
+        margin-top: 5px;
+        text-transform: none;
+      }
+    }
+
+    > .controls {
+      @include flex($align: stretch);
+
+      background-color: lighten($dark-blue, 10%);
+      border-left: 3px solid $mid-blue;
+      border-radius: 0;
+      padding: 14px;
+
+      // ToDo:
+      // move to .tasks-btn-close default definition
+      .tasks-btn-close {
+        background: none;
+        background-image: none;
+        border: none;
+        float: none;
+        margin-right: 0;
+        padding: 0;
+      }
+
+      // ToDo: use dedicated class
+      i {
+        color: darken($light-blue, 25%);
+        transition: color 0.5s ease;
+        font-size: 2.5em;
+        cursor: pointer;
+
+        &:hover {
+          color: $white;
+        }
+
+        &.closed {
+          color: $light-green;
+          cursor: default;
+
+          &:hover{
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+
+  > .content {
+    @include flex-container($align: flex-start);
+
+    border-bottom: 3px solid #eee;
+    margin-bottom: 20px;
+    padding: 0 10px;
+
+    > .meta {
+      @include flex-container($align: flex-start, $direction: column);
+      @include flex();
+
+      margin-top: 20px;
+      width: 25%;
+    }
+
+    > .description {
+      @include flex();
+      width: 75%;
+
+      article {
+        padding: 0 0 5px;
+      }
+    }
+  }
+}
+
+.task-meta-entry {
+  @include flex-container($align: center);
+  @include flex();
+
+  background-color: $white;
+  padding-bottom: 12px;
+
+  > i {
+    color:$grey;
+    font-size: 1.5em;
+    margin-right: 3px;
+    text-align: center;
+    width: 25px;
+  }
+
+  > div span {
+    font-size:1.2em;
+
+    &.title {
+      display: block;
+      color: $grey;
+      font-size: 0.8em;
+      margin: 0 3px 0 0;
+      text-transform: uppercase;
+    }
+  }
+}

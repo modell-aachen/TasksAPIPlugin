@@ -13,6 +13,7 @@
 
     return this.each(function () {
       var $this = $(this);
+      $this[0].tasksPanel = new TasksPanel($this);
 
       var id = $this.attr('id');
       var json = $this.children('.settings').text();
@@ -665,37 +666,8 @@
 
   var taskMouseEnter = function(evt) {
     var $task = $(this);
-    // if (hoveredTask) {
-    //   $('body > .controls').detach().appendTo($(hoveredTask).children('.task-controls'));
-    // }
-
     hoveredTask = $task;
-    // var $ctrl = $task.children('.task-controls').children('div')
-    //   .detach()
-    //   .appendTo('body');
-
-    // var offset = $task.offset();
-    // var left = offset.left + $task.outerWidth() - Math.min($ctrl.outerWidth(), 80);
-    // var top = offset.top;
-
-    // $ctrl
-    //   .css('position','absolute')
-    //   .css('left', left).css('top', top);
   };
-
-  // var taskMouseLeave = function(evt) {
-  //   var $node = $(evt.toElement || evt.relatedTarget);
-  //   var isCtrl = $node.hasClass('controls') ||
-  //                 $node.parent().hasClass('controls') ||
-  //                 $node.parent().parent().hasClass('controls');
-  //   if ( isCtrl ) {
-  //     return;
-  //   }
-
-  //   var $cnt = $(hoveredTask).children('.task-controls');
-  //   $('body').children('.controls').detach().appendTo($cnt);
-  //   // hoveredTask = undefined;
-  // };
 
   var resetControls = function() {
     var $ctrl = $(this).parent();
@@ -772,7 +744,14 @@
                   if ($next.hasClass('task-children-container')) {
                       $next.remove();
                   }
-                  swal('Erledigt!', 'Protokollpunkt wurde als geschlossen markiert.', 'success');
+                  swal({
+                    type: 'success',
+                    title: 'Erledigt!',
+                    text: 'Protokollpunkt wurde als geschlossen markiert.',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    showCancelButton: false
+                  });
 
               }).always($.unblockUI);
 
@@ -812,7 +791,11 @@
       .on('mouseenter', taskMouseEnter)
       // .on('mouseleave', taskMouseLeave)
       .on('click', '.expander', toggleTaskExpand)
-      .on('click', toggleTaskDetails);
+      // .on('click', toggleTaskDetails);
+      .on('click', function() {
+        var $tracker = $(this).closest('.tasktracker');
+        $tracker[0].tasksPanel.viewTask($(this));
+      });
 
     $('.table-task-actions .btn-close').on('click', closeTask);
     $('.table-task-actions .btn-details').on('click', toggleTaskDetails);
