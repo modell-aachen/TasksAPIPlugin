@@ -7,31 +7,87 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::editor::new"}%%{
-}%<div class="task-editor">
-  <div class="editor">%{
-}%%RENDERFOREDIT{
+}%<div class="task-details">
+%RENDERFOREDIT{
   form="%taskeditor_form%"
-  header=""
-  footer=""
   hidden="(Created|Author|Parent|TopicType|Context)"
-  fields="Created,Author,Parent,TopicType,Context,Title,Description,Type,DueDate,AssignedTo"
-  format="<div id=\"Input$name\" class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%<hr>%TWISTY{showlink="%MAKETEXT{"Reminders and notifications"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%%{
-}%%RENDERFOREDIT{
+  include="(Created|Author|Parent|TopicType|Context)"
+}%
+  <div class="caption">
+    <div class="title">
+%RENDERFOREDIT{
   form="%taskeditor_form%"
-  fields="Prioritize,Reminder,Informees"
+  fields="Type"
   header=""
   footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%%{
-}%</div>
-  <div class="actions">
-    <div>
-      <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
-      <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
+}%
+    <span class="title">
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Title"
+  header=""
+  footer=""
+}%
+    </span>
   </div>
-</div>
-</div>%TMPL:END%
+  </div>
+  <div class="content">
+    <div class="meta">
+      <div class="task-meta-entry">
+        <i class="fa fa-calendar-plus-o"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Created"}%</span>
+          <span>%DATE%</span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-user"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Author"}%</span>
+          <span>%WIKINAME%</span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-angle-double-right"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Assigned to"}%</span>
+          <span>
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="AssignedTo"
+  format="$edit"
+  header=""
+  footer=""
+}%
+          </span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-calendar"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Due date"}%</span>
+          <span>
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="DueDate"
+  format="$edit"
+  header=""
+  footer=""
+}%
+          </span>
+        </div>
+      </div>
+</div>%{
+}%%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Description"
+  format="<div class=\"description $name\"><span class=\"title\">$xlatedescription$mandatory</span><div>$edit</div></div>"
+}%
+    <div class="clear"></div>
+  </div>
+</div>%{
+}%%TMPL:END%
+
 
 %TMPL:DEF{"tasksapi::editor::edit"}%%{
 }%<div class="task-details">
@@ -112,52 +168,6 @@
 }%
     <div class="clear"></div>
   </div>
-</div>%{
-}%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::editor::edit::6022"}%%{
-}%<div class="task-editor">
-<div class="editor">
-%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  hidden="(Created|Author|Parent|TopicType|Context)"
-  include="(Created|Author|Parent|TopicType|Context)"
-}%%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  fields="Title,Description"
-  header=""
-  footer=""
-  format="<div  class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%{
-}%%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  fields="Type,Status,DueDate,AssignedTo"
-  header=""
-  footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%<br />%{
-}%%IF{"'%taskeditor_allowupload%'='1'" then="$percntTMPL:P{\"tasksapi::editor::upload\"}$percnt"}%%{
-}%<hr>%TWISTY{showlink="%MAKETEXT{"Reminders and notifications"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
-%RENDERFOREDIT{
-  form="%taskeditor_form%"
-  fields="Prioritize,Reminder,Informees"
-  header=""
-  footer=""
-  format="<div class=\"$name editor-block\"><label><span>$xlatedescription$mandatory</span>$edit</label></div>"
-}%%ENDTWISTY%<hr>%TWISTY{showlink="%MAKETEXT{"Add comment"}%" hidelink="%MAKETEXT{"Hide"}%" start="hide" linkclass="task-twisty"}%
-<div class="Comment editor-block">
-  <label>
-    <span>%MAKETEXT{"Add comment"}%</span>
-    <textarea class="foswikiTextarea ma-taskeditor-cke" name="comment" cols="50" rows="4"></textarea>
-  </label>
-</div>%ENDTWISTY%
-</div>
-<div class="actions">
-  <div>
-    <a href="#" class="tasks-btn tasks-btn-save">%MAKETEXT{"Save"}%</a>
-    <a href="#" class="tasks-btn tasks-btn-cancel">%MAKETEXT{"Cancel"}%</a>
-  </div>
-</div>
 </div>%{
 }%%TMPL:END%
 
@@ -361,7 +371,7 @@
   </td>
   <td class="ampel">
 %IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%'}%</td>
-  <td class="table-task-actions">%TMPL:P{"tasksapi::task::controls::right"}%</td>
+  <td class="close">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
 
