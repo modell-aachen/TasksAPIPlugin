@@ -385,8 +385,14 @@ sub update {
         unshift @comment, 'comment';
     }
 
-    # Find existing changesets to determine new ID
-    if (@changes || @comment) {
+    # just update the comment if a changeset id is given
+    if ( $data{cid} ) {
+        my $cid = delete $data{cid};
+        my $set = $meta->get('TASKCHANGESET', $cid);
+        $set->{comment} = pop(@comment);
+        $meta->putKeyed('TASKCHANGESET', $set);
+    } elsif (@changes || @comment) {
+        # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
         my $newid = @changesets + 1;
         $meta->putKeyed('TASKCHANGESET', {
