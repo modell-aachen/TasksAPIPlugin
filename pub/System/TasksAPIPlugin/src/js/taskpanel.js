@@ -67,6 +67,7 @@ TasksPanel = function(tasktracker) {
 
     self.panel.off('click', '.tasks-btn-close');
     self.panel.off('click', '.task-changeset-edit');
+    self.panel.off('keydown', '.task-changeset-comment');
   };
 
   var attachHandler = function() {
@@ -94,14 +95,31 @@ TasksPanel = function(tasktracker) {
       }
     });
 
+    self.panel.on('keydown', '.task-changeset-comment', function(evt) {
+      if ( evt.keyCode === 27 || evt.which === 27 ) {
+        onCancel();
+        return false;
+      }
+
+      if ( !evt.ctrlKey ) {
+        return;
+      }
+
+      if ( evt.keyCode === 83 || evt.which === 83 ) {
+        onSave();
+        return false;
+      }
+    });
+
     self.panel.on('click', '.task-changeset-edit', function() {
       if ( self.isChangesetEdit ) {
         return;
       }
 
       var $comment = $(this).closest('.task-changeset').find('.task-changeset-comment');
-      $comment.data('saved_comment', $comment.text());
+      $comment.data('saved_comment', $comment.html());
       $comment.attr('contenteditable', true);
+      $comment.focus();
       self.isChangesetEdit = true;
       setButtons('edit');
       self.panel.find('.task-changeset-edit').fadeOut(150);
@@ -124,11 +142,11 @@ TasksPanel = function(tasktracker) {
       }, function(confirmed) {
         if (confirmed) {
 console.log('ToDo');
-          // var data = hoveredTask.data('task_data');
-          // var payload = {
-          //   id: data.id,
-          //   Status: 'closed'
-          // };
+
+          var payload = {
+            id: self.currentTask.data('id'),
+            Status: 'closed'
+          };
 
           // $.blockUI();
           // $.taskapi.update(payload).fail(error).done(function(response) {
@@ -187,10 +205,16 @@ console.log('ToDo');
   };
 
   var cancelEdit = function() {
-    releaseTopic({ id: self.currentTask.data('id') });
+    if ( !self.isCreate ) {
+      releaseTopic({ id: self.currentTask.data('id') });
+    }
+
     if ( self.savedStates.details !== null && self.savedStates.parent !== null ) {
       self.savedStates.parent.fadeOut(200, function() {
-        self.savedStates.parent.empty();
+        if ( !self.isCreate ) {
+          self.savedStates.parent.empty();
+        }
+
         self.savedStates.details.appendTo(self.savedStates.parent);
 
         // set by a previous call to fadeOut
@@ -207,13 +231,15 @@ console.log('ToDo');
 
     self.isEdit = false;
     self.isView = true;
-    setButtons('view');
+    self.isCreate = false;
+
     killCKE();
+    setButtons('view');
   };
 
   var handleSaveTask = function() {
     var task = readEditor(self.panel);
-    task.id = self.currentTask.data('task_data').id;
+    task.id = self.isCreate ? null : self.currentTask.data('task_data').id;
     var opts = self.tracker.data('tasktracker_options');
 
     // missing value for mandatory field
@@ -241,7 +267,7 @@ console.log('ToDo');
 
     blockUI();
     task._depth = opts._depth > 0 ? opts._depth : 0;
-    if ( self.isNewTask ) {
+    if ( self.isCreate ) {
       task.Context = self.tracker.data('tasktracker_options').context;
       if ( !task.Status ) {
         task.Status = 'open';
@@ -250,27 +276,19 @@ console.log('ToDo');
       $.taskapi.create( task ).fail( error ).always( unblockUI ).done( function( response ) {
         task.id = response.id;
         var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, task );
-
-        // ToDo. show newly created task
-        // closeEditor.call(1);
-        // toggleDetails();
-        // def.resolve('save', response.data);
-
+        self.trigger( afterSave, response.data );
         cancelEdit();
       });
-
     } else {
       $.taskapi.update( task ).fail( error ).done( function( response ) {
         var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, task, response.data );
+        self.trigger( afterSave, response.data );
 
         var $task = $(createTaskElement(response.data));
         var $container = $task.children('.task-fullview-container');
         var $details = $container.find('> .task-fullview .task-details:first-child');
-        $details.detach();
-
         self.currentTask = $task;
+        $details.detach();
         self.savedStates.details = $details;
         cancelEdit();
       }).always( unblockUI );
@@ -457,12 +475,9 @@ console.log('ToDo');
     return false;
   };
 
-  var onEdit = function() {
-    if ( self.isUpload ) {
-      toggleUpload();
-    }
+  var onCreate = function() {
+    self.isCreate = true;
 
-    var task = self.currentTask.data('task_data');
     var opts = {};
     var topts = self.tracker.data('tasktracker_options');
     for(var p in topts ) {
@@ -471,7 +486,7 @@ console.log('ToDo');
       }
     }
 
-    opts.id = self.currentTask.data('id');
+    opts.id = '';
     opts.trackerId = self.tracker.attr('id');
     opts.autoassign = topts.autoassign;
     opts._depth = task.depth;
@@ -485,12 +500,9 @@ console.log('ToDo');
       self.isView = false;
       setButtons('edit');
 
-      var $ed = $(response.editor).css('display', 'none');
-      self.savedStates.details = self.panel.find('.task-details');
-      self.savedStates.parent = self.savedStates.details.parent();
-
       // fill the editor
       // (missing data or at least reformat it; e.g. epoch to time string conversion)
+      var $ed = $(response.editor).css('display', 'none');
       writeEditor($ed, task);
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
@@ -533,6 +545,97 @@ console.log('ToDo');
         self.savedStates.parent.append($ed);
         $ed.fadeIn(150);
       });
+    }).fail( error ).always( unblockUI );
+  };
+
+  var onEdit = function() {
+    if ( self.isUpload ) {
+      toggleUpload();
+    }
+
+    var task = self.isCreate ? null : self.currentTask.data('task_data');
+    var opts = {};
+    var topts = self.tracker.data('tasktracker_options');
+    for(var p in topts ) {
+      if ( /string|number|boolean/.test( typeof topts[p] ) ) {
+        opts[p] = topts[p];
+      }
+    }
+
+    opts.id = self.isCreate ? '' : task.id;
+    opts.trackerId = self.tracker.attr('id');
+    opts.autoassign = topts.autoassign;
+    opts._depth = self.isCreate ? topts.depth : task.depth;
+
+    blockUI();
+    leaseTopic(opts).done(function(response) {
+      updateHead( response.scripts );
+      updateHead( response.styles );
+
+      self.isEdit = true;
+      self.isView = false;
+      setButtons('edit');
+
+      var $ed = $(response.editor).css('display', 'none');
+      self.savedStates.details = self.panel.find('.task-details');
+      self.savedStates.parent = self.savedStates.details.parent();
+
+      if ( !self.isCreate ) {
+        // fill the editor
+        // (missing data or at least reformat it; e.g. epoch to time string conversion)
+        writeEditor($ed, task);
+      }
+
+      if ( topts.autoassign && topts.autoassignTarget ) {
+        var $type = $ed.find('select[name="Type"]');
+        var $target = $ed.find('input[name="' + topts.autoassignTarget + '"]');
+
+        var autoassign = topts.autoassign.split(',');
+        var assign = {};
+        var assignees = [];
+        _.each( topts.autoassign.split(','), function(a) {
+          var arr = a.split('=');
+          assign[arr[0]] = arr[1];
+          assignees.push(arr[1]);
+        });
+
+        var setAssignee = function() {
+          var $self = $(this);
+          var val = $self.val();
+          var assignTo = assign[val];
+          if ( assignTo ) {
+            $target.closest('.' + topts.autoassignTarget).css('display', 'none');
+            setTimeout(function() {
+              $target.trigger('Clear');
+              $target.trigger('AddValue', assignTo);
+            }, 100);
+          } else {
+            $target.closest('.' + topts.autoassignTarget).css('display', 'block');
+            var tval = $target.val();
+            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
+              $target.trigger('Clear');
+            }
+          }
+        };
+
+        $type.on('change', setAssignee);
+        setAssignee.call($type);
+      }
+
+      if ( self.isCreate ) {
+        var $content = $('<div class="content"></div>');
+        $content.append($ed);
+        $content.appendTo(self.panel);
+        toggleOverlay(true);
+        $content.addClass('slide-in');
+        $ed.fadeIn(150);
+      } else {
+        self.savedStates.details.fadeOut(150, function() {
+          self.savedStates.details.detach();
+          self.savedStates.parent.append($ed);
+          $ed.fadeIn(150);
+        });
+      }
     }).fail( error ).always( unblockUI );
 
     return false;
@@ -694,6 +797,7 @@ console.log('ToDo');
   };
 
   var initReadmore = function($content) {
+    $content = $content || self.panel.find('.content.slide-in');
     var $article = $content.find('.task-details > .content > .description article');
     $article.readmore('destroy');
     $article.readmore({
@@ -839,9 +943,14 @@ console.log('ToDo');
   var closeOverlay = function() {
     self.isView = false;
     var $current = self.panel.children('.content.slide-in');
-    var $view = $current.children('.task-fullview').detach();
-    $view.appendTo(self.currentTask.children('.task-fullview-container'));
-    self.currentTask.removeClass('highlight');
+    if ( !self.isCreate ) {
+      var $view = $current.children('.task-fullview').detach();
+      $view.appendTo(self.currentTask.children('.task-fullview-container'));
+      self.currentTask.removeClass('highlight');
+    } else {
+      $current.empty();
+    }
+
     self.currentTask = null;
     toggleOverlay(false, true);
   };
@@ -876,12 +985,6 @@ console.log('ToDo');
     }
   };
 
-
-
-
-
-
-
   this.close = function() {
     if ( self.isUpload ) {
       toggleUpload();
@@ -895,7 +998,10 @@ console.log('ToDo');
   };
 
   this.createTask = function(parent) {
-    // todo
+    // self.isView = true;
+    self.isCreate = true;
+    self.currentTask = null;
+    onEdit();
   };
 
   this.editTask = function($task) {
