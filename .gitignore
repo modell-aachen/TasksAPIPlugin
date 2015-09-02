@@ -1,6 +1,4 @@
 /bower_components/*
 /node_modules/*
-/pub/System/TasksAPIPlugin/js/._*
-/pub/System/TasksAPIPlugin/css/._*
-/pub/System/TasksAPIPlugin/fonts/._*
-/pub/System/TasksAPIPlugin/._*
+/pub/System/TasksAPIPlugin/js
+/pub/System/TasksAPIPlugin/css
