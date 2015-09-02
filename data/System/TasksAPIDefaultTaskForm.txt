@@ -1,14 +1,14 @@
 | *Name* | *Type* | *Size* | *Values* | *Tooltip message* | *Attributes* |
-| TopicType | text | 50 | task | | M H |
-| Context | text | 50 | | | M H |
-| Parent | text | 50 | | | H |
-| Author | text | 50 | %WIKINAME% | Task "creator" | M H |
-| Created | date | 50 | %GMTIME{"$epoch"}% | Time of creation | M H |
+| TopicType | text | 10 | task | | M H |
+| Context | text | 10 | | | M H |
+| Parent | text | 10 | | | H |
+| Author | text | 10 | %WIKINAME% | Task "creator" | M H |
+| Created | date | 10 | %GMTIME{"$epoch"}% | Time of creation | M H |
 | Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | |
-| Title | text | 50 | | Title | M |
-| AssignedTo | textboxlist | 50 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
+| Title | text | 95 | | Title | M |
+| AssignedTo | textboxlist | 10 mustMatch limit="1" | %USERAUTOCOMPLETE% | Assigned to | M |
 | Description | taskeditor | 50 | | Description | |
-| DueDate | date | 50 | | Due | |
+| DueDate | date | 10 | | Due | |
 | Informees | textboxlist | 50 mustMatch | %USERAUTOCOMPLETE% | Persons to notify on changes | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | High priority | |
