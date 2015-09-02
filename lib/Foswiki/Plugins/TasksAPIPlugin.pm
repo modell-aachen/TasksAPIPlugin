@@ -603,6 +603,7 @@ sub restLease {
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
+        Foswiki::Func::setPreferencesValue('taskeditor_task', $r->{id});
     } else {
         $meta = Foswiki::Meta->new($session, $web, $topic);
         my $f = $r->{form} || 'System.TasksAPIDefaultTaskForm';
@@ -934,7 +935,7 @@ sub _renderChangeset {
 
     my $fields = $task->form->getFields;
     my $fsep = $params->{fieldseparator} || '';
-    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header"><span class="task-changeset-id">#$id</span>%MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul>$comment</div>';
+    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header">%IF{"\'%TASKINFO{field="Status"}%\'=\'closed\'" else="<a href=\"#\" class=\"task-changeset-edit\" title=\"$percntMAKETEXT{\"Edit comment\"}$percnt\"><i class=\"fa fa-pencil\"></i></a>"}%<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$comment</div></div>';
     my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
     my $faddformat = $params->{fieldaddformat} || '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
     my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
