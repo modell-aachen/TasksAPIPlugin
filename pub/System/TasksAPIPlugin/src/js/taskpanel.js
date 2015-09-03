@@ -446,7 +446,7 @@ console.log('ToDo');
       deferred.resolve();
     } else if ( self.isChangesetEdit ) {
       var $comment = self.panel.find('[contenteditable="true"]');
-      $comment.text($comment.data('saved_comment'));
+      $comment.html($comment.data('saved_comment'));
       $comment.data('saved_comment', '');
       $comment.removeAttr('contenteditable');
       setButtons('view');
