@@ -812,11 +812,13 @@ console.log('ToDo');
     });
   };
 
+  var isAnimating = false;
   var animateTaskChange = function(direction) {
-    if ( !self.currentTask || self.isEdit ) {
+    if ( isAnimating || !self.currentTask || self.isEdit ) {
       return;
     }
 
+    isAnimating = true;
     var nextTask = getSibling(self.currentTask, direction);
 
     // scroll highlighted task into view...
@@ -855,6 +857,7 @@ console.log('ToDo');
       $this.remove();
       $view.appendTo(self.currentTask.children('.task-fullview-container'));
       self.currentTask = nextTask;
+      isAnimating = false;
     });
 
     // destroy and re-init readmore.js
