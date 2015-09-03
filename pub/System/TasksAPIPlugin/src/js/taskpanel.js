@@ -221,6 +221,7 @@ console.log('ToDo');
         self.savedStates.details.attr('style', '');
         setTimeout(function() {
           initReadmore(self.savedStates.parent);
+          sliceChanges(self.savedStates.parent.find('.changes'));
         }, 50);
 
         self.savedStates.parent.fadeIn(200, function() {
@@ -328,6 +329,7 @@ console.log('ToDo');
         $view.fadeIn(200);
         setTimeout(function() {
           initReadmore($view);
+          sliceChanges($view.find('.changes'));
         }, 50);
       });
 
@@ -383,6 +385,7 @@ console.log('ToDo');
         $view.fadeIn(200);
         setTimeout(function() {
           initReadmore($view);
+          sliceChanges($view.find('.changes'));
         }, 50);
       });
     });
@@ -856,6 +859,8 @@ console.log('ToDo');
 
     // destroy and re-init readmore.js
     initReadmore($content);
+    sliceChanges($content.find('.changes'));
+
 
     // switch contents
     if ( direction === 'next' ) {
@@ -982,6 +987,21 @@ console.log('ToDo');
     } else {
       $body.css('overflow', 'hidden');
       attachHandler();
+      sliceChanges( $('.task-overlay .changes') );
+    }
+  };
+
+  var sliceChanges = function($container) {
+    var $changes = $container.children(".task-changeset");
+    if ( $changes.length > 3 && $container.children('.more-changes').length === 0 ) {
+      $changes.slice(3).hide();
+      var $a = $('<a class="more-changes" href="#">Weitere Änderungen anzeigen</a>');
+      $a.insertAfter(".task-overlay .task-changeset:last");
+      $a.on("click", function() {
+        $changes.fadeIn("slow");
+        $(this).remove();
+        return false;
+      });
     }
   };
 
