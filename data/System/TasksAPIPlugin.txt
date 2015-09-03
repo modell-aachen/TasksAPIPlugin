@@ -128,6 +128,58 @@ automatically.
 Set to =true= (or =1= or =on=) to signal that this task can have child tasks
 nested within it.
 
+---++++ =TASKCFG_TASK_TYPE=
+
+A unique string used as identifier for tasks created with the given form.
+See section _Task Flavors_ for further details.
+
+---++++ =TASKCFG_TASK_TEMPLATE_FILE=
+
+A webtopic containing (all) templates used to render tasks created with the given form.
+See section _Task Flavors_ for further details.
+
+---+++ Task Flavors
+
+In some circumstances you might want to include tasks, which are created in different contexts,
+in a single grid. For instance, render all tasks asigned to yourself into your
+personal page by specifying a macro like the following one:
+<verbatim>
+%TASKSGRID{
+  context="any"
+  query="...""
+}%
+</verbatim>
+That macro will render a grid containing all tasks matching the given query.
+Unfortunately, in most cases tasks created in different contexts differ from each
+other not only by their context but by the given form as well as the used template.
+
+To render a grid which includes tasks from more than context *and* which renders
+each task with its own template within that grid, specify the grid's =flavor=
+parameter:
+<verbatim>
+%TASKSGRID{
+  context="any"
+  query="...""
+  flavor="perspage"
+}%
+</verbatim>
+Foswiki will detect that parameter and appends it to the task template name.
+Let's say a task's template is called =tasksapi::task= and you specified a
+flavor called =perspage= then Foswiki will try to expand the template called
+=tasksapi::task_perspage=. Obviously this leads to another problem. All templates
+needs to be placed in a single =templatefile=. To work around that limitation
+you may (or let's say should) set =TASKCFG_TASK_TYPE= and =TASKCFG_TASK_TEMPLATE_FILE=
+within your task's form. While =TASKCFG_TASK_TYPE= is used to cache template
+expands, =TASKCFG_TASK_TEMPLATE_FILE= specifies the webtopic of the according
+template definition.
+
+To avoid hard coded web names within your form you may also use the variable
+=$formweb= which expands to the web containing the task form. E.g.:
+<verbatim>
+   * Set TASKCFG_TASK_TYPE = minute
+   * Set TASKCFG_TASK_TEMPLATE_FILE = $formweb.TaskTemplates
+</verbatim>
+
 ---+++ Access permissions
 
 Tasks don't use Foswiki's permissions system because usually the majority of
