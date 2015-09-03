@@ -284,13 +284,6 @@ console.log('ToDo');
       $.taskapi.update( task ).fail( error ).done( function( response ) {
         var afterSave = $.Event( 'afterSave' );
         self.trigger( afterSave, response.data );
-
-        var $task = $(createTaskElement(response.data));
-        var $container = $task.children('.task-fullview-container');
-        var $details = $container.find('> .task-fullview .task-details:first-child');
-        self.currentTask = $task;
-        $details.detach();
-        self.savedStates.details = $details;
         cancelEdit();
       }).always( unblockUI );
     }
@@ -317,39 +310,11 @@ console.log('ToDo');
 
     blockUI();
     $.taskapi.update(payload).fail(error).done(function(response) {
-      var $task = $(createTaskElement(response.data));
-      self.currentTask = $task;
-
-      var $container = $task.children('.task-fullview-container');
-      var $view = $container.children('.task-fullview').detach();
-      $view.css('display', 'none');
-      var $old = self.panel.find('.task-fullview:first-child');
-      $old.fadeOut(200, function() {
-        $old.replaceWith($view);
-        $view.fadeIn(200);
-        setTimeout(function() {
-          initReadmore($view);
-          sliceChanges($view.find('.changes'));
-        }, 50);
-      });
+      var afterSave = $.Event( 'afterSave' );
+      self.trigger( afterSave, response.data );
 
       // cancel/exit "comment composer"
       onCancel();
-
-      // ToDo. re-apply
-      // var expanded = $task.is('.expanded');
-      // $task.replaceWith( $newTask );
-
-      // if (expanded) {
-      //   $newTask.next().remove();
-      //   var $expander = $newTask.children('.expander');
-      //   toggleTaskExpand.call($expander);
-      // }
-
-      // $tracker.panel.replace.call(self, $newTask);
-      // if ( close ) {
-      //   $('.tasks-btn-next:visible').trigger('click');
-      // }
     }).always(unblockUI);
 
     return false;
@@ -850,34 +815,42 @@ console.log('ToDo');
     $nextView.detach().appendTo($content);
     $content.appendTo(self.panel);
 
-    var $current = self.panel.children('.content.slide-in');
-    $current.on('transitionend', function() {
-      var $this = $(this);
-      var $view = $this.children('.task-fullview').detach();
-      $this.remove();
-      $view.appendTo(self.currentTask.children('.task-fullview-container'));
-      self.currentTask = nextTask;
-      isAnimating = false;
-    });
-
     // destroy and re-init readmore.js
     initReadmore($content);
     sliceChanges($content.find('.changes'));
 
-
+    var $current = self.panel.children('.content.slide-in');
     // switch contents
     if ( direction === 'next' ) {
       $current.addClass('slide-out');
-      setTimeout(function() {
-        $content.addClass('slide-in');
-      }, 10);
     } else {
       $current.removeClass('slide-in');
-      setTimeout(function() {
-        $content.addClass('slide-in').removeClass('slide-out');
-      }, 10);
     }
 
+    var delayed = function() {
+      var $this = $(this);
+      setTimeout(function() {
+        var $view = $this.children('.task-fullview').detach();
+        $this.remove();
+        $view.appendTo(self.currentTask.children('.task-fullview-container'));
+        self.currentTask = nextTask;
+        isAnimating = false;
+
+        if ( direction === 'next' ) {
+          $content.addClass('slide-in');
+        } else {
+          $content.addClass('slide-in').removeClass('slide-out');
+        }
+      }, 400);
+
+      if ( direction === 'next' ) {
+        $content.addClass('slide-in');
+      } else {
+        $content.addClass('slide-in').removeClass('slide-out');
+      }
+    };
+
+    delayed.call($current);
     return nextTask;
   };
 
@@ -1053,6 +1026,7 @@ console.log('ToDo');
 
     toggleOverlay(true);
     initReadmore($content);
+    sliceChanges($content.find('.changes'));
     $content.addClass('slide-in');
   };
 
