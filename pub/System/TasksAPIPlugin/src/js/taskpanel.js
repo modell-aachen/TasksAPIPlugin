@@ -335,36 +335,10 @@ console.log('ToDo');
 
     blockUI();
     $.taskapi.update(payload).fail(error).always(unblockUI).done(function(response) {
-      var $task = $(createTaskElement(response.data));
-      self.currentTask = $task;
-
-      // reset ui/buttons, switch back to "view mode"
+      var afterSave = $.Event( 'afterSave' );
+      self.trigger( afterSave, response.data );
       onCancel();
-
-      var $container = $task.children('.task-fullview-container');
-      var $view = $container.children('.task-fullview').detach();
-      $view.css('display', 'none');
-      var $old = self.panel.find('.task-fullview:first-child');
-      $old.fadeOut(200, function() {
-        $old.replaceWith($view);
-        $view.fadeIn(200);
-        setTimeout(function() {
-          initReadmore($view);
-          sliceChanges($view.find('.changes'));
-        }, 50);
-      });
     });
-  };
-
-  var initTaskElement = function($task, task) {
-    $task.data('id', task.id);
-    $task.data('task_data', task);
-  };
-
-  var createTaskElement = function(task) {
-    var $task = $(task.html);
-    initTaskElement($task, task);
-    return $task;
   };
 
   var onSave = function() {
