@@ -86,6 +86,7 @@ my $renderRecurse = 0;
 our $currentTask;
 our $currentOptions;
 our $currentExpands;
+our $storedTemplates;
 
 my $aclCache = {};
 my $caclCache = {};
@@ -762,7 +763,30 @@ sub _renderTask {
         $Foswiki::Plugins::SESSION->leaveContext('task_showexpander');
     }
 
-    $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
+    my $flavor = {};
+    if ( $currentOptions->{flavor} && $taskTemplate ne 'tasksapi::empty' ) {
+        $flavor->{name} = $currentOptions->{flavor};
+        $flavor->{type} = $task->getPref('TASK_TYPE');
+        $flavor->{file} = $task->getPref('TASK_TEMPLATE_FILE');
+    }
+
+    if ( $flavor->{name} ) {
+        my $tmpl = $taskTemplate . '_' . $flavor->{name};
+
+        my $type = $flavor->{type} || '_default';
+        if ( $storedTemplates->{$type} ) {
+            $task = $meta->expandMacros($storedTemplates->{$type});
+        } else {
+            Foswiki::Func::loadTemplate($flavor->{file}) if $flavor->{file};
+            $storedTemplates->{$type} = Foswiki::Func::expandTemplate($tmpl);
+            $task = $meta->expandMacros($storedTemplates->{$type});
+        }
+    } else {
+        $storedTemplates->{_default} = Foswiki::Func::expandTemplate($taskTemplate)
+            unless $storedTemplates->{_default};
+        $task = $meta->expandMacros($storedTemplates->{_default});
+    }
+
     if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
     } elsif ($canChange) {
@@ -838,6 +862,7 @@ sub tagGrid {
     my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
+    my $flavor = $params->{flavor} || $params->{flavour} || '';
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -869,6 +894,7 @@ sub tagGrid {
         sortable => $sortable,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
+        flavor => $flavor,
         editortemplate => $editorTemplate,
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
@@ -942,7 +968,8 @@ sub tagGrid {
     );
     local $currentExpands = \%tmplAttrs;
     for my $task (@{$res->{tasks}}) {
-        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task', $task);
+        my $tmpl = $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
+        $task = _renderTask($topicObject, $tmpl, $task);
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
@@ -1165,6 +1192,7 @@ sub tagInfo {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
         if ($meta eq 'json') {
+            local $storedTemplates;
             my $json = to_json(_enrich_data($task, 'tasksapi::empty'));
             $json =~ s/&/&amp;/g;
             $json =~ s/</&lt;/g;
