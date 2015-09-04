@@ -789,7 +789,7 @@ sub tagGrid {
         form => $form,
         id => $id,
         depth => int($depth),
-        pagesize => $pageSize || 0,
+        pagesize => int($pageSize || 0),
         paging => $paging,
         infinite => $paging ? 0 : $infinite,
         offset => $offset,
@@ -920,12 +920,31 @@ SCRIPT
         my $next= $page + 1;
         my $pagination = '';
         my $state = '&state=' . $req->param('state') if $req->param('state');
-        $pagination .= "<a class=\"prev\" href=\"/$web/$topic?page=$prev$state\">%MAKETEXT{\"prev\"}%</a>" if $page gt 1;
-        $pagination .= "<a class=\"next\" href=\"/$web/$topic?page=$next$state\">%MAKETEXT{\"next\"}%</a>" if ( $pageSize && $pageSize*$page <= $res->{total});
-        $pagination = "<div class=\"tasks-pagination\"><div>$pagination</div></div>";
-        $grid =~ s#</div></noautolink>$#$pagination</div></noautolink>#;
+
+        my $cur = 1;
+        my $pages = '';
+        for (my $c = $settings{totalsize}/$settings{pagesize}; $c > 0; $c--) {
+            my $cls = $page == $cur ? 'active' : '';
+            $pages .= "<li class=\"$cls\"><a href=\"/$web/$topic?page=$cur$state\">$cur</a></li>";
+            $cur++;
+        }
+
+        my $prevState = $page gt 1 ? '' : 'disabled';
+        my $nextState = ($pageSize && $pageSize*$page <= $res->{total}) ? '' : 'disabled';
+        my $pager = <<PAGER;
+<nav class="pagination-container">
+  <ul class="pagination">
+    <li class="$prevState"><a href="/$web/$topic?page=$prev$state" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
+    $pages
+    <li class="$nextState"><a href="/$web/$topic?page=$next$state" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
+  </ul>
+</nav>
+PAGER
+
+        $grid =~ s#</div></noautolink>$#$pager</div></noautolink>#;
         return $grid
     }
+
 
     return $grid;
 }
@@ -1102,6 +1121,7 @@ sub tagInfo {
             $json =~ s/</&lt;/g;
             $json =~ s/>/&gt;/g;
             $json =~ s/"/&quot;/g;
+            $json =~ s/%/&#37;/g;
             return $json;
         }
 
