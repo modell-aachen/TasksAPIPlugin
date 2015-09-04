@@ -178,7 +178,7 @@
         var $existing = opts.container.children('.task').filter( function() {
           return $(this).data('id') === $task.data('id');
         });
-        console.log($existing);
+
         if ( $existing.length > 0 ) {
           $existing.replaceWith($task);
         } else {
