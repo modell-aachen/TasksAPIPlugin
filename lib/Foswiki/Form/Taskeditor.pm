@@ -21,6 +21,7 @@ sub new {
 sub renderForEdit {
   my ( $this, $topicObject, $value ) = @_;
 
+  $value =~ s/%/&#37;/g;
   my $cgi = CGI::textarea(
     -class   => $this->cssClasses('foswikiTextarea ma-taskeditor-cke'),
     -cols    => $this->{cols},
