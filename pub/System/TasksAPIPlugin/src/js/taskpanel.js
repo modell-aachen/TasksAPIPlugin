@@ -676,6 +676,15 @@ console.log('ToDo');
   var toggleUpload = function() {
     self.isUpload = !self.isUpload;
     self.upload.toggleClass('active');
+    if ( self.upload.hasClass('active') ) {
+      var id = self.currentTask.data('id');
+      var arr =id.split('.');
+      if ( arr.length === 2 ) {
+        var $dnd = self.upload.find('.qw-dnd-upload');
+        $dnd.attr('data-web', arr[0]);
+        $dnd.attr('data-topic', arr[1]);
+      }
+    }
     return false;
   };
 
