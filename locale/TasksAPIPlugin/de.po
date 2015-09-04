@@ -234,3 +234,9 @@ msgstr "Zum Hochladen 'Speichern' drücken"
 
 msgid "Add attachments"
 msgstr "Anhänge hinzufügen"
+
+msgid "Next page"
+msgstr "Nächste Seite"
+
+msgid "Previous page"
+msgstr "Vorherige Seite"
