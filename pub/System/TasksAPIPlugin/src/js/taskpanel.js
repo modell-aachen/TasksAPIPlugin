@@ -268,25 +268,28 @@ console.log('ToDo');
 
     blockUI();
     task._depth = opts._depth > 0 ? opts._depth : 0;
+    var apiFunc = 'update';
+
     if ( self.isCreate ) {
+      apiFunc = 'create';
       task.Context = self.tracker.data('tasktracker_options').context;
       if ( !task.Status ) {
         task.Status = 'open';
       }
+    }
 
-      $.taskapi.create( task ).fail( error ).always( unblockUI ).done( function( response ) {
-        task.id = response.id;
+    $.taskapi[apiFunc]( task )
+      .always( unblockUI )
+      .fail( error )
+      .done( function( response ) {
+        if ( self.isCreate ) {
+          task.id = response.id;
+        }
+
         var afterSave = $.Event( 'afterSave' );
         self.trigger( afterSave, response.data );
         cancelEdit();
       });
-    } else {
-      $.taskapi.update( task ).fail( error ).done( function( response ) {
-        var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, response.data );
-        cancelEdit();
-      }).always( unblockUI );
-    }
 
     return false;
   };
@@ -993,15 +996,26 @@ console.log('ToDo');
     self.currentTask = $task;
     self.currentTask.addClass('highlight');
 
+    var isEdit = self.isEdit || self.isCreate || self.isComment || self.isChangesetEdit;
+    if ( isEdit && self.panel.children().length > 0 ) {
+      self.panel.children().each(function() {
+        var $child = $(this);
+        $child.addClass('slide-out');
+        setTimeout(function() {
+          $child.remove();
+        }, 400);
+      });
+    }
+
     var $content = $('<div class="content"></div>');
     var $view = $task.children('.task-fullview-container').children('.task-fullview');
     $view.detach().appendTo($content);
     $content.appendTo(self.panel);
+    $content.addClass('slide-in');
 
     toggleOverlay(true);
     initReadmore($content);
     sliceChanges($content.find('.changes'));
-    $content.addClass('slide-in');
   };
 
   this.next = function() {
