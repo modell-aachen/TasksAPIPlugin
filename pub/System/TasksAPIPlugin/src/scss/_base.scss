@@ -171,3 +171,27 @@
     }
   }
 }
+
+ul.task-attachments {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+
+  .attachment {
+    list-style: none;
+    padding: 2px 4px;
+
+    &:nth-child(odd) {
+      background-color: #ccc;
+    }
+
+    .meta {
+      display: inline-block;
+      float: right;
+
+      span, a {
+        margin: 0 6px;
+      }
+    }
+  }
+}

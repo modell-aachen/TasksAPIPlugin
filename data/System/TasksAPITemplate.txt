@@ -293,8 +293,25 @@
 
 
 
-
 %TMPL:DEF{"tasksapi::viewer::attachments"}%%{
+}%%TAB{"%MAKETEXT{Attachments}%"}%
+<div class="task-details">
+  <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
+    <div class="title">%{
+      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
+    </div>%{
+    }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<div class=\"controls\"><a href=\"#\" class=\"tasks-btn tasks-btn-close\"><i class=\"fa fa-square-o\"></i></a></div>"}%%{
+    }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='closed'" then="<div class=\"controls\"><i class=\"closed fa fa-check-square\"></i></div>"}%%{
+  }%</div>
+  <div class="content">%TASKINFO{type="attachments"}%</div>
+</div>%{
+}%%ENDTAB%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::viewer::attachments_old"}%%{
 }%%ATTACHMENTLIST{
   topic="%TASKINFO{meta="id"}%"
   header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments foswikiAttachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th></tr></thead><tbody>"

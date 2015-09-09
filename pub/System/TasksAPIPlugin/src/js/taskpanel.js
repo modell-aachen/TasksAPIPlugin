@@ -735,6 +735,7 @@ console.log('ToDo');
         var $dnd = self.upload.find('.qw-dnd-upload');
         $dnd.attr('data-web', arr[0]);
         $dnd.attr('data-topic', arr[1]);
+        $dnd.data('tasksgrid', 1);
       }
     }
     return false;

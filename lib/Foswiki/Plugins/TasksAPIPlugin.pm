@@ -1125,6 +1125,18 @@ PAGER
     return $grid;
 }
 
+sub _renderAttachment {
+    my ($meta, $task, $attachment, $params) = @_;
+
+    my $author = Foswiki::Func::getWikiName($attachment->{author});
+    my $format = $params->{format} || '<li class="attachment"><span class="name">$name</span><div class="meta"><span>$author</span><span>$size</span><a href="#"><i class="fa fa-download"></i></a></div></li>';
+
+    $format =~ s#\$name#$attachment->{name}#g;
+    $format =~ s#\$size#$attachment->{size}->{human}#g;
+    $format =~ s#\$author#$author#g;
+    $format;
+}
+
 sub _renderChangeset {
     my ($meta, $task, $cset, $params) = @_;
 
@@ -1284,6 +1296,16 @@ sub tagInfo {
         }
 
         return _renderChangeset($topicObject, $task, $cset, $params);
+    }
+    if ($params->{type} && $params->{type} eq 'attachments') {
+        my @out;
+        foreach my $attachment (sort { $a->{name} cmp $b->{name} } $task->{meta}->find('FILEATTACHMENT')) {
+            my $out = _renderAttachment($topicObject, $task, $attachment, $params);
+            push @out, $out if $out ne '';
+        }
+        my $header = $params->{header} || '<ul class="task-attachments">';
+        my $footer = $params->{footer} || '</ul>';
+        return $header . join($params->{separator} || "\n", @out) . $footer;
     }
     if ($params->{type} && $params->{type} eq 'changesets') {
         my @out;
