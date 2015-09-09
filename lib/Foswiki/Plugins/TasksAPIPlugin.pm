@@ -87,6 +87,7 @@ my $renderRecurse = 0;
 our $currentTask;
 our $currentOptions;
 our $currentExpands;
+our $storedTemplates;
 
 my $aclCache = {};
 my $caclCache = {};
@@ -105,6 +106,9 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
+
+    my %attachopts = (authenticate => 1, validate => 0, http_allow => 'POST');
+    Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %attachopts );
 
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
@@ -420,6 +424,68 @@ sub _cacheContextACL {
     $caclCache->{$_[0]} = $_[1];
 }
 
+sub restAttach {
+    my ( $session, $subject, $verb, $response ) = @_;
+    my $q = Foswiki::Func::getCgiQuery();
+
+    my $name = $q->param('filename');
+    my $path = $q->param('filepath');
+
+    my $id = $q->param('id') || '';
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, "$id");
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+    unless ($task->checkACL('change')) {
+        $response->header(-status => 403);
+        return to_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to attach files to this task'
+        });
+    }
+
+    eval {
+        my $q = Foswiki::Func::getCgiQuery();
+        my $stream = $q->upload('filepath');
+        unless ($stream) {
+            $response->header(-status => 405);
+            return to_json({
+                status => 'error',
+                code => 'server_error',
+                msg => 'Attachment has zero size'
+            });
+        }
+
+        my @stats = stat $stream;
+        my $origName = $name;
+        ($name, $origName) = Foswiki::Sandbox::sanitizeAttachmentName($name);
+        $task->{meta}->attach(
+            filedate => $stats[9],
+            filepath => $path,
+            filesize => $stats[7],
+            name => $name,
+            nohandlers => 1,
+            stream => $stream
+        );
+
+        close($stream);
+    };
+    if ($@) {
+        Foswiki::Func::writeWarning( $@ );
+        $response->header(-status => 500);
+        return to_json({
+            status => 'error',
+            'code' => 'server_error',
+            msg => "Server error: $@"
+        });
+    }
+
+    my ($date, $user, $rev, $comment) = Foswiki::Func::getRevisionInfo($web, $topic, 0, $name);
+    return to_json({
+        status => 'ok',
+        filedate => $date,
+        filerev => $rev
+    });
+}
 
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
@@ -686,6 +752,10 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_form', $f);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
 
+        if ($r->{parent}) {
+            Foswiki::Func::setPreferencesValue('taskeditor_parentid', $r->{parent});
+        }
+
         my $m = Foswiki::Meta->new($session, Foswiki::Func::normalizeWebTopicName(undef, $f));
         if ($m) {
             $edtpl = $m->getPreference('TASKCFG_EDITOR_TEMPLATE');
@@ -769,7 +839,30 @@ sub _renderTask {
         $Foswiki::Plugins::SESSION->leaveContext('task_showexpander');
     }
 
-    $task = $meta->expandMacros(Foswiki::Func::expandTemplate($taskTemplate));
+    my $flavor = {};
+    if ( $currentOptions->{flavor} && $taskTemplate ne 'tasksapi::empty' ) {
+        $flavor->{name} = $currentOptions->{flavor};
+        $flavor->{type} = $task->getPref('TASK_TYPE');
+        $flavor->{file} = $task->getPref('TASK_TEMPLATE_FILE');
+    }
+
+    if ( $flavor->{name} ) {
+        my $tmpl = $taskTemplate . '_' . $flavor->{name};
+
+        my $type = $flavor->{type} || '_default';
+        if ( $storedTemplates->{$type} ) {
+            $task = $meta->expandMacros($storedTemplates->{$type});
+        } else {
+            Foswiki::Func::loadTemplate($flavor->{file}) if $flavor->{file};
+            $storedTemplates->{$type} = Foswiki::Func::expandTemplate($tmpl);
+            $task = $meta->expandMacros($storedTemplates->{$type});
+        }
+    } else {
+        $storedTemplates->{_default} = Foswiki::Func::expandTemplate($taskTemplate)
+            unless $storedTemplates->{_default};
+        $task = $meta->expandMacros($storedTemplates->{_default});
+    }
+
     if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
     } elsif ($canChange) {
@@ -845,6 +938,7 @@ sub tagGrid {
     my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
+    my $flavor = $params->{flavor} || $params->{flavour} || '';
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -876,6 +970,7 @@ sub tagGrid {
         sortable => $sortable,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
+        flavor => $flavor,
         editortemplate => $editorTemplate,
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
@@ -953,7 +1048,8 @@ sub tagGrid {
     );
     local $currentExpands = \%tmplAttrs;
     for my $task (@{$res->{tasks}}) {
-        $task = _renderTask($topicObject, $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task', $task);
+        my $tmpl = $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
+        $task = _renderTask($topicObject, $tmpl, $task);
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
@@ -1213,6 +1309,7 @@ sub tagInfo {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
         if ($meta eq 'json') {
+            local $storedTemplates;
             my $json = to_json(_enrich_data($task, 'tasksapi::empty'));
             $json =~ s/&/&amp;/g;
             $json =~ s/</&lt;/g;
