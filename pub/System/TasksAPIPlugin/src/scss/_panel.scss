@@ -270,21 +270,21 @@
   padding: 10px;
   transition: background-color .3s ease-in-out;
 
+  i {
+    color: #aaa;
+  }
+
+  i:hover {
+    color: #39526d;
+  }
+
   > .task-changeset-header {
     border-bottom: dashed 1px #b1b1b1;
     font-weight: bold;
     padding-bottom: 5px;
 
-    > .task-changeset-edit {
+    > .task-changeset-add {
       float: right;
-
-      i {
-        color: #aaa;
-      }
-
-      &:hover i {
-        color: #39526d;
-      }
     }
 
     > .task-changeset-id {
@@ -296,14 +296,30 @@
     background-color: inherit;
     height: auto;
     min-height: 1px;
-    padding: 3px;
     transition: background-color .3s ease-in-out,
                 min-height .3s ease-in-out;
 
-    &[contenteditable="true"] {
-      background-color: $white;
-      border-radius: 4px;
-      min-height: 40px;
+    > .icons {
+      display: inline-block;
+      float: right;
+
+      i {
+        margin: 3px 6px 0 0;
+      }
+    }
+
+    > .comment {
+      &:not(:empty) {
+        background-color: lighten(#e9eff5, 5%);
+        border-radius: 5px;
+        padding: 5px;
+      }
+
+      &[contenteditable="true"] {
+        background-color: $white;
+        border-radius: 4px;
+        min-height: 40px;
+      }
     }
   }
 

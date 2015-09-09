@@ -547,6 +547,19 @@
   };
 
   $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+    var $tracker = $('.tasktracker').tasksGrid();
+
+    setTimeout(function() {
+      if ( window.location.search ) {
+        var match = window.location.search.match(/id=([^&;]+)(;|&|$|.*)/);
+        if ( match && match.length > 1 ) {
+          var id = match[1];
+          var $task = $tracker.find('.task:visible');
+          if ( $task.data('id') === id ) {
+            $tracker[0].tasksPanel.viewTask($task);
+          }
+        }
+      }
+    }, 300);
   });
 }(jQuery, window._, window.document, window));

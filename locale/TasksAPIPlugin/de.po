@@ -240,3 +240,12 @@ msgstr "Nächste Seite"
 
 msgid "Previous page"
 msgstr "Vorherige Seite"
+
+msgid "Add comment"
+msgstr "Kommentar hinzufügen"
+
+msgid "Edit comment"
+msgstr "Kommentar bearbeiten"
+
+msgid "Remove comment"
+msgstr "Kommentar entfernen"

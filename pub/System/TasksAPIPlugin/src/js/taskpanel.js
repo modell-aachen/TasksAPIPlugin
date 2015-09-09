@@ -66,7 +66,8 @@ TasksPanel = function(tasktracker) {
     self.overlay.off('click');
 
     self.panel.off('click', '.tasks-btn-close');
-    self.panel.off('click', '.task-changeset-edit');
+    self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
+    self.panel.off('click', '.task-changeset-remove');
     self.panel.off('keydown', '.task-changeset-comment');
   };
 
@@ -111,18 +112,48 @@ TasksPanel = function(tasktracker) {
       }
     });
 
-    self.panel.on('click', '.task-changeset-edit', function() {
+    self.panel.on('click', '.task-changeset-add, .task-changeset-edit', function() {
       if ( self.isChangesetEdit ) {
         return;
       }
 
-      var $comment = $(this).closest('.task-changeset').find('.task-changeset-comment');
-      $comment.data('saved_comment', $comment.html());
+      var $container = $(this).closest('.task-changeset').find('.task-changeset-comment');
+      var $comment = $container.children('.comment');
+      $container.data('saved_comment', $comment.html());
       $comment.attr('contenteditable', true);
       $comment.focus();
       self.isChangesetEdit = true;
       setButtons('edit');
-      self.panel.find('.task-changeset-edit').fadeOut(150);
+      self.panel.find('.task-changeset-add').fadeOut(150);
+      self.panel.find('.task-changeset .icons').fadeOut(150);
+
+      return false;
+    });
+
+    self.panel.on('click', '.task-changeset-remove', function() {
+      var $container = $(this).closest('.task-changeset').find('.task-changeset-comment');
+      var $comment = $container.children('.comment');
+
+      swal({
+        title: 'Sind Sie sicher?',
+        text: 'Möchten Sie diesen Kommentar entfernen?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6CCE86',
+        cancelButtonColor: '#BDBDBD',
+        confirmButtonText: 'Ja',
+        cancelButtonText: 'Nein',
+        closeOnConfirm: false
+      }, function(confirmed) {
+        if (confirmed) {
+          $comment.html('');
+          $comment.attr('contenteditable', true);
+          self.isChangesetEdit = true;
+          onSave();
+        }
+
+        return confirmed;
+      });
 
       return false;
     });
@@ -325,12 +356,13 @@ console.log('ToDo');
 
   var handleSaveChangeset = function() {
     var $set = self.panel.find('[contenteditable="true"]');
-    $set.data('saved_comment', '');
+    var $container = $set.parent();
+    $container.data('saved_comment', '');
 
     var payload = {
       id: self.currentTask.data('id'),
-      cid: $set.data('id'),
-      comment: $set.html()
+      cid: $container.data('id'),
+      comment: $set.html() || ''
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
@@ -391,12 +423,15 @@ console.log('ToDo');
       deferred.resolve();
     } else if ( self.isChangesetEdit ) {
       var $comment = self.panel.find('[contenteditable="true"]');
-      $comment.html($comment.data('saved_comment'));
-      $comment.data('saved_comment', '');
+      var $container = $comment.parent();
+
+      $comment.html($container.data('saved_comment'));
+      $container.data('saved_comment', '');
       $comment.removeAttr('contenteditable');
       setButtons('view');
       self.isChangesetEdit = false;
-      self.panel.find('.task-changeset-edit').fadeIn(150);
+      self.panel.find('.task-changeset-add').fadeIn(150);
+      self.panel.find('.task-changeset .icons').fadeIn(150);
       deferred.resolve();
     }
 

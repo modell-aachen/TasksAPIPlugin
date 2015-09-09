@@ -390,11 +390,17 @@ sub update {
         my $cid = delete $data{cid};
         my $set = $meta->get('TASKCHANGESET', $cid);
         $set->{comment} = pop(@comment);
-        $meta->putKeyed('TASKCHANGESET', $set);
+
+        if ( $set->{changes} eq '[]' ) {
+            $meta->remove('TASKCHANGESET', $cid);
+        } else {
+            $meta->putKeyed('TASKCHANGESET', $set);
+        }
     } elsif (@changes || @comment) {
         # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
-        my $newid = @changesets + 1;
+        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        my $newid = 1 + pop(@ids);
         $meta->putKeyed('TASKCHANGESET', {
             name => $newid,
             actor => Foswiki::Func::getWikiName(),

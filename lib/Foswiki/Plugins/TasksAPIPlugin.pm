@@ -15,6 +15,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use Encode;
+use Error qw( :try );
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 
@@ -112,6 +113,13 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'lease', \&restLease );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease );
 
+    if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
+      require Foswiki::Plugins::SolrPlugin;
+      Foswiki::Plugins::SolrPlugin::registerIndexTopicHandler(
+        \&indexTopicHandler
+      );
+    }
+
     return 1;
 }
 
@@ -122,6 +130,74 @@ sub finishPlugin {
     $caclCache = {};
     $gridCounter = 1;
     $renderRecurse = 0;
+}
+
+sub indexTopicHandler {
+    my ($indexer, $doc, $web, $topic, $meta, $text) = @_;
+
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+    return unless $task;
+
+    my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
+    my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
+    my $webtopic = "$web.$topic";
+    $webtopic =~ s/\//./g;
+
+    my $date = '1970-01-01T00:00:00Z';
+    my $created = _formatSolrDate($task->{fields}{Created});
+    if ( $task->{fields}{DueDate} || $task->{fields}{Due} ) {
+        $date = _formatSolrDate($task->{fields}{DueDate} || $task->{fields}{Due});
+    }
+
+    my $ctxurl = Foswiki::Func::getViewUrl(
+        Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context})
+    );
+    my $taskurl = "$ctxurl?id=" . $task->{id} . "&state=" . ($task->{fields}{Status} || 'open');
+
+    my $theDoc = $indexer->newDocument();
+    $theDoc->add_fields(
+      'id' => $task->{id} . '@' . $task->{fields}{Context},
+      'type' => 'actiontwo',
+      'collection' => $collection,
+      'language' => $language,
+      'web' => $web,
+      'topic' => $topic,
+      'webtopic' => $webtopic,
+      'createdate' => $created,
+      'date' => $created,
+      'title' => $task->{fields}{Title},
+      'text' => $task->{fields}{Description},
+      'url' => $taskurl,
+      'author' => $task->{fields}{Author},
+      'contributor' => $task->{fields}{Author},
+      'state' => $task->{fields}{Status},
+      'container_id' => $task->{fields}{Context},
+      'container_url' => $ctxurl,
+      'container_title' => $task->{fields}{Title},
+      'task_created_dt' => $created,
+      'task_due_dt' => $date,
+      'task_state_s' => $task->{fields}{Status},
+    );
+
+    try {
+      $indexer->add($theDoc);
+    } catch Error::Simple with {
+      my $e = shift;
+      $indexer->log("ERROR: ".$e->{-text});
+    };
+}
+
+sub _formatSolrDate {
+    my $date = shift;
+    if ( $date =~ /^\d+$/ ) {
+        $date = Foswiki::Time::formatTime($date, 'iso', 'gmtime');
+    } elsif ( $date =~ /^\d+\s\w+\s\d+$/ ) {
+        my $epoch = Foswiki::Time::parseTime($date, $Foswiki::cfg{DisplayTimeValues});
+        $date = Foswiki::Time::formatTime($epoch, 'iso', 'gmtime');
+    }
+
+    return $date;
 }
 
 sub db {
@@ -386,7 +462,7 @@ sub restUpdate {
     if ( $lease ) {
         my $cuid = $lease->{user};
         my $ccuid = $session->{user};
-        
+
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
         }
@@ -849,6 +925,10 @@ sub tagGrid {
         $query->{Status} = 'open' if !exists $query->{Status};
     }
 
+    if ( $req->param('id') ) {
+        $query->{id} = $req->param('id');
+    }
+
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
@@ -954,7 +1034,24 @@ sub _renderChangeset {
 
     my $fields = $task->form->getFields;
     my $fsep = $params->{fieldseparator} || '';
-    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header">%IF{"\'%TASKINFO{field="Status"}%\'=\'closed\'" else="<a href=\"#\" class=\"task-changeset-edit\" title=\"$percntMAKETEXT{\"Edit comment\"}$percnt\"><i class=\"fa fa-pencil\"></i></a>"}%<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$comment</div></div>';
+
+    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>';
+    my $addComment = '';
+    my $editComment = '';
+    unless ( $params->{format} ) {
+        my $actor = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($cset->{actor}));
+        my $curUser = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($Foswiki::Plugins::SESSION->{user}));
+        if ( $actor eq $curUser )  {
+            $addComment  = '%IF{"\'%TASKINFO{field="Status"}%\'!=\'closed\' AND \'$encComment\'=\'\'" then="<a href=\"#\" class=\"task-changeset-add\" title=\"$percntMAKETEXT{\"Add comment\"}$percnt\"><i class=\"fa fa-plus\"></i></a>"}%';
+            my $encComment = Foswiki::urlEncode($cset->{comment});
+            $addComment =~ s#\$encComment#$encComment#g;
+            $editComment = '<div class="icons"><a href="#" class="task-changeset-edit" title="%MAKETEXT{"Edit comment"}%"><i class="fa fa-pencil"></i></a><a href="#" class="task-changeset-remove" title="%MAKETEXT{"Remove comment"}%"><i class="fa fa-times"></i></a></div>' if $cset->{comment};
+        }
+
+        $format =~ s#\$addComment#$addComment#g;
+        $format =~ s#\$icons#$editComment#g;
+    }
+
     my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
     my $faddformat = $params->{fieldaddformat} || '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
     my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
