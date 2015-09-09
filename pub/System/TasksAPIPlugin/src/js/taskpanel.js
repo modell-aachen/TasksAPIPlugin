@@ -64,6 +64,7 @@ TasksPanel = function(tasktracker) {
     self.buttons.save.off('click');
     self.buttons.upload.off('click');
     self.overlay.off('click');
+    self.overlay.off('queueEmpty');
 
     self.panel.off('click', '.tasks-btn-close');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
@@ -128,6 +129,22 @@ TasksPanel = function(tasktracker) {
       self.panel.find('.task-changeset .icons').fadeOut(150);
 
       return false;
+    });
+
+    self.overlay.on('queueEmpty', function() {
+      var $dnd = $(this);
+      blockUI();
+      $.taskapi
+        .get({query:{id: self.currentTask.data('id')}})
+        .always(unblockUI)
+        .fail(error)
+        .done(function(response) {
+          if ( response.status === 'ok' && response.data && response.data.length > 0 ) {
+            var afterSave = $.Event( 'afterSave' );
+            self.trigger( afterSave, response.data[0] );
+            onCancel();
+          }
+        });
     });
 
     self.panel.on('click', '.task-changeset-remove', function() {
