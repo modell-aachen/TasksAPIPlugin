@@ -1139,19 +1139,6 @@ sub _renderAttachment {
     $format =~ s#\$date#$date#g;
     $format =~ s#\$taskstopic#$taskstopic#g;
     $format;
-
-
-# <div class="btn-group open">
-#   <a class="btn btn-default" href="#"><i class="fa fa-download fa-fw"></i> User</a>
-#   <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-#     <span class="fa fa-caret-down"></span></a>
-#   <ul class="dropdown-menu">
-#     <li><a href="#"><i class="fa fa-pencil fa-fw"></i> %MAKETEXT{"Edit"}%</a></li>
-#     <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> %MAKETEXT{"Delete"}%</a></li>
-#     <li class="divider"></li>
-#     <li><a href="#"><i class="i"></i> %MAKETEXT{"Manage"}%</a></li>
-#   </ul>
-# </div>
 }
 
 sub _renderChangeset {
