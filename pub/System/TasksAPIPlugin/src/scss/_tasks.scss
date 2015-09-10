@@ -174,43 +174,39 @@
     width: 55px;
   }
 
-   &.table-task-actions {
-    width: 50px;
+  &.close {
+    background-color: transparent;
+    border-left: 4px solid transparent;
+    cursor: pointer;
     text-align: center;
-    transition: background-color 0.5s ease;
-    transition: border 0.5s ease;
-   
+    transition: background-color .3s ease-in-out,
+                border-color .3s ease-in-out;
+    width: 32px;
+
+    &:hover {
+      background-color: darken($light-blue, 25%);
+      border-left: 4px solid darken($light-blue, 35%);
+
+      i:not(.closed) {
+        color: $white;
+      }
+    }
+
+    i {
+      color: #777;
+      font-size: 1.6em;
+      transition: color .3s ease-in-out;
+
+      &.closed {
+        color: #6CCE86;
+        cursor: default;
+      }
+    }
   }
 
   &.controls {
     width: 0;
     max-width: 0;
-  }
-}
-
-.tasks > .task:hover .table-task-actions {
-  background-color: darken($light-blue, 25%);
-  border-left: 4px solid darken($light-blue, 35%) !important;
-
-  & i {
-    color:#fff;
-
-    &:hover {
-      font-weight:bold;
-    }
-  }
-}
-
-// meyer todo.
-.table-task-actions i {
-  color: darken($light-blue, 25%);
-  transition: color 0.5s ease;
-  font-size: 1.6em;
-  cursor: pointer;
-
-  &.closed {
-    color: #6CCE86;
-    cursor: default;
   }
 }
 

@@ -218,7 +218,8 @@
     background-size: 12px;
     border-radius: $global-radius;
     color: $blue;
-    padding: 5px 15px 5px 25px;
+    font-size: 12px;
+    padding: 2px 15px 2px 23px;
   }
 }
 
@@ -556,7 +557,7 @@
   }
 
   > div span {
-    font-size:1.2em;
+    font-size: 1em;
 
     &.title {
       display: block;
@@ -565,5 +566,36 @@
       margin: 0 3px 0 0;
       text-transform: uppercase;
     }
+  }
+}
+
+.task-overlay {
+  input.foswikiInputField,
+  select.foswikiSelect {
+    background-color: $light-blue;
+    border: 1px solid darken($light-blue, 5%);
+    border-radius: 3px;
+    color: $dark-blue;
+    outline: none;
+    padding: 3px;
+    transition: background-color .2s ease-in-out;
+
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    appearance: none;
+
+    &:focus {
+      border-color: darken($light-blue, 5%);
+      background-color: darken($light-blue, 5%);
+    }
+
+    &:hover {
+      background-color: darken($light-blue, 2%);
+    }
+  }
+
+  select.foswikiSelect {
+    cursor: pointer;
   }
 }
