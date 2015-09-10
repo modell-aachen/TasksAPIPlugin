@@ -329,6 +329,10 @@
   };
 
   var closeTask = function() {
+    if ( $(this).find('i.closed').length > 0 ) {
+      return false;
+    }
+
     var $task = $(this).closest('.task');
     var $next = $task.next();
 
