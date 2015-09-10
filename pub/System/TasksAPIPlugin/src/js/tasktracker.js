@@ -24,8 +24,6 @@
         self.tasksPanel.createTask();
       });
 
-    // $('.tasks .task').on('click', '.expander', toggleTaskExpand);
-
       var id = $this.attr('id');
       var json = $this.children('.settings').text();
       var opts = $.parseJSON( json );
@@ -107,63 +105,6 @@
         $(window).on( 'scroll', infiniteScroll);
       }
 
-      // var handleCreate = function() {
-      //   var qopts = {};
-      //   $.extend(qopts, opts);
-      //   qopts.trackerId = opts.id;
-      //   qopts._depth = parseInt(opts.depth);
-
-      //   delete qopts.id;
-      //   delete qopts.depth;
-
-      //   var $self = $(this);
-      //   var parent;
-      //   if ( $self.hasClass('task-new') ) {
-      //     qopts.$table = $self.parent();
-      //     var $parent = $self.closest('.task-children-container').prev();
-      //     parent = $parent.data('id');
-      //     if ( parent ) {
-      //       qopts.parent = parent;
-
-      //       var pdata = $parent.data('task_data');
-      //       qopts._depth = parseInt(pdata.depth) - 1;
-      //     }
-      //   } else {
-      //     qopts.$table = $(opts.container);
-      //   }
-
-      //   var beforeCreate = $.Event( 'beforeCreate' );
-      //   $this.trigger( beforeCreate, qopts );
-      //   if( beforeCreate.isDefaultPrevented() ) {
-      //     return false;
-      //   }
-
-      //   delete qopts.$table;
-      //   delete qopts.container;
-
-      //   var evtResult = beforeCreate.result;
-      //   if ( _.isObject( evtResult ) ) {
-      //     delete evtResult.id;
-      //     delete evtResult.trackerId;
-      //     $.extend(qopts, evtResult);
-      //   }
-
-      //   // $editor.taskEditor(qopts).done(function(type, data) {
-      //   //   if (type === 'save') {
-      //   //     var pid = data.fields.Parent.value;
-      //   //     if (!parent) {
-      //   //       opts.container.append(createTaskElement(data));
-      //   //     } else {
-      //   //       $(createTaskElement(data)).insertBefore($self);
-      //   //     }
-
-      //   //     applyLevels();
-      //   //   }
-      //   // }).fail(error);
-
-      //   return false;
-      // };
-
       var handleStatusFilterChanged = function() {
         var $select = $(this);
         var url = getViewUrl() + '?state=' + $select.val();
@@ -184,13 +125,6 @@
         } else {
           opts.container.append($task);
         }
-
-        // ToDo. re-implement
-        // if (!parent) {
-          // opts.container.append($task);
-        // } else {
-        //   $task.insertBefore($self);
-        // }
 
         applyLevels();
 
@@ -378,55 +312,6 @@
     return $task;
   };
 
-  // var editClicked = function() {
-  //   if (!hoveredTask) {
-  //     return false;
-  //   }
-
-  //   var $task = hoveredTask;
-  //   var edopts = {};
-
-  //   var $tracker = $task.closest('.tasktracker');
-  //   var opts = $tracker.data('tasktracker_options');
-  //   for(var p in opts ) {
-  //     if ( /string|number|boolean/.test( typeof opts[p] ) ) {
-  //       edopts[p] = opts[p];
-  //     }
-  //   }
-
-  //   var task = unescapeHTML( $.parseJSON($task.children('.task-data-container').text()) );
-  //   edopts.autoassign = opts.autoassign;
-  //   edopts.data = task;
-  //   edopts.id = task.id;
-  //   edopts.lang = opts.lang;
-  //   edopts._depth = task.depth;
-  //   edopts.trackerId = $tracker.attr('id');
-
-  //   var expanded = $task.is('.expanded');
-  //   $task.addClass('highlight');
-  //   $('#task-editor').taskEditor(edopts).done(function(type, data) {
-  //     $task.removeClass('highlight');
-  //     if (type === 'save') {
-  //       if (data.fields.Status.value === 'deleted') {
-  //         $task.remove();
-  //       } else {
-  //         var $newTask = $(createTaskElement(data));
-  //         $task.replaceWith( $newTask );
-
-  //         if (expanded) {
-  //           $newTask.next().remove();
-  //           var $expander = $newTask.children('.expander');
-  //           toggleTaskExpand.call($expander);
-  //         }
-  //       }
-
-  //       applyLevels();
-  //     }
-  //   }).fail(function(type, msg) {
-  //     error(msg);
-  //   });
-  // };
-
   var error = function() {
     if ( window.console && console.error ) {
       _.each( [].splice.call(arguments, 0), function( msg ) {
@@ -443,45 +328,19 @@
     }
   };
 
-  // var toggleTaskExpand = function(evt) {
-  //   var $col = $(this);
-  //   var $row = $col.parent();
-  //   $row.toggleClass('expanded');
-
-  //   // update tablesorter to respect child rows
-  //   var $tbl = $col.closest('.tasks-table:not(.children)');
-  //   $tbl.trigger('update');
-
-  //   var isExpanded = $row.hasClass('expanded');
-  //   if ( isExpanded ) {
-  //     var span = $row.children('td').length;
-  //     var $children = $row.children('.task-children').children('table.children').detach();
-  //     var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
-  //     $new.children('td').append($children);
-  //     $new.insertAfter($row);
-  //   } else {
-  //     var $next = $row.next();
-  //     var $table = $next.children('td').children('table.children').detach();
-  //     $table.appendTo($row.children('.task-children'));
-  //     $next.remove();
-  //   }
-
-  //   applyLevels();
-  // };
-
   var closeTask = function() {
     var $task = $(this).closest('.task');
     var $next = $task.next();
 
     swal({
-      title: 'Sind Sie sicher?',
-      text: 'Möchten Sie diesen Protokollpunkt schließen?',
+      title: jsi18n.get('tasksapi', 'Are you sure?'),
+      text: jsi18n.get('tasksapi', 'Do you want to close this entry?'),
       type: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#6CCE86',
       cancelButtonColor: '#BDBDBD',
-      confirmButtonText: 'Ja',
-      cancelButtonText: 'Nein',
+      confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+      cancelButtonText: jsi18n.get('tasksapi', 'No'),
       closeOnConfirm: false
     }, function(confirmed) {
       if (confirmed) {
@@ -499,8 +358,8 @@
 
           swal({
             type: 'success',
-            title: 'Erledigt!',
-            text: 'Protokollpunkt wurde als geschlossen markiert.',
+            title: jsi18n.get('tasksapi', 'Done!'),
+            text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
             timer: 1500,
             showConfirmButton: false,
             showCancelButton: false

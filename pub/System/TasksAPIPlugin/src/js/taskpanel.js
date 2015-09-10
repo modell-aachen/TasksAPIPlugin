@@ -165,14 +165,14 @@ TasksPanel = function(tasktracker) {
       var $comment = $container.children('.comment');
 
       swal({
-        title: 'Sind Sie sicher?',
-        text: 'Möchten Sie diesen Kommentar entfernen?',
+        title: jsi18n.get('tasksapi', 'Are you sure?'),
+        text: jsi18n.get('tasksapi', 'Do you want to remove this comment?'),
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#6CCE86',
         cancelButtonColor: '#BDBDBD',
-        confirmButtonText: 'Ja',
-        cancelButtonText: 'Nein',
+        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+        cancelButtonText: jsi18n.get('tasksapi', 'No'),
         closeOnConfirm: false
       }, function(confirmed) {
         if (confirmed) {
@@ -191,18 +191,18 @@ TasksPanel = function(tasktracker) {
     // ToDo
     self.panel.on('click', '.tasks-btn-close', function() {
       swal({
-        title: 'Sind Sie sicher?',
-        text: 'Möchten Sie diesen Protokollpunkt schließen?',
+        title: jsi18n.get('tasksapi', 'Are you sure?'),
+        text: jsi18n.get('tasksapi', 'Do you want to close this entry?'),
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#6CCE86',
         cancelButtonColor: '#BDBDBD',
-        confirmButtonText: 'Ja',
-        cancelButtonText: 'Nein',
+        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+        cancelButtonText: jsi18n.get('tasksapi', 'No'),
         closeOnConfirm: false
       }, function(confirmed) {
         if (confirmed) {
-console.log('ToDo');
+alert('ToDo');
 
           var payload = {
             id: self.currentTask.data('id'),
@@ -298,10 +298,17 @@ console.log('ToDo');
     task.id = self.isCreate ? null : self.currentTask.data('task_data').id;
     var opts = self.tracker.data('tasktracker_options');
 
-    // missing value for mandatory field
     if ( task.hasError ) {
-      var msg = decodeURIComponent(opts.lang.missingField) + ': ' + task.missingFields;
-      alert(msg);
+      swal({
+        title: jsi18n.get('tasksapi', 'Attention!'),
+        text: jsi18n.get('tasksapi', "You have not filled out the mandatory form field '[_1]'.", task.missingFields),
+        type: 'error',
+        confirmButtonColor: '#6CCE86',
+        showCancelButton: false,
+        confirmButtonText: jsi18n.get('tasksapi', 'OK'),
+        closeOnConfirm: true
+      });
+
       return false;
     }
 
@@ -415,19 +422,17 @@ console.log('ToDo');
   var onCancel = function() {
     var deferred = $.Deferred();
 
-    // ToDo. track changes, ask for confirmation
     if ( self.isEdit ) {
       if ( checkDirty() ) {
-        // ToDo. localization
         swal({
-          title: 'Sind Sie sicher?',
-          text: 'ToDo. meaningful message here',
+          title: jsi18n.get('tasksapi', 'Are you sure?'),
+          text: jsi18n.get('tasksapi', 'Your previous changes will be lost.'),
           type: 'error',
           showCancelButton: true,
           confirmButtonColor: '#6CCE86',
           cancelButtonColor: '#BDBDBD',
-          confirmButtonText: 'Ja',
-          cancelButtonText: 'Nein',
+          confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+          cancelButtonText: jsi18n.get('tasksapi', 'No'),
           closeOnConfirm: true
         }, function(confirmed) {
           if ( confirmed ) {
@@ -707,6 +712,9 @@ console.log('ToDo');
 
       if ( $input.hasClass('foswikiMandatory') && (/^\s*$/.test( val ) || val === null || val === undefined ) ) {
         var fname = $input.parent().find('span').text().replace(/\*/g, '');
+        if ( !fname ) {
+          fname = jsi18n.get('tasksapi', prop) || prop;
+        }
         missingFields.push(fname);
         data.hasError = true;
         return false;
@@ -716,7 +724,7 @@ console.log('ToDo');
     });
 
     if ( data.hasError ) {
-      data.missingFields = missingFields.join(', ');
+      data.missingFields = missingFields;
     }
 
     return data;
@@ -764,7 +772,7 @@ console.log('ToDo');
     ];
 
     swal({
-      text: 'Please wait...',
+      text: jsi18n.get('tasksapi', 'Please wait...'),
       type: null,
       imageUrl: url.join(''),
       imageSize: '220x19',
@@ -818,8 +826,8 @@ console.log('ToDo');
       collapsedHeight: 150,
       speed: 400,
       // ToDo.: template..
-      lessLink: '<a class="readmore_link" href="#">Weniger anzeigen</a>',
-      moreLink: '<a class="readmore_link" href="#">Mehr anzeigen</a>'
+      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
     });
   };
 
@@ -1017,7 +1025,7 @@ console.log('ToDo');
     var $changes = $container.children(".task-changeset");
     if ( $changes.length > 3 && $container.children('.more-changes').length === 0 ) {
       $changes.slice(3).hide();
-      var $a = $('<a class="more-changes" href="#">Weitere Änderungen anzeigen</a>');
+      var $a = $('<a class="more-changes" href="#">' + jsi18n.get('tasksapi', 'Show more changes') + '</a>');
       $a.insertAfter(".task-overlay .task-changeset:last");
       $a.on("click", function() {
         $changes.fadeIn("slow");

@@ -1068,6 +1068,8 @@ sub tagGrid {
     my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
     my $suffix = $debug ? '' : '.min';
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
+    my $lang = $session->i18n->language();
+    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
@@ -1084,6 +1086,10 @@ SCRIPTS
 
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
 <script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
 SCRIPT
 
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
