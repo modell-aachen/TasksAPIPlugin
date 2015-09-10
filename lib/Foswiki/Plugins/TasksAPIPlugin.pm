@@ -1129,12 +1129,29 @@ sub _renderAttachment {
     my ($meta, $task, $attachment, $params) = @_;
 
     my $author = Foswiki::Func::getWikiName($attachment->{author});
-    my $format = $params->{format} || '<li class="attachment"><span class="name">$name</span><div class="meta"><span>$author</span><span>$size</span><a href="#"><i class="fa fa-download"></i></a></div></li>';
-
+    my $taskstopic = $task->{id};
+    my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
+    $taskstopic =~ s/\./\//;
+    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$author</span><span>$date</span></td><td>$name<a href="%PUBURLPATH%/$taskstopic/$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
     $format =~ s#\$name#$attachment->{name}#g;
     $format =~ s#\$size#$attachment->{size}->{human}#g;
     $format =~ s#\$author#$author#g;
+    $format =~ s#\$date#$date#g;
+    $format =~ s#\$taskstopic#$taskstopic#g;
     $format;
+
+
+# <div class="btn-group open">
+#   <a class="btn btn-default" href="#"><i class="fa fa-download fa-fw"></i> User</a>
+#   <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+#     <span class="fa fa-caret-down"></span></a>
+#   <ul class="dropdown-menu">
+#     <li><a href="#"><i class="fa fa-pencil fa-fw"></i> %MAKETEXT{"Edit"}%</a></li>
+#     <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> %MAKETEXT{"Delete"}%</a></li>
+#     <li class="divider"></li>
+#     <li><a href="#"><i class="i"></i> %MAKETEXT{"Manage"}%</a></li>
+#   </ul>
+# </div>
 }
 
 sub _renderChangeset {
@@ -1303,8 +1320,8 @@ sub tagInfo {
             my $out = _renderAttachment($topicObject, $task, $attachment, $params);
             push @out, $out if $out ne '';
         }
-        my $header = $params->{header} || '<ul class="task-attachments">';
-        my $footer = $params->{footer} || '</ul>';
+        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Created"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th></tr></thead></tbody>';
+        my $footer = $params->{footer} || '</tbody></table>';
         return $header . join($params->{separator} || "\n", @out) . $footer;
     }
     if ($params->{type} && $params->{type} eq 'changesets') {

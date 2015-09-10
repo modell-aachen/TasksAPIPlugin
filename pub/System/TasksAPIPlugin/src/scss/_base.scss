@@ -1,5 +1,5 @@
 .tasktracker {
-  border: 1px solid #f0f0f0;
+  // border: 1px solid #f0f0f0;
   overflow: hidden;
   position: relative;
 
@@ -125,14 +125,14 @@
     > span {
       position: relative;
       float: left;
-      padding: 7px 9px;
+      padding: 6px 9px;
       line-height: 100%;
       text-decoration: none;
       color: #337ab7;
       background-color: transparent;
       border: none;
-      border-radius: 10px;
-      margin: 0 3px 0 0;
+      border-radius: 15px;
+      margin: 0 5px 0 0;
     }
   }
 
@@ -172,25 +172,75 @@
   }
 }
 
-ul.task-attachments {
+table.task-attachments {
+  border-collapse: collapse;
   margin: 0;
   padding: 0;
   width: 100%;
 
-  .attachment {
-    list-style: none;
-    padding: 2px 4px;
+  th, td {
+    text-align: left;
+  }
 
-    &:nth-child(odd) {
-      background-color: #ccc;
+  thead th {
+    font-weight: bold;
+    padding: 3px;
+
+    &:first-child,
+    &:last-child {
+      min-width: 24px;
+      max-width: 24px;
+      width: 24px;
     }
 
-    .meta {
-      display: inline-block;
-      float: right;
+    &.created {
+      min-width: 100px;
+      width: 100px;
 
-      span, a {
-        margin: 0 6px;
+      span {
+        color: #777;
+        display:  block;
+        font-size: 11px;
+      }
+    }
+
+    &.size {
+      min-width: 75px;
+      width: 75px;
+    }
+  }
+
+  tbody td {
+    padding: 10px 5px;
+    transition: color .2s ease-in-out;
+    vertical-align: middle;
+
+    &.by span {
+      color: #777;
+      display:  block;
+      font-size: 11px;
+      transition: color .2s ease-in-out;
+    }
+  }
+
+  tbody tr {
+    background-color: $alternate;
+    cursor: pointer;
+    transition: background-color .2s ease-in-out;
+
+    &:nth-child(even) {
+      background-color: $light-blue;
+    }
+
+    &:hover {
+      background-color: darken($light-blue, 10%);
+    }
+
+    &:active {
+      background-color: $dark-blue;
+
+      td, span {
+        color: $white;
       }
     }
   }

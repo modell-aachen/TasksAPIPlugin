@@ -231,9 +231,9 @@
 }%<literal>
   <div class="viewer">
   %TABPANE{class="simple"}%
-  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::viewer::details"}%%ENDTAB%
-  %TMPL:P{"tasksapi::viewer::attachments"}%
-  %ENDTABPANE%
+  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::viewer::details"}%%ENDTAB%%{
+  }%%IF{"'%TASKINFO{meta="AttachCount"}%'='0'" else="$percntTMPL:P{\"tasksapi::viewer::attachments\"}$percnt"}%%{
+  }%%ENDTABPANE%
   </div>
 </literal>%{
 }%%TMPL:END%
@@ -294,8 +294,8 @@
 
 
 %TMPL:DEF{"tasksapi::viewer::attachments"}%%{
-}%%TAB{"%MAKETEXT{Attachments}%"}%
-<div class="task-details">
+}%%TAB{"%MAKETEXT{Attachments}% (%TASKINFO{meta="AttachCount"}%)"}%
+<div class="task-details attachments">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title">%{
       }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
@@ -441,7 +441,7 @@
 }%%TMPL:END%
 %TMPL:DEF{"tasksapi::grid::filter::create"}%%{
 }%<div class="create">
-  <a href="#" class="tasks-btn tasks-btn-create">%MAKETEXT{"Add task"}%</a>
+  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>%MAKETEXT{"Add task"}%</a>
 </div>%{
 }%%TMPL:END%
 

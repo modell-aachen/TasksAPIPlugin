@@ -70,6 +70,7 @@ TasksPanel = function(tasktracker) {
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
     self.panel.off('keydown', '.task-changeset-comment');
+    self.panel.off('click', '.task-attachments tbody tr');
   };
 
   var attachHandler = function() {
@@ -96,6 +97,18 @@ TasksPanel = function(tasktracker) {
         self.close();
       }
     });
+
+    self.panel.on('click', '.task-attachments tbody tr', function(evt) {
+      var $target = $(evt.target || evt. delegateTarget || evt.toElement);
+      if ( $target.is('a.hidden') ) {
+        return false;
+      }
+
+      var href = $(this).find('a.hidden').attr('href');
+      window.open && window.open(href, '_blank');
+      return false;
+    });
+
 
     self.panel.on('keydown', '.task-changeset-comment', function(evt) {
       if ( evt.keyCode === 27 || evt.which === 27 ) {
@@ -213,15 +226,6 @@ console.log('ToDo');
     });
   };
 
-  // destroy any remaining instance of CKEditor
-  var killCKE = function() {
-    if ( CKEDITOR && CKEDITOR.instances ) {
-      for (var p in CKEDITOR.instances) {
-        CKEDITOR.instances[p].destroy();
-      }
-    }
-  };
-
   // sets the buttons bar at the bottom of a panel
   var setButtons = function(name) {
     if ( !/^(edit|view)$/.test(name) ) {
@@ -252,12 +256,12 @@ console.log('ToDo');
     return dirty;
   };
 
-  var cancelEdit = function() {
+  var cancelEdit = function(closeOverlay) {
     if ( !self.isCreate ) {
       releaseTopic({ id: self.currentTask.data('id') });
     }
 
-    if ( self.savedStates.details !== null && self.savedStates.parent !== null ) {
+    if ( self.savedStates.details !== null && self.savedStates.parent !== null && self.savedStates.parent.length > 0 ) {
       self.savedStates.parent.fadeOut(200, function() {
         if ( !self.isCreate ) {
           self.savedStates.parent.empty();
@@ -280,9 +284,12 @@ console.log('ToDo');
 
     self.isEdit = false;
     self.isView = true;
-    self.isCreate = false;
 
-    killCKE();
+    if ( closeOverlay ) {
+      self.close();
+    }
+
+    self.isCreate = false;
     setButtons('view');
   };
 
@@ -424,7 +431,7 @@ console.log('ToDo');
           closeOnConfirm: true
         }, function(confirmed) {
           if ( confirmed ) {
-            cancelEdit();
+            cancelEdit(self.isCreate);
             deferred.resolve();
           }
         });
@@ -574,7 +581,7 @@ console.log('ToDo');
       setButtons('edit');
 
       var $ed = $(response.editor).css('display', 'none');
-      self.savedStates.details = self.panel.find('.task-details');
+      self.savedStates.details = self.panel.find('.task-details:not(.attachments)');
       self.savedStates.parent = self.savedStates.details.parent();
 
       if ( !self.isCreate ) {
@@ -963,7 +970,7 @@ console.log('ToDo');
   var closeOverlay = function() {
     self.isView = false;
     var $current = self.panel.children('.content.slide-in');
-    if ( !self.isCreate ) {
+    if ( !self.isCreate && self.currentTask !== null ) {
       var $view = $current.children('.task-fullview').detach();
       $view.appendTo(self.currentTask.children('.task-fullview-container'));
       self.currentTask.removeClass('highlight');
