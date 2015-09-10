@@ -271,14 +271,12 @@ alert('ToDo');
 
         // set by a previous call to fadeOut
         self.savedStates.details.attr('style', '');
+        self.savedStates.parent.fadeIn(200);
         setTimeout(function() {
           initReadmore(self.savedStates.parent);
           sliceChanges(self.savedStates.parent.find('.changes'));
-        }, 50);
-
-        self.savedStates.parent.fadeIn(200, function() {
           self.savedStates.details = self.savedStates.parent = null;
-        });
+        }, 250);
       });
     }
 
