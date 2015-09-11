@@ -468,6 +468,21 @@ sub restAttach {
         );
 
         close($stream);
+
+        my @changesets = $task->{meta}->find('TASKCHANGESET');
+        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        my $newid = 1 + pop(@ids);
+
+        my @changes = ({type => 'add', name => '_attachment', new => $name});
+        $task->{meta}->putKeyed('TASKCHANGESET', {
+            name => $newid,
+            actor => Foswiki::Func::getWikiName(),
+            at => scalar(time),
+            changes => to_json(\@changes)
+        });
+
+        $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
+        Foswiki::Plugins::TasksAPIPlugin::_index($task);
     };
     if ($@) {
         Foswiki::Func::writeWarning( $@ );
@@ -1209,7 +1224,15 @@ sub _renderChangeset {
         $out =~ s#\$new(\(\))?#$change->{new}#g;
         push @fout, $out;
     }
-    return '' unless @fout || $cset->{comment};
+    if ( $changes->{_attachment}) {
+        my $change = $changes->{_attachment};
+        my $out = $faddformat;
+        $out =~ s#\$title#_translate($meta, "Attachment")#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
+        push @fout, $out;
+    }
+
+    return '' unless ( @fout || $cset->{comment} );
     my $out = $format;
     $out =~ s#\$id#$cset->{name}#g;
     $out =~ s#\$user#$cset->{actor}#g;

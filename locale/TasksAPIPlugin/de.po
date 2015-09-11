@@ -249,3 +249,12 @@ msgstr "Kommentar bearbeiten"
 
 msgid "Remove comment"
 msgstr "Kommentar entfernen"
+
+msgid "Attachment"
+msgstr "Anhang"
+
+msgid "%1 added: %2"
+msgstr "%1 hinzugefügt: %2"
+
+msgid "%1 removed: %2"
+msgstr "%1 entfernt: %2"
