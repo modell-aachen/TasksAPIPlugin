@@ -390,9 +390,10 @@ sub update {
     if ( $data{cid} ) {
         my $cid = delete $data{cid};
         my $set = $meta->get('TASKCHANGESET', $cid);
-        $set->{comment} = pop(@comment);
+        my $cmt = pop(@comment);
+        $set->{comment} = $cmt;
 
-        if ( $set->{changes} eq '[]' ) {
+        if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
             $meta->remove('TASKCHANGESET', $cid);
         } else {
             $meta->putKeyed('TASKCHANGESET', $set);
