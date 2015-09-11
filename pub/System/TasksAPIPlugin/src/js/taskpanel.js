@@ -273,8 +273,9 @@ alert('ToDo');
         self.savedStates.details.attr('style', '');
         self.savedStates.parent.fadeIn(200);
         setTimeout(function() {
-          initReadmore(self.savedStates.parent);
-          sliceChanges(self.savedStates.parent.find('.changes'));
+          var parent = self.savedStates.parent;
+          initReadmore(parent);
+          sliceChanges(parent.find('.changes'));
           self.savedStates.details = self.savedStates.parent = null;
         }, 250);
       });
@@ -824,14 +825,15 @@ alert('ToDo');
   var initReadmore = function($content) {
     $content = $content || self.panel.find('.content.slide-in');
     var $article = $content.find('.task-details > .content > .description article');
-    $article.readmore('destroy');
-    $article.readmore({
-      collapsedHeight: 150,
-      speed: 400,
-      // ToDo.: template..
-      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
-      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
-    });
+    setTimeout(function() {
+      $article.readmore('destroy');
+      $article.readmore({
+        collapsedHeight: 150,
+        speed: 400,
+        lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+        moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
+      });
+    }, 100);
   };
 
   var isAnimating = false;
