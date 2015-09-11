@@ -10,7 +10,8 @@
       margin: 0;
     }
 
-    a {
+    a,
+    a:hover {
       background-color: $white;
       border: none;
       color: $grey;
@@ -19,7 +20,13 @@
       text-transform: uppercase;
     }
 
-    .current a {
+    a:hover {
+      font-weight: bold;
+      padding: 10px 14px 10px 15px;
+    }
+
+    .current > a,
+    .current > a:hover {
       color: $white;
       border: none;
       background: $dark-blue;
@@ -467,7 +474,7 @@
       span.title {
         color: $white;
         display: block;
-        font-size: 1.2em;
+        font-size: 1em;
         margin-top: 5px;
         text-transform: none;
       }
