@@ -475,7 +475,7 @@
 <div class="filter">
   <div>
     <div class="options">
-      <span class="title">%MAKETEXT{"Tasks"}%</span>
+      <span class="title">$grid_title</span>
       %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
     </div>
     %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%

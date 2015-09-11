@@ -988,11 +988,7 @@ sub tagGrid {
         flavor => $flavor,
         editortemplate => $editorTemplate,
         autoassign => $autoassign,
-        autoassignTarget => $autoassignTarget,
-        lang => {
-            missingField => Foswiki::urlEncode(Foswiki::Func::expandCommonVariables($mand)),
-            closeTask => Foswiki::urlEncode(Foswiki::Func::expandCommonVariables($close))
-        }
+        autoassignTarget => $autoassignTarget
     );
 
     my $page = $req->param('page') || 1;
@@ -1069,6 +1065,7 @@ sub tagGrid {
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
+    $grid =~ s/\$grid_title/$title/ge;
 
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
