@@ -104,7 +104,7 @@
   header=""
   footer=""
 }%
-    <span class="title" title="%TASKINFO{field="Title"}%">
+    <span class="title" title="%TASKINFO{field="Title" task="%taskeditor_task%"}%">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Title"
