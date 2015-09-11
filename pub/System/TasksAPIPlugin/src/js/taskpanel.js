@@ -641,6 +641,11 @@ alert('ToDo');
           self.savedStates.details.detach();
           self.savedStates.parent.append($ed);
           $ed.fadeIn(150);
+
+          var $tabs = self.panel.find('.jqTabGroup > li');
+          if ( $tabs.length > 1 ) {
+            $tabs.first().children('a').trigger('click');
+          }
         });
       }
     }).fail( error ).always( unblockUI );
