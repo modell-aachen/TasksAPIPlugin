@@ -81,65 +81,6 @@
 
       loadTasks( $this, opts.currentState, true );
 
-      if ( opts.infinite ) {
-        var isLoading = false;
-        var infiniteScroll = function() {
-          if ( isLoading ) {
-            return;
-          }
-
-          var top = $(window).scrollTop();
-          var dh = $(document).height();
-          var wh = $(window).height();
-          var  trigger = 0.80;
-
-          if ( (top/(dh-wh)) > trigger ) {
-            var rowCnt = $this.find('> .tasks-table > tbody > tr').length;
-            if ( rowCnt >= opts.totalsize ) {
-              isLoading = false;
-              return false;
-            }
-
-            var url = getViewUrl() + '?page=' + Math.round(rowCnt/opts.pagesize + 0.5);
-            if ( params.state ) {
-              url += '&state=' + params.state;
-            }
-
-            $('<div class="tasks-tmp-container" style="display: none"></div>').appendTo('body');
-            $.blockUI();
-            isLoading = true;
-            $('.tasks-tmp-container').load(url + ' #' + id, function(response) {
-              var $tmp = $(this);
-              var $rows = $tmp.find('#' + id + '> .tasks-table > tbody > tr');
-              if ( $rows.length < opts.pagesize ) {
-                $(window).off('scroll', infiniteScroll);
-              }
-
-              $rows.each(function() {
-                var $task = $(this).detach();
-                var $data = $task.find('> .task-data-container > .task-data');
-                if ( $data.length > 0 ) {
-                  var data = unescapeHTML( $.parseJSON($data.text()) );
-                  data.html = $('<div></div>').append($task).html();
-                  opts.container.append( createTaskElement(data) );
-                }
-              });
-
-              isLoading = false;
-              $tmp.remove();
-
-              if ( opts.sortable ) {
-                invokeTablesorter.call($this.children('.tasks-table'), false, true);
-              }
-
-              $.unblockUI();
-            });
-          }
-        };
-
-        $(window).on( 'scroll', infiniteScroll);
-      }
-
       var handleStatusFilterChanged = function() {
         var $select = $(this);
         var url = getViewUrl() + '?state=' + $select.val();

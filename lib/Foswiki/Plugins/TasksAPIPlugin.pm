@@ -992,7 +992,6 @@ sub tagGrid {
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
     my $pageSize = $params->{pagesize};
     my $paging = $params->{paging} || 0;
-    my $infinite = $params->{infinite} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
     my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
@@ -1032,7 +1031,6 @@ sub tagGrid {
         depth => int($depth),
         pagesize => int($pageSize || 0),
         paging => $paging,
-        infinite => $paging ? 0 : $infinite,
         offset => $offset,
         query => $query,
         order => $req->param('order') || $order,
