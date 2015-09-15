@@ -250,7 +250,7 @@
       return deferred.promise();
     }
 
-    $.blockUI();
+    window.tasksapi.blockUI();
     var query = {
       Context: opts.context
     };
@@ -276,7 +276,7 @@
     qopts._depth = opts.depth;
 
     $.taskapi.get(qopts).always(function() {
-      $.unblockUI();
+      window.tasksapi.unblockUI();
     }).done( function( response ) {
       _.each( response.data, function(entry) {
         var $task = createTaskElement(entry);
@@ -363,8 +363,8 @@
           }
         }
 
-        $.blockUI();
-        $.taskapi.update(payload).fail(error).done(function(response) {
+        window.tasksapi.blockUI();
+        $.taskapi.update(payload).done(function(response) {
           if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
             var $newTask = createTaskElement(response.data);
             $task.replaceWith($newTask);
@@ -375,15 +375,21 @@
             }
           }
 
-          swal({
-            type: 'success',
-            title: jsi18n.get('tasksapi', 'Done!'),
-            text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
-            timer: 1500,
-            showConfirmButton: false,
-            showCancelButton: false
-          });
-        }).always($.unblockUI);
+          window.tasksapi.unblockUI();
+          setTimeout(function() {
+            swal({
+              type: 'success',
+              title: jsi18n.get('tasksapi', 'Done!'),
+              text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
+              timer: 1500,
+              showConfirmButton: false,
+              showCancelButton: false
+            });
+          }, 250);
+        }).fail(function(err) {
+          error(err);
+          window.tasksapi.unblockUI();
+        });
       }
 
       return confirmed;
