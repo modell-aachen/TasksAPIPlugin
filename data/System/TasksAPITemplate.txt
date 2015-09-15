@@ -85,6 +85,55 @@
 }%
     <div class="clear"></div>
   </div>
+    <div class="content">
+    <div class="meta">
+      <div class="task-meta-entry">
+        <i class="fa fa-group"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Informees"}%</span>
+          <span>
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Informees"
+  format="$edit"
+  header=""
+  footer=""
+}%
+          </span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-lightbulb-o"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Reminder"}%</span>
+          <span>
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Reminder"
+  format="$edit"
+  header=""
+  footer=""
+}%
+          </span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-exclamation"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Prioritize"}%</span>
+          <span>
+%RENDERFOREDIT{
+  form="%taskeditor_form%"
+  fields="Prioritize"
+  format="$edit"
+  header=""
+  footer=""
+}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>%{
 }%%TMPL:END%
 
@@ -273,12 +322,6 @@
 }%<div class="upload">%DNDUPLOAD{extraclass="task-dnd"}%</div>%{
 }%%TMPL:END%
 
-%{
-  <div class="comment">%-TMPL:P{"tasksapi::viewer::comments"}-%</div>
-  <div class="upload">%-TMPL:P{"tasksapi::viewer::upload"}-%</div>
-  <div class="actions">%-TMPL:P{"tasksapi::viewer::actions"}-%</div>
-}%
-
 %TMPL:DEF{"tasksapi::viewer"}%%{
 }%<literal>
   <div class="viewer">
@@ -363,27 +406,6 @@
 }%%ENDTAB%%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::viewer::attachments_old"}%%{
-}%%ATTACHMENTLIST{
-  topic="%TASKINFO{meta="id"}%"
-  header="$percntTAB{$quot%MAKETEXT{Attachments}% ($fileCount)$quot}$percnt<div class='task-attachments foswikiAttachments'><table class='foswikiTable'><thead><tr><th></th><th>%MAKETEXT{Title}%</th><th>%MAKETEXT{Who}%</th><th>%MAKETEXT{Date}%</th></tr></thead><tbody>"
-  format="<tr><td>$fileIcon</td><td class='foswikiTableCol1'><a target='_blank' href='$fileUrl'>$fileName ($fileSize)</a></td><td>$fileUser</td><td>$fileDate</td></tr>"
-  footer="</tbody></table></div>$percntENDTAB$percnt"
-}%%{
-}%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::viewer::comments"}%%{
-}%<div>
-  <label>
-    <span>%MAKETEXT{"Add comment"}%</span>
-    <textarea class="foswikiTextarea" name="comment" cols="100" rows="12"></textarea>
-  </label>
-  <label>
-    <span>%MAKETEXT{"Close task"}%</span>
-    <input type="checkbox" name="close">
-  </label>
-</div>%{
-}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::viewer::actions"}%%{
 }%<div class="active">
