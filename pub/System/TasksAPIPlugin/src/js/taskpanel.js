@@ -68,6 +68,7 @@ TasksPanel = function(tasktracker) {
     self.overlay.off('click');
     self.overlay.off('queueEmpty');
 
+    self.panel.off('keydown', 'input');
     self.panel.off('click', '.tasks-btn-close');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
@@ -138,6 +139,12 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
+    // hocus pocus demanded by sweetalert2
+    // else it will fail removing its dynamically created style tag
+    self.panel.on('keydown', 'input', function(evt) {
+      evt.stopPropagation();
+      evt.stopImmediatePropagation();
+    });
 
     self.panel.on('keydown', '.task-changeset-comment', function(evt) {
       if ( evt.keyCode === 27 || evt.which === 27 ) {
