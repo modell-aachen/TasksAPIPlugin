@@ -3,6 +3,10 @@
   overflow: hidden;
   position: relative;
 
+  *:focus {
+    outline: 0;
+  }
+
   > .settings {
     display: none;
   }

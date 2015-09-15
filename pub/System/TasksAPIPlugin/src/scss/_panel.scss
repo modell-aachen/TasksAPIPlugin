@@ -614,11 +614,6 @@
     padding: 3px;
     transition: background-color .2s ease-in-out;
 
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    -ms-appearance: none;
-    appearance: none;
-
     &:focus {
       border-color: darken($light-blue, 5%);
       background-color: darken($light-blue, 5%);
