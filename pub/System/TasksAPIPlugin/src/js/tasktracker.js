@@ -41,7 +41,7 @@
 
       var self = this;
       self.isTaskClicked = false;
-      this.tasksPanel = new TasksPanel($this);
+      self.tasksPanel = new TasksPanel($this);
 
       $this.on('click', '.task > .close', closeTask);
       $this.on('click', '.task', function() {
@@ -61,25 +61,25 @@
 
       var id = $this.attr('id');
       var json = $this.children('.settings').text();
-      var opts = $.parseJSON( json );
+      self.opts = $.parseJSON( json );
 
-      opts.cntHeight = $this.height();
-      opts.container = $this.children('.tasks-table').children('.tasks');
+      self.opts.cntHeight = $this.height();
+      self.opts.container = $this.children('.tasks-table').children('.tasks');
 
-      opts.currentState = 'open';
-      $this.data('tasktracker_options', opts);
+      self.opts.currentState = 'open';
+      $this.data('tasktracker_options', self.opts);
 
-      var $tasks = opts.container;
+      var $tasks = self.opts.container;
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
 
       var params = parseQueryParams();
       if ( params.state ) {
-        opts.currentState = params.state;
+        self.opts.currentState = params.state;
         $status.val(params.state);
       }
 
-      loadTasks( $this, opts.currentState, true );
+      loadTasks( $this, self.opts.currentState, true );
 
       var handleStatusFilterChanged = function() {
         var $select = $(this);
@@ -93,13 +93,12 @@
         var isClose = task.fields.Status.value === 'closed';
         var $task = $(createTaskElement(task));
         var $nextActive = $task;
-
-        var $existing = opts.container.children('.task').filter( function() {
+        var $existing = self.opts.container.children('.task').filter( function() {
           return $(this).data('id') === $task.data('id');
         });
 
         if ( $existing.length > 0 ) {
-          if ( !isClose || /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
+          if ( !isClose || /(1|on|true|enabled)/i.test(self.opts.keepclosed) ) {
             $existing.replaceWith($task);
           } else {
             var $next = $existing.next();
@@ -111,7 +110,7 @@
             }
           }
         } else {
-          opts.container.append($task);
+          self.opts.container.append($task);
         }
 
         applyLevels();
@@ -126,7 +125,7 @@
           });
         }
 
-        if ( opts.sortable ) {
+        if ( self.opts.sortable ) {
           invokeTablesorter.call($this.children('.tasks-table'), true);
         }
 
@@ -134,7 +133,7 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
-      if ( opts.sortable ) {
+      if ( self.opts.sortable ) {
         invokeTablesorter.call($this.children('.tasks-table'));
       }
 

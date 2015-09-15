@@ -1,7 +1,8 @@
 TasksPanel = function(tasktracker) {
   var self = this;
   var listeners = {};
-  TasksPanel.prototype.on = function(name, callback) {
+
+  this.on = function(name, callback) {
     if ( typeof callback !== 'function' ) {
       return;
     }
@@ -13,7 +14,7 @@ TasksPanel = function(tasktracker) {
     listeners[name].push(callback);
   };
 
-  TasksPanel.prototype.trigger = function() {
+  this.trigger = function() {
     var args = [].splice.call(arguments, 0);
     var evt = args[0];
     if ( listeners[evt.type] ) {
@@ -1140,6 +1141,8 @@ TasksPanel = function(tasktracker) {
   this.prev = function() {
     return animateTaskChange('prev');
   };
+
+  return this;
 };
 
   // var setLinkTarget = function() {
