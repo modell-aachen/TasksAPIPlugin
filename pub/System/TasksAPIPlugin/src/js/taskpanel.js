@@ -71,6 +71,8 @@ TasksPanel = function(tasktracker) {
 
     self.panel.off('keydown', 'input');
     self.panel.off('click', '.tasks-btn-close');
+    self.panel.off('mouseenter', '.tasks-btn-close');
+    self.panel.off('mouseleave', '.tasks-btn-close');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
     self.panel.off('keydown', '.task-changeset-comment');
@@ -226,62 +228,96 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
-    var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
-    var cmtTxt = jsi18n.get('tasksapi', 'Comment');
-    var html = [
-      closeTxt,
-      '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
-      cmtTxt,
-      '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
-    ].join('');
-    self.panel.on('click', '.tasks-btn-close', function() {
-      swal({
-        title: jsi18n.get('tasksapi', 'Are you sure?'),
-        html: html,
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#6CCE86',
-        cancelButtonColor: '#BDBDBD',
-        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
-        cancelButtonText: jsi18n.get('tasksapi', 'No'),
-        closeOnConfirm: false
-      }, function(confirmed) {
-        if (confirmed) {
-          var $dialog = $('.sweet-alert.show-sweet-alert.visible');
-          var payload = {
-            id: self.currentTask.data('id'),
-            Status: 'closed'
-          };
+    self.panel.on('mouseenter', '.controls', function() {
+      var $i = $(this).find('i');
+      if ( $i.hasClass('closed') ) {
+        $i.removeClass('fa-check-square').addClass('fa-square-o');
+      } else {
+        $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+      }
+    });
 
-          var comment = $dialog.find('textarea[name="Comment"]').val();
-          if ( !/^[\s\n\r]*$/.test(comment) ) {
-            payload.comment = comment;
-          }
+    self.panel.on('mouseleave', '.controls', function() {
+      var $i = $(this).find('i');
+      if ( $i.hasClass('closed') ) {
+        $i.removeClass('fa-square-o').addClass('fa-check-square');
+      } else {
+        $i.removeClass('fa-check-square-o').addClass('fa-square-o');
+      }
+    });
 
-          var opts = self.tracker.data('tasktracker_options');
-          for (var prop in opts) {
-            if ( /template|form/.test(prop) ) {
-              payload[prop] = opts[prop];
-            }
-          }
+    self.panel.on('click', '.caption > .controls', function() {
+      var data = self.currentTask.data('task_data');
+      var isOpen = data.fields.Status.value === 'open';
+      var deferred = $.Deferred();
+      var payload = {
+        id: self.currentTask.data('id'),
+      };
 
-          window.tasksapi.blockUI();
-          $.taskapi.update(payload)
-            .fail(error)
-            .always(window.tasksapi.unblockUI)
-            .done(function(response) {
-              var $current = self.panel.children('.content.slide-in');
-              $current.removeClass('slide-in').addClass('slide-out');
-              setTimeout(function() {
-                $current.remove();
-              }, 500);
-
-              var afterSave = $.Event( 'afterSave' );
-              self.trigger( afterSave, response.data );
-            });
+      var opts = self.tracker.data('tasktracker_options');
+      for (var prop in opts) {
+        if ( /template|form/.test(prop) ) {
+          payload[prop] = opts[prop];
         }
+      }
 
-        return confirmed;
+      if ( isOpen ) {
+        var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
+        var cmtTxt = jsi18n.get('tasksapi', 'Comment');
+        var html = [
+          closeTxt,
+          '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+          cmtTxt,
+          '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+        ].join('');
+
+        swal({
+          title: jsi18n.get('tasksapi', 'Are you sure?'),
+          html: html,
+          type: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#6CCE86',
+          cancelButtonColor: '#BDBDBD',
+          confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+          cancelButtonText: jsi18n.get('tasksapi', 'No'),
+          closeOnConfirm: false
+        }, function(confirmed) {
+          if (confirmed) {
+            payload.Status = 'closed';
+
+            var $dialog = $('.sweet-alert.show-sweet-alert.visible');
+            var comment = $dialog.find('textarea[name="Comment"]').val();
+            if ( !/^[\s\n\r]*$/.test(comment) ) {
+              payload.comment = comment;
+            }
+
+            deferred.resolve(payload);
+          } else {
+            deferred.reject();
+          }
+
+          return confirmed;
+        });
+      } else {
+        payload.Status = 'open';
+        deferred.resolve(payload);
+      }
+
+      deferred.promise().done(function(data) {
+        window.tasksapi.blockUI();
+        $.taskapi.update(data)
+          .fail(error)
+          .always(window.tasksapi.unblockUI)
+          .done(function(response) {
+            var $current = self.panel.children('.content.slide-in');
+            $current.removeClass('slide-in').addClass('slide-out');
+            setTimeout(function() {
+              $current.remove();
+            }, 500);
+
+            var afterSave = $.Event( 'afterSave' );
+            self.trigger( afterSave, response.data );
+          });
       });
 
       return false;

@@ -214,6 +214,9 @@ msgstr "Seit %1 Tagen abgelaufen"
 msgid "Close task"
 msgstr "Aufgabe schließen"
 
+msgid "Reopen task"
+msgstr "Aufgabe wieder öffnen"
+
 msgid "View details"
 msgstr "Details anzeigen"
 

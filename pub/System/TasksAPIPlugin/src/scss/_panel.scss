@@ -515,6 +515,13 @@
       border-radius: 0;
       padding: 14px;
 
+      &:hover {
+        i,
+        i.closed {
+          color: $white;
+        }
+      }
+
       // ToDo:
       // move to .tasks-btn-close default definition
       .tasks-btn-close {

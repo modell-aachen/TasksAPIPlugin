@@ -178,7 +178,8 @@
       background-color: darken($light-blue, 25%);
       border-left: 4px solid darken($light-blue, 35%);
 
-      i:not(.closed) {
+      i,
+      i.closed {
         color: $white;
       }
     }

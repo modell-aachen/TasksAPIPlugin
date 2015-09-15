@@ -43,7 +43,24 @@
       self.isTaskClicked = false;
       self.tasksPanel = new TasksPanel($this);
 
-      $this.on('click', '.task > .close', closeTask);
+      $this.on('mouseenter', '.task > td.close', function() {
+        var $i = $(this).find('> span > i');
+        if ( $i.hasClass('closed') ) {
+          $i.removeClass('fa-check-square').addClass('fa-square-o');
+        } else {
+          $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+        }
+      });
+      $this.on('mouseleave', '.task > td.close', function() {
+        var $i = $(this).find('> span > i');
+        if ( $i.hasClass('closed') ) {
+          $i.removeClass('fa-square-o').addClass('fa-check-square');
+        } else {
+          $i.removeClass('fa-check-square-o').addClass('fa-square-o');
+        }
+      });
+
+      $this.on('click', '.task > .close', toggleTaskState);
       $this.on('click', '.task', function() {
         if ( self.isTaskClicked ) {
           return false;
@@ -315,83 +332,92 @@
     }
   };
 
-  var closeTask = function() {
-    if ( $(this).find('i.closed').length > 0 ) {
-      return false;
-    }
-
+  var toggleTaskState = function() {
+    var deferred = $.Deferred();
     var $task = $(this).closest('.task');
+    var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
-    var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
-    var cmtTxt = jsi18n.get('tasksapi', 'Comment');
-    var html = [
-      closeTxt,
-      '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
-      cmtTxt,
-      '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
-    ].join('');
+    var opts = $task.closest('.tasktracker').data('tasktracker_options');
+    var payload = {
+      id: $task.data('id'),
+    };
 
-    swal({
-      title: jsi18n.get('tasksapi', 'Are you sure?'),
-      html: html,
-      type: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#6CCE86',
-      cancelButtonColor: '#BDBDBD',
-      confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
-      cancelButtonText: jsi18n.get('tasksapi', 'No'),
-      closeOnConfirm: false
-    }, function(confirmed) {
-      if (confirmed) {
-        var $dialog = $('.sweet-alert.show-sweet-alert.visible');
-        var comment = $dialog.find('textarea[name="Comment"]').val();
-        var payload = {
-          id: $task.data('id'),
-          Status: 'closed'
-        };
-
-        if ( !/^[\s\n\r]*$/.test(comment) ) {
-          payload.comment = comment;
-        }
-
-        var opts = $task.closest('.tasktracker').data('tasktracker_options');
-        for (var prop in opts) {
-          if ( /template|form/.test(prop) ) {
-            payload[prop] = opts[prop];
-          }
-        }
-
-        window.tasksapi.blockUI();
-        $.taskapi.update(payload).done(function(response) {
-          if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
-            var $newTask = createTaskElement(response.data);
-            $task.replaceWith($newTask);
-          } else {
-            $task.remove();
-            if ($next.hasClass('task-children-container')) {
-              $next.remove();
-            }
-          }
-
-          window.tasksapi.unblockUI();
-          setTimeout(function() {
-            swal({
-              type: 'success',
-              title: jsi18n.get('tasksapi', 'Done!'),
-              text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
-              timer: 1500,
-              showConfirmButton: false,
-              showCancelButton: false
-            });
-          }, 250);
-        }).fail(function(err) {
-          error(err);
-          window.tasksapi.unblockUI();
-        });
+    for (var prop in opts) {
+      if ( /template|form/.test(prop) ) {
+        payload[prop] = opts[prop];
       }
+    }
 
-      return confirmed;
+    if ( isOpen ) {
+      var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
+      var cmtTxt = jsi18n.get('tasksapi', 'Comment');
+      var html = [
+        closeTxt,
+        '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+        cmtTxt,
+        '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+      ].join('');
+
+      swal({
+        title: jsi18n.get('tasksapi', 'Are you sure?'),
+        html: html,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6CCE86',
+        cancelButtonColor: '#BDBDBD',
+        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+        cancelButtonText: jsi18n.get('tasksapi', 'No'),
+        closeOnConfirm: false
+      }, function(confirmed) {
+        if (confirmed) {
+          payload.Status = 'closed';
+          var $dialog = $('.sweet-alert.show-sweet-alert.visible');
+          var comment = $dialog.find('textarea[name="Comment"]').val();
+          if ( !/^[\s\n\r]*$/.test(comment) ) {
+            payload.comment = comment;
+          }
+
+          deferred.resolve(payload);
+        } else {
+          deferred.reject();
+        }
+
+        return confirmed;
+      });
+    } else {
+      payload.Status = 'open';
+      deferred.resolve(payload);
+    }
+
+    deferred.promise().done(function() {
+      window.tasksapi.blockUI();
+      $.taskapi.update(payload).done(function(response) {
+        if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
+          var $newTask = createTaskElement(response.data);
+          $task.replaceWith($newTask);
+        } else {
+          $task.remove();
+          if ($next.hasClass('task-children-container')) {
+            $next.remove();
+          }
+        }
+
+        window.tasksapi.unblockUI();
+        setTimeout(function() {
+          swal({
+            type: 'success',
+            title: jsi18n.get('tasksapi', 'Done!'),
+            text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
+            timer: 1500,
+            showConfirmButton: false,
+            showCancelButton: false
+          });
+        }, 250);
+      }).fail(function(err) {
+        error(err);
+        window.tasksapi.unblockUI();
+      });
     });
 
     return false;
