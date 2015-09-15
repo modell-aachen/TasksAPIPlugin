@@ -95,6 +95,7 @@
       width: 47px; // 48 - border-left
       height: 47px; // 48 - border-bottom
       background-color: #4b6b8e;
+      box-shadow: -2px 2px 5px #39526d;
       border-bottom-left-radius: 5px;
       border-bottom: 1px solid #39526d;
       border-left: 1px solid #39526d;
@@ -134,6 +135,7 @@
 
       background-color: $white;
       border-left: 1px solid #39526d;
+      box-shadow: -2px 0 5px #39526d;
       width: calc(100% - 48px);
       overflow-x: hidden;
     }
@@ -145,6 +147,7 @@
       z-index: 2;
 
       background-color: #39526d;
+      box-shadow: -2px 0 5px #39526d;
       height: 48px;
       width: calc(100% - 48px);
 
@@ -473,6 +476,7 @@
 
     background-color: $dark-blue;
     border-left: 7px solid transparent;
+    box-shadow: 0 2px 5px #39526d;
     clear: left;
     color: $white;
     margin-bottom: 20px;

@@ -904,38 +904,31 @@ TasksPanel = function(tasktracker) {
     initReadmore($content);
     sliceChanges($content.find('.changes'));
 
-    var $current = self.panel.children('.content.slide-in');
-    // switch contents
-    if ( direction === 'next' ) {
-      $current.addClass('slide-out');
-    } else {
-      $current.removeClass('slide-in');
-    }
+    setTimeout(function() {
+      var $current = self.panel.children('.content.slide-in');
+      $current.on('transitionend', function() {
+        $current.off('transitionend').remove();
 
-    var delayed = function() {
-      var $this = $(this);
-      setTimeout(function() {
-        var $view = $this.children('.task-fullview').detach();
-        $this.remove();
+        var $view = $current.children('.task-fullview').detach();
         $view.appendTo(self.currentTask.children('.task-fullview-container'));
         self.currentTask = nextTask;
         isAnimating = false;
 
-        if ( direction === 'next' ) {
-          $content.addClass('slide-in');
-        } else {
-          $content.addClass('slide-in').removeClass('slide-out');
-        }
-      }, 400);
+        setTimeout(function() {
+          $current.remove();
+        }, 300);
+      });
 
+      // switch contents
+      $current.removeClass('slide-in');
       if ( direction === 'next' ) {
+        $current.addClass('slide-out');
         $content.addClass('slide-in');
       } else {
         $content.addClass('slide-in').removeClass('slide-out');
       }
-    };
+    }, 25);
 
-    delayed.call($current);
     return nextTask;
   };
 
