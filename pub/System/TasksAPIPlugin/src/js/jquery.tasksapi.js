@@ -56,7 +56,7 @@
 
       $.ajax({
         url: url,
-        type: 'POST',
+        type: 'GET',
         data: {
           request: JSON.stringify(queryopts),
           topic: foswiki.preferences.WEB +'.'+ foswiki.preferences.TOPIC

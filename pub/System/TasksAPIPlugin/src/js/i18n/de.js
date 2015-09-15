@@ -16,6 +16,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "Please wait...": "Bitte warten...",
     "Attention!": "Achtung!",
     "Title": "Titel",
-    "AssignedTo": "Zugewiesen an"
+    "AssignedTo": "Zugewiesen an",
+    "Comment": "Kommentar"
   });
 }

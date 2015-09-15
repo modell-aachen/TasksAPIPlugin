@@ -26,10 +26,11 @@ The following Perl packages are required:
    * DBI
    * Number::Bytes::Human
    * Date::Manip
+   * File::MimeInfo
 
 Debian packages exist for all of these:
 
-<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl</verbatim>
+<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl libfile-mimeinfo-perl</verbatim>
 
 Before the plugin can be used, a web must created which is used for storing
 the tasks. If you use the default configuration, its name has to be =Tasks=.

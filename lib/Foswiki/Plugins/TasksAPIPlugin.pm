@@ -16,6 +16,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 use DBI;
 use Encode;
 use Error qw( :try );
+use File::MimeInfo;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 
@@ -107,15 +108,17 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
-    my %attachopts = (authenticate => 1, validate => 0, http_allow => 'POST');
-    Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %attachopts );
+    my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
+    Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %restopts );
+    Foswiki::Func::registerRESTHandler( 'create', \&restCreate, %restopts );
+    Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate, %restopts );
+    Foswiki::Func::registerRESTHandler( 'update', \&restUpdate, %restopts );
 
-    Foswiki::Func::registerRESTHandler( 'create', \&restCreate );
-    Foswiki::Func::registerRESTHandler( 'update', \&restUpdate );
-    Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate );
-    Foswiki::Func::registerRESTHandler( 'search', \&restSearch );
-    Foswiki::Func::registerRESTHandler( 'lease', \&restLease );
-    Foswiki::Func::registerRESTHandler( 'release', \&restRelease );
+    $restopts{http_allow} = 'GET';
+    Foswiki::Func::registerRESTHandler( 'download', \&restDownload, %restopts );
+    Foswiki::Func::registerRESTHandler( 'lease', \&restLease, %restopts );
+    Foswiki::Func::registerRESTHandler( 'search', \&restSearch, %restopts );
+    Foswiki::Func::registerRESTHandler( 'release', \&restRelease, %restopts );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -422,6 +425,58 @@ sub _cachedContextACL {
 }
 sub _cacheContextACL {
     $caclCache->{$_[0]} = $_[1];
+}
+
+sub restDownload {
+    my ( $session, $subject, $verb, $response ) = @_;
+
+    my $q = $session->{request};
+    my $id = $q->param('id') || '';
+    my $file = $q->param('file') || '';
+
+    unless ($id && $file) {
+        $response->header(-status => 400);
+        return to_json({
+            status => 'error',
+            'code' => 'client_error',
+            msg => "Request error: Missing filename or task id parameter."
+        });
+    }
+
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+    unless ($task->checkACL('view')) {
+        $response->header(-status => 403);
+        return to_json({
+            status => 'error',
+            code => 'acl_view',
+            msg => 'No permission to attachments of this task'
+        });
+    }
+
+    $response->header(
+        -type => mimetype($file),
+        -status => 200,
+        "-Content-Disposition" => "attachment; filename=\"$file\"",
+        "-Content-Transfer-Encoding" => "binary"
+    );
+
+    eval {
+        my $fh = $task->{meta}->openAttachment($file, '<');
+        while( <$fh> ) {
+            $response->print( $_ );
+        }
+        close $fh;
+    };
+    if($@) {
+        Foswiki::Func::writeWarning( $@ );
+        $response->header(-status => 500);
+        return to_json({
+            status => 'error',
+            'code' => 'server_error',
+            msg => "Server error: $@"
+        });
+    }
 }
 
 sub restAttach {
@@ -1150,7 +1205,7 @@ sub _renderAttachment {
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
-    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$author</span><span>$date</span></td><td>$name<a href="%PUBURLPATH%/$taskstopic/$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
+    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$author</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
     $format =~ s#\$name#$attachment->{name}#g;
     $format =~ s#\$size#$attachment->{size}->{human}#g;
     $format =~ s#\$author#$author#g;

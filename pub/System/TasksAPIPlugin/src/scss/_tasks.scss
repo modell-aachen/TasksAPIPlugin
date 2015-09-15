@@ -57,16 +57,7 @@
   .tasks > .task-new {
     background-color: $light-blue;
 
-    &.noselect {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-
-    &.prioritize > td:first-child{
+    &.prioritize > td:first-child {
       border-left: 3px solid $prioritized;
     }
 

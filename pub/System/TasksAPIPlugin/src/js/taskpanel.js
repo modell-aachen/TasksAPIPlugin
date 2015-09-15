@@ -38,6 +38,7 @@ TasksPanel = function(tasktracker) {
   this.upload = this.overlay.find('> .panel-wrapper > .upload');
 
   this.buttons = {
+    add: this.overlay.find('> .panel-wrapper > .buttons > .view .add'),
     cancel: this.overlay.find('> .panel-wrapper > .buttons > .edit .cancel'),
     close: this.overlay.find('> .panel-wrapper > .close'),
     comment: this.overlay.find('> .panel-wrapper > .buttons > .view .comment'),
@@ -55,6 +56,7 @@ TasksPanel = function(tasktracker) {
   };
 
   var detachHandler = function() {
+    self.buttons.add.off('click');
     self.buttons.cancel.off('click');
     self.buttons.close.off('click');
     self.buttons.comment.off('click');
@@ -87,16 +89,31 @@ TasksPanel = function(tasktracker) {
     self.buttons.previous.on('click', onPrevTask);
     self.buttons.save.on('click', onSave);
     self.buttons.upload.on('click', toggleUpload);
-    self.overlay.on('click', function(evt) {
-      if ( self.isEdit || self.isChangesetEdit || self.isComment || self.isUpload ) {
-        return;
+
+    self.buttons.add.on('click', function() {
+      self.currentTask.removeClass('highlight');
+
+      if ( self.isUpload ) {
+        toggleUpload();
       }
 
-      var $target = $(evt.target || evt. delegateTarget || evt.toElement);
-      if ( $target.hasClass('task-overlay') ) {
-        self.close();
-      }
+      self.createTask();
+      return false;
     });
+
+    // delay overlay click handler to prevent closing the panel if the user clicked twice on a task element.
+    setTimeout(function() {
+      self.overlay.on('click', function(evt) {
+        if ( self.isEdit || self.isChangesetEdit || self.isComment || self.isUpload ) {
+          return;
+        }
+
+        var $target = $(evt.target || evt. delegateTarget || evt.toElement);
+        if ( $target.hasClass('task-overlay') ) {
+          self.close();
+        }
+      });
+    }, 200);
 
     self.panel.on('click', '.task-attachments tbody tr', function(evt) {
       var $target = $(evt.target || evt. delegateTarget || evt.toElement);
@@ -104,8 +121,20 @@ TasksPanel = function(tasktracker) {
         return false;
       }
 
-      var href = $(this).find('a.hidden').attr('href');
-      window.open && window.open(href, '_blank');
+      var id = self.currentTask.data('id');
+      var file = $(this).find('a.hidden').attr('href');
+      var p = foswiki.preferences;
+      var url = [
+        p.SCRIPTURL,
+        '/rest',
+        p.SCRIPTSUFFIX,
+        '/TasksAPIPlugin/download?id=',
+        self.currentTask.data('id'),
+        '&file=',
+        file
+      ].join('');
+
+      window.open && window.open(url, '_blank');
       return false;
     });
 
@@ -146,16 +175,17 @@ TasksPanel = function(tasktracker) {
 
     self.overlay.on('queueEmpty', function() {
       var $dnd = $(this);
-      blockUI();
+      window.tasksapi.blockUI();
       $.taskapi
         .get({query:{id: self.currentTask.data('id')}})
-        .always(unblockUI)
+        .always(window.tasksapi.unblockUI)
         .fail(error)
         .done(function(response) {
           if ( response.status === 'ok' && response.data && response.data.length > 0 ) {
             var afterSave = $.Event( 'afterSave' );
             self.trigger( afterSave, response.data[0] );
             onCancel();
+            toggleUpload();
           }
         });
     });
@@ -188,11 +218,18 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
-    // ToDo
+    var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
+    var cmtTxt = jsi18n.get('tasksapi', 'Comment');
+    var html = [
+      closeTxt,
+      '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+      cmtTxt,
+      '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+    ].join('');
     self.panel.on('click', '.tasks-btn-close', function() {
       swal({
         title: jsi18n.get('tasksapi', 'Are you sure?'),
-        text: jsi18n.get('tasksapi', 'Do you want to close this entry?'),
+        html: html,
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#6CCE86',
@@ -202,21 +239,35 @@ TasksPanel = function(tasktracker) {
         closeOnConfirm: false
       }, function(confirmed) {
         if (confirmed) {
-alert('ToDo');
-
+          var $dialog = $('.sweet-alert.show-sweet-alert.visible');
           var payload = {
             id: self.currentTask.data('id'),
             Status: 'closed'
           };
 
-          // $.blockUI();
-          // $.taskapi.update(payload).fail(error).done(function(response) {
-          //   $task.remove();
-          //   if ($next.hasClass('task-children-container')) {
-          //     $next.remove();
-          //   }
-          //   swal('Erledigt!', 'Protokollpunkt wurde als geschlossen markiert.', 'success');
-          // }).always($.unblockUI);
+          var comment = $dialog.find('textarea[name="Comment"]').val();
+          if ( !/^[\s\n\r]*$/.test(comment) ) {
+            payload.comment = comment;
+          }
+
+          var opts = self.tracker.data('tasktracker_options');
+          for (var prop in opts) {
+            if ( /template|form/.test(prop) ) {
+              payload[prop] = opts[prop];
+            }
+          }
+
+          window.tasksapi.blockUI();
+          $.taskapi.update(payload)
+            .fail(error)
+            .always(window.tasksapi.unblockUI)
+            .done(function(response) {
+              var afterSave = $.Event( 'afterSave' );
+              self.trigger( afterSave, response.data );
+
+              // cancel/exit "comment composer"
+              onCancel();
+            });
         }
 
         return confirmed;
@@ -327,7 +378,7 @@ alert('ToDo');
       return false;
     }
 
-    blockUI();
+    window.tasksapi.blockUI();
     task._depth = opts._depth > 0 ? opts._depth : 0;
     var apiFunc = 'update';
 
@@ -340,7 +391,7 @@ alert('ToDo');
     }
 
     $.taskapi[apiFunc]( task )
-      .always( unblockUI )
+      .always( window.tasksapi.unblockUI )
       .fail( error )
       .done( function( response ) {
         if ( self.isCreate ) {
@@ -372,14 +423,14 @@ alert('ToDo');
       payload.Status = 'closed';
     }
 
-    blockUI();
+    window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
       self.trigger( afterSave, response.data );
 
       // cancel/exit "comment composer"
       onCancel();
-    }).always(unblockUI);
+    }).always(window.tasksapi.unblockUI);
 
     return false;
   };
@@ -398,8 +449,8 @@ alert('ToDo');
     var opts = self.tracker.data('tasktracker_options') || {};
     $.extend(payload, _.pick(opts, 'form', 'tasktemplate', 'templatefile'));
 
-    blockUI();
-    $.taskapi.update(payload).fail(error).always(unblockUI).done(function(response) {
+    window.tasksapi.blockUI();
+    $.taskapi.update(payload).fail(error).always(window.tasksapi.unblockUI).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
       self.trigger( afterSave, response.data );
       onCancel();
@@ -499,7 +550,7 @@ alert('ToDo');
     opts.autoassign = topts.autoassign;
     opts._depth = task.depth;
 
-    blockUI();
+    window.tasksapi.blockUI();
     leaseTopic(opts).done(function(response) {
       updateHead( response.scripts );
       updateHead( response.styles );
@@ -553,7 +604,7 @@ alert('ToDo');
         self.savedStates.parent.append($ed);
         $ed.fadeIn(150);
       });
-    }).fail( error ).always( unblockUI );
+    }).fail( error ).always( window.tasksapi.unblockUI );
   };
 
   var onEdit = function() {
@@ -575,7 +626,7 @@ alert('ToDo');
     opts.autoassign = topts.autoassign;
     opts._depth = self.isCreate ? topts.depth : task.depth;
 
-    blockUI();
+    window.tasksapi.blockUI();
     leaseTopic(opts).done(function(response) {
       updateHead( response.scripts );
       updateHead( response.styles );
@@ -649,7 +700,7 @@ alert('ToDo');
           }
         });
       }
-    }).fail( error ).always( unblockUI );
+    }).fail( error ).always( window.tasksapi.unblockUI );
 
     return false;
   };
@@ -764,31 +815,6 @@ alert('ToDo');
     if ( window.console && console.error ) {
       console.error.apply(console, arguments);
     }
-  };
-
-  var blockUI = function() {
-    var p = foswiki.preferences;
-    var url = [
-      p.PUBURLPATH,
-      '/',
-      p.SYSTEMWEB,
-      '/TasksAPIPlugin/assets/ajax-loader.gif'
-    ];
-
-    swal({
-      text: jsi18n.get('tasksapi', 'Please wait...'),
-      type: null,
-      imageUrl: url.join(''),
-      imageSize: '220x19',
-      showCancelButton: false,
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      allowEscapeKey: false
-    });
-  };
-
-  var unblockUI = function() {
-    swal.closeModal();
   };
 
   var isTask = function($task) {
