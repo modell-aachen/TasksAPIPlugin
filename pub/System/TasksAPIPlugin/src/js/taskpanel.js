@@ -269,11 +269,14 @@ TasksPanel = function(tasktracker) {
             .fail(error)
             .always(window.tasksapi.unblockUI)
             .done(function(response) {
+              var $current = self.panel.children('.content.slide-in');
+              $current.removeClass('slide-in').addClass('slide-out');
+              setTimeout(function() {
+                $current.remove();
+              }, 500);
+
               var afterSave = $.Event( 'afterSave' );
               self.trigger( afterSave, response.data );
-
-              // cancel/exit "comment composer"
-              onCancel();
             });
         }
 
@@ -478,6 +481,7 @@ TasksPanel = function(tasktracker) {
 
   var onCancel = function() {
     var deferred = $.Deferred();
+    var dfunc = 'resolve';
 
     if ( self.isEdit ) {
       if ( checkDirty() ) {
@@ -494,19 +498,18 @@ TasksPanel = function(tasktracker) {
         }, function(confirmed) {
           if ( confirmed ) {
             cancelEdit(self.isCreate);
-            deferred.resolve();
+          } else {
+            dfunc = 'reject';
           }
         });
       } else {
         cancelEdit();
-        deferred.resolve();
       }
     } else if ( self.isComment ) {
       self.overlay.find('textarea[name="TaskComment"]').val('');
       self.isComment = false;
       setButtons('view');
       self.comment.removeClass('active');
-      deferred.resolve();
     } else if ( self.isChangesetEdit ) {
       var $comment = self.panel.find('[contenteditable="true"]');
       var $container = $comment.parent();
@@ -518,9 +521,9 @@ TasksPanel = function(tasktracker) {
       self.isChangesetEdit = false;
       self.panel.find('.task-changeset-add').fadeIn(150);
       self.panel.find('.task-changeset .icons').fadeIn(150);
-      deferred.resolve();
     }
 
+    deferred[dfunc]();
     return deferred.promise();
   };
 

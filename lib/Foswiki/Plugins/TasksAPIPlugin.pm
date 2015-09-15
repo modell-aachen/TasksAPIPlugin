@@ -1000,6 +1000,7 @@ sub tagGrid {
     my $templateFile = $params->{templatefile} || 'TasksAPI';
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
+    my $keepclosed = $params->{keepclosed} || 0;
     my $readonly = $params->{readonly} || 0;
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
@@ -1036,6 +1037,7 @@ sub tagGrid {
         query => $query,
         order => $req->param('order') || $order,
         allowupload => $allowUpload,
+        keepclosed => $keepclosed,
         stateless => $stateless,
         sortable => $sortable,
         templatefile => $templateFile,

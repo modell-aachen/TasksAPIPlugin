@@ -149,14 +149,26 @@
       $status.on( 'change', handleStatusFilterChanged );
       self.tasksPanel.on( 'afterSave', function( evt, task ) {
         var pid = task.fields.Parent.value;
+        var isClose = task.fields.Status.value === 'closed';
         var $task = $(createTaskElement(task));
+        var $nextActive = $task;
 
         var $existing = opts.container.children('.task').filter( function() {
           return $(this).data('id') === $task.data('id');
         });
 
         if ( $existing.length > 0 ) {
-          $existing.replaceWith($task);
+          if ( !isClose || /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
+            $existing.replaceWith($task);
+          } else {
+            var $next = $existing.next();
+            $nextActive = $next;
+            $existing.remove();
+            if ($next.hasClass('task-children-container')) {
+              $nextActive = $next.next();
+              $next.remove();
+            }
+          }
         } else {
           opts.container.append($task);
         }
@@ -178,7 +190,7 @@
         }
 
         // view task
-        self.tasksPanel.viewTask($task);
+        self.tasksPanel.viewTask($nextActive);
       });
 
       if ( opts.sortable ) {
@@ -412,9 +424,14 @@
 
         $.blockUI();
         $.taskapi.update(payload).fail(error).done(function(response) {
-          $task.remove();
-          if ($next.hasClass('task-children-container')) {
-            $next.remove();
+          if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
+            var $newTask = createTaskElement(response.data);
+            $task.replaceWith($newTask);
+          } else {
+            $task.remove();
+            if ($next.hasClass('task-children-container')) {
+              $next.remove();
+            }
           }
 
           swal({
