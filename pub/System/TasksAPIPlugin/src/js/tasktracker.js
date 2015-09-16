@@ -344,7 +344,7 @@
     };
 
     for (var prop in opts) {
-      if ( /template|form/.test(prop) ) {
+      if ( /template|form|flavor|depth/.test(prop) ) {
         payload[prop] = opts[prop];
       }
     }

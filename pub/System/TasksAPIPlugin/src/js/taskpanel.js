@@ -256,7 +256,7 @@ TasksPanel = function(tasktracker) {
 
       var opts = self.tracker.data('tasktracker_options');
       for (var prop in opts) {
-        if ( /template|form/.test(prop) ) {
+        if ( /template|form|depth|flavor/.test(prop) ) {
           payload[prop] = opts[prop];
         }
       }
@@ -393,7 +393,6 @@ TasksPanel = function(tasktracker) {
   var handleSaveTask = function() {
     var task = readEditor(self.panel);
     task.id = self.isCreate ? null : self.currentTask.data('task_data').id;
-    var opts = self.tracker.data('tasktracker_options');
 
     if ( task.hasError ) {
       swal({
@@ -409,8 +408,9 @@ TasksPanel = function(tasktracker) {
       return false;
     }
 
+    var opts = self.tracker.data('tasktracker_options');
     for (var prop in opts) {
-      if ( /template|form/.test(prop) ) {
+      if ( /template|form|depth|flavor/.test(prop) ) {
         task[prop] = opts[prop];
       }
     }
@@ -458,13 +458,18 @@ TasksPanel = function(tasktracker) {
     var $cb = $textarea.parent().find('input[name="close"]');
     var comment = $textarea.val();
 
-    var opts = self.tracker.data('tasktracker_options') || {};
     var payload = {
       id: self.currentTask.data('id'),
       comment: comment
     };
 
-    $.extend(payload, _.pick(opts, 'form', 'tasktemplate', 'templatefile'));
+    var opts = self.tracker.data('tasktracker_options') || {};
+    for (var prop in opts) {
+      if ( /template|form|depth|flavor/.test(prop) ) {
+        payload[prop] = opts[prop];
+      }
+    }
+
     var close = $cb.attr('checked');
     if ( close ) {
       payload.Status = 'closed';
@@ -494,7 +499,11 @@ TasksPanel = function(tasktracker) {
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
-    $.extend(payload, _.pick(opts, 'form', 'tasktemplate', 'templatefile'));
+    for (var prop in opts) {
+      if ( /template|form|depth|flavor/.test(prop) ) {
+        payload[prop] = opts[prop];
+      }
+    }
 
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).always(window.tasksapi.unblockUI).done(function(response) {
