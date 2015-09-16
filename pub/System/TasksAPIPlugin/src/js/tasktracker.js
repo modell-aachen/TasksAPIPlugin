@@ -101,6 +101,14 @@
       var handleStatusFilterChanged = function() {
         var $select = $(this);
         var url = getViewUrl() + '?state=' + $select.val();
+
+        if ( typeof window.location.hash === typeof '' && /jqTab/.test(window.location.hash) ) {
+          var tabId = window.location.hash.replace('!', '');
+          var $tab = $(tabId);
+          var cls = $tab.attr('class');
+          var tab = cls.replace(/(current|jqTab)/, '');
+          url += '&tab=' + tab;
+        }
         window.location = url;
       };
 
