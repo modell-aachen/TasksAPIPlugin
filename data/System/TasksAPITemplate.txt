@@ -440,14 +440,11 @@
 %TMPL:DEF{"tasksapi::task"}%%{
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
 %IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
-}%
-
-<td class="created" data-value="%TASKINFO{field="Created"}%">
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
   </td>
   <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
-  
   <td class="assigned">
     <span>%TASKINFO{field="AssignedTo"}%</span>
   </td>
@@ -463,7 +460,83 @@
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
+</tr>%{
+}%%TMPL:END%
 
+%TMPL:DEF{"tasksapi::task::closed"}%%{
+}%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
+    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+    <span>%TASKINFO{field="Author"}%</span>
+  </td>
+  <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
+  <td class="assigned">
+    <span>%TASKINFO{field="AssignedTo"}%</span>
+  </td>
+  <td class="title">
+    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
+    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
+  </td>
+  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
+    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+  </td>
+  <td class="due">
+    <span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>
+  </td>
+  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
+  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
+</tr>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task_perspage"}%%{
+}%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
+    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+    <span>%TASKINFO{field="Author"}%</span>
+    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="Title" else="%TASKINFO{field="Context"}%"}%</a></span>
+  </td>
+  <td class="title">
+    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
+    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
+  </td>
+  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
+    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+  </td>
+  <td class="ampel">
+%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%'}%</td>
+  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
+  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
+</tr>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::task::closed_perspage"}%%{
+}%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+}%<td class="created" data-value="%TASKINFO{field="Created"}%">
+    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
+    <span>%TASKINFO{field="Author"}%</span>
+    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="Title" else="%TASKINFO{field="Context"}%"}%</a></span>
+  </td>
+  <td class="title">
+    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
+    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
+  </td>
+  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
+    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
+  </td>
+  <td class="due">
+    <span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>
+  </td>
+  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
+  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -525,6 +598,47 @@
   <th>%MAKETEXT{"Title"}%</th>
   <th>%MAKETEXT{"Due date"}%</th>
   <th>%MAKETEXT{"Status"}%</th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::caption::closed"}%<tr>
+%IF{"context task_showexpandercol" then="<th></th>"}%
+  <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Assigned to"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Closed"}%</th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>
+%IF{"context task_showexpandercol" then="<th></th>"}%
+  <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Status"}%</th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::caption::closed_perspage"}%<tr>
+%IF{"context task_showexpandercol" then="<th></th>"}%
+  <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Closed"}%</th>
   <th class="hidden"></th>
   <th class="hidden"></th>
   <th class="hidden"></th>
