@@ -337,9 +337,9 @@
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title view-only">%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
       }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<div class=\"controls\" title=\"$percentMAKETEXT{\"Close task\"}$percent\"><a href=\"#\" class=\"tasks-btn tasks-btn-close\"><i class=\"fa fa-square-o\"></i></a></div>" else="<div class=\"controls\" title=\"$percentMAKETEXT{\"Reopen task\"}$percent\"><i class=\"closed fa fa-check-square\"></i></div>"}%%{
@@ -392,9 +392,9 @@
 <div class="task-details attachments">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title view-only">%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
       }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<div class=\"controls\"><a href=\"#\" class=\"tasks-btn tasks-btn-close\"><i class=\"fa fa-square-o\"></i></a></div>"}%%{
@@ -444,7 +444,7 @@
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
   </td>
-  <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
+  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="assigned">
     <span>%TASKINFO{field="AssignedTo"}%</span>
   </td>
@@ -456,7 +456,8 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">
-%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%'}%</td>
+%IF{"'%TASKINFO{field="Status"}%'='open'" then="%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%" else="<div>$percentMAKETEXT{$quotclosed$quot}$percent</div><span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
+</td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
@@ -471,7 +472,7 @@
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
   </td>
-  <td class="type">%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
+  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="assigned">
     <span>%TASKINFO{field="AssignedTo"}%</span>
   </td>
@@ -483,7 +484,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="due">
-    <span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>
+%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
   </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
@@ -500,6 +501,7 @@
     <span>%TASKINFO{field="Author"}%</span>
     <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="$percntQUERY{$quot'%TASKINFO{field="Context"}%'/Title$quot}$percnt" else="%TASKINFO{field="Context"}%"}%</a></span>
   </td>
+  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
     <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
@@ -508,7 +510,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">
-%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%'}%</td>
+%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<div>$percentMAKETEXT{$quotclosed$quot}$percent</div><span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%</td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
@@ -524,6 +526,7 @@
     <span>%TASKINFO{field="Author"}%</span>
     <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="$percntQUERY{$quot'%TASKINFO{field="Context"}%'/Title$quot}$percnt" else="%TASKINFO{field="Context"}%"}%</a></span>
   </td>
+  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
     <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
@@ -532,7 +535,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="due">
-    <span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>
+%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<div>$percentMAKETEXT{$quotclosed$quot}$percent</div><span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
   </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
@@ -623,6 +626,7 @@
 %TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>
 %IF{"context task_showexpandercol" then="<th></th>"}%
   <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
   <th>%MAKETEXT{"Title"}%</th>
   <th>%MAKETEXT{"Due date"}%</th>
   <th>%MAKETEXT{"Status"}%</th>
@@ -636,6 +640,7 @@
 %TMPL:DEF{"tasksapi::grid::caption::closed_perspage"}%<tr>
 %IF{"context task_showexpandercol" then="<th></th>"}%
   <th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
   <th>%MAKETEXT{"Title"}%</th>
   <th>%MAKETEXT{"Due date"}%</th>
   <th>%MAKETEXT{"Closed"}%</th>

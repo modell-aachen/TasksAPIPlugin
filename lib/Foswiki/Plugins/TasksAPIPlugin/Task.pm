@@ -387,8 +387,10 @@ sub update {
     }
     if ($self->{fields}{Status} eq 'open') {
         $meta->remove('FIELD', 'Closed');
+        delete $self->{fields}{Closed};
     } else {
-        $meta->putKeyed('FIELD', { name => 'Closed', title => 'Closed', value => time });
+        $self->{fields}{Closed} = time;
+        $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
     # just update the comment if a changeset id is given

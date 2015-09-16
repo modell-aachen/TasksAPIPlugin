@@ -294,3 +294,9 @@ msgstr "%1 hat die Aufgabe '%2' geschlossen"
 
 msgid "Closed"
 msgstr "Abgeschlossen"
+
+msgid "My open tasks"
+msgstr "Meine offenen Aufgaben"
+
+msgid "My closed tasks"
+msgstr "Meine geschlossenen Aufgaben"
