@@ -18,3 +18,8 @@
    * Set ALLOWTOPICCHANGE = AdminUser
    * Set NOWYSIWYG = 1
    * Set TASKCFG_HAS_CHILDREN = 0
+   * Set TASKCFG_NOTIFY_CREATED = $curvalue(AssignedTo),$curvalue(Informees)
+   * Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+   * Set TASKCFG_NOTIFY_REOPENED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+   * Set TASKCFG_NOTIFY_CHANGED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+   * Set TASKCFG_NOTIFY_CLOSED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)

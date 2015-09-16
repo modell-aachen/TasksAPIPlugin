@@ -3,9 +3,9 @@
 %TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task closed: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] closed a task in [_2]:" args="%TASKSAPI_ACTOR%,%SCRIPTURL{view}%/%WEB%/%TOPIC%"}%
+%MAKETEXT{"[_1] closed the task '[_2]'" args="%TASKSAPI_ACTOR%,%TMPL:P{ModacMailTitle}%"}%
 
-%TMPL:P{"ModacMailTitle"}%
-
-%TASKINFO{type="changeset"}%
+%TASKINFO{type="changeset" nohtml="1"}%
+%MAKETEXT{"Direct link"}%:
+%SCRIPTURL{view}%/%WEB%/%TOPIC%?id=%TASKINFO{meta="id"}%
 %TMPL:END%

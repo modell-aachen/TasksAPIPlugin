@@ -3,10 +3,14 @@
 %TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] created a task in [_2]:" args="%TASKSAPI_ACTOR%,%SCRIPTURL{view}%/%WEB%/%TOPIC%"}%
+%MAKETEXT{"[_1] created a task: [_2]" args="%TASKSAPI_ACTOR%,%TMPL:P{ModacMailTitle}%"}%
 
-%TMPL:P{"ModacMailTitle"}%
+%MAKETEXT{"Assigned to"}%: %TASKINFO{field="AssignedTo"}%
+%MAKETEXT{"Due date"}%: %TASKINFO{field="DueDate" format="$day $month $year"}%
+%MAKETEXT{"Prioritize"}%: %MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%
 
 %MAKETEXT{"Description"}%:
-%TASKINFO{field="Description"}%
+%TASKINFO{field="Description" nohtml="1"}%
+%MAKETEXT{"Direct link"}%:
+%SCRIPTURL{view}%/%WEB%/%TOPIC%?id=%TASKINFO{meta="id"}%
 %TMPL:END%

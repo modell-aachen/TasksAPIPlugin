@@ -538,6 +538,8 @@ sub restAttach {
 
         $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
         Foswiki::Plugins::TasksAPIPlugin::_index($task);
+        $task->{changeset} = $newid;
+        $task->notify('changed');
     };
     if ($@) {
         Foswiki::Func::writeWarning( $@ );
@@ -1221,7 +1223,27 @@ sub _renderChangeset {
     my $fields = $task->form->getFields;
     my $fsep = $params->{fieldseparator} || '';
 
-    my $format = $params->{format} || '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>';
+    my $plain = Foswiki::isTrue($params->{nohtml}, 0);
+    my $defaultFormat;
+    if ( $plain ) {
+        if ( $cset->{comment} ) {
+            $defaultFormat = <<FORMAT;
+%MAKETEXT{"[_1] on [_2]" args="\$user,\$date"}%
+\$fields
+
+%MAKETEXT{"Comment"}%:
+\$comment
+FORMAT
+        } else {
+            $defaultFormat = <<FORMAT;
+%MAKETEXT{"[_1] on [_2]" args="\$user,\$date"}%
+\$fields
+FORMAT
+        }
+    } else {
+        $defaultFormat = '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>'
+    }
+    my $format = $params->{format} || $defaultFormat;
     my $addComment = '';
     my $editComment = '';
     unless ( $params->{format} ) {
@@ -1238,9 +1260,25 @@ sub _renderChangeset {
         $format =~ s#\$icons#$editComment#g;
     }
 
-    my $fformat = $params->{fieldformat} || '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
-    my $faddformat = $params->{fieldaddformat} || '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
-    my $fdeleteformat = $params->{fielddeleteformat} || '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
+    my ($defaultFFormat, $defaultFAddFormat, $defaultFDeleteFormat);
+    if ( $plain ) {
+        $defaultFFormat = <<FORMAT;
+%MAKETEXT{"Field [_1] changed:" args="\$title"}% \$old(shorten:25) -> \$new(shorten:25)
+FORMAT
+        $defaultFAddFormat = <<FORMAT;
+%MAKETEXT{"[_1] added: [_2]" args="\$title,\$new(shorten:25)"}%
+FORMAT
+        $defaultFDeleteFormat = <<FORMAT;
+%MAKETEXT{"[_1] removed: [_2]" args="\$title,\$old(shorten:25)"}%
+FORMAT
+    } else {
+        $defaultFFormat = '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
+        $defaultFAddFormat = '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
+        $defaultFDeleteFormat = '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
+    }
+    my $fformat = $params->{fieldformat} || $defaultFFormat;
+    my $faddformat = $params->{fieldaddformat} || $defaultFAddFormat;
+    my $fdeleteformat = $params->{fielddeleteformat} || $defaultFDeleteFormat;
     my @fout;
     my $exclude = $params->{excludefields} || '^$';
 
@@ -1364,6 +1402,9 @@ sub tagInfo {
             $val =~ s/</&lt;/g;
             $val =~ s/>/&gt;/g;
             $val =~ s/"/&quot;/g;
+        }
+        if (Foswiki::isTrue($params->{nohtml}, 0)) {
+            $val =~ s|<.+?>||g;
         }
         return $val;
     }

@@ -160,6 +160,9 @@ msgstr "Aufgabe wieder eröffnet: %1"
 msgid "Task reassigned: %1"
 msgstr "Aufgabe neu zugewiesen: %1"
 
+msgid "%1 created a task: %2"
+msgstr "%1 hat eine Aufgabe erstellt: %2"
+
 msgid "%1 created a task in %2:"
 msgstr "%1 hat eine Aufgabe in %2 erstellt:"
 
@@ -198,6 +201,9 @@ msgstr "Neue untergeordnete Aufgabe hinzufügen"
 
 msgid "Unknown status"
 msgstr "Unbekannter Status"
+
+msgid "Due date"
+msgstr "Zieltermin"
 
 msgid "In one day"
 msgstr "In einem Tag"
@@ -267,3 +273,21 @@ msgstr "Von mir erstellt"
 
 msgid "Assigned to me"
 msgstr "Mir zugewiesen"
+
+msgid "Field %1 changed:"
+msgstr "Feld %1 geändert:"
+
+msgid "Direct link"
+msgstr "Direkter Link"
+
+msgid "%1 reassigned the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' neu zugewiesen"
+
+msgid "%1 reopened the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' wieder geöffnet"
+
+msgid "%1 updated the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' aktualisiert"
+
+msgid "%1 closed the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' geschlossen"
