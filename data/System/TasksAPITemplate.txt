@@ -507,14 +507,13 @@
 %TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
-}%<label>
-  <select name="status">%TASKINFO{expand="stateoptions"}%</select>
-</label>%{
+}%<span class="hint">%MAKETEXT{"Filter nach Status"}%:</span>
+  <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
 }%%TMPL:END%
 %TMPL:DEF{"tasksapi::grid::filter::create"}%%{
 }%<div class="create">
   <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>%MAKETEXT{"Add task"}%</a>
-</div>%{
+</div><span class="clear"></span>%{
 }%%TMPL:END%
 
 

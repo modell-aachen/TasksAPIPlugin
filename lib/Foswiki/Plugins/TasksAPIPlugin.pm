@@ -994,7 +994,6 @@ sub tagGrid {
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
-    my $title = $params->{title} || '%MAKETEXT{"Tasks"}%';
     my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
     my $templateFile = $params->{templatefile} || 'TasksAPI';
     my $allowCreate = $params->{allowcreate} || 0;
@@ -1009,6 +1008,8 @@ sub tagGrid {
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
+    my $title = $params->{title};
+    $title = '%MAKETEXT{"Tasks"}%' unless defined $title;
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];

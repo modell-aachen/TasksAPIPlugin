@@ -261,3 +261,9 @@ msgstr "%1 hinzugefügt: %2"
 
 msgid "%1 removed: %2"
 msgstr "%1 entfernt: %2"
+
+msgid "Created by me"
+msgstr "Von mir erstellt"
+
+msgid "Assigned to me"
+msgstr "Mir zugewiesen"
