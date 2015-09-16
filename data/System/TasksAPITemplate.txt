@@ -456,7 +456,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">
-%IF{"'%TASKINFO{field="Status"}%'='open'" then="%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%" else="<div>$percentMAKETEXT{$quotclosed$quot}$percent</div><span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
+%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<div>$percentMAKETEXT{$quotclosed$quot}$percent</div><span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
 </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
