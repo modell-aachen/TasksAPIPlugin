@@ -912,8 +912,9 @@ sub _renderTask {
     }
 
     my $flavor = {};
-    if ( $currentOptions->{flavor} && $taskTemplate ne 'tasksapi::empty' ) {
-        $flavor->{name} = $currentOptions->{flavor};
+    my $q = $Foswiki::Plugins::SESSION->{request};
+    if ( ($currentOptions->{flavor} || $q->param('flavor')) && $taskTemplate ne 'tasksapi::empty' ) {
+        $flavor->{name} = $currentOptions->{flavor} || $q->param('flavor');
         $flavor->{type} = $task->getPref('TASK_TYPE');
         $flavor->{file} = $task->getPref('TASK_TEMPLATE_FILE');
     }
