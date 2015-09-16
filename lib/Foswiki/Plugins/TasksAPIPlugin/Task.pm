@@ -385,6 +385,11 @@ sub update {
     if (@comment) {
         unshift @comment, 'comment';
     }
+    if ($self->{fields}{Status} eq 'open') {
+        $meta->remove('FIELD', 'Closed');
+    } else {
+        $meta->putKeyed('FIELD', { name => 'Closed', title => 'Closed', value => time });
+    }
 
     # just update the comment if a changeset id is given
     if ( $data{cid} ) {

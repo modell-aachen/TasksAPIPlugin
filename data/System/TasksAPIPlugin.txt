@@ -60,6 +60,7 @@ A number of other fields, if used, should use these standard names:
    * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
    * =Created=: the creation time. Set the default value  to
      =%GMTIME{"$epoch"}=.
+   * =Closed=: the time a task was closed. Handled internally.
    * =Title=: user-defined title of the task
    * =AssignedTo=: the user this task is assigned to. This is generally meant
      to be a single person because with task with multiple assignees, there is
