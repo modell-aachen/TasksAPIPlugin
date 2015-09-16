@@ -291,3 +291,6 @@ msgstr "%1 hat die Aufgabe '%2' aktualisiert"
 
 msgid "%1 closed the task '%2'"
 msgstr "%1 hat die Aufgabe '%2' geschlossen"
+
+msgid "Closed"
+msgstr "Abgeschlossen"

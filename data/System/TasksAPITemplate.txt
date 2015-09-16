@@ -498,7 +498,7 @@
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
-    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="Title" else="%TASKINFO{field="Context"}%"}%</a></span>
+    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="$percntQUERY{$quot'%TASKINFO{field="Context"}%'/Title$quot}$percnt" else="%TASKINFO{field="Context"}%"}%</a></span>
   </td>
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
@@ -522,7 +522,7 @@
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
-    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="Title" else="%TASKINFO{field="Context"}%"}%</a></span>
+    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="$percntQUERY{$quot'%TASKINFO{field="Context"}%'/Title$quot}$percnt" else="%TASKINFO{field="Context"}%"}%</a></span>
   </td>
   <td class="title">
     <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
