@@ -142,6 +142,10 @@ sub finishPlugin {
 sub indexTopicHandler {
     my ($indexer, $doc, $web, $topic, $meta, $text) = @_;
 
+    my $topicType = $meta->get('FIELD', 'TopicType');
+    return unless ref $topicType;
+    return unless $topicType->{value} eq 'task';
+
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     return unless $task;
