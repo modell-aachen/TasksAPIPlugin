@@ -74,6 +74,7 @@
       });
       $this.on('click', '> .filter .tasks-btn-create', function() {
         self.tasksPanel.createTask();
+        return false;
       });
 
       var id = $this.attr('id');
