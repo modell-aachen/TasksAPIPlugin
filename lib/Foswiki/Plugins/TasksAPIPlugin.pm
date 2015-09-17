@@ -381,7 +381,8 @@ sub _index {
     for my $f (keys %{$task->{fields}}) {
         my $v = $task->{fields}{$f};
         next unless defined $v;
-        if ($form->getField($f)->isMultiValued()) {
+        my $field = $form->getField($f);
+        if ($field && $field->can('isMultiValued') && $field->isMultiValued()) {
             $v = [ split(/\s*,\s*/, $v) ];
         } else {
             $v = [ $v ];
