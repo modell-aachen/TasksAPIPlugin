@@ -30,6 +30,9 @@ TasksPanel = function(tasktracker) {
     }
   };
 
+  var isCtrlKeyDown = false;
+  var isControlsHovered = false;
+
   this.currentTask = null;
   this.tracker = tasktracker;
   this.overlay = this.tracker.find('> .overlay > .task-overlay');
@@ -77,10 +80,36 @@ TasksPanel = function(tasktracker) {
     self.panel.off('click', '.task-changeset-remove');
     self.panel.off('keydown', '.task-changeset-comment');
     self.panel.off('click', '.task-attachments tbody tr');
+
+    window.onkeydown = window.onkeyup = null;
   };
 
   var attachHandler = function() {
     detachHandler();
+
+    window.onkeydown = window.onkeyup = function(e) {
+      isCtrlKeyDown = e.ctrlKey;
+
+      if ( !isControlsHovered ) {
+        self.panel.find('.controls i').each(function() {
+          var $i = $(this);
+          $i.removeClass('fa-trash-o');
+          $i.addClass($i.hasClass('closed') ? 'fa-check-square' : 'fa-square-o');
+        });
+
+        return;
+      }
+
+      self.panel.find('.controls i').each(function() {
+        var $i = $(this);
+        if ( isCtrlKeyDown ) {
+          $i.removeClass('fa-square-o fa-check-square fa-check-square-o').addClass('fa-trash-o');
+        } else {
+          $i.removeClass('fa-trash-o');
+          $i.addClass($i.hasClass('closed') ? 'fa-square-o' : 'fa-check-square-o');
+        }
+      });
+    };
 
     self.buttons.cancel.on('click', function() {
       onCancel();
@@ -228,25 +257,32 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
-    self.panel.on('mouseenter', '.controls', function() {
+    self.panel.on('mouseenter', '.controls', function(evt) {
+      isControlsHovered = true;
       var $i = $(this).find('i');
-      if ( $i.hasClass('closed') ) {
-        $i.removeClass('fa-check-square').addClass('fa-square-o');
+      if ( isCtrlKeyDown ) {
+        $i.removeClass('fa-check-square fa-square-o').addClass('fa-trash-o');
       } else {
-        $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+        if ( $i.hasClass('closed') ) {
+          $i.removeClass('fa-check-square').addClass('fa-square-o');
+        } else {
+          $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+        }
       }
     });
 
     self.panel.on('mouseleave', '.controls', function() {
+      isControlsHovered = false;
       var $i = $(this).find('i');
       if ( $i.hasClass('closed') ) {
-        $i.removeClass('fa-square-o').addClass('fa-check-square');
+        $i.removeClass('fa-square-o fa-trash-o').addClass('fa-check-square');
       } else {
-        $i.removeClass('fa-check-square-o').addClass('fa-square-o');
+        $i.removeClass('fa-check-square-o fa-trash-o').addClass('fa-square-o');
       }
     });
 
     self.panel.on('click', '.caption > .controls', function() {
+      var isDelete = $(this).find('i').hasClass('fa-trash-o');
       var data = self.currentTask.data('task_data');
       var isOpen = data.fields.Status.value === 'open';
       var deferred = $.Deferred();
@@ -261,8 +297,10 @@ TasksPanel = function(tasktracker) {
         }
       }
 
-      if ( isOpen ) {
-        var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
+      if ( isOpen || isDelete ) {
+        var closeTxt = isDelete 
+          ? jsi18n.get('tasksapi', 'Do you want to delete this entry?')
+          : jsi18n.get('tasksapi', 'Do you want to close this entry?');
         var cmtTxt = jsi18n.get('tasksapi', 'Comment');
         var html = [
           closeTxt,
@@ -274,7 +312,7 @@ TasksPanel = function(tasktracker) {
         swal({
           title: jsi18n.get('tasksapi', 'Are you sure?'),
           html: html,
-          type: 'warning',
+          type: isDelete ? 'error' : 'warning',
           showCancelButton: true,
           confirmButtonColor: '#6CCE86',
           cancelButtonColor: '#BDBDBD',
@@ -283,7 +321,7 @@ TasksPanel = function(tasktracker) {
           closeOnConfirm: false
         }, function(confirmed) {
           if (confirmed) {
-            payload.Status = 'closed';
+            payload.Status = isDelete ? 'deleted' : 'closed';
 
             var $dialog = $('.sweet-alert.show-sweet-alert.visible');
             var comment = $dialog.find('textarea[name="Comment"]').val();

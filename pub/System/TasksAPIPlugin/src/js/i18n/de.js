@@ -4,6 +4,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "Are you sure?": "Sind Sie sicher?",
     "Do you want to remove this comment?": "Möchten Sie diesen Kommentar entfernen?",
     "Do you want to close this entry?": "Möchten Sie diesen Eintrag schließen?",
+    "Do you want to delete this entry?": "Möchten Sie diesen Eintrag löschen?",
     "Your previous changes will be lost.": "Ihre bisherigen Änderungen gehen verloren.",
     "Show less": "Weniger anzeigen",
     "Show more": "Mehr anzeigen",

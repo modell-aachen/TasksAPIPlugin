@@ -141,10 +141,16 @@
       self.tasksPanel.on( 'afterSave', function( evt, task ) {
         var $task = $(createTaskElement(task));
         var $existing = findTask($task.data('id'));
+        var $next = $existing.next();
 
         if ( task.fields.Status.value === 'deleted' ) {
-          self.tasksPanel.next();
+          if ( $existing.hasClass('expanded') ) {
+            $existing.next().remove();
+          }
+
+          $next = self.tasksPanel.next();
           $existing.remove();
+          self.tasksPanel.viewTask($next);
           return false;
         }
 
@@ -159,12 +165,11 @@
               var $children = $task.children('.task-children').children('table.children').detach();
               var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
               $new.children('td').append($children);
-              $existing.next().replaceWith($new);
+              $next.replaceWith($new);
             }
 
             $existing.replaceWith($task);
           } else {
-            var $next = $existing.next();
             $nextActive = $next;
             $existing.remove();
             if ($next.hasClass('task-children-container')) {
