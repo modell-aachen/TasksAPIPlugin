@@ -802,6 +802,10 @@ sub restLease {
     my $edtpl;
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $r->{Context});
 
+    if ($r->{context}) {
+        Foswiki::Func::setPreferencesValue('taskeditor_context', $r->{context});
+    }
+
     if ($r->{id}) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
         my $lease = $task->{meta}->getLease();
@@ -830,7 +834,7 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
 
         if ($r->{parent}) {
-            Foswiki::Func::setPreferencesValue('taskeditor_parentid', $r->{parent});
+            Foswiki::Func::setPreferencesValue('taskeditor_parent', $r->{parent});
         }
 
         my $m = Foswiki::Meta->new($session, Foswiki::Func::normalizeWebTopicName(undef, $f));
@@ -936,9 +940,9 @@ sub _renderTask {
             $task = $meta->expandMacros($storedTemplates->{$type});
         }
     } else {
-        $storedTemplates->{_default} = Foswiki::Func::expandTemplate($taskTemplate)
-            unless $storedTemplates->{_default};
-        $task = $meta->expandMacros($storedTemplates->{_default});
+        $storedTemplates->{"$taskTemplate"} = Foswiki::Func::expandTemplate($taskTemplate)
+            unless $storedTemplates->{"$taskTemplate"};
+        $task = $meta->expandMacros($storedTemplates->{"$taskTemplate"});
     }
 
     if ($canChange && $haveCtx && !$readonly) {
@@ -1002,7 +1006,6 @@ sub tagGrid {
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
-    my $createText = $params->{createlinktext} || '%MAKETEXT{"Add task"}%';
     my $templateFile = $params->{templatefile} || 'TasksAPI';
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
@@ -1018,6 +1021,8 @@ sub tagGrid {
     my $flavor = $params->{flavor} || $params->{flavour} || '';
     my $title = $params->{title};
     $title = '%MAKETEXT{"Tasks"}%' unless defined $title;
+    my $createText = $params->{createlinktext};
+    $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
@@ -1130,6 +1135,7 @@ sub tagGrid {
 
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
     $grid =~ s/\$grid_title/$title/ge;
+    $grid =~ s/\$create_text/$createText/ge;
 
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_stateless};
@@ -1398,6 +1404,7 @@ sub tagInfo {
         $val = _shorten($val, $params->{shorten});
         if ($params->{format}) {
             if ( $val =~ /^\d+$/ ) {
+                $val = substr $val, 0, 10 if ( length $val eq 13 );
                 $val = Foswiki::Time::formatTime($val, $params->{format});
             }
 

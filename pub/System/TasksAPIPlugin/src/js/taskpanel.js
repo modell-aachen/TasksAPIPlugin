@@ -70,9 +70,9 @@ TasksPanel = function(tasktracker) {
     self.overlay.off('queueEmpty');
 
     self.panel.off('keydown', 'input');
-    self.panel.off('click', '.tasks-btn-close');
-    self.panel.off('mouseenter', '.tasks-btn-close');
-    self.panel.off('mouseleave', '.tasks-btn-close');
+    self.panel.off('click', '.caption > .controls');
+    self.panel.off('mouseenter', '.controls');
+    self.panel.off('mouseleave', '.controls');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
     self.panel.off('keydown', '.task-changeset-comment');
@@ -304,6 +304,9 @@ TasksPanel = function(tasktracker) {
       }
 
       deferred.promise().done(function(data) {
+        // Hotfix. (ToDo)
+        data._depth = data.depth ? data.depth : 0;
+
         window.tasksapi.blockUI();
         $.taskapi.update(data)
           .fail(error)
@@ -387,6 +390,7 @@ TasksPanel = function(tasktracker) {
     }
 
     self.isCreate = false;
+    self.taskParent = null;
     setButtons('view');
   };
 
@@ -415,28 +419,26 @@ TasksPanel = function(tasktracker) {
       }
     }
 
-    // if ( $this.data('parent') && !task.Parent ) {
-    //   task.Parent = $this.data('parent');
-    // }
-
-    var beforeSave = $.Event( 'beforeSave' );
-    self.trigger( beforeSave, task ); 
-    if( beforeSave.isDefaultPrevented() ) {
-      return false;
-    }
-
-    window.tasksapi.blockUI();
-    task._depth = opts._depth > 0 ? opts._depth : 0;
+    task._depth = opts.depth > 0 ? opts.depth : 0;
     var apiFunc = 'update';
 
     if ( self.isCreate ) {
       apiFunc = 'create';
       task.Context = self.tracker.data('tasktracker_options').context;
+      task.Parent = self.taskParent;
       if ( !task.Status ) {
         task.Status = 'open';
       }
     }
 
+    var beforeSave = $.Event( 'beforeSave' );
+    self.trigger( beforeSave, task );
+    if( beforeSave.isDefaultPrevented() ) {
+      self.taskParent = null;
+      return false;
+    }
+
+    window.tasksapi.blockUI();
     $.taskapi[apiFunc]( task )
       .always( window.tasksapi.unblockUI )
       .fail( error )
@@ -686,6 +688,18 @@ TasksPanel = function(tasktracker) {
     opts.autoassign = topts.autoassign;
     opts._depth = self.isCreate ? topts.depth : task.depth;
 
+    if ( self.taskParent ) {
+      opts.parent = self.taskParent;
+    }
+
+    if ( self.isCreate ) {
+      var beforeCreate = $.Event( 'beforeCreate' );
+      self.trigger( beforeCreate, opts );
+      if( beforeCreate.isDefaultPrevented() ) {
+        return false;
+      }
+    }
+
     window.tasksapi.blockUI();
     leaseTopic(opts).done(function(response) {
       updateHead( response.scripts );
@@ -930,6 +944,10 @@ TasksPanel = function(tasktracker) {
 
     isAnimating = true;
     var nextTask = getSibling(self.currentTask, direction);
+    if ( nextTask[0] === self.currentTask[0] ) {
+      isAnimating = false;
+      return self.currentTask;
+    }
 
     // scroll highlighted task into view...
     self.currentTask.removeClass('highlight');
@@ -1132,9 +1150,12 @@ TasksPanel = function(tasktracker) {
   };
 
   this.createTask = function(parent) {
-    // self.isView = true;
     self.isCreate = true;
     self.currentTask = null;
+    if ( parent ) {
+      self.taskParent = parent;
+    }
+
     onEdit();
   };
 

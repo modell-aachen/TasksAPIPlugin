@@ -17,6 +17,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "Attention!": "Achtung!",
     "Title": "Titel",
     "AssignedTo": "Zugewiesen an",
-    "Comment": "Kommentar"
+    "Comment": "Kommentar",
+    "The entry has been reopened": "Der Eintrag wurde wieder eröffnet"
   });
 }

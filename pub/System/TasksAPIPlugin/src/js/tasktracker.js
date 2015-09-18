@@ -61,7 +61,12 @@
       });
 
       $this.on('click', '.task > .close', toggleTaskState);
-      $this.on('click', '.task', function() {
+      $this.on('click', '.task', function(evt) {
+        if ( $(evt.target).closest('.expander').length === 1 ) {
+          toggleTaskExpand.call(evt.target, evt);
+          return false;
+        }
+
         if ( self.isTaskClicked ) {
           return false;
         }
@@ -72,8 +77,21 @@
           self.isTaskClicked = false;
         }, 200);
       });
+
       $this.on('click', '> .filter .tasks-btn-create', function() {
         self.tasksPanel.createTask();
+        return false;
+      });
+
+      $this.on('click', '.task-new', function() {
+        var $self = $(this);
+        var $cnt = $(this).closest('.task-children-container');
+        var $task = $cnt.prev();
+        if ( $task.is('.task.expanded') ) {
+          var parent = $task.data('id');
+          self.tasksPanel.createTask(parent);
+        }
+
         return false;
       });
 
@@ -114,17 +132,36 @@
       };
 
       $status.on( 'change', handleStatusFilterChanged );
-      self.tasksPanel.on( 'afterSave', function( evt, task ) {
-        var pid = task.fields.Parent.value;
-        var isClose = task.fields.Status.value === 'closed';
-        var $task = $(createTaskElement(task));
-        var $nextActive = $task;
-        var $existing = self.opts.container.children('.task').filter( function() {
-          return $(this).data('id') === $task.data('id');
+      var findTask = function(id) {
+        return self.opts.container.find('.task:visible').filter( function() {
+          return $(this).data('id') === id;
         });
+      };
+
+      self.tasksPanel.on( 'afterSave', function( evt, task ) {
+        var $task = $(createTaskElement(task));
+        var $existing = findTask($task.data('id'));
+
+        if ( task.fields.Status.value === 'deleted' ) {
+          self.tasksPanel.next();
+          $existing.remove();
+          return false;
+        }
+
+        var $nextActive = $task;
+        var isClose = task.fields.Status.value === 'closed';
 
         if ( $existing.length > 0 ) {
           if ( !isClose || /(1|on|true|enabled)/i.test(self.opts.keepclosed) ) {
+            if ( $existing.hasClass('expanded') ) {
+              $task.addClass('expanded');
+              var span = $task.children('td').length;
+              var $children = $task.children('.task-children').children('table.children').detach();
+              var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+              $new.children('td').append($children);
+              $existing.next().replaceWith($new);
+            }
+
             $existing.replaceWith($task);
           } else {
             var $next = $existing.next();
@@ -136,36 +173,45 @@
             }
           }
         } else {
-          self.opts.container.append($task);
-        }
-
-        applyLevels();
-
-        if ( $status.length > 0 && task.fields.Status.value !== $status.val() ) {
-          $tasks.find('.task').each( function() {
-            var $t = $(this);
-            if ( $t.data('id') === task.id ) {
-              $t.remove();
+          if ( task.fields.Parent.value ) {
+            var $parent = findTask(task.fields.Parent.value);
+            var $childContainer = $parent.next();
+            if ( !$childContainer.hasClass('task-children-container') ) {
+              // TBD. is this even possible?
               return false;
             }
-          });
-        }
 
-        if ( self.opts.sortable ) {
-          invokeTablesorter.call($this.children('.tasks-table'), true);
+            $task.insertBefore($childContainer.find('> td > table > tbody > .task-new'));
+          } else {
+            self.opts.container.append($task);
+          }
         }
 
         // view task
         self.tasksPanel.viewTask($nextActive);
       });
 
-      if ( self.opts.sortable ) {
-        invokeTablesorter.call($this.children('.tasks-table'));
-      }
-
-      applyLevels();
       return this;
     });
+  };
+
+  var toggleTaskExpand = function(evt) {
+    var $col = $(this).closest('.expander');
+    var $row = $col.parent();
+    $row.toggleClass('expanded');
+
+    if ( $row.hasClass('expanded') ) {
+      var span = $row.children('td').length;
+      var $children = $row.children('.task-children').children('table.children').detach();
+      var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+      $new.children('td').append($children);
+      $new.insertAfter($row);
+    } else {
+      var $next = $row.next();
+      var $table = $next.children('td').children('table.children').detach();
+      $table.appendTo($row.children('.task-children'));
+      $next.remove();
+    }
   };
 
   var getViewUrl = function() {
@@ -399,11 +445,23 @@
       deferred.resolve(payload);
     }
 
-    deferred.promise().done(function() {
+    deferred.promise().done(function(data) {
       window.tasksapi.blockUI();
-      $.taskapi.update(payload).done(function(response) {
+      // Hotfix. (ToDo)
+      data._depth = data.depth ? data.depth : 0;
+
+      $.taskapi.update(data).done(function(response) {
         if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
           var $newTask = createTaskElement(response.data);
+          if ( $task.hasClass('expanded') ) {
+            $newTask.addClass('expanded');
+            var span = $newTask.children('td').length;
+            var $children = $newTask.children('.task-children').children('table.children').detach();
+            var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+            $new.children('td').append($children);
+            $next.replaceWith($new);
+          }
+
           $task.replaceWith($newTask);
         } else {
           $task.remove();
@@ -417,7 +475,7 @@
           swal({
             type: 'success',
             title: jsi18n.get('tasksapi', 'Done!'),
-            text: jsi18n.get('tasksapi', 'The entry has been marked as closed'),
+            text: jsi18n.get('tasksapi', isOpen ? 'The entry has been marked as closed' : 'The entry has been reopened'),
             timer: 1500,
             showConfirmButton: false,
             showCancelButton: false
@@ -430,22 +488,6 @@
     });
 
     return false;
-  };
-
-  var applyLevels = function() {
-    $('.task:visible, .task-new:visible').each(function(i,e) {
-      var lvl = 0;
-      var $task = $(e);
-      var $t = $(this);
-      while ($t.parent().closest('.tasks-table').length) {
-        $t = $t.parent().closest('.tasks-table');
-        lvl++;
-      }
-
-      $task.attr('class', function(j,cls) {
-        return cls.replace(/(^|\s)alternate/g, '') + (lvl%2===0 ? ' alternate' : '');
-      });
-    });
   };
 
   var parseQueryParams = function(query) {

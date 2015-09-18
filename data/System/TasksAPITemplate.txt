@@ -313,27 +313,27 @@
       </label>
       <textarea name="TaskComment" cols="30" rows="10"></textarea>
     </div>%{
-    }%%TMPL:P{"tasksapi::viewer::upload"}%%{
+    }%%TMPL:P{"tasksapi::overlay::upload"}%%{
 }%</div>
 </div>
 %TMPL:END%
 
-%TMPL:DEF{"tasksapi::viewer::upload"}%%{
+%TMPL:DEF{"tasksapi::overlay::upload"}%%{
 }%<div class="upload">%DNDUPLOAD{extraclass="task-dnd"}%</div>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::viewer"}%%{
+%TMPL:DEF{"tasksapi::overlay::content"}%%{
 }%<literal>
   <div class="viewer">
   %TABPANE{class="simple"}%
-  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::viewer::details"}%%ENDTAB%%{
-  }%%IF{"'%TASKINFO{meta="AttachCount"}%'='0'" else="$percntTMPL:P{\"tasksapi::viewer::attachments\"}$percnt"}%%{
+  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::overlay::content::details"}%%ENDTAB%%{
+  }%%IF{"'%TASKINFO{meta="AttachCount"}%'='0'" else="$percntTMPL:P{\"tasksapi::overlay::content::attachments\"}$percnt"}%%{
   }%%ENDTABPANE%
   </div>
 </literal>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::viewer::details"}%%{
+%TMPL:DEF{"tasksapi::overlay::content::details"}%%{
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title view-only">%{
@@ -387,7 +387,7 @@
 
 
 
-%TMPL:DEF{"tasksapi::viewer::attachments"}%%{
+%TMPL:DEF{"tasksapi::overlay::content::attachments"}%%{
 }%%TAB{"%MAKETEXT{Attachments}% (%TASKINFO{meta="AttachCount"}%)"}%
 <div class="task-details attachments">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
@@ -406,7 +406,7 @@
 }%%TMPL:END%
 
 
-%TMPL:DEF{"tasksapi::viewer::actions"}%%{
+%TMPL:DEF{"tasksapi::overlay::content::actions"}%%{
 }%<div class="active">
   <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
   <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
@@ -460,7 +460,7 @@
 </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -488,7 +488,7 @@
   </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -513,7 +513,7 @@
 %IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%</td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -539,7 +539,7 @@
   </td>
   <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
   <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::viewer"}%</div></td>
+  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
@@ -583,12 +583,12 @@
 %TMPL:END%
 
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
-}%<span class="hint">%MAKETEXT{"Filter nach Status"}%:</span>
+}%<span class="hint">%MAKETEXT{"Filter by state"}%:</span>
   <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
 }%%TMPL:END%
 %TMPL:DEF{"tasksapi::grid::filter::create"}%%{
 }%<div class="create">
-  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>%MAKETEXT{"Add task"}%</a>
+  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>$create_text</a>
 </div><span class="clear"></span>%{
 }%%TMPL:END%
 

@@ -116,7 +116,8 @@
 
 .tasks > .task td {
   &.expander {
-    width: 52px;
+    width: 20px;
+    padding: 0 0 0 10px;
   }
 
   &.created {
@@ -161,6 +162,8 @@
   }
 
   &.ampel {
+    color: #777;
+    font-size: 11px;
     text-align: center;
     width: 55px;
   }

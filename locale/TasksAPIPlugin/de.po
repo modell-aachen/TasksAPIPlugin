@@ -300,3 +300,6 @@ msgstr "Meine offenen Aufgaben"
 
 msgid "My closed tasks"
 msgstr "Meine geschlossenen Aufgaben"
+
+msgid "Filter by state"
+msgstr "Filter nach Status"
