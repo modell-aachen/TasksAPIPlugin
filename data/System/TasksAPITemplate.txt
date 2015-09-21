@@ -406,20 +406,6 @@
 }%%TMPL:END%
 
 
-%TMPL:DEF{"tasksapi::overlay::content::actions"}%%{
-}%<div class="active">
-  <a href="#" class="tasks-btn tasks-btn-prev">%MAKETEXT{"Previous task"}%</a>
-  <a href="#" class="tasks-btn tasks-btn-next">%MAKETEXT{"Next task"}%</a>
-  <a href="#" class="tasks-btn tasks-btn-edit" title="%MAKETEXT{"Edit task"}%">&nbsp;</a>
-  <a href="#" class="tasks-btn tasks-btn-upload" title="%MAKETEXT{"Add attachments"}%">&nbsp;</a>
-  <a href="#" class="tasks-btn tasks-btn-comment" title="%MAKETEXT{"Add comment"}%">&nbsp;</a>
-</div>
-<div class="hidden">
-  <a href="#" class="tasks-btn tasks-btn-save-comment">%MAKETEXT{"Save"}%</a>
-  <a href="#" class="tasks-btn tasks-btn-cancel-comment">%MAKETEXT{"Cancel"}%</a>
-</div>%{
-}%%TMPL:END%
-
 %TMPL:DEF{"tasksapi::task::children::new"}%
 <tr class="task-new">
   <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
@@ -650,9 +636,5 @@
   <th class="hidden"></th>
   <th class="hidden"></th>
 </tr>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::addnew"}%%{
-}%<a class="task-subbtn-template task-child-add tasks-btn tasks-btn-create" href="#">%MAKETEXT{"Add sub-task"}%</a>%{
-}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::empty"}%%TMPL:END%
