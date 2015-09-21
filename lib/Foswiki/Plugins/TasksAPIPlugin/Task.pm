@@ -159,6 +159,13 @@ sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
     return () unless $aclPref;
+    if ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
+        my $f = $this->get('FIELD', $1);
+        if ( $f && $f->{value}) {
+            $aclPref =~ s/\$curvalue\(([^)]+)\)/$f->{value}/eg;
+        }
+    }
+
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
     my $parent = $this->get('FIELD', 'Parent');
