@@ -472,7 +472,6 @@ TasksPanel = function(tasktracker) {
     var beforeSave = $.Event( 'beforeSave' );
     self.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
-      self.taskParent = null;
       return false;
     }
 
