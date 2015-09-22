@@ -413,8 +413,11 @@ TasksPanel = function(tasktracker) {
         self.savedStates.parent.fadeIn(200);
         setTimeout(function() {
           var parent = self.savedStates.parent;
-          initReadmore(parent);
-          sliceChanges(parent.find('.changes'));
+          if ( parent ) {
+            initReadmore(parent);
+            sliceChanges(parent.find('.changes'));
+          }
+
           self.savedStates.details = self.savedStates.parent = null;
         }, 250);
       });
