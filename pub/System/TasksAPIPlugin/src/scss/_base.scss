@@ -258,3 +258,20 @@ table.task-attachments {
   -ms-user-select: none;
   user-select: none;
 }
+
+.tasks-table {
+  th.sortable {
+    background-image: url('../assets/sort_bg.gif');
+    background-position: center right;
+    background-repeat: no-repeat;
+    cursor: pointer;
+
+    &.asc {
+      background-image: url('../assets/sort_asc.gif');
+    }
+
+    &.desc {
+      background-image: url('../assets/sort_desc.gif');
+    }
+  }
+}

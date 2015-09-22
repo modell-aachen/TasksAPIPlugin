@@ -992,8 +992,8 @@ sub tagGrid {
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName( $web, $topic );
     my $ctx = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
     my $parent = $params->{parent} || "";
-    my $id = $params->{id} || $gridCounter;
-    $gridCounter += 1 if $id eq $gridCounter;
+    my $id = $params->{id} || "tracker-$gridCounter";
+    $gridCounter += 1 if $id eq "tracker-$gridCounter";
     my $system = $Foswiki::cfg{SystemWebName} || "System";
     my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
     my $template = $params->{template} || 'tasksapi::grid';
@@ -1002,7 +1002,7 @@ sub tagGrid {
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
-    my $pageSize = $params->{pagesize};
+    my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
@@ -1019,6 +1019,7 @@ sub tagGrid {
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
+    my $desc = $params->{desc} || 0;
     my $title = $params->{title};
     $title = '%MAKETEXT{"Tasks"}%' unless defined $title;
     my $createText = $params->{createlinktext};
@@ -1038,21 +1039,38 @@ sub tagGrid {
 
     Foswiki::Func::loadTemplate( $templateFile );
 
-    my $mand = '%MAKETEXT{"Missing value for mandatory field"}%';
-    my $close = '%MAKETEXT{"Do you really want to close the selected task?"}%';
-
     my $req = $session->{request};
+    my $trackerid = $req->param('tid') || '';
+    if ( $req->param('order') && $trackerid eq $id ) {
+        $order = $req->param('order');
+    }
+
+    if ( defined $req->param('desc') && $trackerid eq $id ) {
+        $desc = $req->param('desc') eq 0 ? 0 : $req->param('desc');
+    }
+
+    if ( $req->param('pagesize') && $trackerid eq $id ) {
+        $pageSize = $req->param('pagesize');
+    }
+
+    my $page = 1;
+    $page = $req->param('page') if $req->param('page') && $trackerid eq $id;
+    if ( $pageSize && $page gt 1  && $trackerid eq $id ) {
+        $offset = (int($page) - 1) * int($pageSize);
+    }
+
     my %settings = (
         context => $ctx,
         parent => $parent,
         form => $form,
         id => $id,
         depth => int($depth),
-        pagesize => int($pageSize || 0),
+        pagesize => int($pageSize),
         paging => $paging,
         offset => $offset,
         query => $query,
-        order => $req->param('order') || $order,
+        order => $order,
+        desc => $desc,
         allowupload => $allowUpload,
         keepclosed => $keepclosed,
         stateless => $stateless,
@@ -1064,11 +1082,6 @@ sub tagGrid {
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget
     );
-
-    my $page = $req->param('page') || 1;
-    if ( $pageSize && $page gt 1 ) {
-        $offset = (int($page) - 1) * int($pageSize);
-    }
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
@@ -1095,7 +1108,7 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
-    if ( $req->param('state') ) {
+    if ( $req->param('state') && $trackerid eq $id ) {
         if ( $req->param('state') eq 'all' ) {
             $query->{Status} = [qw(open closed)];
         } else {
@@ -1112,9 +1125,9 @@ sub tagGrid {
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
-        order => $req->param('order') || $params->{order},
-        desc => $req->param('desc') eq 0 ? 0 : ($req->param('desc') || $params->{desc}),
-        count => $params->{pagesize},
+        order => $order,
+        desc => $desc,
+        count => $pageSize,
         offset => $offset
     );
     _deepen($res->{tasks}, $depth, $params->{order});
@@ -1180,13 +1193,19 @@ SCRIPT
         my $prev = $page - 1 || 1;
         my $next= $page + 1;
         my $pagination = '';
-        my $state = '&state=' . $req->param('state') if $req->param('state');
+
+        my @q = ("tid=$id");
+        push(@q, 'state=' . $req->param('state')) if $req->param('state') && $trackerid eq $id;
+        push(@q, 'order=' . $req->param('order')) if $req->param('order') && $trackerid eq $id;
+        push(@q, 'desc=' . $req->param('desc')) if $req->param('desc') && $trackerid eq $id;
+        push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $trackerid eq $id;
+        my $qstr = "&" . join('&', grep(/^.+$/, @q));
 
         my $cur = 1;
         my $pages = '';
         for (my $c = $settings{totalsize}/$settings{pagesize}; $c > 0; $c--) {
             my $cls = $page == $cur ? 'active' : '';
-            $pages .= "<li class=\"$cls\"><a href=\"/$web/$topic?page=$cur$state\">$cur</a></li>";
+            $pages .= "<li class=\"$cls\"><a href=\"/$web/$topic?page=$cur$qstr\">$cur</a></li>";
             $cur++;
         }
 
@@ -1195,9 +1214,9 @@ SCRIPT
         my $pager = <<PAGER;
 <nav class="pagination-container">
   <ul class="pagination">
-    <li class="$prevState"><a href="/$web/$topic?page=$prev$state" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
+    <li class="$prevState"><a href="/$web/$topic?page=$prev$qstr" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
     $pages
-    <li class="$nextState"><a href="/$web/$topic?page=$next$state" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
+    <li class="$nextState"><a href="/$web/$topic?page=$next$qstr" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
   </ul>
 </nav>
 PAGER

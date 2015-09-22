@@ -105,6 +105,23 @@
       self.opts.currentState = 'open';
       $this.data('tasktracker_options', self.opts);
 
+      if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
+        $this.find('> .tasks-table > thead th').each(function() {
+          var $th = $(this);
+          var sortby = $th.data('sort');
+          if ( !sortby ) {
+            return;
+          }
+
+          $th.addClass('sortable');
+          $th.on('click', doSort);
+
+          if ( self.opts.order === sortby ) {
+            $th.addClass(/^(1|on|true|enabled?)$/i.test(self.opts.desc) ? 'desc' : 'asc');
+          }
+        });
+      }
+
       var $tasks = self.opts.container;
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
@@ -510,6 +527,37 @@
 
     return retval;
   };
+
+  var doSort = function() {
+    var $th = $(this);
+    var order = $th.data('sort');
+    if ( !order ) {
+      return false;
+    }
+
+    var isDesc = $th.hasClass('asc') || $th.hasClass('desc');
+    var $tracker = $th.closest('.tasktracker');
+    $tracker.find('> .tasks-table > thead th').removeClass('asc desc');
+    var tid = $tracker.attr('id').replace('#', '');
+    $th.addClass(isDesc ? 'desc' : 'asc');
+
+    var query = parseQueryParams();
+    query.order = order;
+    query.desc = isDesc ? 1 : 0;
+    query.tid = tid;
+
+    var search = [];
+    for(var p in query) {
+      if ( p && query[p]) {
+        search.push(p + '=' + query[p]);
+      }
+    }
+
+    var url = window.location.pathname + '?' + search.join('&');
+    window.open(url, '_self');
+    return false;
+  };
+
 
   $(document).ready( function() {
     var $tracker = $('.tasktracker').tasksGrid();
