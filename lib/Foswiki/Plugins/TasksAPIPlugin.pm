@@ -1024,6 +1024,11 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
+    if ($readonly) {
+        $allowCreate = 0;
+        $allowUpload = 0;
+    }
+
     my $_tplDefault = sub {
         $_[0] = $_[1] unless defined $_[0];
         $_[0] = 'tasksapi::empty' if $_[0] eq '';
