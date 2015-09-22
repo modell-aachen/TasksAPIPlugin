@@ -1163,14 +1163,6 @@ sub tagGrid {
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
 STYLE
 
-    if ($sortable) {
-        $scriptDeps .= ', JQTABLESORTERPLUGIN::Scripts';
-        my $sortjs = <<SCRIPTS;
-<script type="text/javascript" src="$pluginURL/js/tasks.tablesorter$suffix.js?version=$RELEASE"></script>
-SCRIPTS
-        Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS::TABLESORTER', $sortjs, 'JQTABLESORTERPLUGIN::Scripts' );
-    }
-
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
 <script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
 SCRIPT
