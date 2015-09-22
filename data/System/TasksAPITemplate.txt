@@ -557,11 +557,11 @@
 %{captions used only for flavor "perspage"}%
 %TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>%{
 }%%IF{"context task_showexpandercol" then="<th></th>"}%%{
-}%<th>%MAKETEXT{"Created"}%</th>
-  <th>%MAKETEXT{"Type"}%</th>
-  <th>%MAKETEXT{"Title"}%</th>
-  <th>%MAKETEXT{"Due date"}%</th>
-  <th>%MAKETEXT{"Status"}%</th>%{
+}%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
+  <th data-sort="Type">%MAKETEXT{"Type"}%</th>
+  <th data-sort="Title">%MAKETEXT{"Title"}%</th>
+  <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
+  <th data-sort="Status">%MAKETEXT{"Status"}%</th>%{
   }%%IF{"not context task_readonly" then="<td></td>"}%%{
   }%<th class="hidden"></th>
   <th class="hidden"></th>
