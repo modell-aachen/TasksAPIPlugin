@@ -273,6 +273,12 @@
       </div>
     </div>
   </div>
+  <div class="content">
+    <div class="comment">
+      <span>%MAKETEXT{"Add comment"}%</span>
+      <textarea name="comment" cols="40" rows="10"></textarea>
+    </div>
+  </div>
 </div>%{
 }%%TMPL:END%
 

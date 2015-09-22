@@ -329,6 +329,7 @@
     > .icons {
       display: inline-block;
       float: right;
+      margin-top: 5px;
 
       i {
         margin: 3px 6px 0 0;
@@ -354,83 +355,6 @@
   ins {color: $ins-color;}
 }
 
-
-// #task-panel {
-//   position: fixed;
-//   top: 0;
-//   bottom: 0;
-//   right: 0;
-//   width: calc(40% + 48px);
-//   min-width: 748px;
-//   z-index: 1000;
-
-//   background-color: transparent;
-//   overflow: hidden;
-//   transform: translate3d(100%, 0, 0);
-//   transition: transform .3s ease-in-out;
-
-//   &.active {
-//     transform: translate3d(0, 0, 0);
-//   }
-
-//   > .close {
-//     position: absolute;
-//     top: 0;
-//     left: 0;
-//     width: 48px;
-//     height: 48px;
-//     background-color: $blue;
-//     background-image: url('../assets/close.png');
-//     background-position: center center; 
-//     background-repeat: no-repeat;
-//     background-size: 16px 16px;
-//     border-bottom-left-radius: 5px;
-//     color: $white;
-//     cursor: pointer;
-
-//     &:hover {
-//       background-color: darken($blue, 5%);
-//     }
-
-//     &:active {
-//       background-color: darken($blue, 10%);
-//     }
-//   }
-
-//   > .content {
-//     position: absolute;
-//     top: 0;
-//     left: 48px;
-//     width: calc(100% - 48px);
-//     height: 100%;
-//     background-color: $white;
-//   }
-
-//   table {
-//     border-spacing: 2px;
-//     width: 100%;
-//   }
-
-//   table:not(.foswikiTable) td {
-//     background-color: $light-blue;
-//     padding: 3px 6px;
-//     min-width: 50%;
-//     max-width: 50%;
-//     width: 50%;
-
-//     span {
-//       display: block;
-
-//       &.title {
-//         text-transform: uppercase;
-//         font-weight: bold;
-//         color: $label-color;
-//         font-size: 10px;
-//         margin: 3px 0;
-//       }
-//     }
-//   }
-// }
 
 .task-twisty {
   display: block;
@@ -575,6 +499,28 @@
 
       article {
         padding: 0 0 5px;
+      }
+    }
+
+    > .comment {
+      margin-bottom: 15px;
+      padding: 10px;
+      width: 100%;
+
+      span {
+        color: #808080;
+        display: block;
+        font-size: 0.8em;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+      }
+
+      textarea {
+        background-color: #f8fcff;
+        border: 1px solid #def1ff;
+        border-radius: 4px;
+        padding: 5px;
+        width: 99%;
       }
     }
   }
