@@ -535,7 +535,7 @@
       return false;
     }
 
-    var isDesc = $th.hasClass('asc') || $th.hasClass('desc');
+    var isDesc = $th.hasClass('asc') || !$th.hasClass('desc');
     var $tracker = $th.closest('.tasktracker');
     $tracker.find('> .tasks-table > thead th').removeClass('asc desc');
     var tid = $tracker.attr('id').replace('#', '');
@@ -546,9 +546,15 @@
     query.desc = isDesc ? 1 : 0;
     query.tid = tid;
 
+    var $tab = $th.closest('.jqTab.current');
+    if ( $tab.length > 0 ) {
+      var cls = $tab.attr('class');
+      query.tab = cls.replace(/\s|jqTab|current/g, '');
+    }
+
     var search = [];
     for(var p in query) {
-      if ( p && query[p]) {
+      if ( !_.isUndefined(p) && !_.isUndefined(query[p]) ) {
         search.push(p + '=' + query[p]);
       }
     }
