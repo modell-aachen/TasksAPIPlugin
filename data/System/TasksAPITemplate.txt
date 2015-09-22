@@ -1,3 +1,7 @@
+%{
+  Editor Templates
+}%
+
 %TMPL:DEF{"tasksapi::editor"}%%{
 }%%IF{
   "'%taskeditor_isnew%'='0'"
@@ -6,6 +10,8 @@
 }%%{
 }%%TMPL:END%
 
+
+%{renders the editor used to create a new task}%
 %TMPL:DEF{"tasksapi::editor::new"}%%{
 }%<div class="task-details">
 %RENDERFOREDIT{
@@ -138,6 +144,7 @@
 }%%TMPL:END%
 
 
+%{renders the editor used to edit an existing task}%
 %TMPL:DEF{"tasksapi::editor::edit"}%%{
 }%<div class="task-details">
 %RENDERFOREDIT{
@@ -270,17 +277,15 @@
 }%%TMPL:END%
 
 
-%TMPL:DEF{"tasksapi::editor::upload"}%%{
-}%<div class="editor-block">
-  <label>
-    <span>%MAKETEXT{"Attach file(s)"}% (%MAKETEXT{"Press 'Save' to start the upload"}%)</span>
-    %DNDUPLOAD{extraclass="full-width" tasksgrid="1" autostart="0"}%
-  </label>
-</div>%{
-}%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::overlay"}%
-<div class="task-overlay">
+
+%{
+  Overlay Templates
+}%
+
+%{active when in details view}%
+%TMPL:DEF{"tasksapi::overlay"}%%{
+}%<div class="task-overlay">
   <div class="panel-wrapper">
     <div class="close noselect" title="%MAKETEXT{"Hide"}%"><i class="fa fa-times"></i></div>
     <div class="panel"></div>
@@ -288,16 +293,14 @@
       <div class="view active">
         <div>
           <a href="#" title="%MAKETEXT{"Previous task"}%" class="panel-btn previous"><i class="fa fa-chevron-left"></i></a>
-          <a href="#" title="%MAKETEXT{"Next task"}%" class="panel-btn next"><i class="fa fa-chevron-right"></i></a>
-          <div style="border-left: 1px solid #4b6b8e; display: inline-block;">
-            <a href="#" title="%MAKETEXT{"Add task"}%" class="panel-btn add"><i class="fa fa-plus"></i></a>
-          </div>
-        </div>
-        <div>
-          <a href="#" title="%MAKETEXT{"Edit task"}%" class="panel-btn edit"><i class="fa fa-pencil"></i></a>
-          <a href="#" title="%MAKETEXT{"Attach file(s)"}%" class="panel-btn upload"><i class="fa fa-upload"></i></a>
-          <a href="#" title="%MAKETEXT{"Add comment"}%" class="panel-btn comment"><i class="fa fa-commenting-o"></i></a>
-        </div>
+          <a href="#" title="%MAKETEXT{"Next task"}%" class="panel-btn next"><i class="fa fa-chevron-right"></i></a>%{
+}%%IF{"not context task_readonly" then="<div style='border-left: 1px solid #4b6b8e; display: inline-block;'><a href='#' title='$percntMAKETEXT{\"Add task\"}$percnt' class='panel-btn add'><i class='fa fa-plus'></i></a></div>"}%%{
+        }%</div>
+        <div>%{
+}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit task\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a>"}%%{
+}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Attach file(s)\"}$percnt' class='panel-btn upload'><i class='fa fa-upload'></i></a>"}%%{
+}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Add comment\"}$percnt' class='panel-btn comment'><i class='fa fa-commenting-o'></i></a>"}%%{
+        }%</div>
       </div>
       <div class="edit">
         <div>
@@ -315,13 +318,16 @@
     </div>%{
     }%%TMPL:P{"tasksapi::overlay::upload"}%%{
 }%</div>
-</div>
-%TMPL:END%
+</div>%TMPL:END%
 
+
+%{DnDUpload}%
 %TMPL:DEF{"tasksapi::overlay::upload"}%%{
 }%<div class="upload">%DNDUPLOAD{extraclass="task-dnd"}%</div>%{
 }%%TMPL:END%
 
+
+%{task details}%
 %TMPL:DEF{"tasksapi::overlay::content"}%%{
 }%<literal>
   <div class="viewer">
@@ -333,6 +339,8 @@
 </literal>%{
 }%%TMPL:END%
 
+
+%{task details definitions}%
 %TMPL:DEF{"tasksapi::overlay::content::details"}%%{
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
@@ -342,7 +350,7 @@
       }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
       }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
-    }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<div class=\"controls\" title=\"$percentMAKETEXT{\"Close task\"}$percent\"><a href=\"#\" class=\"tasks-btn tasks-btn-close\"><i class=\"fa fa-square-o\"></i></a></div>" else="<div class=\"controls\" title=\"$percentMAKETEXT{\"Reopen task\"}$percent\"><i class=\"closed fa fa-check-square\"></i></div>"}%%{
+    }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
   <div class="content">
     <div class="meta">
@@ -385,8 +393,7 @@
 }%%TMPL:END%
 
 
-
-
+%{task attachments definitions}%
 %TMPL:DEF{"tasksapi::overlay::content::attachments"}%%{
 }%%TAB{"%MAKETEXT{Attachments}% (%TASKINFO{meta="AttachCount"}%)"}%
 <div class="task-details attachments">
@@ -406,14 +413,20 @@
 }%%TMPL:END%
 
 
-%TMPL:DEF{"tasksapi::task::children::new"}%
-<tr class="task-new">
-  <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="11" else="10"}%">
-    %MAKETEXT{"Create new subordinate task"}%
-  </td>
-</tr>
-%TMPL:END%
 
+
+%{
+  TaskGrid Entry Templates
+}%
+
+%{used to render a "create new task" button within a nested grid}%
+%TMPL:DEF{"tasksapi::task::children::new"}%%{
+}%<tr class="task-new">
+  <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="$percntIF{\"context task_readonly\" then=\"10\" else=\"11\"}$percnt" else="$percntIF{\"context task_readonly\" then=\"9\" else=\"10\"}$percnt"}%">%MAKETEXT{"Create new subordinate task"}%</td>
+</tr>%TMPL:END%
+
+
+%{template used to display a task's children within the grid}%
 %TMPL:DEF{"tasksapi::task::children"}%%{
 }%<table class="tasks-table children">
   <tbody class="tasks">%{
@@ -423,6 +436,8 @@
 </table>%{
 }%%TMPL:END%
 
+
+%{a single task entry within the grid}%
 %TMPL:DEF{"tasksapi::task"}%%{
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
 %IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
@@ -441,44 +456,128 @@
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
-  <td class="ampel">
-%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
-</td>
-  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
-  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="ampel">%{
+}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
+}%</td>%{
+}%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
+}%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
 </tr>%{
 }%%TMPL:END%
 
-%TMPL:DEF{"tasksapi::task::closed"}%%{
-}%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
-}%<td class="created" data-value="%TASKINFO{field="Created"}%">
-    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
-    <span>%TASKINFO{field="Author"}%</span>
-  </td>
-  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
-  <td class="assigned">
-    <span>%TASKINFO{field="AssignedTo"}%</span>
-  </td>
-  <td class="title">
-    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
-    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
-  </td>
-  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
-    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
-  </td>
-  <td class="due">
-%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
-  </td>
-  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
-  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
-  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
-</tr>%{
+
+%{quick actions: close/reopen}%
+%TMPL:DEF{"tasksapi::task::controls::right"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-fw fa-square-o\"></i></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-fw fa-check-square\"></i></span>"}%%{
 }%%TMPL:END%
 
+
+
+
+%{
+  Grid Templates
+}%
+
+%{the entire grid}%
+%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
+}%%TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%%{
+}%<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
+    <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
+    <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
+  </table>
+  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
+  <div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
+</div></noautolink>%TMPL:END%
+
+
+%{title and filter (select) areas}%
+%TMPL:DEF{"tasksapi::grid::filter"}%%{
+}%<div class="filter">
+  <div>
+    <div class="options">
+      <span class="title">$grid_title</span>%{
+      }%%TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%%{
+    }%</div>%{
+    }%%TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%%{
+}%</div>
+</div>%TMPL:END%
+
+
+%{the status select}%
+%TMPL:DEF{"tasksapi::grid::filter::status"}%%{
+}%<span class="hint">%MAKETEXT{"Filter by state"}%:</span>
+  <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
+}%%TMPL:END%
+
+
+%{the button used to create a new grid entry}%
+%TMPL:DEF{"tasksapi::grid::filter::create"}%%{
+}%<div class="create">
+  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>$create_text</a>
+</div><span class="clear"></span>%{
+}%%TMPL:END%
+
+
+%{the grid's caption area}%
+%TMPL:DEF{"tasksapi::grid::caption"}%<tr>%{
+}%%IF{"context task_showexpandercol" then="<th></th>"}%%{
+}%<th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Assigned to"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Status"}%</th>%{
+  }%%IF{"not context task_readonly" then="<td></td>"}%%{
+  }%<th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+%{empty template}%
+%TMPL:DEF{"tasksapi::empty"}%%TMPL:END%
+
+
+
+%{
+  perspage Flavor Templates
+}%
+
+%{captions used only for flavor "perspage"}%
+%TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>%{
+}%%IF{"context task_showexpandercol" then="<th></th>"}%%{
+}%<th>%MAKETEXT{"Created"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Title"}%</th>
+  <th>%MAKETEXT{"Due date"}%</th>
+  <th>%MAKETEXT{"Status"}%</th>%{
+  }%%IF{"not context task_readonly" then="<td></td>"}%%{
+  }%<th class="hidden"></th>
+  <th class="hidden"></th>
+  <th class="hidden"></th>
+</tr>%TMPL:END%
+
+
+%{a task's children table used by flavor "perspage"}%
+%TMPL:DEF{"tasksapi::task::children_perspage"}%%{
+}%<table class="tasks-table children">
+  <tbody class="tasks">%{
+}%%IF{"'%TASKINFO{meta="FetchedChildCount"}%'" then="$percntTASKINFO{type=\"children\"}$percnt"}%%{
+}%%IF{"not context task_readonly" then="$percntTMPL:P{\"tasksapi::task::children::new_perspage\"}$percnt"}%%{
+}%</tbody>
+</table>%{
+}%%TMPL:END%
+
+
+%{create new child button used by flavor "perspage"}%
+%TMPL:DEF{"tasksapi::task::children::new_perspage"}%%{
+}%<tr class="task-new">
+  <td colspan="%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="$percntIF{\"context task_readonly\" then=\"9\" else=\"10\"}$percnt" else="$percntIF{\"context task_readonly\" then=\"8\" else=\"9\"}$percnt"}%">%MAKETEXT{"Create new subordinate task"}%</td>
+</tr>%TMPL:END%
+
+
+%{a single task entry within thegrid used by flavor "perspage"}%
 %TMPL:DEF{"tasksapi::task_perspage"}%%{
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
 %IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
@@ -495,146 +594,12 @@
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
-  <td class="ampel">
-%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%</td>
-  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
-  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+  <td class="ampel">%{
+}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
+}%</td>%{
+}%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
+}%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
-  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
+  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children_perspage"}%</td>
 </tr>%{
 }%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::task::closed_perspage"}%%{
-}%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
-}%<td class="created" data-value="%TASKINFO{field="Created"}%">
-    <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
-    <span>%TASKINFO{field="Author"}%</span>
-    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%IF{"'%TASKINFO{field="Context"}%'/Title" then="$percntQUERY{$quot'%TASKINFO{field="Context"}%'/Title$quot}$percnt" else="%TASKINFO{field="Context"}%"}%</a></span>
-  </td>
-  <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
-  <td class="title">
-    <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
-    <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
-  </td>
-  <td class="due" data-value="%TASKINFO{field="DueDate"}%">
-    <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
-  </td>
-  <td class="due">
-%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%
-  </td>
-  <td class="close" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percentMAKETEXT{\"Close task\"}$percent" else="$percentMAKETEXT{\"Reopen task\"}$percent"}%">%TMPL:P{"tasksapi::task::controls::right"}%</td>
-  <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-  <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
-  <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
-</tr>%{
-}%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::task::controls::left"}%<span>%ICON{"toggleopen"}%</span>
-<span>%ICON{"toggleclose"}%</span>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::task::controls::right"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-fw fa-square-o\"></i></span>"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-fw fa-check-square\"></i></span>"}%%{
-}%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::sortopts"}%%{
-}%%IF{
-  "context task_showexpandercol"
-  then="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [1,1] ], headers: {0: {sorter: false}, 1: {sorter: 'taskDateSorter'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'text'} 5: {sorter: 'taskDateSorter'}, 6: {sorter:'taskAmpelSorter'}}}"
-  else="{selectorHeaders: '&gt; thead th', cssChildRow: 'task-children-container', sortList: [ [0,1] ], headers: {0: {sorter: 'taskDateSorter'}, 1: {sorter: 'text'}, 2: {sorter: 'text'}, 3: {sorter: 'text'}, 4: {sorter: 'taskDateSorter'}, 5: {sorter:'taskAmpelSorter'}}}"
-}%%{
-}%%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
-}%%TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%%{
-}%<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table %TMPL:P{"tasksapi::grid::sortopts"}%">
-    <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
-    <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
-  </table>
-  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
-  <div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
-</div></noautolink>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::filter"}%
-<div class="filter">
-  <div>
-    <div class="options">
-      <span class="title">$grid_title</span>
-      %TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%
-    </div>
-    %TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%
-  </div>
-</div>
-%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::filter::status"}%%{
-}%<span class="hint">%MAKETEXT{"Filter by state"}%:</span>
-  <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
-}%%TMPL:END%
-%TMPL:DEF{"tasksapi::grid::filter::create"}%%{
-}%<div class="create">
-  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>$create_text</a>
-</div><span class="clear"></span>%{
-}%%TMPL:END%
-
-
-%TMPL:DEF{"tasksapi::grid::caption"}%<tr>
-%IF{"context task_showexpandercol" then="<th></th>"}%
-  <th>%MAKETEXT{"Created"}%</th>
-  <th>%MAKETEXT{"Type"}%</th>
-  <th>%MAKETEXT{"Assigned to"}%</th>
-  <th>%MAKETEXT{"Title"}%</th>
-  <th>%MAKETEXT{"Due date"}%</th>
-  <th>%MAKETEXT{"Status"}%</th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-</tr>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::caption::closed"}%<tr>
-%IF{"context task_showexpandercol" then="<th></th>"}%
-  <th>%MAKETEXT{"Created"}%</th>
-  <th>%MAKETEXT{"Type"}%</th>
-  <th>%MAKETEXT{"Assigned to"}%</th>
-  <th>%MAKETEXT{"Title"}%</th>
-  <th>%MAKETEXT{"Due date"}%</th>
-  <th>%MAKETEXT{"Closed"}%</th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-</tr>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>
-%IF{"context task_showexpandercol" then="<th></th>"}%
-  <th>%MAKETEXT{"Created"}%</th>
-  <th>%MAKETEXT{"Type"}%</th>
-  <th>%MAKETEXT{"Title"}%</th>
-  <th>%MAKETEXT{"Due date"}%</th>
-  <th>%MAKETEXT{"Status"}%</th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-</tr>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::grid::caption::closed_perspage"}%<tr>
-%IF{"context task_showexpandercol" then="<th></th>"}%
-  <th>%MAKETEXT{"Created"}%</th>
-  <th>%MAKETEXT{"Type"}%</th>
-  <th>%MAKETEXT{"Title"}%</th>
-  <th>%MAKETEXT{"Due date"}%</th>
-  <th>%MAKETEXT{"Closed"}%</th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-  <th class="hidden"></th>
-</tr>%TMPL:END%
-
-%TMPL:DEF{"tasksapi::empty"}%%TMPL:END%
