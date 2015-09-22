@@ -1,3 +1,5 @@
+%{<varbatim>}%
+
 %{
   Editor Templates
 }%
@@ -614,3 +616,5 @@
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children_perspage"}%</td>
 </tr>%{
 }%%TMPL:END%
+
+%{</varbatim>}%
