@@ -1041,21 +1041,22 @@ sub tagGrid {
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
-    if ( $req->param('order') && $trackerid eq $id ) {
+    my $override = ($trackerid eq $id || $gridCounter - 1 eq 1);
+    if ( $req->param('order') && $override ) {
         $order = $req->param('order');
     }
 
-    if ( defined $req->param('desc') && $trackerid eq $id ) {
+    if ( defined $req->param('desc') && $override ) {
         $desc = $req->param('desc') eq 0 ? 0 : $req->param('desc');
     }
 
-    if ( $req->param('pagesize') && $trackerid eq $id ) {
+    if ( $req->param('pagesize') && $override ) {
         $pageSize = $req->param('pagesize');
     }
 
     my $page = 1;
-    $page = $req->param('page') if $req->param('page') && $trackerid eq $id;
-    if ( $pageSize && $page gt 1  && $trackerid eq $id ) {
+    $page = $req->param('page') if $req->param('page') && $override;
+    if ( $pageSize && $page gt 1  && $override ) {
         $offset = (int($page) - 1) * int($pageSize);
     }
 
@@ -1108,7 +1109,7 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
-    if ( $req->param('state') && $trackerid eq $id ) {
+    if ( $req->param('state') && $override ) {
         if ( $req->param('state') eq 'all' ) {
             $query->{Status} = [qw(open closed)];
         } else {
@@ -1195,10 +1196,10 @@ SCRIPT
         my $pagination = '';
 
         my @q = ("tid=$id");
-        push(@q, 'state=' . $req->param('state')) if $req->param('state') && $trackerid eq $id;
-        push(@q, 'order=' . $req->param('order')) if $req->param('order') && $trackerid eq $id;
-        push(@q, 'desc=' . $req->param('desc')) if $req->param('desc') && $trackerid eq $id;
-        push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $trackerid eq $id;
+        push(@q, 'state=' . $req->param('state')) if $req->param('state') && $override;
+        push(@q, 'order=' . $req->param('order')) if $req->param('order') && $override;
+        push(@q, 'desc=' . $req->param('desc')) if $req->param('desc') && $override;
+        push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $override;
         my $qstr = "&" . join('&', grep(/^.+$/, @q));
 
         my $cur = 1;
