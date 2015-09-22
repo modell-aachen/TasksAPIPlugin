@@ -592,7 +592,7 @@
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
-    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="&tab=tasks_closed"}%">%TASKINFO{field="Context"}%</a></span>
+    <span><a href="%SCRIPTURL{"view"}%/%TASKINFO{field="Context"}%%IF{"'%TASKINFO{field="Status"}%'='closed'" then="?tab=tasks_closed"}%">%TASKINFO{field="Context"}%</a></span>
   </td>
   <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="title">
@@ -600,7 +600,7 @@
       <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
       <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
     </div>%{
-}%%IF{"'%TASKINFO{field="Context"}%'/Title" then="<div class='context'><span><a href=\"$percntSCRIPTURL{$quotview$quot}$percnt/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%$percntIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"&tab=tasks_closed\"}$percnt\">$percntQUERY{\"'%TASKINFO{field="Context"}$percnt'/Title\"}$percnt</a></span></div>"}%%{
+}%%IF{"'%TASKINFO{field="Context"}%'/Title" then="<div class=\"context\"><span><a href=\"$percntSCRIPTURL{$quotview$quot}$percnt/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%$percntIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"&tab=tasks_closed\"}$percnt\">$percntQUERY{\"'%TASKINFO{field="Context"}%'/Title\"}$percnt</a></span></div>"}%%{
 }%</td>
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
