@@ -7,5 +7,5 @@
 
 %TASKINFO{type="changeset" nohtml="1"}%
 %MAKETEXT{"Direct link"}%:
-%SCRIPTURL{view}%/%WEB%/%TOPIC%?id=%TASKINFO{meta="id"}%
+%SCRIPTURL{view}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%
 %TMPL:END%
