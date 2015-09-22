@@ -1198,7 +1198,8 @@ SCRIPT
         my @q = ("tid=$id");
         push(@q, 'state=' . $req->param('state')) if $req->param('state') && $override;
         push(@q, 'order=' . $req->param('order')) if $req->param('order') && $override;
-        push(@q, 'desc=' . $req->param('desc')) if $req->param('desc') && $override;
+        push(@q, 'desc=' . $req->param('desc')) if defined $req->param('desc') && $override;
+        push(@q, 'tab=' . $req->param('tab')) if $req->param('tab');
         push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $override;
         my $qstr = "&" . join('&', grep(/^.+$/, @q));
 
