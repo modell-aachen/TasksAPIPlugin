@@ -1041,7 +1041,7 @@ sub tagGrid {
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
-    my $override = ($trackerid eq $id || $gridCounter - 1 eq 1);
+    my $override = $trackerid eq $id || ($gridCounter - 1 eq 1 && $trackerid eq '');
     if ( $req->param('order') && $override ) {
         $order = $req->param('order');
     }
