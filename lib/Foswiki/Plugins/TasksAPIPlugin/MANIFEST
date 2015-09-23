@@ -52,6 +52,8 @@ pub/System/TasksAPIPlugin/js/i18n/jsi18n.en.js 0644
 pub/System/TasksAPIPlugin/js/i18n/jsi18n.en.min.js 0644
 pub/System/TasksAPIPlugin/css/tasktracker.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
+pub/System/TasksAPIPlugin/css/tasktracker.print.css 0644
+pub/System/TasksAPIPlugin/css/tasktracker.print.min.css 0644
 tools/taskcron 0755
 tools/taskindex 0755
 tools/virtualhosts-taskindex 0755

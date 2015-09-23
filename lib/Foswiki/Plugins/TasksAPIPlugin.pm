@@ -1175,6 +1175,7 @@ sub tagGrid {
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
 <link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
+<link rel='stylesheet' type='text/css' media='print' href='$pluginURL/css/tasktracker.print$suffix.css?version=$RELEASE' />
 STYLE
 
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
@@ -1214,7 +1215,7 @@ SCRIPT
         my $prevState = $page gt 1 ? '' : 'disabled';
         my $nextState = ($pageSize && $pageSize*$page <= $res->{total}) ? '' : 'disabled';
         my $pager = <<PAGER;
-<nav class="pagination-container">
+<nav class="pagination-container no-print">
   <ul class="pagination">
     <li class="$prevState"><a href="/$web/$topic?page=$prev$qstr" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
     $pages
@@ -1222,6 +1223,10 @@ SCRIPT
   </ul>
 </nav>
 PAGER
+        $cur = $cur - 1;
+        if ( $cur gt 1 ) {
+            $pager .= "<nav class=\"pagination-container print-only\">%MAKETEXT{\"Page [_1] of [_2]\" args=\"$page,$cur\"}%</nav>";
+        }
 
         $grid =~ s#</div></noautolink>$#$pager</div></noautolink>#;
         return $grid

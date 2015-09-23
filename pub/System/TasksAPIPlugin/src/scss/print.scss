@@ -1,0 +1,44 @@
+.tasktracker {
+  .tasks-table {
+    > thead > tr > th {
+      font-size: 6pt;
+    }
+
+    > tbody > tr > td {
+      &.created,
+      &.due,
+      &.ampel {
+        color: black;
+        font-size: 6pt;
+      }
+    }
+
+    .task {
+      &:nth-child(even) {
+        background-color: white;
+      }
+
+      &:nth-child(odd) {
+        background-color: #f8fcff;
+      }
+    }
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: none;
+    @media print {
+      display: block;
+    }
+  }
+
+  .pagination-container {
+    color: #777;
+    float: right;
+    margin-top: 10px;
+  }
+}
+

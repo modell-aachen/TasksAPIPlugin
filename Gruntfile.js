@@ -24,7 +24,10 @@ module.exports = function(grunt) {
           outputStyle: 'nested',
         },
         files: {
-          "<%= pkg.pubDir %>/css/tasktracker.css": "<%= pkg.pubDir %>/src/scss/tasktracker.scss"
+          "<%= pkg.pubDir %>/css/tasktracker.css":
+            "<%= pkg.pubDir %>/src/scss/tasktracker.scss",
+          "<%= pkg.pubDir %>/css/tasktracker.print.css":
+            "<%= pkg.pubDir %>/src/scss/print.scss",
         }
       },
       dist: {
@@ -32,7 +35,10 @@ module.exports = function(grunt) {
           outputStyle: 'compressed'
         },
         files: {
-          "<%= pkg.pubDir %>/css/tasktracker.min.css": "<%= pkg.pubDir %>/src/scss/tasktracker.scss"
+          "<%= pkg.pubDir %>/css/tasktracker.min.css":
+            "<%= pkg.pubDir %>/src/scss/tasktracker.scss",
+          "<%= pkg.pubDir %>/css/tasktracker.print.min.css":
+            "<%= pkg.pubDir %>/src/scss/print.scss"
         }
       }
     },

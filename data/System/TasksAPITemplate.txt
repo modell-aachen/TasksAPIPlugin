@@ -448,7 +448,7 @@
 %{a single task entry within the grid}%
 %TMPL:DEF{"tasksapi::task"}%%{
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
+%IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander no-print\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
     <span>%TASKINFO{field="Author"}%</span>
@@ -460,7 +460,7 @@
   <td class="title">
     <div>
       <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
-      <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
+      <span class="attachments no-print %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
     </div>
   </td>
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
@@ -469,7 +469,7 @@
   <td class="ampel">%{
 }%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
 }%</td>%{
-}%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
+}%%IF{"context task_canedit and not context task_readonly" then="<td class='close no-print' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
 }%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
@@ -504,7 +504,7 @@
 
 %{title and filter (select) areas}%
 %TMPL:DEF{"tasksapi::grid::filter"}%%{
-}%<div class="filter">
+}%<div class="filter no-print">
   <div>
     <div class="options">
       <span class="title">$grid_title</span>%{
@@ -532,14 +532,14 @@
 
 %{the grid's caption area}%
 %TMPL:DEF{"tasksapi::grid::caption"}%<tr>%{
-}%%IF{"context task_showexpandercol" then="<th></th>"}%%{
+}%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
   <th data-sort="Type">%MAKETEXT{"Type"}%</th>
   <th data-sort="AssignedTo">%MAKETEXT{"Assigned to"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
   <th data-sort="Status">%MAKETEXT{"Status"}%</th>%{
-  }%%IF{"not context task_readonly" then="<td></td>"}%%{
+  }%%IF{"not context task_readonly" then="<td class=\"no-print\"></td>"}%%{
   }%<th class="hidden"></th>
   <th class="hidden"></th>
   <th class="hidden"></th>
@@ -556,13 +556,13 @@
 
 %{captions used only for flavor "perspage"}%
 %TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>%{
-}%%IF{"context task_showexpandercol" then="<th></th>"}%%{
+}%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
   <th data-sort="Type">%MAKETEXT{"Type"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
   <th data-sort="Status">%MAKETEXT{"Status"}%</th>%{
-  }%%IF{"not context task_readonly" then="<td></td>"}%%{
+  }%%IF{"not context task_readonly" then="<td class=\"no-print\"></td>"}%%{
   }%<th class="hidden"></th>
   <th class="hidden"></th>
   <th class="hidden"></th>
