@@ -305,6 +305,7 @@ sub query {
         my $v = $query->{$q};
 
         if ($singles{$q}) {
+            $q = 't.id' if $q eq 'id';
             if (ref($v) eq 'ARRAY') {
                 $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
                 push @args, @$v;
