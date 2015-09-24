@@ -173,7 +173,7 @@ TasksPanel = function(tasktracker) {
 
     // hocus pocus demanded by sweetalert2
     // else it will fail removing its dynamically created style tag
-    self.overlay.on('keydown', 'input,textarea', function(evt) {
+    self.overlay.on('keydown', 'input,textarea,[contenteditable]', function(evt) {
       evt.stopPropagation();
       evt.stopImmediatePropagation();
     });
