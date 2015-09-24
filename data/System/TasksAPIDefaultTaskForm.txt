@@ -20,6 +20,9 @@
    * Set NOWYSIWYG = 1
    * Set TASKCFG_HAS_CHILDREN = 0
    * Set TASKCFG_TASK_TYPE = minute
+   * Set TASKCFG_TASK_TEMPLATE_FILE = System.TasksAPITemplate
+   * Set TASKCFG_TASK_TEMPLATE = tasksapi::task
+   * Set TASKCFG_EDITOR_TEMPLATE = tasksapi::editor
    * Set TASKCFG_NOTIFY_CREATED = $curvalue(AssignedTo),$curvalue(Informees)
    * Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
    * Set TASKCFG_NOTIFY_REOPENED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
