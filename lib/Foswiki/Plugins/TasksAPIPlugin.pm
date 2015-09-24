@@ -930,7 +930,7 @@ sub _renderTask {
 
     if ( $flavor->{name} ) {
         my $tmpl = $taskTemplate . '_' . $flavor->{name};
-        my $type = $flavor->{type} || '_default';
+        $type = ($flavor->{type} || '_default') . '_' . $flavor->{name};
 
         if ( $addtozone ) {
             unless ($flavorcss->{$type}) {
