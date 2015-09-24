@@ -60,6 +60,7 @@
         }
       });
 
+      $this.children('.pagination-container').on('click', 'li a', handlePager);
       $this.on('click', '.task > .close', toggleTaskState);
       $this.on('click', '.task', function(evt) {
         if ( $(evt.target).closest('.expander').length === 1 ) {
@@ -537,7 +538,8 @@
 
     var isDesc = $th.hasClass('asc') || !$th.hasClass('desc');
     var $tracker = $th.closest('.tasktracker');
-    $tracker.find('> .tasks-table > thead th').removeClass('asc desc');
+    var $table = $tracker.children('.tasks-table');
+    $table.find('> thead th').removeClass('asc desc');
     var tid = $tracker.attr('id').replace('#', '');
     $th.addClass(isDesc ? 'desc' : 'asc');
 
@@ -545,6 +547,10 @@
     query.order = order;
     query.desc = isDesc ? 1 : 0;
     query.tid = tid;
+
+    if ( $tracker.children('.pagination-container').length > 0 ) {
+      query.page = $tracker.find('ul.pagination li.current').text().replace(/\s/g, '');
+    }
 
     var $tab = $th.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
@@ -559,8 +565,90 @@
       }
     }
 
+    $tracker.find('ul.pagination').children('li').each(function() {
+      var $li = $(this);
+      var $a = $li.children('a');
+      var href = $a.attr('href');
+
+      if ( /order=[^&]+/.test(href) ) {
+        href = href.replace(/order=[^&]+/, 'order=' + query.order);
+      } else {
+        href += '&order=' + query.order;
+      }
+
+      if ( /desc=[^&]+/.test(href) ) {
+        href = href.replace(/desc=[^&]+/, 'desc=' + query.desc);
+      } else {
+        href += '&desc=' + query.desc;
+      }
+      $a.attr('href', href);
+    });
+
     var url = window.location.pathname + '?' + search.join('&');
-    window.open(url, '_self');
+    var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
+    window.tasksapi.blockUI();
+    $table.children('.tasks').load(target, function() {
+      window.tasksapi.unblockUI();
+    });
+
+    return false;
+  };
+
+  var handlePager = function() {
+    var $this = $(this);
+    if ( $this.hasClass('disabled') || $this.parent().hasClass('disabled')) {
+      return false;
+    }
+
+    var $ul = $this.closest('ul');
+    var $first = $ul.children('li').first();
+    var $last = $ul.children('li').last();
+    var $current = $ul.children('li.active').removeClass('active');
+    var url = $current.children('a').attr('href');
+
+    if ( $this.parent()[0] === $first[0] ) {
+      var $prev = $current.prev().addClass('active');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $prev.text().replace(/\s/g, ''));
+    } else if ( $this.parent()[0] === $last[0] ) {
+      var $next = $current.next().addClass('active');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $next.text().replace(/\s/g, ''));
+    } else {
+      url = $this.attr('href');
+      $this.parent().addClass('active');
+    }
+
+    var total = $ul.children('li').length;
+    $ul.children('li').each(function(i) {
+      if ( !$(this).hasClass('active') ) {
+        return;
+      }
+
+      if ( i > 1 ) {
+        $first.removeClass('disabled');
+      }
+      if ( i === 1 ) {
+        $first.addClass('disabled');
+      }
+      if ( i + 2 === total ) {
+        $last.addClass('disabled');
+      } else {
+        $last.removeClass('disabled');
+      }
+    });
+
+    var $tab = $this.closest('.jqTab.current');
+    if ( $tab.length > 0 ) {
+      var cls = $tab.attr('class').replace(/(\s|jqTab|current)/g, '');
+      url += '&tab=' + cls;
+    }
+
+    var tid = $this.closest('.tasktracker').attr('id');
+    var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
+    window.tasksapi.blockUI();
+    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function() {
+      window.tasksapi.unblockUI();
+    });
+
     return false;
   };
 

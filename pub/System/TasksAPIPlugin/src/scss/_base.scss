@@ -142,8 +142,7 @@
 
   > li > a,
   > li > span {
-    &:hover,
-    &:focus {
+    &:hover {
       z-index: 2;
       color: #337ab7;
       background-color: #c5e6ff;
@@ -154,8 +153,7 @@
   > .active > a,
   > .active > span {
     &,
-    &:hover,
-    &:focus {
+    &:hover {
       z-index: 3;
       color: $white;
       background-color: #337ab7;
@@ -171,7 +169,9 @@
     > a,
     > a:hover,
     > a:focus {
-      display: none;
+      // display: none;
+      color: #ccc;
+      cursor: not-allowed;
     }
   }
 }
@@ -274,4 +274,8 @@ table.task-attachments {
       background-image: url('../assets/sort_desc.gif');
     }
   }
+}
+
+.tasktracker .print-only {
+  display: none;
 }
