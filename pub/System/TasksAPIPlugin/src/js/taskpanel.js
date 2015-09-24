@@ -215,9 +215,7 @@ TasksPanel = function(tasktracker) {
     self.overlay.on('queueEmpty', function() {
       var $dnd = $(this);
       var payload = {
-        query: {
-          id: self.currentTask.data('id')
-        }
+        id: self.currentTask.data('id')
       };
 
       var opts = self.tracker.data('tasktracker_options');
@@ -229,13 +227,13 @@ TasksPanel = function(tasktracker) {
 
       window.tasksapi.blockUI();
       $.taskapi
-        .get(payload)
+        .update(payload)
         .always(window.tasksapi.unblockUI)
         .fail(error)
         .done(function(response) {
-          if ( response.status === 'ok' && response.data && response.data.length > 0 ) {
+          if ( response.status === 'ok' && response.data ) {
             var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, response.data[0] );
+            self.trigger( afterSave, response.data );
             onCancel();
             toggleUpload();
           }
