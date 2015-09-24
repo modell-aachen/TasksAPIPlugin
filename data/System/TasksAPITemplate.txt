@@ -302,7 +302,7 @@
         <div>
           <a href="#" title="%MAKETEXT{"Previous task"}%" class="panel-btn previous"><i class="fa fa-chevron-left"></i></a>
           <a href="#" title="%MAKETEXT{"Next task"}%" class="panel-btn next"><i class="fa fa-chevron-right"></i></a>%{
-}%%IF{"not context task_readonly" then="<div style='border-left: 1px solid #4b6b8e; display: inline-block;'><a href='#' title='$percntMAKETEXT{\"Add task\"}$percnt' class='panel-btn add'><i class='fa fa-plus'></i></a></div>"}%%{
+}%%IF{"not context task_readonly and context task_allowcreate" then="<div style='border-left: 1px solid #4b6b8e; display: inline-block;'><a href='#' title='$percntMAKETEXT{\"Add task\"}$percnt' class='panel-btn add'><i class='fa fa-plus'></i></a></div>"}%%{
         }%</div>
         <div>%{
 }%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit task\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a>"}%%{
