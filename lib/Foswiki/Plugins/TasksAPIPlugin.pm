@@ -74,6 +74,7 @@ my @schema_updates = (
 );
 my %singles = (
     id => 1,
+    form => 1,
     Context => 1,
     Parent => 1,
     Status => 1,
@@ -89,6 +90,8 @@ our $currentTask;
 our $currentOptions;
 our $currentExpands;
 our $storedTemplates;
+our $flavorcss;
+our $flavorjs;
 
 my $aclCache = {};
 my $caclCache = {};
@@ -150,7 +153,6 @@ sub indexTopicHandler {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     return unless $task;
 
-    my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
     my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
     my $webtopic = "$web.$topic";
     $webtopic =~ s/\//./g;
@@ -170,7 +172,6 @@ sub indexTopicHandler {
     $theDoc->add_fields(
       'id' => $task->{id} . '@' . $task->{fields}{Context},
       'type' => 'actiontwo',
-      'collection' => $collection,
       'language' => $language,
       'web' => $web,
       'topic' => $topic,
@@ -582,7 +583,7 @@ sub restCreate {
     return to_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, $q->param('tasktemplate') || $res->getPref('TASK_TEMPLATE') || 'tasksapi::task'),
+        data => _enrich_data($res, $q->param('tasktemplate')),
     });
 }
 
@@ -611,14 +612,10 @@ sub restUpdate {
         }
     }
 
-    if ( $q->param('templatefile') ) {
-        Foswiki::Func::loadTemplate( $q->param('templatefile') );
-    }
     _deepen([$task], $depth, $order);
-
     return to_json({
         status => 'ok',
-        data => _enrich_data($task, $q->param('tasktemplate') || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task'),
+        data => _enrich_data($task, $q->param('tasktemplate')),
     });
 }
 
@@ -634,7 +631,7 @@ sub restMultiUpdate {
             next;
         }
         $task->update(%$data);
-        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'), $q->param('templatefile'))};
+        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
     }
     return to_json(\%res);
 }
@@ -653,7 +650,7 @@ sub _translate {
 # that contains all the information we need
 sub _enrich_data {
     my $task = shift;
-    my $tpl = shift || 'tasksapi::task';
+    my $tpl = shift;
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
@@ -786,10 +783,7 @@ sub restSearch {
 
     my $depth = $req->{depth} || 0;
     _deepen($res->{tasks}, $depth, $req->{order});
-    my $file = $req->{templatefile} || 'TasksAPI';
-    Foswiki::Func::loadTemplate( $file );
-
-    my @tasks = map { _enrich_data($_, $req->{tasktemplate} || $_->getPref('TASK_TEMPLATE') || 'tasksapi::task') } @{$res->{tasks}};
+    my @tasks = map { _enrich_data($_, $req->{tasktemplate}) } @{$res->{tasks}};
     return to_json({status => 'ok', data => \@tasks});
 }
 
@@ -800,6 +794,7 @@ sub restLease {
 
     my $meta;
     my $edtpl;
+    my $tplfile;
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $r->{Context});
 
     if ($r->{context}) {
@@ -823,6 +818,7 @@ sub restLease {
         $task->{meta}->setLease( $ltime );
         $meta = $task->{meta};
         $edtpl = $task->getPref('EDITOR_TEMPLATE');
+        $tplfile = $task->getPref('TASK_TEMPLATE_FILE');
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
@@ -840,13 +836,14 @@ sub restLease {
         my $m = Foswiki::Meta->new($session, Foswiki::Func::normalizeWebTopicName(undef, $f));
         if ($m) {
             $edtpl = $m->getPreference('TASKCFG_EDITOR_TEMPLATE');
+            $tplfile = $m->getPreference('TASKCFG_TASK_TEMPLATE_FILE');
             $m->finish();
         }
     }
 
     Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
-    Foswiki::Func::loadTemplate( $r->{templatefile} || 'TasksAPI' );
+    Foswiki::Func::loadTemplate( $r->{templatefile} || $tplfile || 'TasksAPI' );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || $edtpl || 'tasksapi::editor' );
     $editor = $meta->expandMacros( $editor );
 
@@ -902,7 +899,7 @@ sub restRelease {
 
 # Gets a rendered version of a task
 sub _renderTask {
-    my ($meta, $taskTemplate, $task) = @_;
+    my ($meta, $taskTemplate, $task, $addtozone) = @_;
     if ($renderRecurse >= 16) {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
@@ -921,17 +918,33 @@ sub _renderTask {
     }
 
     my $flavor = {};
+    my $type = $task->getPref('TASK_TYPE');
+    my $file = $task->getPref('TASK_TEMPLATE_FILE');
     my $q = $Foswiki::Plugins::SESSION->{request};
     if ( ($currentOptions->{flavor} || $q->param('flavor')) && $taskTemplate ne 'tasksapi::empty' ) {
         $flavor->{name} = $currentOptions->{flavor} || $q->param('flavor');
-        $flavor->{type} = $task->getPref('TASK_TYPE');
-        $flavor->{file} = $task->getPref('TASK_TEMPLATE_FILE');
+        $flavor->{type} = $type;
+        $flavor->{file} = $file;
     }
 
     if ( $flavor->{name} ) {
         my $tmpl = $taskTemplate . '_' . $flavor->{name};
-
         my $type = $flavor->{type} || '_default';
+
+        if ( $addtozone ) {
+            unless ($flavorcss->{$type}) {
+                _addToZone($meta, 'head', $task->getPref('FLAVOR_CSS')) if ($task->getPref('FLAVOR_CSS'));
+                _addToZone($meta, 'head', $task->getPref('FLAVOR_CSS')) if ($task->getPref(uc($flavor->{name}) . '_CSS'));
+                $flavorcss->{$type} = 1;
+            }
+
+            unless ($flavorjs->{$type}) {
+                _addToZone($meta, 'script', $task->getPref('FLAVOR_JS')) if ($task->getPref('FLAVOR_JS'));
+                _addToZone($meta, 'script', $task->getPref(uc($flavor->{name}) . '_JS')) if ($task->getPref(uc($flavor->{name}) . '_JS'));
+                $flavorjs->{$type} = 1;
+            }
+        }
+
         if ( $storedTemplates->{$type} ) {
             $task = $meta->expandMacros($storedTemplates->{$type});
         } else {
@@ -940,9 +953,12 @@ sub _renderTask {
             $task = $meta->expandMacros($storedTemplates->{$type});
         }
     } else {
-        $storedTemplates->{"$taskTemplate"} = Foswiki::Func::expandTemplate($taskTemplate)
-            unless $storedTemplates->{"$taskTemplate"};
-        $task = $meta->expandMacros($storedTemplates->{"$taskTemplate"});
+        unless ($storedTemplates->{$type || "$taskTemplate"}) {
+            Foswiki::Func::loadTemplate($file) if $file;
+            $storedTemplates->{$type || "$taskTemplate"} = Foswiki::Func::expandTemplate($taskTemplate);
+        }
+
+        $task = $meta->expandMacros($storedTemplates->{$type || "$taskTemplate"});
     }
 
     if ($canChange && $haveCtx && !$readonly) {
@@ -952,6 +968,33 @@ sub _renderTask {
     }
     $renderRecurse--;
     return $task;
+}
+
+sub _addToZone {
+    my ($meta, $zone, $path) = @_;
+
+    my @paths = ();
+    if ( $path =~ /,/ ) {
+        foreach my $p (split(/,/, $path)) {
+            push(@paths, $meta->expandMacros($p));
+        }
+    } else {
+        push(@paths, $meta->expandMacros($path));
+    }
+
+    my $section = 'TASKSAPI::FLAVOR::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
+    my $dep = 'TASKSAPI::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
+    $dep .= ', jsi18nCore' if $zone eq 'script';
+    my @includes = ();
+    foreach my $p (@paths) {
+        if ($zone eq 'head') {
+            push @includes, "<link rel=\"stylesheet\" type=\"text/css\" media=\"all\" href=\"$p\" />";
+        } else {
+            push @includes, "<script type=\"text/javascript\" src=\"$p\"></script>";
+        }
+
+        Foswiki::Func::addToZone($zone, $section, join("\n", @includes), $dep);
+    }
 }
 
 # Given an array of tasks, fetch children up to a specified depth
@@ -995,7 +1038,7 @@ sub tagGrid {
     my $id = $params->{id} || "tracker-$gridCounter";
     $gridCounter += 1 if $id eq "tracker-$gridCounter";
     my $system = $Foswiki::cfg{SystemWebName} || "System";
-    my $form = $params->{form} || "$system.TasksAPIDefaultTaskForm";
+    my $form = $params->{form};
     my $template = $params->{template} || 'tasksapi::grid';
     my $taskTemplate = $params->{tasktemplate};
     my $editorTemplate = $params->{editortemplate};
@@ -1006,7 +1049,7 @@ sub tagGrid {
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
     my $stateless = $params->{stateless} || 0;
-    my $templateFile = $params->{templatefile} || 'TasksAPI';
+    my $templateFile = $params->{templatefile};
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $keepclosed = $params->{keepclosed} || 0;
@@ -1028,6 +1071,11 @@ sub tagGrid {
     if ($readonly) {
         $allowCreate = 0;
         $allowUpload = 0;
+    }
+
+    unless ($ctx eq 'any') {
+        $form = "$system.TasksAPIDefaultTaskForm" unless $form;
+        $templateFile = 'TasksAPI' unless $templateFile;
     }
 
     my $_tplDefault = sub {
@@ -1148,7 +1196,7 @@ sub tagGrid {
     local $currentExpands = \%tmplAttrs;
     for my $task (@{$res->{tasks}}) {
         my $tmpl = $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
-        $task = _renderTask($topicObject, $tmpl, $task);
+        $task = _renderTask($topicObject, $tmpl, $task, 1);
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 

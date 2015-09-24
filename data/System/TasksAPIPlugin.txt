@@ -182,6 +182,21 @@ To avoid hard coded web names within your form you may also use the variable
    * Set TASKCFG_TASK_TEMPLATE_FILE = $formweb.TaskTemplates
 </verbatim>
 
+Additionaly, you may want to include some extra styles or scripts used by a
+taskgrid in case flavors are active.
+To do so update your task form as shown below
+<verbatim>
+   * Set TASKCFG_FLAVOR_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css1,%PUBURLPATH%/%SYSTEMWEB%/path/to/css2
+   * Set TASKCFG_FLAVOR_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js1,%PUBURLPATH%/%SYSTEMWEB%/path/to/js2
+</verbatim>
+
+In case those styles and/or scripts should be applied to a 'single' flavor only:
+<verbatim>
+   * Set TASKCFG_(flavor)_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css
+   * Set TASKCFG_(flavor)_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js
+</verbatim>
+
+
 ---+++ Access permissions
 
 Tasks don't use Foswiki's permissions system because usually the majority of
