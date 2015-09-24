@@ -214,9 +214,20 @@ TasksPanel = function(tasktracker) {
 
     self.overlay.on('queueEmpty', function() {
       var $dnd = $(this);
+      var payload = {
+        id: self.currentTask.data('id'),
+      };
+
+      var opts = self.tracker.data('tasktracker_options');
+      for (var prop in opts) {
+        if ( /template|form|depth|flavor/.test(prop) ) {
+          payload[prop] = opts[prop];
+        }
+      }
+
       window.tasksapi.blockUI();
       $.taskapi
-        .get({query:{id: self.currentTask.data('id')}})
+        .get({query: payload})
         .always(window.tasksapi.unblockUI)
         .fail(error)
         .done(function(response) {
