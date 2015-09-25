@@ -1136,7 +1136,7 @@ sub tagGrid {
     );
     _deepen($res->{tasks}, $depth, $params->{order});
 
-    my $select = join('\n', @options),
+    my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
     my $json = to_json( \%settings );
     local $currentOptions = \%settings;
