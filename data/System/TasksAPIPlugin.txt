@@ -140,6 +140,10 @@ See section _Task Flavors_ for further details.
 A webtopic containing (all) templates used to render tasks created with the given form.
 See section _Task Flavors_ for further details.
 
+---++++ =TASKCFG_SOLRHIT_ICON=
+
+Relative or absolute url to an image (16x16) used to decorate Solr search results.
+
 ---+++ Task Flavors
 
 In some circumstances you might want to include tasks, which are created in different contexts,

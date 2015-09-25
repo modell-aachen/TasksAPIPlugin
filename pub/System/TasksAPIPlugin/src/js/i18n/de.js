@@ -19,6 +19,16 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "Title": "Titel",
     "AssignedTo": "Zugewiesen an",
     "Comment": "Kommentar",
-    "The entry has been reopened": "Der Eintrag wurde wieder eröffnet"
+    "The entry has been reopened": "Der Eintrag wurde wieder eröffnet",
+    "Task": "Aufgabe",
+    "task": "Aufgabe",
+    "minute": "Protokollpunkt",
+    "prj_stage": "Projekt-Phase",
+    "prj_iteration": "Projekt-Phasenschritt",
+    "prj_package": "Projekt-Arbeitspaket",
+    "prj_task": "Projekt-Aufgabe",
+    "open": "offen",
+    "closed": "geschlossen",
+    "deleted": "gelöscht"
   });
 }

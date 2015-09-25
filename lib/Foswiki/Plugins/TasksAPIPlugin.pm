@@ -15,7 +15,6 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use Encode;
-use Error qw( :try );
 use File::MimeInfo;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
@@ -95,6 +94,7 @@ our $flavorjs;
 
 my $aclCache = {};
 my $caclCache = {};
+my $aclExpands = {};
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
@@ -138,6 +138,7 @@ sub finishPlugin {
     undef %schema_versions;
     $aclCache = {};
     $caclCache = {};
+    $aclExpands = {};
     $gridCounter = 1;
     $renderRecurse = 0;
 }
@@ -153,70 +154,8 @@ sub indexTopicHandler {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     return unless $task;
 
-    my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
-    my $webtopic = "$web.$topic";
-    $webtopic =~ s/\//./g;
-
-    my $date = '1970-01-01T00:00:00Z';
-    my $created = _formatSolrDate($task->{fields}{Created});
-    if ( $task->{fields}{DueDate} || $task->{fields}{Due} ) {
-        $date = _formatSolrDate($task->{fields}{DueDate} || $task->{fields}{Due});
-    }
-
-    my $ctxurl = Foswiki::Func::getViewUrl(
-        Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context})
-    );
-    my $taskurl = "$ctxurl?id=" . $task->{id} . "&state=" . ($task->{fields}{Status} || 'open');
-
-    my $theDoc = $indexer->newDocument();
-    $theDoc->add_fields(
-      'id' => $task->{id} . '@' . $task->{fields}{Context},
-      'type' => 'actiontwo',
-      'language' => $language,
-      'web' => $web,
-      'topic' => $topic,
-      'webtopic' => $webtopic,
-      'createdate' => $created,
-      'date' => $created,
-      'title' => $task->{fields}{Title},
-      'text' => $task->{fields}{Description},
-      'url' => $taskurl,
-      'author' => $task->{fields}{Author},
-      'contributor' => $task->{fields}{Author},
-      'state' => $task->{fields}{Status},
-      'container_id' => $task->{fields}{Context},
-      'container_url' => $ctxurl,
-      'container_title' => $task->{fields}{Title},
-      'task_created_dt' => $created,
-      'task_due_dt' => $date,
-      'task_state_s' => $task->{fields}{Status},
-    );
-
-    if ( $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} || 0 ) {
-        my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
-        $theDoc->add_fields(
-            'collection' => $collection
-        );
-    }
-
-    try {
-      $indexer->add($theDoc);
-    } catch Error::Simple with {
-      my $e = shift;
-      $indexer->log("ERROR: ".$e->{-text});
-    };
-}
-
-sub _formatSolrDate {
-    my $date = shift;
-    if ( $date =~ /^\d+$/ ) {
-        $date = Foswiki::Time::formatTime($date, 'iso', 'gmtime');
-    } elsif ( $date =~ /^\d+\s\w+\s\d+$/ ) {
-        my $epoch = Foswiki::Time::parseTime($date, $Foswiki::cfg{DisplayTimeValues});
-        $date = Foswiki::Time::formatTime($epoch, 'iso', 'gmtime');
-    }
-
-    return $date;
+    my $legacy = $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} || 0;
+    $task->solrize($indexer, $legacy);
 }
 
 sub db {
@@ -439,6 +378,13 @@ sub _cachedContextACL {
 }
 sub _cacheContextACL {
     $caclCache->{$_[0]} = $_[1];
+}
+sub _cacheACLExpands {
+    $aclExpands->{$_[0]} = $_[1];
+}
+sub _cachedACLExpands {
+    my $acl = shift;
+    $aclExpands->{$acl};
 }
 
 sub restDownload {
