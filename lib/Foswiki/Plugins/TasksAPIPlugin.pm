@@ -192,6 +192,13 @@ sub indexTopicHandler {
       'task_state_s' => $task->{fields}{Status},
     );
 
+    if ( $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} || 0 ) {
+        my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
+        $theDoc->add_fields(
+            'collection' => $collection
+        );
+    }
+
     try {
       $indexer->add($theDoc);
     } catch Error::Simple with {
