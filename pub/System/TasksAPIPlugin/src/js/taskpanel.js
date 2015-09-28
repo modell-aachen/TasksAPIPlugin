@@ -112,8 +112,8 @@ TasksPanel = function(tasktracker) {
       });
     };
 
-    self.buttons.cancel.on('click', function() {
-      onCancel();
+    self.buttons.cancel.on('click', function(evt, params) {
+      onCancel(params && params.close);
       return false;
     });
     self.buttons.close.on('click', onClose);
@@ -417,9 +417,29 @@ TasksPanel = function(tasktracker) {
     return dirty;
   };
 
+  var cancelHelper = function(closeOverlay) {
+    self.isEdit = false;
+    self.isView = true;
+    self.isCreate = false;
+
+    if ( closeOverlay ) {
+      self.close();
+    }
+
+    self.taskParent = null;
+  };
+
   var cancelEdit = function(closeOverlay) {
     if ( !self.isCreate ) {
       releaseTopic({ id: self.currentTask.data('id') });
+    } else {
+      var first = self.panel.children().first().detach();
+      self.panel.empty();
+      first.appendTo(self.panel);
+
+      if ( self.currentTask !== null ) {
+        self.currentTask.addClass('highlight');
+      }
     }
 
     if ( self.savedStates.details !== null && self.savedStates.parent !== null && self.savedStates.parent.length > 0 ) {
@@ -441,19 +461,13 @@ TasksPanel = function(tasktracker) {
           }
 
           self.savedStates.details = self.savedStates.parent = null;
+          cancelHelper(closeOverlay);
         }, 250);
       });
+    } else {
+      cancelHelper(closeOverlay);
     }
 
-    self.isEdit = false;
-    self.isView = true;
-
-    if ( closeOverlay ) {
-      self.close();
-    }
-
-    self.isCreate = false;
-    self.taskParent = null;
     setButtons('view');
   };
 
@@ -507,11 +521,21 @@ TasksPanel = function(tasktracker) {
       .done( function( response ) {
         if ( self.isCreate ) {
           task.id = response.id;
+
+          if ( self.currentTask !== null && self.panel.children().length > 1 ) {
+            var current = self.panel.children().first().children('.task-fullview');
+            var $cnt = self.currentTask.children('.task-fullview-container');
+            current.detach().appendTo($cnt);
+          }
+        }
+
+        cancelEdit();
+        if ( self.currentTask !== null ) {
+          self.currentTask.removeClass('highlight');
         }
 
         var afterSave = $.Event( 'afterSave' );
         self.trigger( afterSave, response.data );
-        cancelEdit();
       });
 
     return false;
@@ -589,7 +613,7 @@ TasksPanel = function(tasktracker) {
     return false;
   };
 
-  var onCancel = function() {
+  var onCancel = function(closeOverlay) {
     var deferred = $.Deferred();
 
     if ( self.isEdit ) {
@@ -606,14 +630,14 @@ TasksPanel = function(tasktracker) {
           closeOnConfirm: true
         }, function(confirmed) {
           if ( confirmed ) {
-            cancelEdit(self.isCreate);
+            cancelEdit(closeOverlay);
             deferred.resolve();
           } else {
             deferred.reject();
           }
         });
       } else {
-        cancelEdit();
+        cancelEdit(closeOverlay);
         deferred.resolve();
       }
     } else if ( self.isComment ) {
@@ -642,7 +666,12 @@ TasksPanel = function(tasktracker) {
   };
 
   var onClose = function() {
-    self.close();
+    if ( self.isEdit || self.isCreate || self.isComment ) {
+      self.buttons.cancel.triggerHandler('click', {close: true});
+    } else {
+      self.close();
+    }
+
     return false;
   };
 
@@ -1145,12 +1174,15 @@ TasksPanel = function(tasktracker) {
     if ( !self.isCreate && self.currentTask !== null ) {
       var $view = $current.children('.task-fullview').detach();
       $view.appendTo(self.currentTask.children('.task-fullview-container'));
-      self.currentTask.removeClass('highlight');
     } else {
       $current.empty();
     }
 
-    self.currentTask = null;
+    if ( self.currentTask !== null ) {
+      self.currentTask.removeClass('highlight');
+      self.currentTask = null;
+    }
+
     toggleOverlay(false, true);
   };
 
@@ -1204,8 +1236,8 @@ TasksPanel = function(tasktracker) {
       toggleUpload();
     }
 
-    if ( self.isEdit || self.isComment ) {
-      onCancel().done( closeOverlay );
+    if ( self.isEdit || self.isComment || self.isCreate ) {
+      self.buttons.cancel.triggerHandler('click', {close: true});
     } else {
       closeOverlay();
     }
@@ -1213,7 +1245,6 @@ TasksPanel = function(tasktracker) {
 
   this.createTask = function(parent) {
     self.isCreate = true;
-    self.currentTask = null;
     if ( parent ) {
       self.taskParent = parent;
     }
