@@ -533,7 +533,7 @@ sub solrize {
       'createdate' => $created,
       'date' => $created,
       'title' => $self->{fields}{Title},
-      'text' => $self->{fields}{Description},
+      'text' => Foswiki::Plugins::TasksAPIPlugin::_shorten($self->{fields}{Description} || '', 140),
       'url' => $taskurl,
       'author' => $self->{fields}{Author},
       'contributor' => $self->{fields}{Author},
@@ -545,7 +545,8 @@ sub solrize {
       'task_created_dt' => $created,
       'task_due_dt' => $date,
       'task_state_s' => $self->{fields}{Status},
-      'task_type_s' => $type
+      'task_type_s' => $type,
+      'task_id_s' => $self->{id}
     );
 
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');

@@ -74,12 +74,13 @@ TasksPanel = function(tasktracker) {
 
     self.panel.off('keydown', 'input');
     self.panel.off('click', '.caption > .controls');
-    self.panel.off('mouseenter', '.controls');
-    self.panel.off('mouseleave', '.controls');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
-    self.panel.off('keydown', '.task-changeset-comment');
+    self.panel.off('click', '.task-details .description > article a');
     self.panel.off('click', '.task-attachments tbody tr');
+    self.panel.off('keydown', '.task-changeset-comment');
+    self.panel.off('mouseenter', '.controls');
+    self.panel.off('mouseleave', '.controls');
 
     window.onkeydown = window.onkeyup = null;
   };
@@ -192,6 +193,16 @@ TasksPanel = function(tasktracker) {
         onSave();
         return false;
       }
+    });
+
+    self.panel.on('click', '.task-details .description > article a', function(evt) {
+      var $link = $(this);
+      if ( $link.attr('href') !== '#' ) {
+        window.open($link.attr('href'), '_blank');
+        return false;
+      }
+
+      evt.preventDefault();
     });
 
     self.panel.on('click', '.task-changeset-add, .task-changeset-edit', function() {
@@ -1261,13 +1272,3 @@ TasksPanel = function(tasktracker) {
 
   return this;
 };
-
-  // var setLinkTarget = function() {
-  //   var $panel = $('#task-panel').children('.content');
-  //   $panel.find('a:not(.tasks-btn)').each(function() {
-  //     var $link = $(this);
-  //     if ( $link.attr('href') !== '#' ) {
-  //       $link.attr('target', '_blank');
-  //     }
-  //   });
-  // };
