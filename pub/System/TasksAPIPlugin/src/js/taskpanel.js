@@ -508,6 +508,11 @@ TasksPanel = function(tasktracker) {
       }
     }
 
+    // remove invalid parent entries.
+    if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {
+      delete task.Parent;
+    }
+
     var beforeSave = $.Event( 'beforeSave' );
     self.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
