@@ -25,6 +25,7 @@ pub/System/TasksAPIPlugin/assets/ampel_r.png 0644
 pub/System/TasksAPIPlugin/assets/sort_asc.gif 0644
 pub/System/TasksAPIPlugin/assets/sort_bg.gif 0644
 pub/System/TasksAPIPlugin/assets/sort_desc.gif 0644
+pub/System/TasksAPIPlugin/assets/user.png 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.js 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
