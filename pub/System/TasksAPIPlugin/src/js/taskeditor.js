@@ -313,6 +313,7 @@
 
     $.ajax({
       url: url,
+      type: 'POST',
       data: payload,
       success: function( response ) {
         var json = $.parseJSON( response );
