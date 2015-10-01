@@ -26,10 +26,11 @@ The following Perl packages are required:
    * DBI
    * Number::Bytes::Human
    * Date::Manip
+   * File::MimeInfo
 
 Debian packages exist for all of these:
 
-<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl</verbatim>
+<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl libfile-mimeinfo-perl</verbatim>
 
 Before the plugin can be used, a web must created which is used for storing
 the tasks. If you use the default configuration, its name has to be =Tasks=.
@@ -59,6 +60,7 @@ A number of other fields, if used, should use these standard names:
    * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
    * =Created=: the creation time. Set the default value  to
      =%GMTIME{"$epoch"}=.
+   * =Closed=: the time a task was closed. Handled internally.
    * =Title=: user-defined title of the task
    * =AssignedTo=: the user this task is assigned to. This is generally meant
      to be a single person because with task with multiple assignees, there is
@@ -127,6 +129,77 @@ automatically.
 
 Set to =true= (or =1= or =on=) to signal that this task can have child tasks
 nested within it.
+
+---++++ =TASKCFG_TASK_TYPE=
+
+A unique string used as identifier for tasks created with the given form.
+See section _Task Flavors_ for further details.
+
+---++++ =TASKCFG_TASK_TEMPLATE_FILE=
+
+A webtopic containing (all) templates used to render tasks created with the given form.
+See section _Task Flavors_ for further details.
+
+---++++ =TASKCFG_SOLRHIT_ICON=
+
+Relative or absolute url to an image (16x16) used to decorate Solr search results.
+
+---+++ Task Flavors
+
+In some circumstances you might want to include tasks, which are created in different contexts,
+in a single grid. For instance, render all tasks asigned to yourself into your
+personal page by specifying a macro like the following one:
+<verbatim>
+%TASKSGRID{
+  context="any"
+  query="...""
+}%
+</verbatim>
+That macro will render a grid containing all tasks matching the given query.
+Unfortunately, in most cases tasks created in different contexts differ from each
+other not only by their context but by the given form as well as the used template.
+
+To render a grid which includes tasks from more than context *and* which renders
+each task with its own template within that grid, specify the grid's =flavor=
+parameter:
+<verbatim>
+%TASKSGRID{
+  context="any"
+  query="...""
+  flavor="perspage"
+}%
+</verbatim>
+Foswiki will detect that parameter and appends it to the task template name.
+Let's say a task's template is called =tasksapi::task= and you specified a
+flavor called =perspage= then Foswiki will try to expand the template called
+=tasksapi::task_perspage=. Obviously this leads to another problem. All templates
+needs to be placed in a single =templatefile=. To work around that limitation
+you may (or let's say should) set =TASKCFG_TASK_TYPE= and =TASKCFG_TASK_TEMPLATE_FILE=
+within your task's form. While =TASKCFG_TASK_TYPE= is used to cache template
+expands, =TASKCFG_TASK_TEMPLATE_FILE= specifies the webtopic of the according
+template definition.
+
+To avoid hard coded web names within your form you may also use the variable
+=$formweb= which expands to the web containing the task form. E.g.:
+<verbatim>
+   * Set TASKCFG_TASK_TYPE = minute
+   * Set TASKCFG_TASK_TEMPLATE_FILE = $formweb.TaskTemplates
+</verbatim>
+
+Additionaly, you may want to include some extra styles or scripts used by a
+taskgrid in case flavors are active.
+To do so update your task form as shown below
+<verbatim>
+   * Set TASKCFG_FLAVOR_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css1,%PUBURLPATH%/%SYSTEMWEB%/path/to/css2
+   * Set TASKCFG_FLAVOR_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js1,%PUBURLPATH%/%SYSTEMWEB%/path/to/js2
+</verbatim>
+
+In case those styles and/or scripts should be applied to a 'single' flavor only:
+<verbatim>
+   * Set TASKCFG_(flavor)_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css
+   * Set TASKCFG_(flavor)_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js
+</verbatim>
+
 
 ---+++ Access permissions
 
@@ -293,119 +366,6 @@ $.taskapi.multiupdate( tasksToUpdate ).done( function( response ) {
 });
 </verbatim>
 
-<br />
----++ Events
----+++ beforeCreate
-*cancelable.* Fired after the user clicked the 'create new task' button.
-The task editor is not yet visible to the user and might still hold data from the previous edit/create action.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'beforeCreate', function( evt ) {
-  if ( someState === state.invalid ) {
-    return false; // cancel creation of a new task...
-  }
-});
-</verbatim>
-
-
----+++ afterCreate
-Fired after the editor has been cleaned and is shown to the user.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'afterCreate', function( evt ) {
-  // whatever
-});
-</verbatim>
-
-
----+++ beforeEdit
-*cancelable.* Fired after the user clicked the 'edit task' button. The selected task is passed into the event handler.
-The editor is not yet visible to the user.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'beforeEdit', function( evt, task ) {
-  if ( someState === state.invalid ) {
-    return false; // cancel edit request...
-  }
-
-  // manipulate task
-});
-</verbatim>
-
-
----+++ afterEdit
-Fired after *beforeEdit*. The editor is prepared and shown to the user.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'afterEdit', function( evt ) {
-  console.log( 'task edited...' );
-});
-</verbatim>
-
-
----+++beforeSave
-*cancelable.* Fired after the user clicked the 'save task' button. The selected task is passed into the event handler.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'beforeSave', function( evt, task ) {
-  if ( task === null ) {
-    // error or missing mandatory field
-    return false; // stop propagation
-  }
-</verbatim>
-
-
----+++afterSave
-Fired after a task has been saved. The according task is passed into the event handler.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'afterSave', function( evt, task ) {
-  console.log( task );
-});
-</verbatim>
-
----+++editCanceled
-Fired after the user clicked the editor's cancel button.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'editCanceled', function( evt ) {
-  console.log( 'canceled' );
-});
-</verbatim>
-
----+++ taskClick
-Fired after a task has been clicked by the user. The task's DOM node is passed into the event handler.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'taskClick', function( evt, cnt ) {
-  var $cnt = $(cnt);
-  var taskId = $cnt.data('id');
-  // ...
-});
-</verbatim>
-
-
----+++ taskDoubleClick
-Fired after a task has been double clicked by the user. The task's DOM node is passed into the event handler.
-
-<verbatim>
-var $tracker = $('.tasktracker');
-$tracker.on( 'taskDoubleClick', function( evt, cnt ) {
-  var $cnt = $(cnt);
-  var taskId = $cnt.data('id');
-  // ...
-});
-</verbatim>
-
-<br />
 ---++ Plugin Info
 
 | Author: | Foswiki:Main.JanKrueger, Foswiki:Main.SvenMeyer |

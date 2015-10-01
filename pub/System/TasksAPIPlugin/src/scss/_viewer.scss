@@ -10,9 +10,8 @@
     left: 0;
     right: 0;
 
-    overflow-x: auto;
-    overflow-y: scroll;
-    // padding: 15px;
+    // overflow-x: auto;
+    // overflow-y: scroll;
   }
 
   > .actions {
@@ -84,5 +83,184 @@
     > div {
       padding: 6px;
     }
+  }
+}
+
+.task-details {
+
+  // > .content {
+  //   border-bottom: 3px solid #eee;
+  //   margin-bottom: 20px;
+  //   padding-left: 2%;
+  //   padding-right: 3%;
+
+  //   > div:first-child {
+  //     float:left;
+  //     width: 25%;
+  //   }
+
+  //   > div:last-child {
+  //     float:right;
+  //     width: 68%;
+  //   }
+
+  //   article p {
+  //     color: $grey;
+  //     margin-top: 7px;
+  //     padding-bottom: 20px;
+  //     text-align: justify;
+  //   }
+  // }
+}
+
+table.details-table-head {
+  border-spacing: 0;
+
+  td {
+    background-color: $dark-blue;
+    padding: 3% 2%;
+
+    &:first-child {
+      width: 80%;
+      padding: 18px 2%;
+      padding-right: 3%;
+
+      .label {
+        margin-bottom:5px;
+        padding-top:.4em;
+        display:inline-block;
+      }
+
+      .title {
+        color: $white;
+        display: block;
+        font-size: 16pt;
+        margin-top: 5px;
+        text-transform: none;
+      }
+    }
+
+    &:last-child {
+      background-color: lighten($dark-blue, 10%);
+      border-left: 3px solid $mid-blue;
+      width: 2%;
+      text-align: center;
+
+      // ToDo:
+      // move to .tasks-btn-close default definition
+      .tasks-btn-close {
+        background: none;
+        background-image: none;
+        border: none;
+        float: none;
+        margin-right: 0;
+        padding: 0;
+      }
+
+      // ToDo: use dedicated class
+      i {
+        color: darken($light-blue, 25%);
+        transition: color 0.5s ease;
+        font-size: 2.5em;
+        cursor: pointer;
+
+        &:hover {
+          color: $white;
+        }
+
+        &.closed {
+          color: $light-green;
+          cursor: default;
+
+          &:hover{
+            color: $white;
+          }
+        }
+      }
+    }
+  }
+}
+
+table.details-table {
+  padding-bottom: 20px;
+
+  td {
+    background-color: $white;
+    width: 100%;
+    min-width: none;
+    max-width: none;
+    padding-bottom: 12px;
+
+    &.icon_column {
+      width:20px;
+
+      & i {
+        color:$grey;
+        font-size: 1.5em;
+      }
+    }
+
+    span {
+      font-size:1.2em;
+
+      &.title {
+        display: block;
+        color: $grey;
+        font-size: 0.8em;
+        margin: 0 3px 0 0;
+        text-transform: uppercase;
+      }
+    }
+  }
+}
+
+div.task-attachments {
+  padding:3%;
+
+  table th {
+    color: $black !important;
+  }
+}
+
+.task-fullview {
+  .comment.active,
+  .upload.active {
+    padding: 1%;
+  }
+
+  .upload.active {
+    height: 150px;
+
+    > div {
+      padding: 18px;
+    }
+  }
+}
+
+.tasks-btn {
+  &.tasks-btn-save,
+  &.tasks-btn-save-comment {
+    background-color: #78C5FF;
+    background-image: url('../assets/check.png');
+    border: 1px solid #F3F3F3;
+    color: $white;
+    margin-right: 15px;
+    transition: background-color 0.5s ease;
+
+    &:hover {
+      background-color: darken(#78C5FF, 25%);
+    }
+  }
+}
+
+.qw-dnd-upload.task-dnd {
+  width: 95%;
+  margin: 0 auto;
+  background-color: $white;
+  height: 125px;
+  border-radius: 8px;
+
+  .hint {
+    padding-top: 35px;
   }
 }

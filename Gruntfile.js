@@ -24,7 +24,10 @@ module.exports = function(grunt) {
           outputStyle: 'nested',
         },
         files: {
-          "<%= pkg.pubDir %>/css/tasktracker.css": "<%= pkg.pubDir %>/src/scss/tasktracker.scss"
+          "<%= pkg.pubDir %>/css/tasktracker.css":
+            "<%= pkg.pubDir %>/src/scss/tasktracker.scss",
+          "<%= pkg.pubDir %>/css/tasktracker.print.css":
+            "<%= pkg.pubDir %>/src/scss/print.scss",
         }
       },
       dist: {
@@ -32,7 +35,10 @@ module.exports = function(grunt) {
           outputStyle: 'compressed'
         },
         files: {
-          "<%= pkg.pubDir %>/css/tasktracker.min.css": "<%= pkg.pubDir %>/src/scss/tasktracker.scss"
+          "<%= pkg.pubDir %>/css/tasktracker.min.css":
+            "<%= pkg.pubDir %>/src/scss/tasktracker.scss",
+          "<%= pkg.pubDir %>/css/tasktracker.print.min.css":
+            "<%= pkg.pubDir %>/src/scss/print.scss"
         }
       }
     },
@@ -48,11 +54,13 @@ module.exports = function(grunt) {
         files: {
           '<%= pkg.pubDir %>/js/tasktracker.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
-            '<%= pkg.pubDir %>/src/js/taskeditor.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
           ],
           '<%= pkg.pubDir %>/js/tasks.tablesorter.js': [
             '<%= pkg.pubDir %>/src/js/tasks.tablesorter.js'
+          ],
+          '<%= pkg.pubDir %>/js/tasksapi.solr.js': [
+            '<%= pkg.pubDir %>/src/js/solr.js'
           ]
         }
       },
@@ -62,16 +70,49 @@ module.exports = function(grunt) {
           mangle: true,
           preserveComments: false
         },
-        files: [{
+        files: {
           '<%= pkg.pubDir %>/js/tasktracker.min.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
-            '<%= pkg.pubDir %>/src/js/taskeditor.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
           ],
           '<%= pkg.pubDir %>/js/tasks.tablesorter.min.js': [
             '<%= pkg.pubDir %>/src/js/tasks.tablesorter.js'
+          ],
+          '<%= pkg.pubDir %>/js/tasksapi.solr.min.js': [
+            '<%= pkg.pubDir %>/src/js/solr.js'
           ]
-        }]
+        }
+      },
+      devI18N: {
+        options: {
+          beautify: true,
+          compress: false,
+          mangle: false,
+          preserveComments: 'all'
+        },
+        files: {
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.de.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/de.js'
+          ],
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.en.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/en.js'
+          ]
+        }
+      },
+      distI18N: {
+        options: {
+          compress: true,
+          mangle: true,
+          preserveComments: false
+        },
+        files: {
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.de.min.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/de.js'
+          ],
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.en.min.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/en.js'
+          ]
+        }
       },
       devJQ: {
         options: {
@@ -92,11 +133,11 @@ module.exports = function(grunt) {
           mangle: true,
           preserveComments: false
         },
-        files: [{
+        files: {
           '<%= pkg.pubDir %>/js/jquery.tasksapi.js': [
             '<%= pkg.pubDir %>/src/js/jquery.tasksapi.js'
           ]
-        }]
+        }
       }
     },
 
@@ -113,12 +154,16 @@ module.exports = function(grunt) {
         tasks: ['sass']
       },
       scripts: {
-        files: ['<%= pkg.pubDir %>/src/js/**/!(jquery)*.js'],
-        tasks: ['uglify']
+        files: ['<%= pkg.pubDir %>/src/js/!(jquery)*.js'],
+        tasks: ['uglify:dev','uglify:dist']
       },
       jquery: {
         files: ['<%= pkg.pubDir %>/src/js/**/jquery*.js'],
         tasks: ['uglify:devJQ','uglify:distJQ']
+      },
+      i18n: {
+        files: ['<%= pkg.pubDir %>/src/js/i18n/*.js'],
+        tasks: ['uglify:devI18N','uglify:distI18N']
       }
     },
   });

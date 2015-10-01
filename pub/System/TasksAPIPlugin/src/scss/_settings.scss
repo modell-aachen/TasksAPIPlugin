@@ -3,7 +3,7 @@ $global-radius: 3px;
 $editor-padding: 12px;
 $editor-width: 400px;
 
-$filter-padding: 12px;
+$filter-padding: 12px 0;
 $filter-bg: #fefefe;
 $filter-height: 50px;
 
@@ -26,11 +26,60 @@ $alternate-active: darken($alternate, 20%);
 
 $blue: #6494c9;
 $light-blue: #f8fcff;
+$mid-blue: #628dbd;
+$dark-blue: #39526d;
+$light-green: #6cce86;
 $dark-red: #b80000;
 $hover-bg: #e8f7ff;
 $white: #fff;
 $black: #000;
-$prioritized: #f40;
-$del-color: #c00;
-$ins-color: #080;
+$prioritized: #f10909;
+$del-color: #868686;
+$ins-color: #578dca;
 $changeset-border: #88a;
+$grey: grey;
+
+
+@mixin flex-container($direction:row, $align:flex-start, $justify:flex-start, $wrap:nowrap) {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-direction: $direction;
+  flex-direction: $direction;
+  @if $align == flex-start {
+    -ms-flex-align: start;
+  } @else if $align == flex-end {
+    -ms-flex-align: end;
+  } @else {
+    -ms-flex-align: $align;
+  }
+  align-items: $align;
+  @if $justify == flex-start {
+    -ms-flex-pack: start;
+  } @else if $justify == flex-end {
+    -ms-flex-pack: end;
+  } @else if $justify == space-between {
+    -ms-flex-pack: justify;
+  } @else if $justify == space-around {
+    -ms-flex-pack: distribute;
+  }
+  justify-content: $justify;
+  -ms-flex-wrap: $wrap;
+  flex-wrap: $wrap;
+}
+
+@mixin flex($grow:0, $shrink:1, $basis:auto, $order:0, $align:none) {
+  -ms-flex: $grow $shrink $basis;
+  flex: $grow $shrink $basis;
+  -ms-flex-order: $order;
+  order: $order;
+  @if $align == flex-start {
+    -ms-flex-item-align: start;
+  } @else if $align == flex-end {
+    -ms-flex-item-align: end;
+  } @else if $align != none {
+    -ms-flex-item-align: $align;
+  }
+  @if $align != none {
+    align-self: $align;
+  }
+}

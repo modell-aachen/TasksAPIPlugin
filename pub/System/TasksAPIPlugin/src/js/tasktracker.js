@@ -1,5 +1,31 @@
 ;(function ($, _, document, window, undefined) {
-  'use strict';
+
+  TasksAPI = function() {
+    this.blockUI = function() {
+      var p = foswiki.preferences;
+      var url = [
+        p.PUBURLPATH,
+        '/',
+        p.SYSTEMWEB,
+        '/TasksAPIPlugin/assets/ajax-loader.gif'
+      ];
+
+      swal({
+        text: jsi18n.get('tasksapi', 'Please wait...'),
+        type: null,
+        imageUrl: url.join(''),
+        imageSize: '220x19',
+        showCancelButton: false,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      });
+    };
+
+    this.unblockUI = function() {
+      swal.closeModal();
+    };
+  };
 
   $.fn.tasksGrid = function() {
     if ( typeof _ === typeof undefined ) {
@@ -7,200 +33,208 @@
       return this;
     }
 
-    if (!$('#task-editor').length) {
-      $('body').append('<div id="task-editor"></div>');
-    }
-
     return this.each(function () {
       var $this = $(this);
+      if ( !$this.hasClass('tasktracker') ) {
+        return this;
+      }
+
+      var self = this;
+      self.isTaskClicked = false;
+      self.tasksPanel = new TasksPanel($this);
+
+      $this.on('mouseenter', '.task > td.close', function() {
+        var $i = $(this).find('> span > i');
+        if ( $i.hasClass('closed') ) {
+          $i.removeClass('fa-check-square').addClass('fa-square-o');
+        } else {
+          $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+        }
+      });
+      $this.on('mouseleave', '.task > td.close', function() {
+        var $i = $(this).find('> span > i');
+        if ( $i.hasClass('closed') ) {
+          $i.removeClass('fa-square-o').addClass('fa-check-square');
+        } else {
+          $i.removeClass('fa-check-square-o').addClass('fa-square-o');
+        }
+      });
+
+      $this.children('.pagination-container').on('click', 'li a', handlePager);
+      $this.on('click', '.task > .close', toggleTaskState);
+      $this.on('click', '.task', function(evt) {
+        if ( $(evt.target).closest('.expander').length === 1 ) {
+          toggleTaskExpand.call(evt.target, evt);
+          return false;
+        }
+
+        if ( self.isTaskClicked ) {
+          return false;
+        }
+
+        self.isTaskClicked = true;
+        self.tasksPanel.viewTask($(this));
+        setTimeout(function() {
+          self.isTaskClicked = false;
+        }, 200);
+      });
+
+      $this.on('click', '> .filter .tasks-btn-create', function() {
+        self.tasksPanel.createTask();
+        return false;
+      });
+
+      $this.on('click', '.task-new', function() {
+        var $self = $(this);
+        var $cnt = $(this).closest('.task-children-container');
+        var $task = $cnt.prev();
+        if ( $task.is('.task.expanded') ) {
+          var parent = $task.data('id');
+          self.tasksPanel.createTask(parent);
+        }
+
+        return false;
+      });
 
       var id = $this.attr('id');
       var json = $this.children('.settings').text();
-      var opts = $.parseJSON( json );
+      self.opts = $.parseJSON( json );
 
-      opts.cntHeight = $this.height();
-      opts.container = $this.children('.tasks-table').children('.tasks');
+      self.opts.cntHeight = $this.height();
+      self.opts.container = $this.children('.tasks-table').children('.tasks');
 
-      opts.currentState = 'open';
-      $this.data('tasktracker_options', opts);
+      self.opts.currentState = 'open';
+      $this.data('tasktracker_options', self.opts);
 
-      var $tasks = opts.container;
-      var $editor = $('#task-editor');
+      if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
+        $this.find('> .tasks-table > thead th').each(function() {
+          var $th = $(this);
+          var sortby = $th.data('sort');
+          if ( !sortby ) {
+            return;
+          }
+
+          $th.addClass('sortable');
+          $th.on('click', doSort);
+
+          if ( self.opts.order === sortby ) {
+            $th.addClass(/^(1|on|true|enabled?)$/i.test(self.opts.desc) ? 'desc' : 'asc');
+          }
+        });
+      }
+
+      var $tasks = self.opts.container;
       var $filter = $this.children('.filter');
       var $status = $filter.find('select[name="status"]');
 
       var params = parseQueryParams();
       if ( params.state ) {
-        opts.currentState = params.state;
+        self.opts.currentState = params.state;
         $status.val(params.state);
       }
 
-      loadTasks( $this, opts.currentState, true );
-      if ( opts.infinite ) {
-        var isLoading = false;
-        var infiniteScroll = function() {
-          if ( isLoading ) {
-            return;
-          }
-
-          var top = $(window).scrollTop();
-          var dh = $(document).height();
-          var wh = $(window).height();
-          var  trigger = 0.80;
-
-          if ( (top/(dh-wh)) > trigger ) {
-            var rowCnt = $this.find('> .tasks-table > tbody > tr').length;
-            if ( rowCnt >= opts.totalsize ) {
-              isLoading = false;
-              return false;
-            }
-
-            var url = getViewUrl() + '?page=' + Math.round(rowCnt/opts.pagesize + 0.5);
-            if ( params.state ) {
-              url += '&state=' + params.state;
-            }
-
-            $('<div class="tasks-tmp-container" style="display: none"></div>').appendTo('body');
-            $.blockUI();
-            isLoading = true;
-            $('.tasks-tmp-container').load(url + ' #' + id, function(response) {
-              var $tmp = $(this);
-              var $rows = $tmp.find('#' + id + '> .tasks-table > tbody > tr');
-              if ( $rows.length < opts.pagesize ) {
-                $(window).off('scroll', infiniteScroll);
-              }
-
-              $rows.each(function() {
-                var $task = $(this).detach();
-                var $data = $task.find('> .task-data-container > .task-data');
-                if ( $data.length > 0 ) {
-                  var data = unescapeHTML( $.parseJSON($data.text()) );
-                  data.html = $('<div></div>').append($task).html();
-                  opts.container.append( createTaskElement(data) );
-                }
-              });
-
-              isLoading = false;
-              $tmp.remove();
-
-              if ( opts.sortable ) {
-                try {
-                  invokeTablesorter.call($this.children('.tasks-table'), false, true);
-                } catch(e) {
-                  error(e);
-                }
-              }
-
-              $.unblockUI();
-            });
-          }
-        };
-
-        $(window).on( 'scroll', infiniteScroll);
-      }
-
-      var handleCreate = function() {
-        var qopts = {};
-        $.extend(qopts, opts);
-        qopts.trackerId = opts.id;
-        qopts._depth = parseInt(opts.depth);
-
-        delete qopts.id;
-        delete qopts.depth;
-
-        var $self = $(this);
-        var parent;
-        if ( $self.hasClass('task-new') ) {
-          qopts.$table = $self.parent();
-          var $parent = $self.closest('.task-children-container').prev();
-          parent = $parent.data('id');
-          if ( parent ) {
-            qopts.parent = parent;
-
-            var pdata = $parent.data('task_data');
-            qopts._depth = parseInt(pdata.depth) - 1;
-          }
-        } else {
-          qopts.$table = $(opts.container);
-        }
-
-        var beforeCreate = $.Event( 'beforeCreate' );
-        $this.trigger( beforeCreate, qopts );
-        if( beforeCreate.isDefaultPrevented() ) {
-          return false;
-        }
-
-        delete qopts.$table;
-        delete qopts.container;
-        delete qopts.lang;
-        var evtResult = beforeCreate.result;
-        if ( _.isObject( evtResult ) ) {
-          delete evtResult.id;
-          delete evtResult.trackerId;
-          $.extend(qopts, evtResult);
-        }
-
-        $editor.taskEditor(qopts).done(function(type, data) {
-          if (type === 'save') {
-            var pid = data.fields.Parent.value;
-            if (!parent) {
-              opts.container.append(createTaskElement(data));
-            } else {
-              $(createTaskElement(data)).insertBefore($self);
-            }
-
-            applyLevels();
-          }
-        }).fail(error);
-        return false;
-      };
+      loadTasks( $this, self.opts.currentState, true );
 
       var handleStatusFilterChanged = function() {
         var $select = $(this);
         var url = getViewUrl() + '?state=' + $select.val();
+
+        if ( typeof window.location.hash === typeof '' && /jqTab/.test(window.location.hash) ) {
+          var tabId = window.location.hash.replace('!', '');
+          var $tab = $(tabId);
+          var cls = $tab.attr('class');
+          var tab = cls.replace(/(current|jqTab)/, '');
+          url += '&tab=' + tab;
+        }
         window.location = url;
       };
 
-      $filter.find('.tasks-btn-create').on('click', handleCreate);
-      $this.on('click', '.task-new', handleCreate);
-
       $status.on( 'change', handleStatusFilterChanged );
-      $editor.on( 'afterSave', function( evt, task ) {
-        if ( $status.length > 0 && task.Status !== $status.val() ) {
-          $tasks.find('.task').each( function() {
-            var $t = $(this);
-            if ( $t.data('id') === task.id ) {
-              $t.remove();
+      var findTask = function(id) {
+        return self.opts.container.find('.task:visible').filter( function() {
+          return $(this).data('id') === id;
+        });
+      };
+
+      self.tasksPanel.on( 'afterSave', function( evt, task ) {
+        var $task = $(createTaskElement(task));
+        var $existing = findTask($task.data('id'));
+        var $next = $existing.next();
+
+        if ( task.fields.Status.value === 'deleted' ) {
+          if ( $existing.hasClass('expanded') ) {
+            $existing.next().remove();
+          }
+
+          $next = self.tasksPanel.next();
+          $existing.remove();
+          self.tasksPanel.viewTask($next);
+          return false;
+        }
+
+        var $nextActive = $task;
+        var isClose = task.fields.Status.value === 'closed';
+
+        if ( $existing.length > 0 ) {
+          if ( !isClose || /(1|on|true|enabled)/i.test(self.opts.keepclosed) ) {
+            if ( $existing.hasClass('expanded') ) {
+              $task.addClass('expanded');
+              var span = $task.children('td').length;
+              var $children = $task.children('.task-children').children('table.children').detach();
+              var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+              $new.children('td').append($children);
+              $next.replaceWith($new);
+            }
+
+            $existing.replaceWith($task);
+          } else {
+            $nextActive = $next;
+            $existing.remove();
+            if ($next.hasClass('task-children-container')) {
+              $nextActive = $next.next();
+              $next.remove();
+            }
+          }
+        } else {
+          if ( task.fields.Parent.value ) {
+            var $parent = findTask(task.fields.Parent.value);
+            var $childContainer = $parent.next();
+            if ( !$childContainer.hasClass('task-children-container') ) {
+              // TBD. is this even possible?
               return false;
             }
-          });
-        }
 
-        if ( opts.sortable ) {
-          try {
-            invokeTablesorter.call($this.children('.tasks-table'), true);
-          } catch(e) {
-            error(e);
+            $task.insertBefore($childContainer.find('> td > table > tbody > .task-new'));
+          } else {
+            self.opts.container.append($task);
           }
         }
-      });
 
-      if ( opts.sortable ) {
-        try {
-          invokeTablesorter.call($this.children('.tasks-table'));
-        } catch(e) {
-          error(e);
-        }
-      } else {
-        // moved here due to perfomance reasons (tablesorter vs mutation observers)
-        $this.observe('added', 'tr.task', function(record) {
-          detachEventHandler();
-          attachEventHandler();
-        });
-      }
+        // view task
+        self.tasksPanel.viewTask($nextActive);
+      });
 
       return this;
     });
+  };
+
+  var toggleTaskExpand = function(evt) {
+    var $col = $(this).closest('.expander');
+    var $row = $col.parent();
+    $row.toggleClass('expanded');
+
+    if ( $row.hasClass('expanded') ) {
+      var span = $row.children('td').length;
+      var $children = $row.children('.task-children').children('table.children').detach();
+      var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+      $new.children('td').append($children);
+      $new.insertAfter($row);
+    } else {
+      var $next = $row.next();
+      var $table = $next.children('td').children('table.children').detach();
+      $table.appendTo($row.children('.task-children'));
+      $next.remove();
+    }
   };
 
   var getViewUrl = function() {
@@ -217,42 +251,43 @@
   };
 
   var invokeTablesorter = function(forceSort, updateOnly) {
-    var $tbl = $(this);
-    if ( !forceSort && $tbl.find('> tbody .task').length === 0 ) {
-      return;
-    }
+    try {
+      var $tbl = $(this);
+      if ( !forceSort && $tbl.find('> tbody .task').length === 0 ) {
+        return;
+      }
 
-    if ( updateOnly ) {
-      setTimeout(function() {
-        $tbl.trigger('update');
-      }, 10);
-    }
-
-    var opts = $tbl.data('sortopts');
-    if ( typeof opts === 'object' ) {
-      var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
-
-      $tbl.trigger('update');
-      if ( $col.length > 0 ) {
-        var dir = $col.hasClass('headerSortUp') ? 1 : 0;
-        var index = $col[0].column;
-
-        // tablesorter's update event is processed by a timeout of 1.
-        // use something higher than 1 here...
+      if ( updateOnly ) {
         setTimeout(function() {
-          $tbl.trigger('sorton', [[[index, dir]]]);
+          $tbl.trigger('update');
         }, 10);
       }
 
-      return;
-    }
+      var opts = $tbl.data('sortopts');
+      if ( typeof opts === 'object' ) {
+        var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
 
-    opts = $tbl.metadata() || {};
-    $tbl.data('sortopts', opts);
-    $tbl
-      .tablesorter(opts)
-      .bind('sortStart', onSortStart)
-      .bind('sortEnd', onSortEnd);
+        $tbl.trigger('update');
+        if ( $col.length > 0 ) {
+          var dir = $col.hasClass('headerSortUp') ? 1 : 0;
+          var index = $col[0].column;
+
+          // tablesorter's update event is processed by a timeout of 1.
+          // use something higher than 1 here...
+          setTimeout(function() {
+            $tbl.trigger('sorton', [[[index, dir]]]);
+          }, 10);
+        }
+
+        return;
+      }
+
+      opts = $tbl.metadata() || {};
+      $tbl.data('sortopts', opts);
+      $tbl.tablesorter(opts);
+    } catch(e) {
+      error(e);
+    }
   };
 
   var unescapeHTML = function(obj) {
@@ -270,7 +305,6 @@
 
     return obj;
   };
-
 
   var loadTasks = function( $tracker, status, initial, parent, container ) {
     var deferred = $.Deferred();
@@ -305,11 +339,12 @@
           });
         });
       });
+
       deferred.resolve({data: results});
       return deferred.promise();
     }
 
-    $.blockUI();
+    window.tasksapi.blockUI();
     var query = {
       Context: opts.context
     };
@@ -335,7 +370,7 @@
     qopts._depth = opts.depth;
 
     $.taskapi.get(qopts).always(function() {
-      $.unblockUI();
+      window.tasksapi.unblockUI();
     }).done( function( response ) {
       _.each( response.data, function(entry) {
         var $task = createTaskElement(entry);
@@ -348,241 +383,6 @@
     return deferred.promise();
   };
 
-  var getTaskSibling = function(direction) {
-    var sel, func;
-    if ( /^(left|up|prev)$/i.test(direction) ) {
-      sel = 'last';
-      func = 'prev';
-    } else {
-      sel = 'first';
-      func = 'next';
-    }
-
-    var $task = $(this);
-    var $sibling = $task[func]();
-    if ( $sibling.hasClass('task-children-container') ) {
-      $sibling = $sibling[func]();
-    }
-
-    if ( !$sibling.hasClass('task') ) {
-      var $children = $task.parent().children(sel);
-      $sibling = $task.parent().children('.task')[sel]();
-    }
-
-    return $sibling;
-  };
-
-  var hoveredTask;
-  var toggleTaskDetails = function(evt) {
-    if (!hoveredTask) {
-      return false;
-    }
-
-    var $task = hoveredTask;
-    var data = {
-      isDetailsView: $task.hasClass('highlight'),
-      container: $task
-    };
-
-    var e = $.Event('toggleDetails');
-    var $tracker = $task.closest('.tasktracker');
-    $tracker.trigger( e, data );
-
-    var showFunc = function() {
-      var self = this;
-      $task.children('.task-fullview-container').children('.task-fullview').detach().appendTo(this);
-      $task.addClass('highlight');
-
-      var wh = $(window).height();
-      var sy = window.scrollY;
-      var ot = $task.offset().top;
-      var th = $task.height();
-
-      if ( sy + wh < ot + th || sy > ot ) {
-        $('body,html').animate({
-          scrollTop: ot - th
-        });
-      }
-
-      var saveComment = function(evt) {
-        var $self = $(this);
-
-        var $comment= $self.closest('.task-fullview').children('.comment');
-        var txt = $comment.find('textarea').val();
-        var cb = $comment.find('input[name="close"]');
-
-        var opts = $tracker.data('tasktracker_options') || {};
-        var payload = {
-          id: $task.data('id'),
-          comment: txt
-        };
-        $.extend(payload, _.pick(opts, 'form', 'tasktemplate', 'templatefile'));
-        var close = cb.attr('checked');
-        if ( close ) {
-          payload.Status = 'closed';
-        }
-
-        $.blockUI();
-        $.taskapi.update(payload).fail(error).done(function(response) {
-          var expanded = $task.is('.expanded');
-          var $newTask = $(createTaskElement(response.data));
-          $task.replaceWith( $newTask );
-
-          if (expanded) {
-            $newTask.next().remove();
-            var $expander = $newTask.children('.expander');
-            toggleTaskExpand.call($expander);
-          }
-
-          $tracker.panel.replace.call(self, $newTask);
-          if ( close ) {
-            $('.tasks-btn-next:visible').trigger('click');
-          }
-        }).always($.unblockUI);
-
-        return false;
-      };
-
-      var toggleUpload = function(evt) {
-        var $self = $(this);
-        var $upload = $self.closest('.task-fullview').children('.upload');
-        $upload.toggleClass('active');
-        return false;
-      };
-
-      var toggleComment = function(evt) {
-        var $self = $(this);
-        var $comment = $self.closest('.task-fullview').children('.comment');
-        var $upload = $self.closest('.task-fullview').children('.upload');
-        if ( $upload.is('.active') ) {
-          $upload.removeClass('active');
-        }
-
-        $comment.toggleClass('active');
-
-        var $actions = $self.closest('.actions');
-        var $a = $actions.children('.active');
-        var $h = $actions.children('.hidden');
-
-        $a.toggleClass('active').toggleClass('hidden');
-        $h.toggleClass('active').toggleClass('hidden');
-
-        if ( evt.data === true ) {
-          $comment.find('input[name="close"]').prop('checked', true);
-        }
-
-        return false;
-      };
-
-      var editViewer = function(evt) {
-        $('#task-panel').children('.close').click();
-        hoveredTask = $task;
-        editClicked();
-        return false;
-      };
-
-      var uploadFinished = function() {
-        var $dnd = $(this);
-        var web = $dnd.data('web');
-        var topic = $dnd.data('topic');
-        var id = web + '.' + topic;
-
-        $.taskapi.get({query: {id: id}}).done(function(result) {
-          if ( result.status !== 'ok' || result.data.length === 0 ) {
-            return;
-          }
-
-          var $html = $(result.data[0].html);
-          var $viewer = $html.children('.task-fullview-container').find('.viewer').detach();
-          $viewer.find('.tasks-btn-edit').on('click', editViewer);
-          $dnd.closest('.task-fullview').children('.viewer').replaceWith($viewer);
-
-          if ( window.foswiki.ModacContextMenuPlugin ) {
-            var $table = $viewer.find('div.foswikiAttachments > table');
-            var tds = $table.find('td.foswikiTableCol1');
-            $.each(tds, function(i, e) {
-                foswiki.ModacContextMenuPlugin.attachContextMenu(e);
-            });
-          }
-        });
-      };
-
-      var nextTask = function() {
-        hoveredTask = getTaskSibling.call($task, 'next');
-        $tracker.panel.replace.call(self, hoveredTask);
-        return false;
-      };
-
-      var prevTask = function() {
-        hoveredTask = getTaskSibling.call($task, 'prev');
-        $tracker.panel.replace.call(self, hoveredTask);
-        return false;
-      };
-
-      var cancelComment = function() {
-        var $self = $(this);
-
-        var $actions = $self.closest('.actions');
-        var $a = $actions.children('.active');
-        var $h = $actions.children('.hidden');
-        $a.toggleClass('active').toggleClass('hidden');
-        $h.toggleClass('active').toggleClass('hidden');
-
-        var $comment = $actions.parent().children('.comment');
-        $comment.find('textarea').val('');
-        $comment.find('input[name="close"]').prop('checked', false);
-        $comment.toggleClass('active');
-
-        return false;
-      };
-
-      this.find('.tasks-btn-next')
-        .on('click', nextTask);
-      this.find('.tasks-btn-prev')
-        .on('click', prevTask);
-      this.find('.tasks-btn-comment')
-        .on('click', toggleComment);
-      this.find('.tasks-btn-upload')
-        .on('click', toggleUpload);
-      this.find('.qw-dnd-upload')
-        .on('queueEmpty', uploadFinished);
-      this.find('.tasks-btn-edit')
-        .on('click', editViewer);
-      this.find('.tasks-btn-close')
-        .on('click', true, toggleComment);
-      this.find('.tasks-btn-save-comment')
-        .on('click', saveComment);
-      this.find('.tasks-btn-cancel-comment')
-        .on('click', cancelComment);
-    };
-
-    var hideFunc = function() {
-      this.find('.tasks-btn-save-comment').off('click');
-      this.find('.tasks-btn-cancel-comment').off('click');
-      this.find('.tasks-btn-comment').off('click');
-      this.find('.tasks-btn-upload').off('click');
-      this.find('.tasks-btn-edit').off('click');
-      this.find('.tasks-btn-next').off('click');
-      this.find('.tasks-btn-close').off('click');
-      this.find('.tasks-btn-prev').off('click');
-      this.find('.qw-dnd-upload').off('queueEmpty');
-      this.find('.task-fullview').detach().appendTo($task.children('.task-fullview-container'));
-      $task.removeClass('highlight');
-    };
-
-    $tracker.panel = $tracker.taskPanel({
-      show: showFunc,
-      hide: hideFunc,
-      replace: function( newTask ) {
-        var self = this;
-        hideFunc.call(self);
-        $task = hoveredTask = $(newTask);
-        showFunc.call(self);
-      }
-    });
-    $tracker.panel.show();
-  };
-
   var initTaskElement = function($task, task) {
     $task.data('id', task.id);
     $task.data('task_data', task);
@@ -592,55 +392,6 @@
     var $task = $(task.html);
     initTaskElement($task, task);
     return $task;
-  };
-
-  var editClicked = function() {
-    if (!hoveredTask) {
-      return false;
-    }
-
-    var $task = hoveredTask;
-    var edopts = {};
-
-    var $tracker = $task.closest('.tasktracker');
-    var opts = $tracker.data('tasktracker_options');
-    for(var p in opts ) {
-      if ( /string|number|boolean/.test( typeof opts[p] ) ) {
-        edopts[p] = opts[p];
-      }
-    }
-
-    var task = unescapeHTML( $.parseJSON($task.children('.task-data-container').text()) );
-    edopts.autoassign = opts.autoassign;
-    edopts.data = task;
-    edopts.id = task.id;
-    edopts.lang = opts.lang;
-    edopts._depth = task.depth;
-    edopts.trackerId = $tracker.attr('id');
-
-    var expanded = $task.is('.expanded');
-    $task.addClass('highlight');
-    $('#task-editor').taskEditor(edopts).done(function(type, data) {
-      $task.removeClass('highlight');
-      if (type === 'save') {
-        if (data.fields.Status.value === 'deleted') {
-          $task.remove();
-        } else {
-          var $newTask = $(createTaskElement(data));
-          $task.replaceWith( $newTask );
-
-          if (expanded) {
-            $newTask.next().remove();
-            var $expander = $newTask.children('.expander');
-            toggleTaskExpand.call($expander);
-          }
-        }
-
-        applyLevels();
-      }
-    }).fail(function(type, msg) {
-      error(msg);
-    });
   };
 
   var error = function() {
@@ -659,187 +410,107 @@
     }
   };
 
-  var taskMouseEnter = function(evt) {
-    var $task = $(this);
-    if (hoveredTask) {
-      $('body > .controls').detach().appendTo($(hoveredTask).children('.task-controls'));
-    }
-
-    hoveredTask = $task;
-    var $ctrl = $task.children('.task-controls').children('div')
-      .detach()
-      .appendTo('body');
-
-    var offset = $task.offset();
-    var left = offset.left + $task.outerWidth() - Math.min($ctrl.outerWidth(), 80);
-    var top = offset.top;
-
-    $ctrl
-      .css('position','absolute')
-      .css('left', left).css('top', top);
-  };
-
-  var taskMouseLeave = function(evt) {
-    var $node = $(evt.toElement || evt.relatedTarget);
-    var isCtrl = $node.hasClass('controls') ||
-                  $node.parent().hasClass('controls') ||
-                  $node.parent().parent().hasClass('controls');
-    if ( isCtrl ) {
-      return;
-    }
-
-    var $cnt = $(hoveredTask).children('.task-controls');
-    $('body').children('.controls').detach().appendTo($cnt);
-    // hoveredTask = undefined;
-  };
-
-  var resetControls = function() {
-    var $ctrl = $(this).parent();
-    $ctrl.detach().appendTo($(hoveredTask).children('.task-controls'));
-    hoveredTask = undefined;
-  };
-
-  var toggleTaskExpand = function(evt) {
-    var $col = $(this);
-    var $row = $col.parent();
-    $row.toggleClass('expanded');
-
-    // update tablesorter to respect child rows
-    var $tbl = $col.closest('.tasks-table:not(.children)');
-    $tbl.trigger('update');
-
-    var isExpanded = $row.hasClass('expanded');
-    if ( isExpanded ) {
-      var span = $row.children('td').length;
-      var $children = $row.children('.task-children').children('table.children').detach();
-      var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
-      $new.children('td').append($children);
-      $new.insertAfter($row);
-    } else {
-      var $next = $row.next();
-      var $table = $next.children('td').children('table.children').detach();
-      $table.appendTo($row.children('.task-children'));
-      $next.remove();
-    }
-
-    applyLevels();
-  };
-
-  var closeTask = function(evt) {
-    var $task = hoveredTask;
-    if ( closeTaskEx() ) {
-      return false;
-    }
-
-    $task.removeClass('highlight');
-    return false;
-  };
-
-  var closeTaskEx = function() {
-    hoveredTask.addClass('highlight');
-
-    var $task = hoveredTask;
+  var toggleTaskState = function() {
+    var deferred = $.Deferred();
+    var $task = $(this).closest('.task');
+    var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
-    var $tracker = hoveredTask.closest('.tasktracker');
-    var opts = $tracker.data('tasktracker_options');
+    var opts = $task.closest('.tasktracker').data('tasktracker_options');
+    var payload = {
+      id: $task.data('id'),
+    };
 
-    var confirmed = confirm(decodeURIComponent(opts.lang.closeTask));
-    if ( confirmed ) {
-      var data = hoveredTask.data('task_data');
-      var payload = {
-        id: data.id,
-        Status: 'closed'
-      };
-
-      $.blockUI();
-      $.taskapi.update(payload).fail(error).done(function(response) {
-        $task.remove();
-        if ( $next.hasClass('task-children-container') ) {
-          $next.remove();
-        }
-      }).always($.unblockUI);
+    for (var prop in opts) {
+      if ( /template|form|flavor|depth/.test(prop) ) {
+        payload[prop] = opts[prop];
+      }
     }
 
-    return confirmed;
-  };
+    if ( isOpen ) {
+      var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
+      var cmtTxt = jsi18n.get('tasksapi', 'Comment');
+      var html = [
+        closeTxt,
+        '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+        cmtTxt,
+        '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+      ].join('');
 
-  var applyLevels = function() {
-    $('.task:visible, .task-new:visible').each(function(i,e) {
-      var lvl = 0;
-      var $task = $(e);
-      var $t = $(this);
-      while ($t.parent().closest('.tasks-table').length) {
-        $t = $t.parent().closest('.tasks-table');
-        lvl++;
-      }
+      swal({
+        title: jsi18n.get('tasksapi', 'Are you sure?'),
+        html: html,
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6CCE86',
+        cancelButtonColor: '#BDBDBD',
+        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+        cancelButtonText: jsi18n.get('tasksapi', 'No'),
+        closeOnConfirm: false
+      }, function(confirmed) {
+        if (confirmed) {
+          payload.Status = 'closed';
+          var $dialog = $('.sweet-alert.show-sweet-alert.visible');
+          var comment = $dialog.find('textarea[name="Comment"]').val();
+          if ( !/^[\s\n\r]*$/.test(comment) ) {
+            payload.comment = comment;
+          }
 
-      $task.attr('class', function(j,cls) {
-        return cls.replace(/(^|\s)alternate/g, '') + (lvl%2===0 ? ' alternate' : '');
+          deferred.resolve(payload);
+        } else {
+          deferred.reject();
+        }
+
+        return confirmed;
+      });
+    } else {
+      payload.Status = 'open';
+      deferred.resolve(payload);
+    }
+
+    deferred.promise().done(function(data) {
+      window.tasksapi.blockUI();
+      // Hotfix. (ToDo)
+      data._depth = data.depth ? data.depth : 0;
+
+      $.taskapi.update(data).done(function(response) {
+        if ( /(1|on|true|enabled)/i.test(opts.keepclosed) ) {
+          var $newTask = createTaskElement(response.data);
+          if ( $task.hasClass('expanded') ) {
+            $newTask.addClass('expanded');
+            var span = $newTask.children('td').length;
+            var $children = $newTask.children('.task-children').children('table.children').detach();
+            var $new = $('<tr class="task-children-container"><td class="dashed-line" colspan="' + span + '"></td></tr>');
+            $new.children('td').append($children);
+            $next.replaceWith($new);
+          }
+
+          $task.replaceWith($newTask);
+        } else {
+          $task.remove();
+          if ($next.hasClass('task-children-container')) {
+            $next.remove();
+          }
+        }
+
+        window.tasksapi.unblockUI();
+        setTimeout(function() {
+          swal({
+            type: 'success',
+            title: jsi18n.get('tasksapi', 'Done!'),
+            text: jsi18n.get('tasksapi', isOpen ? 'The entry has been marked as closed' : 'The entry has been reopened'),
+            timer: 1500,
+            showConfirmButton: false,
+            showCancelButton: false
+          });
+        }, 250);
+      }).fail(function(err) {
+        error(err);
+        window.tasksapi.unblockUI();
       });
     });
-  };
 
-  var dclickTimer;
-  var onDoubleClick = function(evt) {
-    if ( $(evt.target).closest('.expander').length !== 0 ) {
-      return false;
-    }
-
-    var $task = $(this);
-    $task.addClass('noselect');
-    if ( dclickTimer ) {
-      hoveredTask = $task;
-      toggleTaskDetails();
-    }
-
-    dclickTimer = setTimeout(function() {
-      dclickTimer = undefined;
-      $task.removeClass('noselect');
-    }, 300);
-  };
-
-  var attachEventHandler = function() {
-    // detach all handlers first
-    // moved here due to performance reasons
-    // (mutation observer's 'removed listener' is pretty slow)
-    detachEventHandler();
-
-    $('.tasks .task')
-      .on('mouseenter', taskMouseEnter)
-      .on('mouseleave', taskMouseLeave)
-      .on('click', '.expander', toggleTaskExpand)
-      .on('click', onDoubleClick);
-
-    $('.controls .btn-close').on('click', closeTask);
-    $('.controls .btn-details').on('click', toggleTaskDetails);
-    $('.controls .btn-edit').on('click', editClicked);
-    $('.controls .task-btn').on('click', resetControls);
-  };
-
-  var detachEventHandler = function() {
-    $('.tasks .task')
-      .off('mouseenter', taskMouseEnter)
-      .off('mouseleave', taskMouseLeave)
-      .off('click', '.expander', toggleTaskExpand)
-      .off('click', onDoubleClick);
-
-    $('.controls .btn-close').off('click', closeTask);
-    $('.controls .btn-details').off('click', toggleTaskDetails);
-    $('.controls .btn-edit').off('click', editClicked);
-    $('.controls .task-btn').off('click', resetControls);
-  };
-
-  // due to performance reasons, stop any mutation observers
-  var onSortStart = function() {
-    $('.tasktracker').disconnect();
-  };
-
-  // (re)attach mutation observers
-  var onSortEnd = function() {
-    $('.tasktracker').observe('added', 'tr.task', function(record) {
-      attachEventHandler();
-    });
+    return false;
   };
 
   var parseQueryParams = function(query) {
@@ -858,10 +529,145 @@
     return retval;
   };
 
-  $(document).ready( function() {
-    $('.tasktracker').tasksGrid();
+  var doSort = function() {
+    var $th = $(this);
+    var order = $th.data('sort');
+    if ( !order ) {
+      return false;
+    }
 
-    attachEventHandler();
-    applyLevels();
+    var isDesc = $th.hasClass('asc') || !$th.hasClass('desc');
+    var $tracker = $th.closest('.tasktracker');
+    var $table = $tracker.children('.tasks-table');
+    $table.find('> thead th').removeClass('asc desc');
+    var tid = $tracker.attr('id').replace('#', '');
+    $th.addClass(isDesc ? 'desc' : 'asc');
+
+    var query = parseQueryParams();
+    query.order = order;
+    query.desc = isDesc ? 1 : 0;
+    query.tid = tid;
+
+    if ( $tracker.children('.pagination-container').length > 0 ) {
+      query.page = $tracker.find('ul.pagination li.current').text().replace(/\s/g, '');
+    }
+
+    var $tab = $th.closest('.jqTab.current');
+    if ( $tab.length > 0 ) {
+      var cls = $tab.attr('class');
+      query.tab = cls.replace(/\s|jqTab|current/g, '');
+    }
+
+    var search = [];
+    for(var p in query) {
+      if ( !_.isUndefined(p) && !_.isUndefined(query[p]) ) {
+        search.push(p + '=' + query[p]);
+      }
+    }
+
+    $tracker.find('ul.pagination').children('li').each(function() {
+      var $li = $(this);
+      var $a = $li.children('a');
+      var href = $a.attr('href');
+
+      if ( /order=[^&]+/.test(href) ) {
+        href = href.replace(/order=[^&]+/, 'order=' + query.order);
+      } else {
+        href += '&order=' + query.order;
+      }
+
+      if ( /desc=[^&]+/.test(href) ) {
+        href = href.replace(/desc=[^&]+/, 'desc=' + query.desc);
+      } else {
+        href += '&desc=' + query.desc;
+      }
+      $a.attr('href', href);
+    });
+
+    var url = window.location.pathname + '?' + search.join('&');
+    var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
+    window.tasksapi.blockUI();
+    $table.children('.tasks').load(target, function() {
+      window.tasksapi.unblockUI();
+    });
+
+    return false;
+  };
+
+  var handlePager = function() {
+    var $this = $(this);
+    if ( $this.hasClass('disabled') || $this.parent().hasClass('disabled')) {
+      return false;
+    }
+
+    var $ul = $this.closest('ul');
+    var $first = $ul.children('li').first();
+    var $last = $ul.children('li').last();
+    var $current = $ul.children('li.active').removeClass('active');
+    var url = $current.children('a').attr('href');
+
+    if ( $this.parent()[0] === $first[0] ) {
+      var $prev = $current.prev().addClass('active');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $prev.text().replace(/\s/g, ''));
+    } else if ( $this.parent()[0] === $last[0] ) {
+      var $next = $current.next().addClass('active');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $next.text().replace(/\s/g, ''));
+    } else {
+      url = $this.attr('href');
+      $this.parent().addClass('active');
+    }
+
+    var total = $ul.children('li').length;
+    $ul.children('li').each(function(i) {
+      if ( !$(this).hasClass('active') ) {
+        return;
+      }
+
+      if ( i > 1 ) {
+        $first.removeClass('disabled');
+      }
+      if ( i === 1 ) {
+        $first.addClass('disabled');
+      }
+      if ( i + 2 === total ) {
+        $last.addClass('disabled');
+      } else {
+        $last.removeClass('disabled');
+      }
+    });
+
+    var $tab = $this.closest('.jqTab.current');
+    if ( $tab.length > 0 ) {
+      var cls = $tab.attr('class').replace(/(\s|jqTab|current)/g, '');
+      url += '&tab=' + cls;
+    }
+
+    var tid = $this.closest('.tasktracker').attr('id');
+    var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
+    window.tasksapi.blockUI();
+    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function() {
+      window.tasksapi.unblockUI();
+    });
+
+    return false;
+  };
+
+
+  $(document).ready( function() {
+    var $tracker = $('.tasktracker').tasksGrid();
+    window.tasksapi = new TasksAPI();
+
+    setTimeout(function() {
+      if ( window.location.search ) {
+        var match = window.location.search.match(/id=([^&;]+)(;|&|$|.*)/);
+        if ( match && match.length > 1 ) {
+          var id = match[1];
+          var $task = $tracker.find('.task:visible');
+          if ( $task.data('id') === id ) {
+            $tracker[0].tasksPanel.viewTask($task);
+          }
+        }
+      }
+    }, 300);
   });
 }(jQuery, window._, window.document, window));

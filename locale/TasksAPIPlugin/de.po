@@ -14,13 +14,16 @@ msgid "Tasks"
 msgstr "Aufgaben"
 
 msgid "Add task"
-msgstr "Aufgabe hinzufügen"
+msgstr "Protokollpunkt hinzufügen"
 
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
 
 msgid "More options"
 msgstr "Weitere Optionen"
+
+msgid "Reminders and notifications"
+msgstr "Erinnerungen und Benachrichtigungen"
 
 msgid "Show attachments"
 msgstr "Anhänge anzeigen"
@@ -115,8 +118,8 @@ msgstr "Nov"
 msgid "Dec"
 msgstr "Dez"
 
-msgid "Updated by %1 on %2"
-msgstr "Aktualisiert von %1 am %2"
+msgid "%1 on %2"
+msgstr "%1 am %2"
 
 msgid "Decision"
 msgstr "Beschluss"
@@ -157,6 +160,9 @@ msgstr "Aufgabe wieder eröffnet: %1"
 msgid "Task reassigned: %1"
 msgstr "Aufgabe neu zugewiesen: %1"
 
+msgid "%1 created a task: %2"
+msgstr "%1 hat eine Aufgabe erstellt: %2"
+
 msgid "%1 created a task in %2:"
 msgstr "%1 hat eine Aufgabe in %2 erstellt:"
 
@@ -196,6 +202,9 @@ msgstr "Neue untergeordnete Aufgabe hinzufügen"
 msgid "Unknown status"
 msgstr "Unbekannter Status"
 
+msgid "Due date"
+msgstr "Zieltermin"
+
 msgid "In one day"
 msgstr "In einem Tag"
 
@@ -210,6 +219,9 @@ msgstr "Seit %1 Tagen abgelaufen"
 
 msgid "Close task"
 msgstr "Aufgabe schließen"
+
+msgid "Reopen task"
+msgstr "Aufgabe wieder öffnen"
 
 msgid "View details"
 msgstr "Details anzeigen"
@@ -231,3 +243,66 @@ msgstr "Zum Hochladen 'Speichern' drücken"
 
 msgid "Add attachments"
 msgstr "Anhänge hinzufügen"
+
+msgid "Next page"
+msgstr "Nächste Seite"
+
+msgid "Previous page"
+msgstr "Vorherige Seite"
+
+msgid "Add comment"
+msgstr "Kommentar hinzufügen"
+
+msgid "Edit comment"
+msgstr "Kommentar bearbeiten"
+
+msgid "Remove comment"
+msgstr "Kommentar entfernen"
+
+msgid "Attachment"
+msgstr "Anhang"
+
+msgid "%1 added: %2"
+msgstr "%1 hinzugefügt: %2"
+
+msgid "%1 removed: %2"
+msgstr "%1 entfernt: %2"
+
+msgid "Created by me"
+msgstr "Von mir erstellt"
+
+msgid "Assigned to me"
+msgstr "Mir zugewiesen"
+
+msgid "Field %1 changed:"
+msgstr "Feld %1 geändert:"
+
+msgid "Direct link"
+msgstr "Direkter Link"
+
+msgid "%1 reassigned the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' neu zugewiesen"
+
+msgid "%1 reopened the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' wieder geöffnet"
+
+msgid "%1 updated the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' aktualisiert"
+
+msgid "%1 closed the task '%2'"
+msgstr "%1 hat die Aufgabe '%2' geschlossen"
+
+msgid "Closed"
+msgstr "Abgeschlossen"
+
+msgid "My open tasks"
+msgstr "Meine offenen Aufgaben"
+
+msgid "My closed tasks"
+msgstr "Meine geschlossenen Aufgaben"
+
+msgid "Filter by state"
+msgstr "Filter nach Status"
+
+msgid "Page %1 of %2"
+msgstr "Seite %1 von %2"

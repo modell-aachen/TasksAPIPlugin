@@ -1,6 +1,12 @@
 # ---+ Extensions
 # ---++ TasksAPIPlugin
 
+# **BOOLEAN**
+# Pass a collection which was mandatory prior Solr 5 into the Solr Indexer.
+# The collection field is deprecated as of Solr 5. In case you're running Solr
+# in version prior to 5, you muss set this value to enabled.
+$Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} = 0;
+
 # **STRING**
 # The name of the web used for storing tasks (auto-created by the plugin if necessary)
 $Foswiki::cfg{TasksAPIPlugin}{DBWeb} = 'Tasks';

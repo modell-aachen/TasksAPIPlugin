@@ -1,5 +1,4 @@
 .tasktracker > .filter {
-  height: $filter-height;
   background-color: $filter-bg;
 
   > div {
@@ -10,30 +9,69 @@
     float: right;
   }
 
+  .tasks-btn-create {
+    background-color: $light-blue;
+    border: 1px solid darken($light-blue, 5%);
+    border-radius: 3px;
+    color: $dark-blue;
+    font-weight: bold;
+    padding: 7px 10px;
+    transition: background-color .3s ease-in-out,
+                border-color .3s ease-in-out;
+    &:hover {
+      border-color: darken($light-blue, 10%);
+      background-color: darken($light-blue, 10%);
+      text-decoration: none;
+    }
+
+    &:active {
+      border-color: darken($light-blue, 15%);
+      background-color: darken($light-blue, 15%);
+    }
+
+    i {
+      margin-right: 10px;
+    }
+  }
+
   .options {
     display: inline-block;
+    padding: 5px 10px;
 
     .title {
-      font-size: 1.2rem;
+      color: #39526d;
+      display: block;
+      font-size: 1.4rem;
       font-weight: bold;
+      margin-bottom: 6px;
+
+      &:not(:empty) {
+        border-bottom: 1px solid #f0f0f0;
+      }
+    }
+
+    .hint {
+      color: #777;
+      font-size: 0.8em;
+      margin-right: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
     }
 
     select {
-      border: 0;
-      border-radius: 4px;
-      color: $blue;
+      background-color: $light-blue;
+      border: 1px solid darken($light-blue, 5%);
+      border-radius: 3px;
+      color: $dark-blue;
       cursor: pointer;
       display: inline-block;
       margin: 0;
       outline: none;
       padding: 3px;
 
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-
       &:hover {
-        background: $light-blue;
+        border-color: darken($light-blue, 10%);
+        background-color: darken($light-blue, 10%);
       }
     }
 
@@ -45,35 +83,6 @@
 
     label {
       position: relative;
-    }
-
-    label:after {
-      position: absolute;
-      right: 8px;
-      top:2px;
-
-      color:$blue;
-      content: '>';
-      font: 11px "Consolas", monospace;
-      padding: 0 0 2px;
-      pointer-events: none;
-
-      -webkit-transform: rotate(90deg);
-      -moz-transform: rotate(90deg);
-      -ms-transform: rotate(90deg);
-      transform: rotate(90deg);
-    }
-
-    label:before {
-      position: absolute;
-      top: 0;
-      right: 6px;
-      
-      content:'';
-      display:block;
-      height: 20px;
-      pointer-events:none;
-      width: 20px;
     }
   }
 }

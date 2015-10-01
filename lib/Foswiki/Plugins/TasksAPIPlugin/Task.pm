@@ -11,6 +11,7 @@ use Foswiki::Form ();
 
 # use Date::Manip;
 use Digest::SHA;
+use Error qw( :try );
 use JSON;
 
 # Create a completely arbitrary task object, with no validation or anything
@@ -159,6 +160,13 @@ sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
     return () unless $aclPref;
+    if ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
+        my $f = $this->get('FIELD', $1);
+        if ( $f && $f->{value}) {
+            $aclPref =~ s/\$curvalue\(([^)]+)\)/$f->{value}/eg;
+        }
+    }
+
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
     my $parent = $this->get('FIELD', 'Parent');
@@ -234,6 +242,7 @@ sub getPref {
 
     $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
     $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
+    $pref =~ s/\$formweb/$prefmeta->web/eg;
 
     if (!defined $subkey) {
         $pref =~ s/^\s*|\s*$//gs;
@@ -384,11 +393,31 @@ sub update {
     if (@comment) {
         unshift @comment, 'comment';
     }
+    if ($self->{fields}{Status} eq 'open') {
+        $meta->remove('FIELD', 'Closed');
+        delete $self->{fields}{Closed};
+    } else {
+        $self->{fields}{Closed} = time;
+        $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
+    }
 
-    # Find existing changesets to determine new ID
-    if (@changes || @comment) {
+    # just update the comment if a changeset id is given
+    if ( $data{cid} ) {
+        my $cid = delete $data{cid};
+        my $set = $meta->get('TASKCHANGESET', $cid);
+        my $cmt = pop(@comment);
+        $set->{comment} = $cmt;
+
+        if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
+            $meta->remove('TASKCHANGESET', $cid);
+        } else {
+            $meta->putKeyed('TASKCHANGESET', $set);
+        }
+    } elsif (@changes || @comment) {
+        # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
-        my $newid = @changesets + 1;
+        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        my $newid = 1 + pop(@ids);
         $meta->putKeyed('TASKCHANGESET', {
             name => $newid,
             actor => Foswiki::Func::getWikiName(),
@@ -465,6 +494,113 @@ sub _postReopen {
 }
 sub _postReassign {
     # TODO
+}
+
+sub solrize {
+    my $self = shift;
+    my $indexer = shift;
+    my $legacy = shift;
+    return unless $self->{fields}{Status};
+    return if $self->{fields}{Status} eq 'deleted';
+
+    my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    my $webtopic = "$web.$topic";
+
+    my $date = '1970-01-01T00:00:00Z';
+    my $created = _formatSolrDate($self->{fields}{Created});
+    if ( $self->{fields}{DueDate} || $self->{fields}{Due} ) {
+        $date = _formatSolrDate($self->{fields}{DueDate} || $self->{fields}{Due});
+    }
+
+    my $ctxurl = Foswiki::Func::getViewUrl(
+        Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
+    );
+    my $state = $self->{fields}{Status} || 'open';
+    my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
+    my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
+    my $icon = $self->getPref('SOLRHIT_ICON') || '';
+    $icon = $self->{meta}->expandMacros($icon) if $icon =~ /%[^%]+%/;
+
+    my $doc = $indexer->newDocument();
+    $doc->add_fields(
+      'id' => $self->{id} . '@' . $self->{fields}{Context},
+      'type' => 'task',
+      'language' => $language,
+      'web' => $web,
+      'topic' => $topic,
+      'webtopic' => $webtopic,
+      'createdate' => $created,
+      'date' => $created,
+      'title' => $self->{fields}{Title},
+      'text' => Foswiki::Plugins::TasksAPIPlugin::_shorten($self->{fields}{Description} || '', 140),
+      'url' => $taskurl,
+      'author' => $self->{fields}{Author},
+      'contributor' => $self->{fields}{Author},
+      'state' => $self->{fields}{Status},
+      'icon' => $icon,
+      'container_id' => $self->{fields}{Context},
+      'container_url' => $ctxurl,
+      'container_title' => $self->{fields}{Title},
+      'task_created_dt' => $created,
+      'task_due_dt' => $date,
+      'task_state_s' => $self->{fields}{Status},
+      'task_type_s' => $type,
+      'task_id_s' => $self->{id}
+    );
+
+    my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
+    unless (scalar @acl) {
+        $doc->add_fields('access_granted' => 'all');
+    } else {
+        my $aclstring = join(',', @acl);
+        my $expanded = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
+        unless ($expanded) {
+            my @arr = ();
+            foreach my $entry (@acl) {
+                if ( Foswiki::Func::isGroup($entry) ) {
+                    my $members = Foswiki::Func::eachGroupMember($entry, {expand => 'true'});
+                    while ($members->hasNext()) {
+                        my $user = $members->next();
+                        push @arr, $user;
+                    }
+                } else {
+                    push @arr, Foswiki::Func::getWikiName($entry);
+                }
+            }
+
+            $expanded = join(',', @arr);
+            Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $expanded);
+        }
+
+        $doc->add_fields('access_granted' => $expanded);
+    }
+
+    if ( $legacy ) {
+        my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
+        $doc->add_fields(
+            'collection' => $collection
+        );
+    }
+
+    try {
+      $indexer->add($doc);
+    } catch Error::Simple with {
+      my $e = shift;
+      $indexer->log("ERROR: ".$e->{-text});
+    };
+}
+
+sub _formatSolrDate {
+    my $date = shift;
+    if ( $date =~ /^\d+$/ ) {
+        $date = Foswiki::Time::formatTime($date, 'iso', 'gmtime');
+    } elsif ( $date =~ /^\d+\s\w+\s\d+$/ ) {
+        my $epoch = Foswiki::Time::parseTime($date, $Foswiki::cfg{DisplayTimeValues});
+        $date = Foswiki::Time::formatTime($epoch, 'iso', 'gmtime');
+    }
+
+    return $date;
 }
 
 1;
