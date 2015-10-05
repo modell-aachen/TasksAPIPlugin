@@ -1000,6 +1000,8 @@ sub tagGrid {
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
+    my $statesMapping = $params->{statesmapping} || '';
+    my $mappingField = $params->{mappingfield} || '';
     my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
@@ -1087,6 +1089,21 @@ sub tagGrid {
         autoassignTarget => $autoassignTarget
     );
 
+    if ( $mappingField && $statesMapping ) {
+        my %map = ();
+        $map{field} = $mappingField;
+
+        $statesMapping =~ s/\s+//g;
+        my @mappings = split(/(?<=\]),?/, $statesMapping);
+        foreach my $mapping (@mappings) {
+            $mapping =~ /([^=]+)=\[([\w,]+)\]/;
+            my @arr = split(/,/, $2);
+            $map{mappings}{$1} = \@arr;
+        }
+
+        $settings{mapping} = \%map;
+    }
+
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
     $fctx->{task_stateless} = 1 if $stateless;
@@ -1112,14 +1129,36 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
+
+
+    my $mapstates = sub {
+        my $query = shift;
+        my $settings = shift;
+        if ( $settings{mapping} ) {
+            while ( my ($k, $v) = each $settings{mapping}{mappings} ) {
+                next if $k eq 'all';
+                if ( grep(/$query->{Status}/, @$v) ) {
+                    $query->{$settings{mapping}{field}} = $query->{Status};
+                    $query->{Status} = $k;
+                    last;
+                }
+            }
+        }
+    };
+
     if ( $req->param('state') && $override ) {
         if ( $req->param('state') eq 'all' ) {
             $query->{Status} = [qw(open closed)];
+            if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
+                $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
+            }
         } else {
             $query->{Status} = $req->param('state');
+            $mapstates->($query, %settings);
         }
     } else {
         $query->{Status} = 'open' if !exists $query->{Status};
+        $mapstates->($query, %settings);
     }
 
     if ( $req->param('id') ) {

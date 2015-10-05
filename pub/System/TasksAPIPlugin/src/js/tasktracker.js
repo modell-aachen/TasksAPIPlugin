@@ -410,6 +410,18 @@
     }
   };
 
+  var getMappedState = function(trackeropts, taskstate) {
+    if ( trackeropts.mapping && trackeropts.mapping.field) {
+      var field = trackeropts.mapping.field;
+      var mappings = trackeropts.mapping.mappings[taskstate];
+      if ( mappings && mappings.length > 0 ) {
+        return {field: field, value: mappings[0]};
+      }
+    }
+
+    return undefined;
+  };
+
   var toggleTaskState = function() {
     var deferred = $.Deferred();
     var $task = $(this).closest('.task');
@@ -456,6 +468,11 @@
             payload.comment = comment;
           }
 
+          var mappedState = getMappedState(opts, 'closed');
+          if ( !_.isUndefined(mappedState) ) {
+            payload[mappedState.field] = mappedState.value;
+          }
+
           deferred.resolve(payload);
         } else {
           deferred.reject();
@@ -465,6 +482,11 @@
       });
     } else {
       payload.Status = 'open';
+      var mappedState = getMappedState(opts, 'open');
+      if ( !_.isUndefined(mappedState) ) {
+        payload[mappedState.field] = mappedState.value;
+      }
+
       deferred.resolve(payload);
     }
 

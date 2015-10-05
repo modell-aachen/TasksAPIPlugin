@@ -501,11 +501,25 @@ TasksPanel = function(tasktracker) {
 
     if ( self.isCreate ) {
       apiFunc = 'create';
-      task.Context = self.tracker.data('tasktracker_options').context;
+      task.Context = opts.context;
       task.Parent = self.taskParent;
       if ( !task.Status ) {
         task.Status = 'open';
       }
+    }
+
+    if ( opts.mapping && opts.mapping.field ) {
+      var field = task[opts.mapping.field];
+      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
+      task.Status = _.find(keys, function(key) {
+        if (!_.isUndefined(key)) {
+          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
+            return key;
+          }
+        }
+
+        return undefined;
+      });
     }
 
     // remove invalid parent entries.
@@ -1265,6 +1279,70 @@ TasksPanel = function(tasktracker) {
     self.isEdit = true;
     self.currentTask = $task;
     toggleOverlay(true);
+  };
+
+  this.updateCurrentTask = function(changedFields) {
+    if ( typeof changedFields !== typeof {} || _.isUndefined(self.currentTask)) {
+      return undefined;
+    }
+
+    if ( !self.currentTask || self.currentTask.length === 0 ) {
+      return undefined;
+    }
+
+    var data = self.currentTask.data('task_data');
+    var task = {id: data.id};
+    var opts = self.tracker.data('tasktracker_options');
+    for (var p in changedFields) {
+      task[p] = changedFields[p];
+    }
+
+    for (var prop in opts) {
+      if ( /template|form|depth|flavor/.test(prop) ) {
+        task[prop] = opts[prop];
+      }
+    }
+
+    task._depth = opts.depth > 0 ? opts.depth : 0;
+    var apiFunc = 'update';
+
+    if ( opts.mapping && opts.mapping.field ) {
+      var field = task[opts.mapping.field];
+      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
+      task.Status = _.find(keys, function(key) {
+        if (!_.isUndefined(key)) {
+          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
+            return key;
+          }
+        }
+
+        return undefined;
+      });
+    }
+
+    // remove invalid parent entries.
+    if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {
+      delete task.Parent;
+    }
+
+    var beforeSave = $.Event( 'beforeSave' );
+    self.trigger( beforeSave, task );
+    if( beforeSave.isDefaultPrevented() ) {
+      return false;
+    }
+
+    window.tasksapi.blockUI();
+    $.taskapi[apiFunc]( task )
+      .always( window.tasksapi.unblockUI )
+      .fail( error )
+      .done( function( response ) {
+        if ( self.currentTask !== null ) {
+          self.currentTask.removeClass('highlight');
+        }
+
+        var afterSave = $.Event( 'afterSave' );
+        self.trigger( afterSave, response.data );
+      });
   };
 
   this.viewTask = function($task) {
