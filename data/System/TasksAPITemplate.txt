@@ -340,7 +340,12 @@
 }%<literal>
   <div class="viewer">
   %TABPANE{class="simple"}%
-  %TAB{"%MAKETEXT{"Details"}%"}%%TMPL:P{"tasksapi::overlay::content::details"}%%ENDTAB%%{
+  %TAB{"%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
+      }%"
+  }%%TMPL:P{"tasksapi::overlay::content::details"}%%ENDTAB%%{
   }%%IF{"'%TASKINFO{meta="AttachCount"}%'='0'" else="$percntTMPL:P{\"tasksapi::overlay::content::attachments\"}$percnt"}%%{
   }%%ENDTABPANE%
   </div>
@@ -352,11 +357,8 @@
 %TMPL:DEF{"tasksapi::overlay::content::details"}%%{
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-    <div class="title view-only">%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
+    <div class="title view-only">
+      <span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
@@ -406,11 +408,8 @@
 }%%TAB{"%MAKETEXT{Attachments}% (%TASKINFO{meta="AttachCount"}%)"}%
 <div class="task-details attachments">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-    <div class="title view-only">%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%{
-      }%<span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
+    <div class="title view-only">
+      <span class="title" title="%TASKINFO{field="Title"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='open'" then="<div class=\"controls\"><a href=\"#\" class=\"tasks-btn tasks-btn-close\"><i class=\"fa fa-square-o\"></i></a></div>"}%%{
     }%%IF{"context task_canedit and not context task_readonly and '%TASKINFO{field="Status"}%'='closed'" then="<div class=\"controls\"><i class=\"closed fa fa-check-square\"></i></div>"}%%{

@@ -18,7 +18,9 @@
       color: #39526d;
       font-size: 0.8em;
       font-weight: bold;
-      padding: 15px 15px;
+      min-height: 19px; // 49px - 2*15px
+      padding: 15px;
+      text-shadow: none;
       text-transform: uppercase;
       transition: background-color .2s ease-in-out,
                   color .2s ease-in-out;
@@ -34,6 +36,11 @@
       border: none;
       background: $dark-blue;
       text-shadow: none;
+    }
+
+    span.label {
+      font-size: 1em;
+      width: auto;
     }
   }
 
@@ -436,6 +443,7 @@
       border-left: 3px solid $mid-blue;
       border-radius: 0;
       padding: 14px;
+      width: 31px; // 65 - 2*14
 
       &:hover {
         i,
