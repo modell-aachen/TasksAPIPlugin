@@ -312,6 +312,10 @@ sub create {
         });
     }
 
+    if ( $meta->get('FIELD', 'Status')->{value} eq 'closed' ) {
+        $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+    }
+
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     my $task = load($meta);
 
