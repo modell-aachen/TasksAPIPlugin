@@ -591,4 +591,14 @@
   select.foswikiSelect {
     cursor: pointer;
   }
+
+  .select2-container {
+    .select2-selection,
+    .select2-selection-multi {
+      background-color: $light-blue;
+      border: 1px solid darken($light-blue, 5%);
+      border-radius: 3px;
+      color: $dark-blue;
+    }
+  }
 }
