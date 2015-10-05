@@ -414,6 +414,11 @@
       border-left: 7px solid $prioritized;
     }
 
+    > div:not(:first-child) {
+      @include flex($align: stretch);
+      padding: 14px;
+    }
+
     > .title {
       @include flex($align: center);
       padding: 10px;
