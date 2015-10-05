@@ -6,4 +6,5 @@ jsi18n.add('tasksapi', {
   "prj_iteration": "Project iteration",
   "prj_package": "Project package",
   "prj_task": "Project task",
+  "auditmeasure": "Audit measure",
 });

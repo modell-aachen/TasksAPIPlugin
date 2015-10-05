@@ -27,6 +27,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "prj_iteration": "Projekt-Phasenschritt",
     "prj_package": "Projekt-Arbeitspaket",
     "prj_task": "Projekt-Aufgabe",
+    "auditmeasure": "Audit-Maßname",
     "open": "offen",
     "closed": "geschlossen",
     "deleted": "gelöscht"
