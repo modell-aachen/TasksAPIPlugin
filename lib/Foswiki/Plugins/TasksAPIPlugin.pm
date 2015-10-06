@@ -1202,7 +1202,7 @@ sub tagGrid {
     delete $fctx->{task_stateless};
     delete $fctx->{task_showexpandercol};
 
-    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog", "jqp::readmore", "jqp::sweetalert2");
+    my @jqdeps = ("blockui", "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore", "tasksapi", "ui::dialog", "jqp::readmore", "jqp::sweetalert2", "select2");
     foreach (@jqdeps) {
         Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
     }
