@@ -1415,9 +1415,9 @@ sub _shorten {
     my ($text, $len) = @_;
     return $text unless defined $len;
     $text =~ s/<.+?>//g;
-    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) unless $Foswiki::UNICODE;
+    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
     $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
-    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) unless $Foswiki::UNICODE;
+    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
     return $text;
 }
 
