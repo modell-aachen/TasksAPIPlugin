@@ -168,9 +168,9 @@ sub db {
             PrintError => 0,
             AutoCommit => 1,
             FetchHashKeyName => 'NAME_lc',
+            sqlite_unicode => $Foswiki::UNICODE ? 1 : 0
         }
     );
-    $db->{sqlite_unicode} = 0;
     eval {
         %schema_versions = %{ $db->selectall_hashref("SELECT * FROM meta", 'type') };
     };
@@ -322,12 +322,13 @@ sub _index {
     $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id}) if $transact;
     $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id}) if $transact;
     my $form = $task->{form};
+    # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
+    my $raw = $Foswiki::UNICODE ? $task->{meta}->getEmbeddedStoreForm : Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm);
     my %vals = (
         id => $task->{id},
         form => $form->web .'.'. $form->topic,
         Parent => '',
-        # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
-        raw => Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm),
+        raw => $raw,
     );
     my @extra;
     for my $f (keys %{$task->{fields}}) {
@@ -1414,9 +1415,10 @@ sub _shorten {
     my ($text, $len) = @_;
     return $text unless defined $len;
     $text =~ s/<.+?>//g;
-    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text);
+    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) unless $Foswiki::UNICODE;
     $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
-    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text);
+    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) unless $Foswiki::UNICODE;
+    return $text;
 }
 
 # Given a task changeset as a JSON string, deserialize and convert legacy
