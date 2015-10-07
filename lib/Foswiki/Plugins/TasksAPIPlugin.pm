@@ -1021,8 +1021,7 @@ sub tagGrid {
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
     my $desc = $params->{desc} || 0;
-    my $title = $params->{title};
-    $title = '%MAKETEXT{"Tasks"}%' unless defined $title;
+    my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
