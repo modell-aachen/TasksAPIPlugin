@@ -1480,6 +1480,10 @@ sub tagInfo {
 
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
+        if (Foswiki::isTrue($params->{user}, 0)) {
+            my $mapping = $session->{users}->_getMapping($val);
+            $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($val) : $session->{users}->getWikiName($val);
+        }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
             $val =~ s/</&lt;/g;

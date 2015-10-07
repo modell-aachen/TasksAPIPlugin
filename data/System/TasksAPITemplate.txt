@@ -375,14 +375,14 @@
         <i class="fa fa-user"></i>
         <div>
           <span class="title">%MAKETEXT{"Author"}%</span>
-          <span>%TASKINFO{field="Author"}%</span>
+          <span>%TASKINFO{field="Author" user="1"}%</span>
         </div>
       </div>
       <div class="task-meta-entry">
         <i class="fa fa-angle-double-right"></i>
         <div>
           <span class="title">%MAKETEXT{"Assigned to"}%</span>
-          <span>%TASKINFO{field="AssignedTo"}%</span>
+          <span>%TASKINFO{field="AssignedTo" user="1"}%</span>
         </div>
       </div>
       <div class="task-meta-entry">
@@ -450,11 +450,11 @@
 %IF{"context task_showexpander and '%TASKINFO{taskcfg="HAS_CHILDREN"}%'='1'" then="<td class=\"expander no-print\"><span class=\"open\">$percntICON{\"toggleopen\"}$percnt</span><span class=\"close\">$percntICON{\"toggleclose\"}$percnt</span></td>"}%%{
 }%<td class="created" data-value="%TASKINFO{field="Created"}%">
     <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
-    <span>%TASKINFO{field="Author"}%</span>
+    <span>%TASKINFO{field="Author" user="1"}%</span>
   </td>
   <td class="type">%IF{"'%TASKINFO{field="Type"}%'='Decision'" then="<span class=\"label label-primary\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Information'" then="<span class=\"label label-default\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%%IF{"'%TASKINFO{field="Type"}%'='Task'" then="<span class=\"label label-info\">$percntMAKETEXT{$percntTASKINFO{field=\"Type\"}$percnt}$percnt</span>"}%</td>
   <td class="assigned">
-    <span>%TASKINFO{field="AssignedTo"}%</span>
+    <span>%TASKINFO{field="AssignedTo" user="1"}%</span>
   </td>
   <td class="title">
     <div>
