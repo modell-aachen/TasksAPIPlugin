@@ -433,6 +433,13 @@ TasksPanel = function(tasktracker) {
     if ( !self.isCreate ) {
       releaseTopic({ id: self.currentTask.data('id') });
     } else {
+      // Hotfix: remove all empty container
+      self.panel.children().each(function() {
+        if ($(this).children().length === 0) {
+          $(this).remove();
+        }
+      });
+
       var first = self.panel.children().first().detach();
       self.panel.empty();
       first.appendTo(self.panel);
@@ -465,7 +472,7 @@ TasksPanel = function(tasktracker) {
         }, 250);
       });
     } else {
-      cancelHelper(closeOverlay);
+      cancelHelper(true);
     }
 
     setButtons('view');
