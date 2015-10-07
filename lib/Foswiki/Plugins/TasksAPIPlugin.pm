@@ -1370,6 +1370,15 @@ FORMAT
     };
     $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
+    my $getDisplayName = sub {
+        my $usr = shift;
+        $usr =~ s/\s+//g;
+        my $session = $Foswiki::Plugins::SESSION;
+        my $cuid = Foswiki::Func::getCanonicalUserID($usr);
+        my $mapping = $session->{users}->_getMapping($cuid);
+        $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+    };
+
     my $changes = _decodeChanges($cset->{changes});
     foreach my $f (@$fields) {
         my $change = $changes->{$f->{name}};
@@ -1387,6 +1396,16 @@ FORMAT
             $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
             $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
             $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
+        }
+
+        if ( $f->{type} eq 'user') {
+            $changeOld = $getDisplayName->($changeOld);
+            $changeNew = $getDisplayName->($changeNew);
+        }
+
+        if ( $f->{type} eq 'user+multi') {
+            $changeOld = join(', ', map {$getDisplayName->($_)} split(',', $changeOld));
+            $changeNew = join(', ', map {$getDisplayName->($_)} split(',', $changeNew));
         }
 
         $out =~ s#\$name#$f->{name}#g;
