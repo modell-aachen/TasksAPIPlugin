@@ -1410,7 +1410,7 @@ FORMAT
 
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
-        $out =~ s#\$title#_translate($meta, $f->{description}) || $f->{name}#eg;
+        $out =~ s#\$title#_translate($meta, $f->{description} || $f->{tooltip}) || $f->{name}#eg;
         $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1)#eg;
         $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
