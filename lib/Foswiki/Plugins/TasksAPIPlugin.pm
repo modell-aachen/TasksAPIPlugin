@@ -1483,8 +1483,9 @@ sub tagInfo {
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
-            my $mapping = $session->{users}->_getMapping($val);
-            $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($val) : $session->{users}->getWikiName($val);
+            my $cuid = Foswiki::Func::getCanonicalUserID($val);
+            my $mapping = $session->{users}->_getMapping($cuid);
+            $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
