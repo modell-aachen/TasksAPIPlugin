@@ -941,6 +941,10 @@ TasksPanel = function(tasktracker) {
       var prop = $input.attr('name');
       var val = $input.val();
 
+      if ( _.isArray(val) ) {
+        val = val.join(', ');
+      }
+
       if ( $input.hasClass('foswikiEditFormDateField') ) {
         try {
           if (val) {
