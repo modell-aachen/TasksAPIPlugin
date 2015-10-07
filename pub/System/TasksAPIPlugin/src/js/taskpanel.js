@@ -472,7 +472,7 @@ TasksPanel = function(tasktracker) {
         }, 250);
       });
     } else {
-      cancelHelper(true);
+      cancelHelper(self.currentTask === null && closeOverlay !== false);
     }
 
     setButtons('view');
@@ -555,7 +555,7 @@ TasksPanel = function(tasktracker) {
           }
         }
 
-        cancelEdit();
+        cancelEdit(false);
         if ( self.currentTask !== null ) {
           self.currentTask.removeClass('highlight');
         }
