@@ -1385,11 +1385,13 @@ FORMAT
         if ( $f->{type} eq 'date' ) {
             $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
             $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
+            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
+            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
         }
 
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
-        $out =~ s#\$title#_translate($meta, $f->{tooltip}) || $f->{name}#eg;
+        $out =~ s#\$title#_translate($meta, $f->{description}) || $f->{name}#eg;
         $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1)#eg;
         $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
