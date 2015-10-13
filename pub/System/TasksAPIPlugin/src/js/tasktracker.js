@@ -80,7 +80,7 @@
       });
 
       $this.on('click', '> .filter .tasks-btn-create', function() {
-        self.tasksPanel.createTask();
+        self.tasksPanel.createTask(self.opts.parent);
         return false;
       });
 
