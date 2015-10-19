@@ -424,10 +424,8 @@ sub restDownload {
 
     eval {
         my $fh = $task->{meta}->openAttachment($file, '<');
-        while( <$fh> ) {
-            $response->print( $_ );
-        }
-        close $fh;
+        local $/;
+        $response->body( <$fh> );
     };
     if($@) {
         Foswiki::Func::writeWarning( $@ );
