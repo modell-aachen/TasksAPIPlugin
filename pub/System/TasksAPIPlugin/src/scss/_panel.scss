@@ -19,6 +19,7 @@
       font-size: 0.8em;
       font-weight: bold;
       min-height: 19px; // 49px - 2*15px
+      height: 19px; // without this sometimes the total comes out to 49.5px -KRU
       padding: 15px;
       text-shadow: none;
       text-transform: uppercase;
