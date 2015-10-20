@@ -1133,7 +1133,7 @@ sub tagGrid {
         my $query = shift;
         my $settings = shift;
         if ( $settings{mapping} ) {
-            while ( my ($k, $v) = each $settings{mapping}{mappings} ) {
+            while ( my ($k, $v) = each %{$settings{mapping}{mappings}} ) {
                 next if $k eq 'all';
                 if ( grep(/$query->{Status}/, @$v) ) {
                     $query->{$settings{mapping}{field}} = $query->{Status};
