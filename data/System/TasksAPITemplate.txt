@@ -468,7 +468,7 @@
   <td class="ampel">%{
 }%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
 }%</td>%{
-}%%IF{"context task_canedit and not context task_readonly" then="<td class='close no-print' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
+}%%IF{"context task_canedit and not context task_readonly" then="<td class='close no-print' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>%TMPL:P{"tasksapi::task::controls::right"}%</td>"}%%{
 }%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children"}%</td>
@@ -478,8 +478,8 @@
 
 %{quick actions: close/reopen}%
 %TMPL:DEF{"tasksapi::task::controls::right"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-fw fa-square-o\"></i></span>"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-fw fa-check-square\"></i></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\\"task-btn btn-close\\"><i class=\\"fa fa-fw fa-square-o\\"></i></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\\"closed fa fa-fw fa-check-square\\"></i></span>"}%%{
 }%%TMPL:END%
 
 
@@ -609,7 +609,7 @@
   <td class="ampel">%{
 }%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
 }%</td>%{
-}%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>$percntTMPL:P{$quottasksapi::task::controls::right$quot}$percnt</td>"}%%{
+}%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>%TMPL:P{"tasksapi::task::controls::right"}%</td>"}%%{
 }%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
   <td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::overlay::content"}%</div></td>
   <td class="hidden task-children">%TMPL:P{"tasksapi::task::children_perspage"}%</td>
