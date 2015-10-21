@@ -68,12 +68,19 @@
           return false;
         }
 
+        var $task = $(this);
+        if (!$task.data('id') || !$task.data('task_data')) {
+          var raw = $task.find('> .task-data-container > .task-data').text();
+          var task = $.parseJSON(raw);
+          initTaskElement($task, task);
+        }
+
         if ( self.isTaskClicked ) {
           return false;
         }
 
         self.isTaskClicked = true;
-        self.tasksPanel.viewTask($(this));
+        self.tasksPanel.viewTask($task);
         setTimeout(function() {
           self.isTaskClicked = false;
         }, 200);
