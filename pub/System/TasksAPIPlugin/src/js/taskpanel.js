@@ -839,6 +839,11 @@ TasksPanel = function(tasktracker) {
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
         var $target = $ed.find('input[name="' + topts.autoassignTarget + '"]');
+        var isSelect2 = false;
+        if ($target.length === 0) {
+          $target = $ed.find('select[name="' + topts.autoassignTarget + '"]');
+          isSelect2 = $target.length > 0;
+        }
 
         var autoassign = topts.autoassign.split(',');
         var assign = {};
@@ -855,21 +860,38 @@ TasksPanel = function(tasktracker) {
           var assignTo = assign[val];
           if ( assignTo ) {
             $target.closest('.' + topts.autoassignTarget).css('display', 'none');
-            setTimeout(function() {
-              $target.trigger('Clear');
-              $target.trigger('AddValue', assignTo);
-            }, 100);
+            if (isSelect2) {
+              if ($target.children().length === 0) {
+                $target.append('<option selected="selected"></option>');
+              }
+
+              var $o = $target.children('option[selected],option:selected');
+              $o.val(assignTo).text(assignTo);
+              $target.next().find('.select2-selection__rendered').text(assignTo).attr('title', assignTo);
+            } else {
+              setTimeout(function() {
+                $target.trigger('Clear');
+                $target.trigger('AddValue', assignTo);
+              }, 100);
+            }
           } else {
             $target.closest('.' + topts.autoassignTarget).css('display', 'block');
             var tval = $target.val();
             if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
-              $target.trigger('Clear');
+              if (isSelect2) {
+                $target.children('option[selected],option:selected').remove();
+                $target.next().find('.select2-selection__rendered').text('').attr('title', '');
+              } else {
+                $target.trigger('Clear');
+              }
+            } else if (isSelect2) {
+              $target.children('option[selected],option:selected').remove();
+              $target.next().find('.select2-selection__rendered').text('').attr('title', '');
             }
           }
         };
 
         $type.on('change', setAssignee);
-        setAssignee.call($type);
       }
 
       if ( self.isCreate ) {
@@ -943,6 +965,13 @@ TasksPanel = function(tasktracker) {
 
       if ( _.isArray(val) ) {
         val = val.join(', ');
+      }
+
+      if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
+        val = $input.children('option[selected]').val();
+        if (!val) {
+          val = $input.children('option:selected').val();
+        }
       }
 
       if ( $input.hasClass('foswikiEditFormDateField') ) {

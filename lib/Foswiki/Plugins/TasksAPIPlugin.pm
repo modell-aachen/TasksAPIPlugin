@@ -1020,6 +1020,7 @@ sub tagGrid {
     my $offset = $params->{offset} || 0;
     my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
+    my @autouser = map {pop([split(/=/, $_)])} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
     my $desc = $params->{desc} || 0;
@@ -1088,7 +1089,8 @@ sub tagGrid {
         flavor => $flavor,
         editortemplate => $editorTemplate,
         autoassign => $autoassign,
-        autoassignTarget => $autoassignTarget
+        autoassignTarget => $autoassignTarget,
+        autouser => @autouser
     );
 
     if ( $mappingField && $statesMapping ) {
@@ -1377,8 +1379,12 @@ FORMAT
         $usr =~ s/\s+//g;
         my $session = $Foswiki::Plugins::SESSION;
         my $cuid = Foswiki::Func::getCanonicalUserID($usr);
-        my $mapping = $session->{users}->_getMapping($cuid);
-        $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+        if ($cuid) {
+            my $mapping = $session->{users}->_getMapping($cuid);
+            return $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+        }
+
+        $usr;
     };
 
     my $changes = _decodeChanges($cset->{changes});
@@ -1396,6 +1402,11 @@ FORMAT
         if ( $f->{type} eq 'date' ) {
             $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
             $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
+            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
+            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
+        }
+
+        if ( $f->{type} =~ /^select/ ) {
             $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
             $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
         }
@@ -1504,9 +1515,14 @@ sub tagInfo {
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
-            my $cuid = Foswiki::Func::getCanonicalUserID($val);
-            my $mapping = $session->{users}->_getMapping($cuid);
-            $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+            my $prevVal = $val;
+            unless(grep(/$val/, $currentOptions->{autouser})) {
+                my $cuid = Foswiki::Func::getCanonicalUserID($val);
+                if ($cuid) {
+                    my $mapping = $session->{users}->_getMapping($cuid);
+                    $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+                }
+            }
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
