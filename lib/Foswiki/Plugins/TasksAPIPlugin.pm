@@ -1326,7 +1326,7 @@ FORMAT
 FORMAT
         }
     } else {
-        $defaultFormat = '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$user,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>'
+        $defaultFormat = '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$displayuser,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>'
     }
     my $format = $params->{format} || $defaultFormat;
     my $addComment = '';
@@ -1378,13 +1378,8 @@ FORMAT
         my $usr = shift;
         $usr =~ s/\s+//g;
         my $session = $Foswiki::Plugins::SESSION;
-        my $cuid = Foswiki::Func::getCanonicalUserID($usr);
-        if ($cuid) {
-            my $mapping = $session->{users}->_getMapping($cuid);
-            return $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
-        }
-
-        $usr;
+        my $mapping = $session->{users}->_getMapping($usr);
+        return $mapping->can('getDisplayName') ? $mapping->getDisplayName($usr) : $session->{users}->getWikiName($usr);
     };
 
     my $changes = _decodeChanges($cset->{changes});
@@ -1442,6 +1437,7 @@ FORMAT
     my $out = $format;
     $out =~ s#\$id#$cset->{name}#g;
     $out =~ s#\$user#$cset->{actor}#g;
+    $out =~ s#\$displayuser#$getDisplayName->($cset->{actor})#eg;
     $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
     $out =~ s#\$comment#$cset->{comment} || ''#eg;
@@ -1517,10 +1513,9 @@ sub tagInfo {
         if (Foswiki::isTrue($params->{user}, 0)) {
             my $prevVal = $val;
             unless(grep(/$val/, $currentOptions->{autouser})) {
-                my $cuid = Foswiki::Func::getCanonicalUserID($val);
-                if ($cuid) {
-                    my $mapping = $session->{users}->_getMapping($cuid);
-                    $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($cuid) : $session->{users}->getWikiName($cuid);
+                if ($val) {
+                    my $mapping = $session->{users}->_getMapping($val);
+                    $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($val) : $session->{users}->getWikiName($val);
                 }
             }
         }
