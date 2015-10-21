@@ -15,6 +15,15 @@ database.
 In addition to the TASKSGRID macro which provides a complete user interface
 out of the box, a JavaScript/REST API is available.
 
+%IF{
+   "$USERNAME ingroup 'AdminGroup'"
+   then="---++ Task Indexing
+$percntBUTTON{
+    $quot$percntMAKETEXT{\"Reindex all tasks\"}$percnt$quot
+    target=$quot$percntWEB$percnt.$percntTOPIC$percnt?taskindex=full$quot
+}$percnt $percntCLEAR$percnt"
+}%
+
 ---++ Installation
 %$INSTALL_INSTRUCTIONS%
 

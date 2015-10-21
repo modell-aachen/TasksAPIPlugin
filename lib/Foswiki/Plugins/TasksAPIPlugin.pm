@@ -84,6 +84,7 @@ my %singles = (
 );
 
 my $gridCounter = 1;
+my $indexerCalled;
 my $renderRecurse = 0;
 our $currentTask;
 our $currentOptions;
@@ -129,6 +130,8 @@ sub initPlugin {
         \&indexTopicHandler
       );
     }
+
+    $indexerCalled = 0;
 
     return 1;
 }
@@ -355,12 +358,13 @@ sub _index {
 }
 # Bring the entire database up-to-date
 sub _fullindex {
+    my $noprint = shift;
     my $db = db();
     $db->begin_work;
     $db->do("DELETE FROM tasks");
     $db->do("DELETE FROM task_multi");
     foreach my $t (Foswiki::Plugins::TasksAPIPlugin::Task::loadMany()) {
-        print $t->{id} ."\n";
+        print $t->{id} ."\n" unless $noprint;
         _index($t, 0);
     }
     $db->commit;
@@ -620,7 +624,7 @@ sub _enrich_data {
             name => $f->{name},
             multi => $f->isMultiValued ? JSON::true : JSON::false,
             mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
-            tooltip => _translate($task->{meta}, $f->{tooltip}),
+            tooltip => _translate($task->{meta}, $f->{tooltip} || ''),
             mandatory => $f->isMandatory ? JSON::true : JSON::false,
             hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
             type => $f->{type},
@@ -1387,8 +1391,8 @@ FORMAT
         $out = $faddformat if $change->{type} eq 'add';
         $out = $fdeleteformat if $change->{type} eq 'delete';
 
-        my $changeOld = $change->{old};
-        my $changeNew = $change->{new};
+        my $changeOld = $change->{old} || '';
+        my $changeNew = $change->{new} || '';
         if ( $f->{type} eq 'date' ) {
             $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
             $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
@@ -1408,7 +1412,7 @@ FORMAT
 
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
-        $out =~ s#\$title#_translate($meta, $f->{description} || $f->{tooltip}) || $f->{name}#eg;
+        $out =~ s#\$title#_translate($meta, $f->{description} || $f->{tooltip} || '') || $f->{name}#eg;
         $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1)#eg;
         $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
@@ -1429,7 +1433,7 @@ FORMAT
     $out =~ s#\$user#$cset->{actor}#g;
     $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
-    $out =~ s#\$comment#$cset->{comment}#g;
+    $out =~ s#\$comment#$cset->{comment} || ''#eg;
     $out;
 }
 
@@ -1602,6 +1606,28 @@ sub afterUploadHandler {
 # web, to prevent the server from melting
 sub beforeCommonTagsHandler {
     my ($text, $topic, $web, $meta) = @_;
+
+    unless ($indexerCalled) {
+        $indexerCalled = 1;
+        my $session = $Foswiki::Plugins::SESSION;
+
+        my $req = $session->{request};
+        my $param = $req->param('taskindex');
+        if ($param && Foswiki::Func::isAnAdmin($session->{user})) {
+            my $tweb = $Foswiki::cfg{TasksAPIPlugin}{DBWeb} || 'Tasks';
+            if ($param =~ /^$tweb\.Task-\w+$/) {
+                eval {
+                    my ($w, $t) = Foswiki::Func::normalizeWebTopicName(undef, $param);
+                    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($w, $t);
+                    _index($task);
+                };
+            } elsif ($param =~ /^full$/i) {
+                eval {
+                    _fullindex(1);
+                };
+            }
+        }
+    }
     return unless $web eq $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
     return unless $Foswiki::Plugins::SESSION->inContext('body_text');
     if (grep /^\Q$topic\E$/, qw(WebAtom WebRss WebNotify WebTopicList WebIndex WebChanges WebShortIndex WebSearch WebSearchAdvanced)) {
