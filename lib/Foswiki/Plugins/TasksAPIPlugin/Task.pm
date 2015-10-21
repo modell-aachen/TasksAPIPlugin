@@ -424,7 +424,7 @@ sub update {
         my $newid = 1 + pop(@ids);
         $meta->putKeyed('TASKCHANGESET', {
             name => $newid,
-            actor => Foswiki::Func::getWikiName(),
+            actor => $Foswiki::Plugins::SESSION->{user},
             at => scalar(time),
             changes => to_json(\@changes),
             @comment
