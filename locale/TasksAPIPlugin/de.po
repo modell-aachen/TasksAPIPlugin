@@ -81,6 +81,18 @@ msgstr "wöchentlich"
 msgid "monthly"
 msgstr "monatlich"
 
+msgid "Never"
+msgstr "Nie"
+
+msgid "Daily"
+msgstr "Täglich"
+
+msgid "Weekly"
+msgstr "Wöchentlich"
+
+msgid "Monthly"
+msgstr "Monatlich"
+
 msgid "yes"
 msgstr "ja"
 
