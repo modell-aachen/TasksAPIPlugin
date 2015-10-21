@@ -1261,9 +1261,9 @@ SCRIPT
         my $pager = <<PAGER;
 <nav class="pagination-container no-print">
   <ul class="pagination">
-    <li class="$prevState"><a href="/$web/$topic?page=$prev$qstr" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
+    <li class="$prevState"><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=$prev$qstr" title="%MAKETEXT{"Previous page"}%"><span>&laquo;</span></a></li>
     $pages
-    <li class="$nextState"><a href="/$web/$topic?page=$next$qstr" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
+    <li class="$nextState"><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=$next$qstr" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
   </ul>
 </nav>
 PAGER
