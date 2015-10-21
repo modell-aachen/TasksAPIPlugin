@@ -75,6 +75,14 @@
           initTaskElement($task, task);
         }
 
+        if (evt.ctrlKey && evt.shiftKey) {
+          if (window.console && console.log) {
+           var id = $task.data('id');
+           var json = $task.data('task_data');
+            console.log(id, json);
+          }
+        }
+
         if ( self.isTaskClicked ) {
           return false;
         }
