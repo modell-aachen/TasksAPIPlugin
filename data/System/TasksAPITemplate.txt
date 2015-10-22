@@ -52,7 +52,7 @@
         <i class="fa fa-user"></i>
         <div>
           <span class="title">%MAKETEXT{"Author"}%</span>
-          <span>%WIKINAME%</span>
+          <span>%RENDERUSER{format="$displayName"}%</span>
         </div>
       </div>
       <div class="task-meta-entry">
@@ -185,7 +185,7 @@
         <i class="fa fa-user"></i>
         <div>
           <span class="title">%MAKETEXT{"Author"}%</span>
-          <span>%TASKINFO{field="Author" task="%taskeditor_task%"}%</span>
+          <span>%TASKINFO{field="Author" task="%taskeditor_task%" user="1"}%</span>
         </div>
       </div>
       <div class="task-meta-entry">

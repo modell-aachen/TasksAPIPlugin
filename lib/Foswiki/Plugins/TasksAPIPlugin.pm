@@ -1315,7 +1315,7 @@ sub _renderChangeset {
     if ( $plain ) {
         if ( $cset->{comment} ) {
             $defaultFormat = <<FORMAT;
-%MAKETEXT{"[_1] on [_2]" args="\$user,\$date"}%
+%MAKETEXT{"[_1] on [_2]" args="\$displayuser,\$date"}%
 \$fields
 
 %MAKETEXT{"Comment"}%:
@@ -1323,7 +1323,7 @@ sub _renderChangeset {
 FORMAT
         } else {
             $defaultFormat = <<FORMAT;
-%MAKETEXT{"[_1] on [_2]" args="\$user,\$date"}%
+%MAKETEXT{"[_1] on [_2]" args="\$displayuser,\$date"}%
 \$fields
 FORMAT
         }
