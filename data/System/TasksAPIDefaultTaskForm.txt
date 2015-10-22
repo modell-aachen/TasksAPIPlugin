@@ -9,7 +9,7 @@
 | Title | text | 95 | | Title | M |
 | AssignedTo | user | 20 | | Assigned to | M |
 | Description | taskeditor | 50 | | Description | |
-| DueDate | date | 10 | | Due | |
+| DueDate | date2 | 10 | | Due | |
 | Informees | user+multi | 50 | | Persons to notify on changes | |
 | Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | High priority | |

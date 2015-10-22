@@ -1399,7 +1399,7 @@ FORMAT
 
         my $changeOld = $change->{old} || '';
         my $changeNew = $change->{new} || '';
-        if ( $f->{type} eq 'date' ) {
+        if ( $f->{type} =~ /date2?/ ) {
             $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
             $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
             $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
