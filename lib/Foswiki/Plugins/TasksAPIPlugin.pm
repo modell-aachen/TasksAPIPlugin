@@ -1328,7 +1328,7 @@ FORMAT
 FORMAT
         }
     } else {
-        $defaultFormat = '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$displayuser,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>'
+        $defaultFormat = '<div class="task-changeset"><div class="task-changeset-header">$addComment<span class="task-changeset-id">#$id</span> %MAKETEXT{"[_1] on [_2]" args="$displayuser,$date"}%</div><ul class="task-changeset-fields">$fields</ul><div class="task-changeset-comment" data-id="$id">$icons<div class="comment">$comment</div></div></div>';
     }
     my $format = $params->{format} || $defaultFormat;
     my $addComment = '';
