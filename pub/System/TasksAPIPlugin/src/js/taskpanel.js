@@ -72,6 +72,9 @@ TasksPanel = function(tasktracker) {
     self.overlay.off('click');
     self.overlay.off('queueEmpty');
 
+    self.panel.off('keydown', 'input[name="Title"]');
+    self.panel.off('blur', 'input[name="Title"]');
+    self.overlay.off('keydown', 'input,textarea,[contenteditable]');
     self.panel.off('keydown', 'input');
     self.panel.off('click', '.caption > .controls');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
@@ -171,6 +174,29 @@ TasksPanel = function(tasktracker) {
       window.open && window.open(url, '_blank');
       return false;
     });
+
+    var restrictTitle = function() {
+      var $in = $(this);
+      var opts = self.tracker.data('tasktracker_options');
+      var max = opts.titlelength;
+      if (max === 0) {
+        return;
+      } else if (typeof max !== typeof 0 || max < 0) {
+        max = 100;
+      }
+
+      var val = $in.val();
+      if (val.length > max) {
+        $in.val(val.substr(0, max));
+        $in.css('background-color', '#f00');
+        setTimeout(function() {
+          $in.css('background-color', '');
+        }, 100);
+      }
+    };
+
+    self.panel.on('keydown', 'input[name="Title"]', restrictTitle);
+    self.panel.on('blur', 'input[name="Title"]', restrictTitle);
 
     // hocus pocus demanded by sweetalert2
     // else it will fail removing its dynamically created style tag

@@ -44,6 +44,7 @@ The following parameters are available:
 | tasktemplate="..." | Name of the template used to render a task entry | tasksapi::task |
 | templatefile="..." | Name of the template file to be read before applying templates | TasksAPITemplate |
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
+| titlelength="..." | Number of characters before a task's title gets trancuated. Set to =0= to disable title length restrictions. | 100 |
 | statesmapping="..." | Maps custom task states to the required Status field. Format, e.g.: open=[state1, state2],closed=[state3],all=[state1,state2,state3] | |
 | mappingfield="..." | Name of the formfield container the custom state definitions | |
 %STOPINCLUDE%

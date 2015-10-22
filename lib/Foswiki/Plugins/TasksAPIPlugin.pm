@@ -1013,6 +1013,7 @@ sub tagGrid {
     my $allowCreate = $params->{allowcreate} || 0;
     my $allowUpload = $params->{allowupload} || 0;
     my $keepclosed = $params->{keepclosed} || 0;
+    my $titlelength = $params->{titlelength} || 100;
     my $readonly = $params->{readonly} || 0;
     my $showAttachments = $params->{showattachments} || 0;
     my $order = $params->{order} || '';
@@ -1090,7 +1091,8 @@ sub tagGrid {
         editortemplate => $editorTemplate,
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
-        autouser => @autouser
+        autouser => \@autouser,
+        titlelength => int($titlelength)
     );
 
     if ( $mappingField && $statesMapping ) {
