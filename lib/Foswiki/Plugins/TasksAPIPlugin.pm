@@ -1288,17 +1288,28 @@ PAGER
     return $grid;
 }
 
+sub _getDisplayName {
+    my $usr = shift;
+    $usr =~ s/\s+//g;
+    my $session = $Foswiki::Plugins::SESSION;
+    my $mapping = $session->{users}->_getMapping($usr);
+    return $mapping->can('getDisplayName') ? $mapping->getDisplayName($usr) : $session->{users}->getWikiName($usr);
+}
+
 sub _renderAttachment {
     my ($meta, $task, $attachment, $params) = @_;
 
-    my $author = Foswiki::Func::getWikiName($attachment->{author});
+    my $author = $attachment->{author};
+    my $displayauthor = $author;
+    $displayauthor = _getDisplayName($author) if $author;
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
-    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$author</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
+    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$displayauthor</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
     $format =~ s#\$name#$attachment->{name}#g;
     $format =~ s#\$size#$attachment->{size}->{human}#g;
     $format =~ s#\$author#$author#g;
+    $format =~ s#\$displayauthor#$displayauthor#g;
     $format =~ s#\$date#$date#g;
     $format =~ s#\$taskstopic#$taskstopic#g;
     $format;
@@ -1376,14 +1387,6 @@ FORMAT
     };
     $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
-    my $getDisplayName = sub {
-        my $usr = shift;
-        $usr =~ s/\s+//g;
-        my $session = $Foswiki::Plugins::SESSION;
-        my $mapping = $session->{users}->_getMapping($usr);
-        return $mapping->can('getDisplayName') ? $mapping->getDisplayName($usr) : $session->{users}->getWikiName($usr);
-    };
-
     my $changes = _decodeChanges($cset->{changes});
     foreach my $f (@$fields) {
         my $change = $changes->{$f->{name}};
@@ -1409,13 +1412,13 @@ FORMAT
         }
 
         if ( $f->{type} eq 'user') {
-            $changeOld = $getDisplayName->($changeOld);
-            $changeNew = $getDisplayName->($changeNew);
+            $changeOld = _getDisplayName($changeOld);
+            $changeNew = _getDisplayName($changeNew);
         }
 
         if ( $f->{type} eq 'user+multi') {
-            $changeOld = join(', ', map {$getDisplayName->($_)} split(',', $changeOld));
-            $changeNew = join(', ', map {$getDisplayName->($_)} split(',', $changeNew));
+            $changeOld = join(', ', map {_getDisplayName($_)} split(',', $changeOld));
+            $changeNew = join(', ', map {_getDisplayName($_)} split(',', $changeNew));
         }
 
         $out =~ s#\$name#$f->{name}#g;
@@ -1439,7 +1442,7 @@ FORMAT
     my $out = $format;
     $out =~ s#\$id#$cset->{name}#g;
     $out =~ s#\$user#$cset->{actor}#g;
-    $out =~ s#\$displayuser#$getDisplayName->($cset->{actor})#eg;
+    $out =~ s#\$displayuser#_getDisplayName($cset->{actor})#eg;
     $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
     $out =~ s#\$comment#$cset->{comment} || ''#eg;
@@ -1515,10 +1518,7 @@ sub tagInfo {
         if (Foswiki::isTrue($params->{user}, 0)) {
             my $prevVal = $val;
             unless(grep(/$val/, $currentOptions->{autouser})) {
-                if ($val) {
-                    my $mapping = $session->{users}->_getMapping($val);
-                    $val = $mapping->can('getDisplayName') ? $mapping->getDisplayName($val) : $session->{users}->getWikiName($val);
-                }
+                $val = _getDisplayName($val) if $val;
             }
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
