@@ -1021,7 +1021,7 @@ sub tagGrid {
     my $offset = $params->{offset} || 0;
     my $sortable = $params->{sortable} || 0;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
-    my @autouser = map {pop([split(/=/, $_)])} split(/,/, $autoassign);
+    my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
     my $desc = $params->{desc} || 0;
