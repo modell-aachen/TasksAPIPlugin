@@ -68,6 +68,16 @@
   }
 }
 
+div[name="comment"] {
+  background-color: #f8fcff;
+  border: 1px solid #def1ff;
+  border-radius: 4px;
+  padding: 5px;
+  min-height: 100px;
+  text-align: left;
+  font-size: 13px;
+}
+
 .task-overlay {
   position: fixed;
   top: 0;
@@ -212,12 +222,17 @@
         transform: translate3d(0, 0, 0);
       }
 
-      textarea {
-        width: calc(100% - 2.5 * #{$pad});
-      }
-
       label {
         color: $white;
+      }
+
+      [contenteditable] {
+        background: white;
+        border-radius: 4px;
+        width: calc(100% - 34px);
+        min-height: 100px;
+        padding: 5px;
+        margin-top: 5px;
       }
     }
 
@@ -530,14 +545,6 @@
         font-size: 0.8em;
         text-transform: uppercase;
         margin-bottom: 3px;
-      }
-
-      textarea {
-        background-color: #f8fcff;
-        border: 1px solid #def1ff;
-        border-radius: 4px;
-        padding: 5px;
-        width: 99%;
       }
     }
   }

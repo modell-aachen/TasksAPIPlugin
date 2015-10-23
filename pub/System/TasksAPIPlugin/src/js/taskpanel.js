@@ -74,7 +74,7 @@ TasksPanel = function(tasktracker) {
 
     self.panel.off('keydown', 'input[name="Title"]');
     self.panel.off('blur', 'input[name="Title"]');
-    self.overlay.off('keydown', 'input,textarea,[contenteditable]');
+    self.overlay.off('keydown', 'input, textarea, [contenteditable], div[name="comment"]');
     self.panel.off('keydown', 'input');
     self.panel.off('click', '.caption > .controls');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
@@ -200,7 +200,7 @@ TasksPanel = function(tasktracker) {
 
     // hocus pocus demanded by sweetalert2
     // else it will fail removing its dynamically created style tag
-    self.overlay.on('keydown', 'input,textarea,[contenteditable]', function(evt) {
+    self.overlay.on('keydown', 'input, textarea, [contenteditable], div[name="comment"]', function(evt) {
       evt.stopPropagation();
       evt.stopImmediatePropagation();
     });
@@ -352,9 +352,9 @@ TasksPanel = function(tasktracker) {
         var cmtTxt = jsi18n.get('tasksapi', 'Comment');
         var html = [
           closeTxt,
-          '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+          '<br><div style="float: left; margin: 15px 0 0 3px;"><small>',
           cmtTxt,
-          '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+          '</small></div><div style="clear: both"></div><div name="comment" contenteditable="true"></div><br><br>'
         ].join('');
 
         swal({
@@ -372,7 +372,7 @@ TasksPanel = function(tasktracker) {
             payload.Status = isDelete ? 'deleted' : 'closed';
 
             var $dialog = $('.sweet-alert.show-sweet-alert.visible');
-            var comment = $dialog.find('textarea[name="Comment"]').val();
+            var comment = $dialog.find('div[name="comment"]').html();
             if ( !/^[\s\n\r]*$/.test(comment) ) {
               payload.comment = comment;
             }
@@ -434,8 +434,8 @@ TasksPanel = function(tasktracker) {
         dirty = CKEDITOR.instances.Description.checkDirty();
       }
     } else if ( self.isComment ) {
-      var $tb = self.overlay.find('textarea[name="TaskComment"]');
-      dirty = !/^\s*$/.test($tb.val());
+      var $tb = self.comment.children('[contenteditable]');
+      dirty = !/^\s*$/.test($tb.html());
     }
 
     // ToDo. do more checks here
@@ -594,9 +594,9 @@ TasksPanel = function(tasktracker) {
   };
 
   var handleSaveComment = function() {
-    var $textarea = self.overlay.find('textarea[name="TaskComment"]');
-    var $cb = $textarea.parent().find('input[name="close"]');
-    var comment = $textarea.val();
+    var $cb = self.comment.find('input[name="close"]');
+    var $cmt = self.comment.children('div[contenteditable]');
+    var comment = $cmt.html();
 
     var payload = {
       id: self.currentTask.data('id'),
@@ -619,6 +619,9 @@ TasksPanel = function(tasktracker) {
     $.taskapi.update(payload).fail(error).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
       self.trigger( afterSave, response.data );
+
+      // clear comment container
+      $cmt.empty();
 
       // cancel/exit "comment composer"
       onCancel();
@@ -693,7 +696,7 @@ TasksPanel = function(tasktracker) {
         deferred.resolve();
       }
     } else if ( self.isComment ) {
-      self.overlay.find('textarea[name="TaskComment"]').val('');
+      self.comment.children('div[contenteditable]').empty();
       self.isComment = false;
       setButtons('view');
       self.comment.removeClass('active');
@@ -1030,6 +1033,11 @@ TasksPanel = function(tasktracker) {
 
     if ( data.hasError ) {
       data.missingFields = missingFields;
+    }
+
+    var $cmt = editor.find('div[name="comment"]');
+    if ($cmt.length) {
+      data.comment = $cmt.html();
     }
 
     return data;

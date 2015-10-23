@@ -278,7 +278,7 @@
   <div class="content">
     <div class="comment">
       <span>%MAKETEXT{"Add comment"}%</span>
-      <textarea name="comment" cols="40" rows="10"></textarea>
+      <div name="comment" contenteditable="true"></div>
     </div>
   </div>
 </div>%{
@@ -322,7 +322,7 @@
         <input type="checkbox" name="close" value="">
         %MAKETEXT{"Close task"}%
       </label>
-      <textarea name="TaskComment" cols="30" rows="10"></textarea>
+      <div contenteditable="true"></div>
     </div>%{
     }%%TMPL:P{"tasksapi::overlay::upload"}%%{
 }%</div>

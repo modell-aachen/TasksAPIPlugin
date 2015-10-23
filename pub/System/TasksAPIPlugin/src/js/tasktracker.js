@@ -463,9 +463,9 @@
       var cmtTxt = jsi18n.get('tasksapi', 'Comment');
       var html = [
         closeTxt,
-        '<br><div style="float: left; margin: 12px 0 0 30px;"><small>',
+        '<br><div style="float: left; margin: 15px 0 0 3px;"><small>',
         cmtTxt,
-        '</small></div><div style="clear: both"></div><textarea style="width: 400px;" name="Comment" rows="4" cols="50"></textarea><br><br>'
+        '</small></div><div style="clear: both"></div><div name="comment" contenteditable="true"></div><br><br>'
       ].join('');
 
       swal({
@@ -482,7 +482,7 @@
         if (confirmed) {
           payload.Status = 'closed';
           var $dialog = $('.sweet-alert.show-sweet-alert.visible');
-          var comment = $dialog.find('textarea[name="Comment"]').val();
+          var comment = $dialog.find('div[name="comment"]').html();
           if ( !/^[\s\n\r]*$/.test(comment) ) {
             payload.comment = comment;
           }
@@ -695,8 +695,14 @@
 
 
   $(document).ready( function() {
+    if (CKEDITOR) {
+      CKEDITOR.disableAutoInline = true;
+    }
+
     var $tracker = $('.tasktracker').tasksGrid();
     window.tasksapi = new TasksAPI();
+
+
 
     setTimeout(function() {
       if ( window.location.search ) {
