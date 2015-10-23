@@ -68,6 +68,10 @@
           return false;
         }
 
+        if ($(evt.target).is('a')) {
+          return;
+        }
+
         var $task = $(this);
         if (!$task.data('id') || !$task.data('task_data')) {
           var raw = $task.find('> .task-data-container > .task-data').text();
