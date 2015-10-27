@@ -579,6 +579,8 @@ TasksPanel = function(tasktracker) {
             var $cnt = self.currentTask.children('.task-fullview-container');
             current.detach().appendTo($cnt);
           }
+
+          self.panel.empty();
         }
 
         cancelEdit(false);
