@@ -1433,7 +1433,7 @@ TasksPanel = function(tasktracker) {
     self.currentTask = $task;
     self.currentTask.addClass('highlight');
 
-    var isEdit = self.isEdit || self.isCreate || self.isComment || self.isChangesetEdit;
+    var isEdit = self.isEdit || self.isCreate || self.isComment || self.isChangesetEdit || self.isUpload;
     if ( isEdit && self.panel.children().length > 0 ) {
       self.panel.children().each(function() {
         var $child = $(this);
