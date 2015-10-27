@@ -990,6 +990,9 @@ TasksPanel = function(tasktracker) {
     editor.find('input[name],select[name],textarea[name]').each(function() {
       var $input = $(this);
       var prop = $input.attr('name');
+      if (!prop || /^\s*$/.test(prop)) {
+        return;
+      }
       var val = $input.val();
 
       if ( _.isArray(val) ) {
