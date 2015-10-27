@@ -43,6 +43,17 @@
       self.isTaskClicked = false;
       self.tasksPanel = new TasksPanel($this);
 
+      $('body').on('keydown', '.sweet-alert', function(e) {
+        if ($(e.target).is('[contenteditable="true"]')) {
+          e.stopPropagation();
+          return;
+        }
+
+        // ignore all keys except ENTER, ESC
+        if (e.which !== 13 && e.which !== 27)
+          return false;
+      });
+
       $this.on('mouseenter', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
         if ( $i.hasClass('closed') ) {
