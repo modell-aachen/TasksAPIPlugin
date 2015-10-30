@@ -31,7 +31,7 @@ msgid "Tasks"
 msgstr "Aufgaben"
 
 msgid "Add task"
-msgstr "Protokollpunkt hinzufügen"
+msgstr "Aufgabe hinzufügen"
 
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
