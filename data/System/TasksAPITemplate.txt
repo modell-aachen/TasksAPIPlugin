@@ -142,6 +142,12 @@
       </div>
     </div>
   </div>
+  <div class="upload">
+    <div>
+      <span>%MAKETEXT{"Attach file(s)"}% <em>(%MAKETEXT{"Attachments will be uploaded after you press 'Save'"}%)</em></span>
+      %DNDUPLOAD{autostart="0" width="100%"}%
+    </div>
+  </div>
 </div>%{
 }%%TMPL:END%
 
