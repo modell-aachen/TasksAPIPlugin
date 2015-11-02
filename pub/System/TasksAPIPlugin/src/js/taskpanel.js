@@ -158,20 +158,90 @@ TasksPanel = function(tasktracker) {
         return false;
       }
 
+      var $row = $(this);
+      var isDelete = 0;
+      if ($target.is('.delete-attachment') || $target.parent().is('.delete-attachment')) {
+        isDelete = 1;
+      }
+
       var id = self.currentTask.data('id');
       var file = $(this).find('a.hidden').attr('href');
       var p = foswiki.preferences;
+      var endpoint = isDelete ? 'delete' : 'download';
       var url = [
         p.SCRIPTURL,
         '/rest',
         p.SCRIPTSUFFIX,
-        '/TasksAPIPlugin/download?id=',
-        self.currentTask.data('id'),
-        '&file=',
-        file
+        '/TasksAPIPlugin/',
+        endpoint
       ].join('');
 
-      window.open && window.open(url, '_blank');
+      if (!isDelete) {
+        url += '?id=' + self.currentTask.data('id') + '&file=' + file;
+        window.open && window.open(url, '_blank');
+        return false;
+      }
+
+      swal({
+        title: jsi18n.get('tasksapi', 'Are you sure?'),
+        text: jsi18n.get('tasksapi', 'Do you want to remove this attachment?'),
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#6CCE86',
+        cancelButtonColor: '#BDBDBD',
+        confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
+        cancelButtonText: jsi18n.get('tasksapi', 'No'),
+        closeOnConfirm: false
+      }, function(confirmed) {
+        if (confirmed) {
+          window.tasksapi.blockUI();
+          $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+              id: self.currentTask.data('id'),
+              file: file
+            },
+            success: function() {
+              $row.remove();
+
+                    var $dnd = $(this);
+              var payload = {
+                id: self.currentTask.data('id')
+              };
+
+              var opts = self.tracker.data('tasktracker_options');
+              for (var prop in opts) {
+                if ( /template|form|depth|flavor/.test(prop) ) {
+                  payload[prop] = opts[prop];
+                }
+              }
+
+              $.taskapi
+                .update(payload)
+                .always(window.tasksapi.unblockUI)
+                .fail(error)
+                .done(function(response) {
+                  if (response.status === 'ok' && response.data) {
+                    var afterSave = $.Event('afterSave');
+                    self.trigger(afterSave, response.data);
+
+                    var $new = self.panel.children('.content.slide-in:last-child').detach();
+                    self.panel.empty();
+                    $new.appendTo(self.panel);
+
+                    // ToDo. switch to 'attachments tab' if it exists?
+                  }
+                });
+
+            },
+            error: window.tasksapi.unblockUI
+          });
+        }
+
+        return confirmed;
+      });
+
       return false;
     });
 

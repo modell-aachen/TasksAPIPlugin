@@ -225,6 +225,16 @@ table.task-attachments {
       font-size: 11px;
       transition: color .2s ease-in-out;
     }
+
+    &.delete-attachment {
+      text-align: center;
+      color: $dark-blue;
+
+      &:hover {
+        background-color: $blue;
+        color: $white;
+      }
+    }
   }
 
   tbody tr {

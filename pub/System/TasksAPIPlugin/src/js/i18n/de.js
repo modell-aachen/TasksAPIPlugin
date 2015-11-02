@@ -3,6 +3,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "You have not filled out the mandatory form field '[_1]'.": "Sie haben das Pflichtfeld '[_1]' nicht ausgefüllt.",
     "Are you sure?": "Sind Sie sicher?",
     "Do you want to remove this comment?": "Möchten Sie diesen Kommentar entfernen?",
+    "Do you want to remove this attachment?": "Möchten Sie diesen Anhang entfernen?",
     "Do you want to close this entry?": "Möchten Sie diesen Eintrag schließen?",
     "Do you want to delete this entry?": "Möchten Sie diesen Eintrag löschen?",
     "Your previous changes will be lost.": "Ihre bisherigen Änderungen gehen verloren.",

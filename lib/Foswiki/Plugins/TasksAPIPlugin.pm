@@ -115,6 +115,7 @@ sub initPlugin {
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
     Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %restopts );
     Foswiki::Func::registerRESTHandler( 'create', \&restCreate, %restopts );
+    Foswiki::Func::registerRESTHandler( 'delete', \&restDelete, %restopts );
     Foswiki::Func::registerRESTHandler( 'multiupdate', \&restMultiUpdate, %restopts );
     Foswiki::Func::registerRESTHandler( 'update', \&restUpdate, %restopts );
 
@@ -410,12 +411,12 @@ sub restDownload {
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
-    unless ($task->checkACL('view')) {
+    unless ($task->checkACL('change')) {
         $response->header(-status => 403);
         return to_json({
             status => 'error',
-            code => 'acl_view',
-            msg => 'No permission to attachments of this task'
+            code => 'acl_change',
+            msg => 'No permission to attach files to this task'
         });
     }
 
@@ -440,6 +441,61 @@ sub restDownload {
             msg => "Server error: $@"
         });
     }
+}
+
+sub restDelete {
+    my ( $session, $subject, $verb, $response ) = @_;
+
+    my $q = $session->{request};
+    my $id = $q->param('id') || '';
+    my $file = $q->param('file') || '';
+
+    unless ($id && $file) {
+        $response->header(-status => 400);
+        return to_json({
+            status => 'error',
+            'code' => 'client_error',
+            msg => "Request error: Missing filename or task id parameter."
+        });
+    }
+
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+    unless ($task->checkACL('change')) {
+        $response->header(-status => 403);
+        return to_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to remove attachments of this task'
+        });
+    }
+
+    my $trash = $Foswiki::cfg{TrashWebName} || 'Trash';
+    $topic = "$topic-".time();
+    unless (Foswiki::Func::topicExists($trash, $topic)) {
+        Foswiki::Func::saveTopic($trash, $topic, undef, undef, {dontlog => 1, ignorepermissions => 1});
+    }
+
+    my $to = Foswiki::Meta->load($session, Foswiki::Func::normalizeWebTopicName($trash, $topic));
+    $task->{meta}->moveAttachment($file, $to);
+    my @changesets = $task->{meta}->find('TASKCHANGESET');
+    my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+    my $newid = 1 + pop(@ids);
+
+    my @changes = ({type => 'delete', name => '_attachment', old => $file});
+    $task->{meta}->putKeyed('TASKCHANGESET', {
+        name => $newid,
+        actor => Foswiki::Func::getWikiName(),
+        at => scalar(time),
+        changes => to_json(\@changes)
+    });
+
+    $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
+    Foswiki::Plugins::TasksAPIPlugin::_index($task);
+    $task->{changeset} = $newid;
+
+    $response->header(-status => 200);
+    return '';
 }
 
 sub restAttach {
@@ -1305,7 +1361,7 @@ sub _renderAttachment {
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
-    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$displayauthor</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td></tr>';
+    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$displayauthor</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td><td class="delete-attachment" title="%MAKETEXT{"Delete attachment"}%"><i class="fa fa-times"></i></td></tr>';
     $format =~ s#\$name#$attachment->{name}#g;
     $format =~ s#\$size#$attachment->{size}->{human}#g;
     $format =~ s#\$author#$author#g;
@@ -1432,9 +1488,10 @@ FORMAT
     }
     if ( $changes->{_attachment}) {
         my $change = $changes->{_attachment};
-        my $out = $faddformat;
+        my $out = $change->{type} eq 'add' ? $faddformat : $fdeleteformat;
         $out =~ s#\$title#_translate($meta, "Attachment")#eg;
         $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1)#eg;
         push @fout, $out;
     }
 
@@ -1554,7 +1611,7 @@ sub tagInfo {
             my $out = _renderAttachment($topicObject, $task, $attachment, $params);
             push @out, $out if $out ne '';
         }
-        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Created"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th></tr></thead></tbody>';
+        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Created"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th><th></th></tr></thead></tbody>';
         my $footer = $params->{footer} || '</tbody></table>';
         return $header . join($params->{separator} || "\n", @out) . $footer;
     }
