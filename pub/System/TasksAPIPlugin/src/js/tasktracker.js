@@ -408,7 +408,10 @@
       });
 
       deferred.resolve( response.data );
-    }).fail( deferred.reject );
+    }).fail(function(xhr, status, err) {
+      deferred.reject();
+      error(xhr, status, err);
+    });
 
     return deferred.promise();
   };
@@ -430,6 +433,15 @@
         console.error( msg );
       });
     }
+
+    swal({
+      type: 'error',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
+      timer: 1500,
+      showConfirmButton: true,
+      showCancelButton: false
+    });
   };
 
   var log = function( msg ) {
@@ -556,8 +568,8 @@
             showCancelButton: false
           });
         }, 250);
-      }).fail(function(err) {
-        error(err);
+      }).fail(function(xhr, status, err) {
+        error(xhr, status, err);
         window.tasksapi.unblockUI();
       });
     });
@@ -639,8 +651,12 @@
     var url = window.location.pathname + '?' + search.join('&');
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
-    $table.children('.tasks').load(target, function() {
+    $table.children('.tasks').load(target, function(resp, status, xhr) {
       window.tasksapi.unblockUI();
+
+      if (status === 'error') {
+        error(status, resp, xhr);
+      }
     });
 
     return false;
@@ -697,8 +713,12 @@
     var tid = $this.closest('.tasktracker').attr('id');
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
-    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function() {
+    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
       window.tasksapi.unblockUI();
+
+      if (status === 'error') {
+        error(status, resp, xhr);
+      }
     });
 
     return false;
@@ -712,8 +732,6 @@
 
     var $tracker = $('.tasktracker').tasksGrid();
     window.tasksapi = new TasksAPI();
-
-
 
     setTimeout(function() {
       if ( window.location.search ) {

@@ -31,6 +31,8 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "auditmeasure": "Audit-Maßname",
     "open": "offen",
     "closed": "geschlossen",
-    "deleted": "gelöscht"
+    "deleted": "gelöscht",
+    "Oops": "Uups",
+    "Something went wrong! Try again later.": "Etwas ist schief gelaufen. Versuchen Sie es später erneut.",
   });
 }

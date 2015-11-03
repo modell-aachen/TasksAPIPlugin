@@ -235,7 +235,10 @@ TasksPanel = function(tasktracker) {
                 });
 
             },
-            error: window.tasksapi.unblockUI
+            error: function(xhr, status, err) {
+              window.tasksapi.unblockUI();
+              error(xhr, status, err);
+            }
           });
         }
 
@@ -1148,6 +1151,15 @@ TasksPanel = function(tasktracker) {
     if ( window.console && console.error ) {
       console.error.apply(console, arguments);
     }
+
+    swal({
+      type: 'error',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
+      timer: 1500,
+      showConfirmButton: true,
+      showCancelButton: false
+    });
   };
 
   var isTask = function($task) {
@@ -1290,6 +1302,7 @@ TasksPanel = function(tasktracker) {
       },
       error: function( xhr, sts, err ) {
         deferred.reject( err );
+        error(err);
       }
     });
 
