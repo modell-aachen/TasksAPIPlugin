@@ -345,7 +345,11 @@ TasksPanel = function(tasktracker) {
             var afterSave = $.Event( 'afterSave' );
             self.trigger( afterSave, response.data );
             onCancel();
-            toggleUpload();
+            if (!self.isInitialUpload) {
+              toggleUpload();
+            } else {
+              self.isInitialUpload = false;
+            }
           }
         });
     });
@@ -647,22 +651,48 @@ TasksPanel = function(tasktracker) {
         if ( self.isCreate ) {
           task.id = response.id;
 
-          if ( self.currentTask !== null && self.panel.children().length > 1 ) {
-            var current = self.panel.children().first().children('.task-fullview');
-            var $cnt = self.currentTask.children('.task-fullview-container');
-            current.detach().appendTo($cnt);
+          var afterCreateFunc = function() {
+            if ( self.currentTask !== null && self.panel.children().length > 1 ) {
+              var current = self.panel.children().first().children('.task-fullview');
+              var $cnt = self.currentTask.children('.task-fullview-container');
+              current.detach().appendTo($cnt);
+            }
+
+            self.panel.empty();
+          };
+
+          var afterSaveFunc = function(data) {
+            cancelEdit(false);
+            if ( self.currentTask !== null ) {
+              self.currentTask.removeClass('highlight');
+            }
+
+            var afterSave = $.Event( 'afterSave' );
+            self.trigger( afterSave, data );
+          };
+
+          var $dnd = self.panel.find('.qw-dnd-upload');
+          if (!$dnd.isEmpty()) {
+            var arr = task.id.split('.');
+            if ( arr.length === 2 ) {
+              $dnd.attr('data-web', arr[0]);
+              $dnd.attr('data-topic', arr[1]);
+              $dnd.data('tasksgrid', 1);
+              self.isInitialUpload = true;
+              $dnd.upload();
+              $dnd.on('queueEmpty', function() {
+                afterCreateFunc();
+                afterSaveFunc(response.data);
+              });
+
+              return false;
+            }
           }
 
-          self.panel.empty();
+          afterCreateFunc();
         }
 
-        cancelEdit(false);
-        if ( self.currentTask !== null ) {
-          self.currentTask.removeClass('highlight');
-        }
-
-        var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, response.data );
+        afterSaveFunc(response.data);
       });
 
     return false;

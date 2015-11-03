@@ -548,6 +548,14 @@ div[name="comment"] {
       }
     }
   }
+
+  > .upload {
+    border-bottom: 3px solid #eee;
+    color: #808080;
+    font-size: 12px;
+    margin-bottom: 20px;
+    padding: 10px 0 10px 10px;
+  }
 }
 
 .task-meta-entry {
