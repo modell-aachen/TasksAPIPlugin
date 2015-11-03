@@ -648,6 +648,16 @@ TasksPanel = function(tasktracker) {
       .always( window.tasksapi.unblockUI )
       .fail( error )
       .done( function( response ) {
+        var afterSaveFunc = function(data) {
+          cancelEdit(false);
+          if ( self.currentTask !== null ) {
+            self.currentTask.removeClass('highlight');
+          }
+
+          var afterSave = $.Event( 'afterSave' );
+          self.trigger( afterSave, data );
+        };
+
         if ( self.isCreate ) {
           task.id = response.id;
 
@@ -659,16 +669,6 @@ TasksPanel = function(tasktracker) {
             }
 
             self.panel.empty();
-          };
-
-          var afterSaveFunc = function(data) {
-            cancelEdit(false);
-            if ( self.currentTask !== null ) {
-              self.currentTask.removeClass('highlight');
-            }
-
-            var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, data );
           };
 
           var $dnd = self.panel.find('.qw-dnd-upload');
