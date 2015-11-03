@@ -280,46 +280,6 @@
     ].join('');
   };
 
-  var invokeTablesorter = function(forceSort, updateOnly) {
-    try {
-      var $tbl = $(this);
-      if ( !forceSort && $tbl.find('> tbody .task').length === 0 ) {
-        return;
-      }
-
-      if ( updateOnly ) {
-        setTimeout(function() {
-          $tbl.trigger('update');
-        }, 10);
-      }
-
-      var opts = $tbl.data('sortopts');
-      if ( typeof opts === 'object' ) {
-        var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
-
-        $tbl.trigger('update');
-        if ( $col.length > 0 ) {
-          var dir = $col.hasClass('headerSortUp') ? 1 : 0;
-          var index = $col[0].column;
-
-          // tablesorter's update event is processed by a timeout of 1.
-          // use something higher than 1 here...
-          setTimeout(function() {
-            $tbl.trigger('sorton', [[[index, dir]]]);
-          }, 10);
-        }
-
-        return;
-      }
-
-      opts = $tbl.metadata() || {};
-      $tbl.data('sortopts', opts);
-      $tbl.tablesorter(opts);
-    } catch(e) {
-      error(e);
-    }
-  };
-
   var unescapeHTML = function(obj) {
     if ( !obj.fields ) {
       return obj;
