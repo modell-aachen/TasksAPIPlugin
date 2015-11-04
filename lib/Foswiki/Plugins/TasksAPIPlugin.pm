@@ -1573,10 +1573,20 @@ sub tagInfo {
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
-            my $prevVal = $val;
-            unless(grep(/$val/, $currentOptions->{autouser})) {
-                $val = _getDisplayName($val) if $val;
+            my @vals = ();
+            if ($task->form->getField($field)->{type} =~ /\+multi/) {
+                @vals = split(/,\s?/, $val);
+            } else {
+                push @vals, $val;
             }
+
+            foreach my $v (@vals) {
+                unless(grep(/$v/, $currentOptions->{autouser})) {
+                    $v = _getDisplayName($v) if $v;
+                }
+            }
+
+            $val = join(',', @vals);
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;

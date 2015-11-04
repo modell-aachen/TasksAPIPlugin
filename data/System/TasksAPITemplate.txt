@@ -383,8 +383,9 @@
           <span class="title">%MAKETEXT{"Author"}%</span>
           <span>%TASKINFO{field="Author" user="1"}%</span>
         </div>
-      </div>
-      <div class="task-meta-entry">
+      </div>%{
+      }%%IF{"'%TASKINFO{field="Informees"}%'=''" else="<div class=\"task-meta-entry\"><i class=\"fa fa-users\"></i><div><span class=\"title\">$percntMAKETEXT{$quotInformees$quot}$percnt</span><span>%TASKINFO{field="Informees" user="1"}%</span></div></div>"}%%{
+      }%<div class="task-meta-entry">
         <i class="fa fa-angle-double-right"></i>
         <div>
           <span class="title">%MAKETEXT{"Assigned to"}%</span>

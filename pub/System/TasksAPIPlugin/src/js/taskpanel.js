@@ -91,6 +91,12 @@ TasksPanel = function(tasktracker) {
   var attachHandler = function() {
     detachHandler();
 
+    // self.tracker.on('transitionend', '.content.slide-in', function() {
+    //   var $content = $(this);
+    //   initReadmore($content);
+    //   sliceChanges($content.find('.changes'));
+    // });
+
     window.onkeydown = window.onkeyup = function(e) {
       isCtrlKeyDown = e.ctrlKey;
 
@@ -562,17 +568,18 @@ TasksPanel = function(tasktracker) {
 
         // set by a previous call to fadeOut
         self.savedStates.details.attr('style', '');
-        self.savedStates.parent.fadeIn(200);
-        setTimeout(function() {
+initReadmore(self.savedStates.parent);
+sliceChanges(self.savedStates.parent.find('.changes'));
+        self.savedStates.parent.fadeIn(300, function() {
           var parent = self.savedStates.parent;
           if ( parent ) {
-            initReadmore(parent);
-            sliceChanges(parent.find('.changes'));
+            // initReadmore(parent);
+            // sliceChanges(parent.find('.changes'));
           }
 
           self.savedStates.details = self.savedStates.parent = null;
           cancelHelper(closeOverlay);
-        }, 250);
+        });
       });
     } else {
       cancelHelper(self.currentTask === null && closeOverlay !== false);
@@ -1099,17 +1106,26 @@ TasksPanel = function(tasktracker) {
         return;
       }
       var val = $input.val();
+      if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
+        var $selected = $input.children('option[selected]');
+        if (!$selected.length || ($selected.length === 1 && !$selected.val())) {
+          $selected = $input.children('option:selected')
+        }
+
+        if ($selected.length > 1) {
+          val = [];
+          $selected.each(function() {
+            val.push($(this).val());
+          });
+        } else {
+          val = $selected.val();
+        }
+      }
 
       if ( _.isArray(val) ) {
         val = val.join(', ');
       }
 
-      if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
-        val = $input.children('option[selected]').val();
-        if (!val) {
-          val = $input.children('option:selected').val();
-        }
-      }
 
       if ( $input.hasClass('foswikiEditFormDateField') ) {
         try {
@@ -1225,16 +1241,15 @@ TasksPanel = function(tasktracker) {
 
   var initReadmore = function($content) {
     $content = $content || self.panel.find('.content.slide-in');
+
     var $article = $content.find('.task-details > .content > .description article');
-    setTimeout(function() {
-      $article.readmore('destroy');
-      $article.readmore({
-        collapsedHeight: 150,
-        speed: 400,
-        lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
-        moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
-      });
-    }, 100);
+    $article.readmore('destroy');
+    $article.readmore({
+      collapsedHeight: 150,
+      speed: 400,
+      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
+    });
   };
 
   var isAnimating = false;
@@ -1278,10 +1293,6 @@ TasksPanel = function(tasktracker) {
     var $nextView = nextTask.children('.task-fullview-container').children('.task-fullview');
     $nextView.detach().appendTo($content);
     $content.appendTo(self.panel);
-
-    // destroy and re-init readmore.js
-    initReadmore($content);
-    sliceChanges($content.find('.changes'));
 
     setTimeout(function() {
       var $current = self.panel.children('.content.slide-in');
@@ -1561,11 +1572,13 @@ TasksPanel = function(tasktracker) {
     var $view = $task.children('.task-fullview-container').children('.task-fullview');
     $view.detach().appendTo($content);
     $content.appendTo(self.panel);
-    $content.addClass('slide-in');
 
     toggleOverlay(true);
-    initReadmore($content);
-    sliceChanges($content.find('.changes'));
+    setTimeout(function() {
+      initReadmore($content);
+      $content.addClass('slide-in');
+      sliceChanges($content.find('.changes'));
+    }, 100);
   };
 
   this.next = function() {
