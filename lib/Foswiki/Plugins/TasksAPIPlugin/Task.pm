@@ -408,6 +408,7 @@ sub update {
         $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
+    my $changed = 0;
     # just update the comment if a changeset id is given
     if ( $data{cid} ) {
         my $cid = delete $data{cid};
@@ -420,6 +421,8 @@ sub update {
         } else {
             $meta->putKeyed('TASKCHANGESET', $set);
         }
+
+        $changed = 1;
     } elsif (@changes || @comment) {
         # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
@@ -433,7 +436,14 @@ sub update {
             @comment
         });
         $self->{changeset} = $newid;
+        $changed = 1;
     }
+
+    if ($changed) {
+        $self->{fields}{Changed} = time;
+        $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
+    }
+
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
 
     $self->notify($notify);
