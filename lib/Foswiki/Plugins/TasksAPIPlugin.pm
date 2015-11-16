@@ -256,32 +256,29 @@ sub query {
 
         if ($singles{$q}) {
             $q = 't.id' if $q eq 'id';
-            if (ref($v) eq 'ARRAY') {
-                $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
-                push @args, @$v;
-            } else {
-                $filter .= "$filterprefix $q = ?";
-                push @args, $v;
-            }
-            $filterprefix = ' AND';
-            next;
+        } else {
+            my $t = "j_$q";
+            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
+            $joins{$q} = 1;
+            $order = "$t.value" if $order eq $q;
+            $q = "$t.value";
         }
 
-        # multi field
-        my $t = "j_$q";
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
-        $joins{$q} = 1;
-        if (defined $v) {
-            if (ref $v eq 'ARRAY') {
-                $filter .= "$filterprefix $t.value IN(". join(',', map { '?' } @$v) .")";
-                push @args, @$v;
+        if (ref($v) eq 'ARRAY') {
+            $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
+            push @args, @$v;
+        } elsif (ref($v) eq 'HASH') {
+            if ($v->{type} eq 'range') {
+                $filter .= "$filterprefix $q BETWEEN ? AND ?";
+                push @args, $v->{from}, $v->{to};
             } else {
-                $filter .= "$filterprefix $t.value = ?";
-                push @args, $v;
+                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
-            $filterprefix = ' AND';
+        } else {
+            $filter .= "$filterprefix $q = ?";
+            push @args, $v;
         }
-        $order = "$t.value" if $order eq $q;
+        $filterprefix = ' AND';
     }
 
     if ($order && !$singles{$order} && !$joins{$order}) {
