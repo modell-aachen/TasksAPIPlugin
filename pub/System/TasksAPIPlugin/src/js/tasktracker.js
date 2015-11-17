@@ -164,7 +164,7 @@
       }
 
       loadTasks( $this, self.opts.currentState, true );
-
+			hideInformees();
       var handleStatusFilterChanged = function() {
         var $select = $(this);
         var url = getViewUrl() + '?state=' + $select.val();
@@ -683,8 +683,33 @@
 
     return false;
   };
-
-
+	var hideInformees = function(){
+		$('.task-details .task-meta-entry .fa-users').each(function(){
+			if($(this).parent().find('.task-informee').length == 0){
+				informeesElem = $(this).parent().find('span').last();
+				if(informeesElem.hasClass('title')){
+					return;
+				}
+					
+				informeesArray = informeesElem.html().split(',');
+				if(informeesArray.length <2){
+					return;
+				}
+				firstInformee = informeesArray[0];
+				newDiv = '<span>'+firstInformee+',... <div class="task-informee">';
+				informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
+				$.each(informeesArray,function(index,value){
+					if(index == 0)
+						newDiv += this;
+					else
+						newDiv += ', '+this;
+				});
+				newDiv += '</div></span>';//<p class="task-informee-a"><a class="more-changes" href="#">'+jsi18n.get("tasksapi", "Show more")+'</a></p>
+				informeesElem.remove();
+				$(newDiv).insertAfter($(this).parent().find('span'));
+			}
+		});
+	};
   $(document).ready( function() {
     if (CKEDITOR) {
       CKEDITOR.disableAutoInline = true;
