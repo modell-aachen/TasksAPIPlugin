@@ -91,12 +91,6 @@ TasksPanel = function(tasktracker) {
   var attachHandler = function() {
     detachHandler();
 
-    // self.tracker.on('transitionend', '.content.slide-in', function() {
-    //   var $content = $(this);
-    //   initReadmore($content);
-    //   sliceChanges($content.find('.changes'));
-    // });
-
     window.onkeydown = window.onkeyup = function(e) {
       isCtrlKeyDown = e.ctrlKey;
 
@@ -1054,6 +1048,15 @@ sliceChanges(self.savedStates.parent.find('.changes'));
           }
         });
       }
+
+      // Fixes MA #10193
+      $ed.find('select.foswikiSelect2Field option').each(function() {
+        if (this.attributes && this.attributes.selected) {
+          if (this.attributes.selected.value === 'selected') {
+            this.selected = true;
+          }
+        }
+      });
     }).fail( error ).always( window.tasksapi.unblockUI );
 
     return false;
