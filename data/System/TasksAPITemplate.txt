@@ -508,23 +508,49 @@
 </div></noautolink>%TMPL:END%
 
 
+
+
 %{title and filter (select) areas}%
 %TMPL:DEF{"tasksapi::grid::filter"}%%{
 }%<div class="filter no-print">
   <div>
     <div class="options">
       <span class="title">$grid_title</span>%{
-      }%%TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%%{
+      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
+      }%%TMPL:P{"tasksapi::grid::filter::collection"}%%{
+      }%%ENDTWISTY%%{
     }%</div>%{
     }%%TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%%{
 }%</div>
 </div>%TMPL:END%
 
 
+%{filter templates}%
+%TMPL:DEF{"tasksapi::grid::filter::collection"}%%{
+}%%TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::created"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::changed"}%%{
+}%<div class="btn-filter-container">
+  <a class="btn-filter btn-apply" href="#">%MAKETEXT{"Apply"}%</a>
+  <a class="btn-filter btn-reset" href="#">%MAKETEXT{"Reset"}%</a>
+</div>%{
+}%%TMPL:END%
+
+
 %{the status select}%
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
-}%<span class="hint">%MAKETEXT{"Filter by state"}%:</span>
-  <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
+}%%TASKSFILTER{"Status"}%%{
+}%%TMPL:END%
+
+%{the created filter}%
+%TMPL:DEF{"tasksapi::grid::filter::created"}%%{
+}%%TASKSFILTER{"Created" range="1" max="true"}%%{
+}%%TMPL:END%
+
+%{the changed filter}%
+%TMPL:DEF{"tasksapi::grid::filter::changed"}%%{
+}%%TASKSFILTER{"Changed" range="1" max="true"}%%{
+}%%TASKSFILTER{"Title"}%%{
 }%%TMPL:END%
 
 

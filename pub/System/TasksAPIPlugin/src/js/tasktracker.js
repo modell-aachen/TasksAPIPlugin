@@ -54,6 +54,9 @@
           return false;
       });
 
+      $this.on('click', '.btn-filter.btn-apply', applyFilter);
+      $this.on('click', '.btn-filter.btn-reset', resetFilter);
+
       $this.on('mouseenter', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
         if ( $i.hasClass('closed') ) {
@@ -155,7 +158,7 @@
 
       var $tasks = self.opts.container;
       var $filter = $this.children('.filter');
-      var $status = $filter.find('select[name="status"]');
+      var $status = $filter.find('select[name="Status"]');
 
       var params = parseQueryParams();
       if ( params.state ) {
@@ -164,22 +167,22 @@
       }
 
       loadTasks( $this, self.opts.currentState, true );
-			hideInformees();
-      var handleStatusFilterChanged = function() {
-        var $select = $(this);
-        var url = getViewUrl() + '?state=' + $select.val();
+      hideInformees();
+      // var handleStatusFilterChanged = function() {
+      //   var $select = $(this);
+      //   var url = getViewUrl() + '?state=' + $select.val();
 
-        if ( typeof window.location.hash === typeof '' && /jqTab/.test(window.location.hash) ) {
-          var tabId = window.location.hash.replace('!', '');
-          var $tab = $(tabId);
-          var cls = $tab.attr('class');
-          var tab = cls.replace(/(current|jqTab)/, '');
-          url += '&tab=' + tab;
-        }
-        window.location = url;
-      };
+      //   if ( typeof window.location.hash === typeof '' && /jqTab/.test(window.location.hash) ) {
+      //     var tabId = window.location.hash.replace('!', '');
+      //     var $tab = $(tabId);
+      //     var cls = $tab.attr('class');
+      //     var tab = cls.replace(/(current|jqTab)/, '');
+      //     url += '&tab=' + tab;
+      //   }
+      //   window.location = url;
+      // };
 
-      $status.on( 'change', handleStatusFilterChanged );
+      // $status.on( 'change', handleStatusFilterChanged );
       var findTask = function(id) {
         return self.opts.container.find('.task:visible').filter( function() {
           return $(this).data('id') === id;
@@ -620,6 +623,116 @@
     });
 
     return false;
+  };
+
+  var applyFilter = function() {
+    var $filter = $(this);
+    var $tracker = $filter.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
+    var filter = readFilter.call($filter.closest('.filter'));
+
+    // stringify
+    var params = [];
+    for (var p in filter) {
+      if (typeof filter[p] === 'object') {
+        if (filter[p].type === 'range') {
+          params.push('f_' + p + '_r=' + filter[p].from + '_' + filter[p].to);
+        } else if (filter[p].type === 'like') {
+          params.push('f_' + p + '_l=' + filter[p].substring);
+        }
+      } else {
+        params.push('f_' + p + '=' + filter[p]);
+      }
+    }
+
+    var url = window.location.pathname + '?' + params.join('&');
+    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
+    var $table = $tracker.children('.tasks-table');
+    window.tasksapi.blockUI();
+    $table.children('.tasks').load(target, function(resp, status, xhr) {
+      window.tasksapi.unblockUI();
+
+      if (status === 'error') {
+        error(status, resp, xhr);
+      }
+    });
+
+    return false;
+  };
+
+  var resetFilter = function() {
+    console.log('reset');
+    return false;
+  };
+
+  var readFilter = function() {
+    var q = {};
+    $(this).find('input[name], select[name]').each(function() {
+      var $filter = $(this);
+      var name = $filter.attr('name');
+      if (!name || /^\s*$/.test(name)) {
+        return;
+      }
+
+      var val = $filter.val();
+      if (!val || /^\s*$/.test(val)) {
+        return;
+      }
+
+      if (/-/.test(name)) {
+        var type = /like$/.test(name) ? 'like' : 'range';
+        var aname = name.replace(/-(from|to|like)/, '');
+        if (!q[aname]) {
+          q[aname] = {type: type};
+        }
+
+        if (q.type === 'range') {
+          if (/-from$/.test(name)) {
+            q[aname].from = parseInt(val);
+          } else {
+            q[aname].to = parseInt(val);
+          }
+        } else {
+          q[aname].substring = val;
+        }
+      } else {
+        q[name] = val
+      }
+    });
+
+    // Fix 'from' and 'to' fields:
+    // When filtering by date (epoch) we need to make sure to ignore an epoch's
+    // time component.
+    if (q.type === 'range') {
+      for (var p in q) {
+        if (typeof q[p] !== 'object') continue;
+
+        if (q[p].from) {
+          var from = new Date();
+          from.setTime(q[p].from * 1e3);
+          from.setHours(0);
+          from.setMinutes(0);
+          from.setSeconds(0);
+          q[p].from = Math.round(from.getTime()/1e3);
+        } else {
+          q[p].from = 0;
+        }
+
+        var to = new Date();
+        if (q[p].to) {
+          to.setTime(q[p].to * 1e3);
+        } else {
+          to.setTime(q[p].from * 1e3)
+        }
+
+        to.setHours(23);
+        to.setMinutes(59);
+        to.setSeconds(59);
+        q[p].to = Math.round(to.getTime()/1e3);
+      }
+    }
+
+    return q;
   };
 
   var handlePager = function() {

@@ -333,8 +333,29 @@ msgstr "Meine geschlossenen Aufgaben"
 msgid "Filter by state"
 msgstr "Filter nach Status"
 
+msgid "State"
+msgstr "Status"
+
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "Changed"
+msgstr "Geändert"
+
 msgid "Page %1 of %2"
 msgstr "Seite %1 von %2"
 
 msgid "Attachments will be uploaded after you press 'Save'"
 msgstr "Anhänge werden hochgeladen, nachdem Sie 'Speichern' drücken"
+
+msgid "Show filter"
+msgstr "Filter anzeigen"
+
+msgid "Hide filter"
+msgstr "Filter verbergen"
+
+msgid "Apply"
+msgstr "Anwenden"
+
+msgid "Reset"
+msgstr "Zurücksetzen"

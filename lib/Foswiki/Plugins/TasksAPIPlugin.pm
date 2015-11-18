@@ -110,6 +110,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&tagAmpel );
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
+    Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
@@ -271,6 +272,9 @@ sub query {
             if ($v->{type} eq 'range') {
                 $filter .= "$filterprefix $q BETWEEN ? AND ?";
                 push @args, $v->{from}, $v->{to};
+            } elsif ($v->{type} eq 'like') {
+                $filter .= "$filterprefix $q LIKE ?";
+                push @args, "\%$v->{substring}%";
             } else {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
@@ -776,6 +780,90 @@ sub tagSearch {
     return to_json({status => 'ok', data => \@res});
 }
 
+sub tagFilter {
+    my( $session, $params, $topic, $web, $meta ) = @_;
+    my $filter = $params->{_DEFAULT} || $params->{field} || '';
+    return '' unless $filter;
+
+    my $sys = $Foswiki::cfg{SystemWebName} || 'System';
+    my $ftopic = $params->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $isrange = $params->{range} || 0;
+    my $ismulti = $params->{multi} || 0;
+    my $min = $params->{min} || '';
+    my $minto = $params->{minto} || '';
+    my $minfrom = $params->{minfrom} || '';
+    my $max = $params->{max} || '';
+    my $maxto = $params->{maxto} || '';
+    my $maxfrom = $params->{maxfrom} || '';
+    my $format = $params->{format} || ''; # ToDo
+    my $title = $params->{title} || '';
+
+    my $form = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $ftopic) );
+    my $fields = $form->getFields;
+    my @html = ('<div>');
+    foreach my $f (@$fields) {
+        next unless $f->{name} eq $filter;
+        $title = $f->{title} || $f->{name} unless $title;
+        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>");
+
+        if ($f->{type} =~ /^date2?$/) {
+            my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
+            my $dmax = ($maxfrom || $max) ? "data-max=\"" . ($maxfrom || $max) . "\"" : '';
+            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            if ($isrange) {
+                $dmin = ($minto || $min) ? "data-min=\"" . ($minto || $min) . "\"" : '';
+                $dmax = ($maxto || $max) ? "data-max=\"" . ($maxto || $max) . "\"" : '';
+                push(@html, "<span>-</span>");
+                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            }
+        } elsif ($f->{type} =~ /^text$/) {
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\">");
+        } elsif ($f->{type} =~ /^select/) {
+            push(@html, "<select name=\"$filter\" class=\"filter\">");
+            my @opts = ();
+            my @labels = ();
+            my @arr = split(',', $f->{value});
+            foreach my $a (@arr) {
+                next if ($f->{name} eq 'Status' && $a =~ /deleted/ && !Foswiki::Func::isAnAdmin());
+                $a =~ s/(^\s*)|(\s*$)//g;
+                if ( $f->{type} =~ m/values/i ) {
+                    my @pair = split('=', $a);
+                    push(@opts, pop @pair);
+                    push(@labels, pop @pair);
+                } else {
+                    push(@opts, $a);
+                }
+            }
+
+            my @options = ();
+            if ( scalar @opts eq scalar @labels) {
+                for (my $i=0; $i < scalar @opts; $i++) {
+                    my $val = $opts[$i];
+                    $val =~ s/(^\s*)|(\s*$)//g;
+                    my $label = $labels[$i];
+                    $label =~ s/(^\s*)|(\s*$)//g;
+                    push(@options, "<option value=\"$val\">$label</option>")
+                }
+            } else {
+                for (my $i=0; $i < scalar @opts; $i++) {
+                    my $val = $opts[$i];
+                    $val =~ s/(^\s*)|(\s*$)//g;
+                    push(@options, "<option value=\"$val\">$val</option>")
+                }
+            }
+
+            push(@options, "<option value=\"all\">%MAKETEXT{\"all\"}%</option>");
+            push(@html, @options);
+            push(@html, "</select>");
+        } elsif ($f->{type} =~ /^user/) {
+            # ToDo
+        }
+    }
+
+    push(@html, '</div>');
+    join('', @html);
+}
+
 sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
     my $res;
@@ -1082,6 +1170,9 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
     if ($readonly) {
         $allowCreate = 0;
         $allowUpload = 0;
@@ -1205,9 +1296,8 @@ sub tagGrid {
         }
     };
 
-    if ( $req->param('state') && $override ) {
+    if ( $req->param('state') && $override && !$req->param('fStatus') ) {
         if ( $req->param('state') eq 'all' ) {
-            $query->{Status} = [qw(open closed)];
             if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
                 $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
             }
@@ -1220,10 +1310,42 @@ sub tagGrid {
         $mapstates->($query, %settings);
     }
 
+    my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
+    foreach my $l (@list) {
+        my $val = $req->param("f_$l");
+        if ($l !~ /_(l|r)$/) {
+            $query->{$l} = $val;
+        } else {
+            my %range;
+
+            if ($l =~ /_r$/) {
+                my @arr = split(/_/, $val);
+                $l =~ s/_r$//;
+                %range = (
+                    type => 'range',
+                    from => int(@arr[0]),
+                    to => int(@arr[1])
+                );
+            } else {
+                $l =~ s/_l$//;
+                %range = (
+                    type => 'like',
+                    substring => $val,
+                );
+            }
+
+            $query->{$l} = \%range;
+        }
+    }
+
+    if ($query->{Status} eq 'all') {
+        $query->{Status} = [qw(open closed)];
+    }
+
     if ( $req->param('id') ) {
         $query->{id} = $req->param('id');
     }
-
+Foswiki::Func::writeWarning( to_json($query) );
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
@@ -1276,6 +1398,9 @@ sub tagGrid {
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
     my $lang = $session->i18n->language();
     $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
+require Foswiki::Form::Select2;
+Foswiki::Form::Select2->addJavascript();
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
@@ -1336,7 +1461,6 @@ PAGER
         $grid =~ s#</div></noautolink>$#$pager</div></noautolink>#;
         return $grid
     }
-
 
     return $grid;
 }
