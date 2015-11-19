@@ -1,0 +1,48 @@
+%META:TOPICPARENT{name="TasksAPIPlugin"}%
+---+ TASKSFILTER macro
+
+_This is a macro from [[TasksAPIPlugin]], used to generate filter elements within task grids._
+
+%STARTINCLUDE%
+
+Creates input fields by which tasks can be filtered by the entered selection.
+
+---++++ Create Filters
+*Note:* The <code>%<nop>TASKFILTER%</code> macro is only valid within a task grid!
+
+The following paramters are supported:
+   * <code>range</code>: Renders a second date picker to let the user chose a date interval.
+      * *applies to*: date fields
+   * <code>multi</code>: TBD
+      * *not implemented yet*
+   * <code>min</code>: <code>true</code> to disable future dates, day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>minfrom</code>: Day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>minto</code>: Day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>max</code>: <code>true</code> to disable future dates, day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>maxfrom</code>: Day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>maxto</code>: Day offset to enable/disable dates within the date picker. Offset starts from today.
+      * *applies to*: date fields
+   * <code>format</code>: A format string used to render the filter.
+      * *not implemented yet*
+   * <code>title</code>: specifies a filter's title. Defaults to the field name.
+
+---++++ Examples
+Creates two date pickers by which the user can select a date interval. Tasks
+within that interval are shown within the grid. Both pickers can only select
+dates before today's date (max="true").
+<verbatim>%TASKSFILTER{"Created" range="1" max="true"}%</verbatim>
+
+Renders a single date picker by which the user can filter a task grid by a task's
+changed date.
+<verbatim>%TASKSFILTER{"Changed"}%</verbatim>
+
+Renders a select element to allow filtering tasks by their form field 'Status'.
+<verbatim>%TASKSFILTER{"Status"}%</verbatim>
+
+Renders an input element to allow filtering tasks by their title.
+<verbatim>%TASKSFILTER{"Title"}%</verbatim>

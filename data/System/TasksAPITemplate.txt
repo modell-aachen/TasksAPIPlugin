@@ -550,7 +550,6 @@
 %{the changed filter}%
 %TMPL:DEF{"tasksapi::grid::filter::changed"}%%{
 }%%TASKSFILTER{"Changed" range="1" max="true"}%%{
-}%%TASKSFILTER{"Title"}%%{
 }%%TMPL:END%
 
 

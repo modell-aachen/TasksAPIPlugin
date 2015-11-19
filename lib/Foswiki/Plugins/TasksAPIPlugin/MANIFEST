@@ -10,6 +10,7 @@ data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPITemplate.txt 0644 Task form
 data/System/VarTASKINFO.txt 0644 Docs
 data/System/VarTASKSGRID.txt 0644 Docs
+data/System/VarTASKSFILTER.txt 0644 Docs
 lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0644

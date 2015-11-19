@@ -262,6 +262,9 @@ The following ACL types currently exist:
 ---+++ TASKSGRID
 %INCLUDE{"VarTASKSGRID"}%
 
+---+++ TASKSFILTER
+%INCLUDE{"VarTASKSFILTER"}%
+
 ---+++ TASKINFO
 %INCLUDE{"VarTASKINFO"}%
 

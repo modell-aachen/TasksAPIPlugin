@@ -286,9 +286,11 @@ sub query {
     }
 
     if ($order && !$singles{$order} && !$joins{$order}) {
-        my $t = "j_$order";
+        my $t = "$order";
+        $t = "j_$t" unless $t =~ /^j_/;
         $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
-        $order = "$t.value";
+        $order = "$t";
+        $order .= ".value" unless $order =~ /\.value$/;
     }
     $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
     $order .= " DESC" if $order && $opts{desc};
@@ -1345,7 +1347,7 @@ sub tagGrid {
     if ( $req->param('id') ) {
         $query->{id} = $req->param('id');
     }
-Foswiki::Func::writeWarning( to_json($query) );
+
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
@@ -1427,7 +1429,7 @@ SCRIPT
         my $pagination = '';
 
         my @q = ("tid=$id");
-        push(@q, 'state=' . $req->param('state')) if $req->param('state') && $override;
+        push(@q, 'state=' . ($req->param('state') || $req->param('f_Status'))) if ($req->param('state') || $req->param('f_Status')) && $override;
         push(@q, 'order=' . $req->param('order')) if $req->param('order') && $override;
         push(@q, 'desc=' . $req->param('desc')) if defined $req->param('desc') && $override;
         push(@q, 'tab=' . $req->param('tab')) if $req->param('tab');
