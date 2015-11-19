@@ -1,4 +1,4 @@
-%{<varbatim>}%
+%{<verbatim>}%
 
 %{
   Editor Templates
@@ -648,4 +648,4 @@
 </tr>%{
 }%%TMPL:END%
 
-%{</varbatim>}%
+%{</verbatim>}%
