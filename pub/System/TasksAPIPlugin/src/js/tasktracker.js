@@ -187,6 +187,10 @@
       };
 
       self.tasksPanel.on( 'afterSave', function( evt, task ) {
+        if (evt.ignoreSelf) {
+          return;
+        }
+
         var $task = $(createTaskElement(task));
         var $existing = findTask($task.data('id'));
         var $next = $existing.next();
@@ -430,7 +434,8 @@
     var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
-    var opts = $task.closest('.tasktracker').data('tasktracker_options');
+    var $tracker = $task.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
     var payload = {
       id: $task.data('id'),
     };
@@ -510,6 +515,14 @@
           }
 
           $task.replaceWith($newTask);
+
+          // Hotfix.
+          // Some apps, scripts, ..., might listen on the afterSave event which
+          // is fired by the taskpanel. Those listeners were ignored by updating
+          // a task through the API. For that reason we trigger the afterSave
+          // event here...
+          var afterSave = $.Event('afterSave', {ignoreSelf: true});
+          $tracker[0].tasksPanel.trigger(afterSave, $newTask.data('task_data'));
         } else {
           $task.remove();
           if ($next.hasClass('task-children-container')) {
