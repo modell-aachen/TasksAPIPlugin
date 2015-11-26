@@ -450,7 +450,7 @@ TasksPanel = function(tasktracker) {
 
             var $dialog = $('.sweet-alert.show-sweet-alert.visible');
             var comment = $dialog.find('div[name="comment"]').html();
-            if ( !/^[\s\n\r]*$/.test(comment) ) {
+            if ( !/^[\s\n\r]*$/.test(comment) && !/^\s*<br\s*\/?>\s*$/.test(comment)) {
               payload.comment = comment;
             }
 
@@ -703,6 +703,9 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     var $cb = self.comment.find('input[name="close"]');
     var $cmt = self.comment.children('div[contenteditable]');
     var comment = $cmt.html();
+    if (/^\s*<br\s*\/?>\s*$/.test(comment)) {
+      comment = '';
+    }
 
     var payload = {
       id: self.currentTask.data('id'),
@@ -741,10 +744,15 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     var $container = $set.parent();
     $container.data('saved_comment', '');
 
+    var cmt = $set.html() || '';
+    if (/^\s*<br\s*\/?>\s*$/.test(cmt)) {
+      cmt = '';
+    }
+
     var payload = {
       id: self.currentTask.data('id'),
       cid: $container.data('id'),
-      comment: $set.html() || ''
+      comment: cmt
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
@@ -1164,7 +1172,12 @@ sliceChanges(self.savedStates.parent.find('.changes'));
 
     var $cmt = editor.find('div[name="comment"]');
     if ($cmt.length) {
-      data.comment = $cmt.html();
+      var cmt = $cmt.html();
+      if (/^\s*<br\s*\/?>\s*$/.test(cmt)) {
+        cmt = '';
+      }
+
+      data.comment = cmt;
     }
 
     return data;
