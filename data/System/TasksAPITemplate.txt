@@ -527,7 +527,8 @@
 
 %{filter templates}%
 %TMPL:DEF{"tasksapi::grid::filter::collection"}%%{
-}%%TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::status"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::type"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::created"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::changed"}%%{
 }%<div class="btn-filter-container">
@@ -540,6 +541,11 @@
 %{the status select}%
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
 }%%TASKSFILTER{"Status"}%%{
+}%%TMPL:END%
+
+%{the type select}%
+%TMPL:DEF{"tasksapi::grid::filter::type"}%%{
+}%%TASKSFILTER{"Type"}%%{
 }%%TMPL:END%
 
 %{the created filter}%
@@ -565,7 +571,7 @@
 %TMPL:DEF{"tasksapi::grid::caption"}%<tr>%{
 }%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
-  <th data-sort="Type">%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
   <th data-sort="AssignedTo">%MAKETEXT{"Assigned to"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>

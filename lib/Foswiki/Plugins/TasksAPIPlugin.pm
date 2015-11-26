@@ -854,7 +854,12 @@ sub tagFilter {
                 }
             }
 
-            push(@options, "<option value=\"all\">%MAKETEXT{\"all\"}%</option>");
+            my $selected = '';
+            if ($f->{name} ne 'Status') {
+                $selected = 'selected="selected"';
+            }
+
+            push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
             push(@html, @options);
             push(@html, "</select>");
         } elsif ($f->{type} =~ /^user/) {
@@ -1151,7 +1156,6 @@ sub tagGrid {
     my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
-    my $stateless = $params->{stateless} || 0;
     my $templateFile = $params->{templatefile};
     my $allowCreate = $params->{allowcreate};
     $allowCreate = 1 unless defined $allowCreate;
@@ -1235,7 +1239,6 @@ sub tagGrid {
         desc => $desc,
         allowupload => $allowUpload,
         keepclosed => $keepclosed,
-        stateless => $stateless,
         sortable => $sortable,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
@@ -1264,7 +1267,6 @@ sub tagGrid {
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
-    $fctx->{task_stateless} = 1 if $stateless;
     $fctx->{task_readonly} = 1 if $readonly;
     $fctx->{task_showexpandercol} = 1 if $depth;
 
@@ -1304,7 +1306,7 @@ sub tagGrid {
         }
     };
 
-    if ( $req->param('state') && $override && !$req->param('fStatus') ) {
+    if ( $req->param('state') && $override && !$req->param('f_Status') ) {
         if ( $req->param('state') eq 'all' ) {
             if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
                 $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
@@ -1314,7 +1316,7 @@ sub tagGrid {
             $mapstates->($query, %settings);
         }
     } else {
-        $query->{Status} = 'open' if !exists $query->{Status};
+        $query->{Status} = 'open' if !exists $query->{Status} && !$req->param('f_Status');
         $mapstates->($query, %settings);
     }
 
@@ -1346,8 +1348,26 @@ sub tagGrid {
         }
     }
 
-    if ($query->{Status} eq 'all') {
-        $query->{Status} = [qw(open closed)];
+    if ($form) {
+        while (my ($k, $v) = each %$query) {
+            if ($v eq 'all') {
+                my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
+                my $field = $f->getField($k);
+                next unless $field->{type} =~ /^select/;
+                my @vals = split(/\s*,\s*/, $field->{value});
+                my @arr = ();
+                foreach my $v (@vals) {
+                    next if ($k eq 'Status' && $v =~ /deleted/ && !Foswiki::Func::isAnAdmin());
+                    if ( $field->{type} =~ m/values/i ) {
+                        my @pair = split(/\s*=\s*/, $v);
+                        push(@arr, pop @pair);
+                    } else {
+                        push(@arr, $v);
+                    }
+                }
+                $query->{$k} = \@arr;
+            }
+        }
     }
 
     if ( $req->param('id') ) {
@@ -1388,7 +1408,6 @@ sub tagGrid {
     $grid =~ s/\$create_text/$createText/ge;
 
     delete $fctx->{task_allowcreate};
-    delete $fctx->{task_stateless};
     delete $fctx->{task_showexpandercol};
 
     my @jqdeps = (

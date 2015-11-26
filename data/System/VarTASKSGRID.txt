@@ -40,7 +40,6 @@ The following parameters are available:
 | showattachments="..." | Show existing attachments for each task | 0 |
 | sortable="..." | Enable client-side sorting by column | 0 |
 | states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all'). See also =statesmapping= and =mappingfield= | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
-| stateless="..." | Enable to hide the status filter widget | 0 |
 | tasktemplate="..." | Name of the template used to render a task entry | tasksapi::task |
 | templatefile="..." | Name of the template file to be read before applying templates | TasksAPITemplate |
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |

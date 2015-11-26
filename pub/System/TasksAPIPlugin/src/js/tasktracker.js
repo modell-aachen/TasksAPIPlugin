@@ -133,7 +133,18 @@
       self.opts.cntHeight = $this.height();
       self.opts.container = $this.children('.tasks-table').children('.tasks');
 
-      self.opts.currentState = 'open';
+      var curstate = 'open';
+      if (typeof self.opts.query === typeof '') {
+        try {
+          json = $.parseJSON(self.opts.query);
+          if (typeof json.Status === typeof '') {
+            curstate = json.Status;
+          }
+        } catch (e) {
+          erorr(e);
+        }
+      }
+      self.opts.currentState = curstate;
       $this.data('tasktracker_options', self.opts);
 
       if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
@@ -158,9 +169,9 @@
       var $status = $filter.find('select[name="Status"]');
 
       var params = parseQueryParams();
-      if ( params.state ) {
-        self.opts.currentState = params.state;
-        $status.val(params.state);
+      if ( params.f_Status || params.state ) {
+        self.opts.currentState = params.f_Status || params.state;
+        $status.val(params.f_Status || params.state);
       }
 
       loadTasks( $this, self.opts.currentState, true );
@@ -297,7 +308,7 @@
 
     if ( opts.query ) {
       var json = $.parseJSON( opts.query );
-      if ( json.Status && opts.currentState ) {
+      if ( !json.Status && opts.currentState ) {
         json.Status = opts.currentState;
         opts.query = JSON.stringify( json );
       }
