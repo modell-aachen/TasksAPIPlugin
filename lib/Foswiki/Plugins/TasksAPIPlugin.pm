@@ -1333,8 +1333,8 @@ sub tagGrid {
                 $l =~ s/_r$//;
                 %range = (
                     type => 'range',
-                    from => int(@arr[0]),
-                    to => int(@arr[1])
+                    from => int($arr[0]),
+                    to => int($arr[1])
                 );
             } else {
                 $l =~ s/_l$//;
