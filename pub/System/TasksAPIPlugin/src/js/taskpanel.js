@@ -224,7 +224,7 @@ TasksPanel = function(tasktracker) {
                 .done(function(response) {
                   if (response.status === 'ok' && response.data) {
                     var afterSave = $.Event('afterSave');
-                    self.trigger(afterSave, response.data);
+                    tasktracker.trigger(afterSave, response.data);
 
                     var $new = self.panel.children('.content.slide-in:last-child').detach();
                     self.panel.empty();
@@ -343,7 +343,7 @@ TasksPanel = function(tasktracker) {
         .done(function(response) {
           if ( response.status === 'ok' && response.data ) {
             var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, response.data );
+            tasktracker.trigger( afterSave, response.data );
             onCancel();
             if (!self.isInitialUpload) {
               toggleUpload();
@@ -482,7 +482,7 @@ TasksPanel = function(tasktracker) {
             }, 500);
 
             var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, response.data );
+            tasktracker.trigger( afterSave, response.data );
           });
       });
 
@@ -639,7 +639,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     }
 
     var beforeSave = $.Event( 'beforeSave' );
-    self.trigger( beforeSave, task );
+    tasktracker.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
       return false;
     }
@@ -656,7 +656,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
           }
 
           var afterSave = $.Event( 'afterSave' );
-          self.trigger( afterSave, data );
+          tasktracker.trigger( afterSave, data );
         };
 
         if ( self.isCreate ) {
@@ -727,7 +727,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
-      self.trigger( afterSave, response.data );
+      tasktracker.trigger( afterSave, response.data );
 
       // clear comment container
       $cmt.empty();
@@ -765,7 +765,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).always(window.tasksapi.unblockUI).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
-      self.trigger( afterSave, response.data );
+      tasktracker.trigger( afterSave, response.data );
       onCancel();
     });
   };
@@ -954,7 +954,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
 
     if ( self.isCreate ) {
       var beforeCreate = $.Event( 'beforeCreate' );
-      self.trigger( beforeCreate, opts );
+      tasktracker.trigger( beforeCreate, opts );
       if( beforeCreate.isDefaultPrevented() ) {
         return false;
       }
@@ -1567,7 +1567,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
     }
 
     var beforeSave = $.Event( 'beforeSave' );
-    self.trigger( beforeSave, task );
+    tasktracker.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
       return false;
     }
@@ -1582,7 +1582,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
         }
 
         var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, response.data );
+        tasktracker.trigger( afterSave, response.data );
       });
   };
 

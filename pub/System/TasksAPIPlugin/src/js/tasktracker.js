@@ -184,7 +184,7 @@
         });
       };
 
-      self.tasksPanel.on( 'afterSave', function( evt, task ) {
+      $this.on( 'afterSave', function( evt, task ) {
         if (evt.ignoreSelf) {
           return;
         }
@@ -513,14 +513,8 @@
           }
 
           $task.replaceWith($newTask);
-
-          // Hotfix.
-          // Some apps, scripts, ..., might listen on the afterSave event which
-          // is fired by the taskpanel. Those listeners were ignored by updating
-          // a task through the API. For that reason we trigger the afterSave
-          // event here...
           var afterSave = $.Event('afterSave', {ignoreSelf: true});
-          $tracker[0].tasksPanel.trigger(afterSave, $newTask.data('task_data'));
+          $tracker.trigger(afterSave, $newTask.data('task_data'));
         } else {
           $task.remove();
           if ($next.hasClass('task-children-container')) {
