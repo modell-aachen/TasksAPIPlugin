@@ -1722,7 +1722,8 @@ sub tagInfo {
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
             my @vals = ();
-            if ($task->form->getField($field)->{type} =~ /\+multi/) {
+            my $f = $task->form->getField($field);
+            if (defined $f && $f->{type} =~ /\+multi/) {
                 @vals = split(/,\s?/, $val);
             } else {
                 push @vals, $val;
