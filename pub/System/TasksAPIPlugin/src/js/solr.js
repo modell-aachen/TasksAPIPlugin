@@ -52,7 +52,7 @@
     return deferred.promise();
   };
 
-  var showTask = function($task) {
+  var showTask = function($task, taskId) {
     getOverlay().done(function($overlay) {
       var $panel = $overlay.find('> .panel-wrapper > .panel');
       var $content = $('<div class="content"></div>');
@@ -60,10 +60,35 @@
       $view.appendTo($content);
       $panel.empty();
       $content.appendTo($panel);
-      $overlay.find('.panel-btn, .controls, .jqTabLabel').remove();
+      $overlay.find('.panel-btn, .controls').remove();
+      $overlay.find('.delete-attachment').replaceWith('<td></td>');
       $overlay.find('.task-changeset-add').remove();
       $overlay.find('.task-changeset-edit').remove();
       $overlay.find('.task-changeset-remove').remove();
+
+      $overlay.on('click', '.task-attachments tbody tr', function(evt) {
+        var $target = $(evt.target || evt. delegateTarget || evt.toElement);
+        if ( $target.is('a.hidden') ) {
+          return false;
+        }
+
+        var $row = $(this);
+        var file = $(this).find('a.hidden').attr('href');
+        var p = foswiki.preferences;
+        var url = [
+          p.SCRIPTURL,
+          '/rest',
+          p.SCRIPTSUFFIX,
+          '/TasksAPIPlugin/download?id=',
+          taskId,
+          '&file=',
+          file
+        ].join('');
+
+        window.open && window.open(url, '_blank');
+        return false;
+      });
+
       $overlay.fadeIn(300, function() {
         $('body').css('overflow', 'hidden');
         $overlay.children('.panel-wrapper').addClass('active');
@@ -119,7 +144,7 @@
 
         var task = response.data[0];
         var $task = $(task.html);
-        showTask($task);
+        showTask($task, id);
       });
 
       return false;
