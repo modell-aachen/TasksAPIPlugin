@@ -516,7 +516,7 @@
   <div>
     <div class="options">
       <span class="title">$grid_title</span>%{
-      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
+      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
       }%%TMPL:P{"tasksapi::grid::filter::collection"}%%{
       }%%ENDTWISTY%%{
     }%</div>%{
