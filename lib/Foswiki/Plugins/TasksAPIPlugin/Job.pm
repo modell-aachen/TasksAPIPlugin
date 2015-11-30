@@ -9,27 +9,37 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 
-# use Date::Manip;
+use Date::Manip;
 use JSON;
 
 *_db = \&Foswiki::Plugins::TasksAPIPlugin::db;
 
 sub create {
-    # my %params = @_;
-    # my $db = _db();
-    # my ($tid, $time, $type) = delete @params{'task_id', 'time', 'type'};
-    # if (my $task = delete $params{task}) {
-    #     $tid = $task->id;
-    # }
-    # if (ref $time && $time->isa('Date::Manip::Delta')) {
-    #     my $date = new Date::Manip::Date;
-    #     $date->parse('now');
-    #     $date->calc($time);
-    #     $time = $date->printf('%s');
-    # } elsif (ref $time && $time->isa('Date::Manip::Date')) {
-    #     $time = $time->printf('%s');
-    # }
-    # $db->do("INSERT INTO jobs (task_id, job_time, job_type, parameters) VALUES(?,?,?,?)", {}, $tid, $time, $type, encode_json(\%params));
+    my %params = @_;
+    my $db = _db();
+    my ($tid, $time, $type) = delete @params{'task_id', 'time', 'type'};
+    if (my $task = delete $params{task}) {
+        $tid = $task->id;
+    }
+    if (ref $time && $time->isa('Date::Manip::Delta')) {
+        my $date = new Date::Manip::Date;
+        $date->parse('now');
+        $date->calc($time);
+        $time = $date->printf('%s');
+    } elsif (ref $time && $time->isa('Date::Manip::Date')) {
+        $time = $time->printf('%s');
+    }
+    $db->do("INSERT INTO jobs (task_id, job_time, job_type, parameters) VALUES(?,?,?,?)", {}, $tid, $time, $type, encode_json(\%params));
+}
+
+sub remove {
+    my %params = @_;
+    my $db = _db();
+    my ($tid, $type) = delete @params{'task_id', 'type'};
+    if (my $task = delete $params{task}) {
+        $tid = $task->id;
+    }
+    $db->do("DELETE FROM jobs WHERE task_id=? AND job_type=?", {}, $tid, $type);
 }
 
 sub process {
@@ -51,6 +61,17 @@ sub process {
             $task->update(Status => 'open');
             $mark_done->();
             next;
+        }
+        if ($type eq 'remind') {
+            next unless $task->{fields}{Status} eq 'open';
+            print STDERR "Remind task: $task->{id}\n";
+            $task->notify('remind');
+            my $remind = $task->getPref('SCHEDULE_REMIND');
+            if ($remind) {
+                my $date = new Date::Manip::Date();
+                $date->parse($remind);
+                $db->do("UPDATE jobs SET job_time=? WHERE rowid=?", $date, $job->{rowid});
+            }
         }
     }
 }

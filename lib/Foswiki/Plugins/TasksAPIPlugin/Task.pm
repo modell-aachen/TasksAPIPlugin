@@ -321,6 +321,7 @@ sub create {
 
     $task->notify('created');
     $task->_postCreate();
+    $task->_postUpdate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
     $task;
 }
@@ -357,6 +358,8 @@ sub update {
     $meta->putKeyed('FORM', {
         name => $formName,
     });
+
+    $self->_preUpdate;
 
     my @changes;
     delete $data{TopicType};
@@ -405,6 +408,7 @@ sub update {
         $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
+    my $changed = 0;
     # just update the comment if a changeset id is given
     if ( $data{cid} ) {
         my $cid = delete $data{cid};
@@ -417,6 +421,8 @@ sub update {
         } else {
             $meta->putKeyed('TASKCHANGESET', $set);
         }
+
+        $changed = 1;
     } elsif (@changes || @comment) {
         # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
@@ -430,7 +436,14 @@ sub update {
             @comment
         });
         $self->{changeset} = $newid;
+        $changed = 1;
     }
+
+    if ($changed) {
+        $self->{fields}{Changed} = time;
+        $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
+    }
+
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
 
     $self->notify($notify);
@@ -442,6 +455,7 @@ sub update {
     } elsif ($notify eq 'reassigned') {
         $self->_postReassign;
     }
+    $self->_postUpdate;
 
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
@@ -483,21 +497,58 @@ sub _postCreate {
 }
 sub _postClose {
     my $self = shift;
+    Foswiki::Plugins::TasksAPIPlugin::Job::remove(
+        task => $self,
+        type => 'remind',
+    );
     if (my $reopen = $self->getPref('SCHEDULE_REOPEN')) {
         my $date = new Date::Manip::Date();
-        $date->parse($reopen);
-        Foswiki::Plugins::TasksAPIPlugin::Job::create(
-            type => 'reopen',
-            time => $date,
-            task => $self,
-        );
+        unless ($date->parse($reopen)) {
+            Foswiki::Plugins::TasksAPIPlugin::Job::create(
+                type => 'reopen',
+                time => $date,
+                task => $self,
+            );
+        }
     }
 }
 sub _postReopen {
-    # TODO
+    my $self = shift;
+    Foswiki::Plugins::TasksAPIPlugin::Job::remove(
+        task => $self,
+        type => 'reopen',
+    );
 }
 sub _postReassign {
     # TODO
+}
+
+sub _preUpdate {
+    my $self = shift;
+    my $remind = $self->getPref('SCHEDULE_REMIND');
+    $self->{_remindPrev} = $remind || '';
+}
+
+sub _postUpdate {
+    my $self = shift;
+    my $remind = $self->getPref('SCHEDULE_REMIND');
+    if (defined $remind && $remind ne $self->{_remindPrev}) {
+        delete $self->{_remindPrev};
+        Foswiki::Plugins::TasksAPIPlugin::Job::remove(
+            type => 'remind',
+            task => $self,
+        );
+        if ($remind ne '') {
+            my $date = new Date::Manip::Date();
+            unless ($date->parse($remind)) {
+                Foswiki::Plugins::TasksAPIPlugin::Job::create(
+                    type => 'remind',
+                    time => $date,
+                    task => $self,
+                );
+            }
+        }
+    }
 }
 
 sub solrize {

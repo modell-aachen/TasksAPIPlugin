@@ -1,4 +1,4 @@
-%{<varbatim>}%
+%{<verbatim>}%
 
 %{
   Editor Templates
@@ -384,14 +384,15 @@
           <span>%TASKINFO{field="Author" user="1"}%</span>
         </div>
       </div>
-      <div class="task-meta-entry">
+	  <div class="task-meta-entry">
         <i class="fa fa-angle-double-right"></i>
         <div>
           <span class="title">%MAKETEXT{"Assigned to"}%</span>
           <span>%TASKINFO{field="AssignedTo" user="1"}%</span>
         </div>
-      </div>
-      <div class="task-meta-entry">
+      </div>%{
+      }%%IF{"'%TASKINFO{field="Informees"}%'=''" else="<div class=\"task-meta-entry\"><i class=\"fa fa-users\"></i><div><span class=\"title\">$percntMAKETEXT{$quotInformees$quot}$percnt</span><span>%TASKINFO{field="Informees" user="1"}%</span></div></div>"}%%{
+      }%<div class="task-meta-entry">
         <i class="fa fa-calendar"></i>
         <div>
           <span class="title">%MAKETEXT{"Due date"}%</span>
@@ -507,23 +508,54 @@
 </div></noautolink>%TMPL:END%
 
 
+
+
 %{title and filter (select) areas}%
 %TMPL:DEF{"tasksapi::grid::filter"}%%{
 }%<div class="filter no-print">
   <div>
     <div class="options">
       <span class="title">$grid_title</span>%{
-      }%%TMPL:P{context="task_stateless" else="tasksapi::grid::filter::status"}%%{
+      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
+      }%%TMPL:P{"tasksapi::grid::filter::collection"}%%{
+      }%%ENDTWISTY%%{
     }%</div>%{
     }%%TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%%{
 }%</div>
 </div>%TMPL:END%
 
 
+%{filter templates}%
+%TMPL:DEF{"tasksapi::grid::filter::collection"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::status"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::type"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::created"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::changed"}%%{
+}%<div class="btn-filter-container">
+  <a class="btn-filter btn-apply" href="#">%MAKETEXT{"Apply"}%</a>
+  <a class="btn-filter btn-reset" href="#">%MAKETEXT{"Reset"}%</a>
+</div>%{
+}%%TMPL:END%
+
+
 %{the status select}%
 %TMPL:DEF{"tasksapi::grid::filter::status"}%%{
-}%<span class="hint">%MAKETEXT{"Filter by state"}%:</span>
-  <select name="status">%TASKINFO{expand="stateoptions"}%</select>%{
+}%%TASKSFILTER{"Status"}%%{
+}%%TMPL:END%
+
+%{the type select}%
+%TMPL:DEF{"tasksapi::grid::filter::type"}%%{
+}%%TASKSFILTER{"Type"}%%{
+}%%TMPL:END%
+
+%{the created filter}%
+%TMPL:DEF{"tasksapi::grid::filter::created"}%%{
+}%%TASKSFILTER{"Created" range="1" max="true"}%%{
+}%%TMPL:END%
+
+%{the changed filter}%
+%TMPL:DEF{"tasksapi::grid::filter::changed"}%%{
+}%%TASKSFILTER{"Changed" range="1" max="true"}%%{
 }%%TMPL:END%
 
 
@@ -539,7 +571,7 @@
 %TMPL:DEF{"tasksapi::grid::caption"}%<tr>%{
 }%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
-  <th data-sort="Type">%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
   <th data-sort="AssignedTo">%MAKETEXT{"Assigned to"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
@@ -622,4 +654,4 @@
 </tr>%{
 }%%TMPL:END%
 
-%{</varbatim>}%
+%{</verbatim>}%

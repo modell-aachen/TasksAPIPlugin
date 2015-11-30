@@ -110,6 +110,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&tagAmpel );
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
+    Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
 
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
@@ -256,38 +257,40 @@ sub query {
 
         if ($singles{$q}) {
             $q = 't.id' if $q eq 'id';
-            if (ref($v) eq 'ARRAY') {
-                $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
-                push @args, @$v;
-            } else {
-                $filter .= "$filterprefix $q = ?";
-                push @args, $v;
-            }
-            $filterprefix = ' AND';
-            next;
+        } else {
+            my $t = "j_$q";
+            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
+            $joins{$q} = 1;
+            $order = "$t.value" if $order eq $q;
+            $q = "$t.value";
         }
 
-        # multi field
-        my $t = "j_$q";
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
-        $joins{$q} = 1;
-        if (defined $v) {
-            if (ref $v eq 'ARRAY') {
-                $filter .= "$filterprefix $t.value IN(". join(',', map { '?' } @$v) .")";
-                push @args, @$v;
+        if (ref($v) eq 'ARRAY') {
+            $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
+            push @args, @$v;
+        } elsif (ref($v) eq 'HASH') {
+            if ($v->{type} eq 'range') {
+                $filter .= "$filterprefix $q BETWEEN ? AND ?";
+                push @args, $v->{from}, $v->{to};
+            } elsif ($v->{type} eq 'like') {
+                $filter .= "$filterprefix $q LIKE ?";
+                push @args, "\%$v->{substring}%";
             } else {
-                $filter .= "$filterprefix $t.value = ?";
-                push @args, $v;
+                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
-            $filterprefix = ' AND';
+        } else {
+            $filter .= "$filterprefix $q = ?";
+            push @args, $v;
         }
-        $order = "$t.value" if $order eq $q;
+        $filterprefix = ' AND';
     }
 
     if ($order && !$singles{$order} && !$joins{$order}) {
-        my $t = "j_$order";
+        my $t = "$order";
+        $t = "j_$t" unless $t =~ /^j_/;
         $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
-        $order = "$t.value";
+        $order = "$t";
+        $order .= ".value" unless $order =~ /\.value$/;
     }
     $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
     $order .= " DESC" if $order && $opts{desc};
@@ -779,6 +782,95 @@ sub tagSearch {
     return to_json({status => 'ok', data => \@res});
 }
 
+sub tagFilter {
+    my( $session, $params, $topic, $web, $meta ) = @_;
+    my $filter = $params->{_DEFAULT} || $params->{field} || '';
+    return '' unless $filter;
+
+    my $sys = $Foswiki::cfg{SystemWebName} || 'System';
+    my $ftopic = $params->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $isrange = $params->{range} || 0;
+    my $ismulti = $params->{multi} || 0;
+    my $min = $params->{min} || '';
+    my $minto = $params->{minto} || '';
+    my $minfrom = $params->{minfrom} || '';
+    my $max = $params->{max} || '';
+    my $maxto = $params->{maxto} || '';
+    my $maxfrom = $params->{maxfrom} || '';
+    my $format = $params->{format} || ''; # ToDo
+    my $title = $params->{title} || '';
+
+    my $form = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $ftopic) );
+    my $fields = $form->getFields;
+    my @html = ('<div>');
+    foreach my $f (@$fields) {
+        next unless $f->{name} eq $filter;
+        $title = $f->{title} || $f->{name} unless $title;
+        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>");
+
+        if ($f->{type} =~ /^date2?$/) {
+            my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
+            my $dmax = ($maxfrom || $max) ? "data-max=\"" . ($maxfrom || $max) . "\"" : '';
+            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            if ($isrange) {
+                $dmin = ($minto || $min) ? "data-min=\"" . ($minto || $min) . "\"" : '';
+                $dmax = ($maxto || $max) ? "data-max=\"" . ($maxto || $max) . "\"" : '';
+                push(@html, "<span>-</span>");
+                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            }
+        } elsif ($f->{type} =~ /^text$/) {
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\">");
+        } elsif ($f->{type} =~ /^select/) {
+            push(@html, "<select name=\"$filter\" class=\"filter\">");
+            my @opts = ();
+            my @labels = ();
+            my @arr = split(',', $f->{value});
+            foreach my $a (@arr) {
+                next if ($f->{name} eq 'Status' && $a =~ /deleted/ && !Foswiki::Func::isAnAdmin());
+                $a =~ s/(^\s*)|(\s*$)//g;
+                if ( $f->{type} =~ m/values/i ) {
+                    my @pair = split('=', $a);
+                    push(@opts, pop @pair);
+                    push(@labels, pop @pair);
+                } else {
+                    push(@opts, $a);
+                }
+            }
+
+            my @options = ();
+            if ( scalar @opts eq scalar @labels) {
+                for (my $i=0; $i < scalar @opts; $i++) {
+                    my $val = $opts[$i];
+                    $val =~ s/(^\s*)|(\s*$)//g;
+                    my $label = $labels[$i];
+                    $label =~ s/(^\s*)|(\s*$)//g;
+                    push(@options, "<option value=\"$val\">$label</option>")
+                }
+            } else {
+                for (my $i=0; $i < scalar @opts; $i++) {
+                    my $val = $opts[$i];
+                    $val =~ s/(^\s*)|(\s*$)//g;
+                    push(@options, "<option value=\"$val\">$val</option>")
+                }
+            }
+
+            my $selected = '';
+            if ($f->{name} ne 'Status') {
+                $selected = 'selected="selected"';
+            }
+
+            push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
+            push(@html, @options);
+            push(@html, "</select>");
+        } elsif ($f->{type} =~ /^user/) {
+            # ToDo
+        }
+    }
+
+    push(@html, '</div>');
+    join('', @html);
+}
+
 sub restSearch {
     my ($session, $subject, $verb, $response) = @_;
     my $res;
@@ -1064,26 +1156,34 @@ sub tagGrid {
     my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging} || 0;
     my $query = $params->{query} || '{}';
-    my $stateless = $params->{stateless} || 0;
     my $templateFile = $params->{templatefile};
-    my $allowCreate = $params->{allowcreate} || 1;
-    my $allowUpload = $params->{allowupload} || 1;
-    my $keepclosed = $params->{keepclosed} || 1;
+    my $allowCreate = $params->{allowcreate};
+    $allowCreate = 1 unless defined $allowCreate;
+    my $allowUpload = $params->{allowupload};
+    $allowUpload = 1 unless defined $allowUpload;
+    my $keepclosed = $params->{keepclosed};
+    $keepclosed = 1 unless defined $keepclosed;
     my $titlelength = $params->{titlelength} || 100;
     my $readonly = $params->{readonly} || 0;
-    my $showAttachments = $params->{showattachments} || 1;
+    my $showAttachments = $params->{showattachments};
+    $showAttachments = 1 unless defined $showAttachments;
     my $order = $params->{order} || 'Created';
     my $depth = $params->{depth} || 0;
     my $offset = $params->{offset} || 0;
-    my $sortable = $params->{sortable} || 1;
+    my $sortable = $params->{sortable};
+    $sortable = 1 unless defined $sortable;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
     my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $flavor = $params->{flavor} || $params->{flavour} || '';
-    my $desc = $params->{desc} || 1;
+    my $desc = $params->{desc};
+    $desc = 1 unless defined $desc;
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
+
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
 
     if ($readonly) {
         $allowCreate = 0;
@@ -1139,7 +1239,6 @@ sub tagGrid {
         desc => $desc,
         allowupload => $allowUpload,
         keepclosed => $keepclosed,
-        stateless => $stateless,
         sortable => $sortable,
         templatefile => $templateFile,
         tasktemplate => $taskTemplate,
@@ -1168,7 +1267,6 @@ sub tagGrid {
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
-    $fctx->{task_stateless} = 1 if $stateless;
     $fctx->{task_readonly} = 1 if $readonly;
     $fctx->{task_showexpandercol} = 1 if $depth;
 
@@ -1208,9 +1306,8 @@ sub tagGrid {
         }
     };
 
-    if ( $req->param('state') && $override ) {
+    if ( $req->param('state') && $override && !$req->param('f_Status') ) {
         if ( $req->param('state') eq 'all' ) {
-            $query->{Status} = [qw(open closed)];
             if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
                 $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
             }
@@ -1219,8 +1316,58 @@ sub tagGrid {
             $mapstates->($query, %settings);
         }
     } else {
-        $query->{Status} = 'open' if !exists $query->{Status};
+        $query->{Status} = 'open' if !exists $query->{Status} && !$req->param('f_Status');
         $mapstates->($query, %settings);
+    }
+
+    my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
+    foreach my $l (@list) {
+        my $val = $req->param("f_$l");
+        if ($l !~ /_(l|r)$/) {
+            $query->{$l} = $val;
+        } else {
+            my %range;
+
+            if ($l =~ /_r$/) {
+                my @arr = split(/_/, $val);
+                $l =~ s/_r$//;
+                %range = (
+                    type => 'range',
+                    from => int($arr[0]),
+                    to => int($arr[1])
+                );
+            } else {
+                $l =~ s/_l$//;
+                %range = (
+                    type => 'like',
+                    substring => $val,
+                );
+            }
+
+            $query->{$l} = \%range;
+        }
+    }
+
+    if ($form) {
+        while (my ($k, $v) = each %$query) {
+            if ($v eq 'all') {
+                my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
+                my $field = $f->getField($k);
+                next unless $field->{type} =~ /^select/;
+                my @vals = split(/\s*,\s*/, $field->{value});
+                my @arr = ();
+                foreach my $v (@vals) {
+                    next if ($k eq 'Status' && $v =~ /deleted/ && !Foswiki::Func::isAnAdmin());
+                    if ( $field->{type} =~ m/values/i ) {
+                        my @pair = split(/\s*=\s*/, $v);
+                        push(@arr, pop @pair);
+                    } else {
+                        push(@arr, $v);
+                    }
+                }
+                $query->{$k} = \@arr;
+            }
+        }
     }
 
     if ( $req->param('id') ) {
@@ -1261,7 +1408,6 @@ sub tagGrid {
     $grid =~ s/\$create_text/$createText/ge;
 
     delete $fctx->{task_allowcreate};
-    delete $fctx->{task_stateless};
     delete $fctx->{task_showexpandercol};
 
     my @jqdeps = (
@@ -1279,6 +1425,9 @@ sub tagGrid {
     my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
     my $lang = $session->i18n->language();
     $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
+require Foswiki::Form::Select2;
+Foswiki::Form::Select2->addJavascript();
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
@@ -1305,7 +1454,7 @@ SCRIPT
         my $pagination = '';
 
         my @q = ("tid=$id");
-        push(@q, 'state=' . $req->param('state')) if $req->param('state') && $override;
+        push(@q, 'state=' . ($req->param('state') || $req->param('f_Status'))) if ($req->param('state') || $req->param('f_Status')) && $override;
         push(@q, 'order=' . $req->param('order')) if $req->param('order') && $override;
         push(@q, 'desc=' . $req->param('desc')) if defined $req->param('desc') && $override;
         push(@q, 'tab=' . $req->param('tab')) if $req->param('tab');
@@ -1339,7 +1488,6 @@ PAGER
         $grid =~ s#</div></noautolink>$#$pager</div></noautolink>#;
         return $grid
     }
-
 
     return $grid;
 }
@@ -1573,10 +1721,21 @@ sub tagInfo {
             $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
-            my $prevVal = $val;
-            unless(grep(/$val/, $currentOptions->{autouser})) {
-                $val = _getDisplayName($val) if $val;
+            my @vals = ();
+            my $f = $task->form->getField($field);
+            if (defined $f && $f->{type} =~ /\+multi/) {
+                @vals = split(/,\s?/, $val);
+            } else {
+                push @vals, $val;
             }
+
+            foreach my $v (@vals) {
+                unless(grep(/$v/, $currentOptions->{autouser})) {
+                    $v = _getDisplayName($v) if $v;
+                }
+            }
+
+            $val = join(',', @vals);
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;

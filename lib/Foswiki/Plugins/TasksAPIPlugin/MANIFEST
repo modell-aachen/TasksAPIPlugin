@@ -10,6 +10,7 @@ data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPITemplate.txt 0644 Task form
 data/System/VarTASKINFO.txt 0644 Docs
 data/System/VarTASKSGRID.txt 0644 Docs
+data/System/VarTASKSFILTER.txt 0644 Docs
 lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0644
@@ -31,8 +32,6 @@ pub/System/TasksAPIPlugin/js/jquery.tasksapi.js 0644
 pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.min.js 0644
-pub/System/TasksAPIPlugin/js/tasks.tablesorter.js 0644
-pub/System/TasksAPIPlugin/js/tasks.tablesorter.min.js 0644
 pub/System/TasksAPIPlugin/js/tasksapi.solr.js 0644
 pub/System/TasksAPIPlugin/js/tasksapi.solr.min.js 0644
 pub/System/TasksAPIPlugin/js/i18n/jsi18n.de.js 0644

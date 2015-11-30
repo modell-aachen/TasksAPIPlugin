@@ -4,6 +4,7 @@
 | Parent | text | 10 | | | H |
 | Author | text | 10 | %RENDERUSER{format="$cUID"}% | Task "creator" | M H |
 | Created | date | 10 | %GMTIME{"$epoch"}% | Time of creation | M H |
+| Changed | date | 10 | %GMTIME{"$epoch"}% | Time of most recent change | H |
 | Closed | date | 10 | | | H |
 | Status | select+values | | %MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"deleted"}%=deleted | Status | |
 | Title | text | 95 | | Title | M |

@@ -133,7 +133,18 @@
       self.opts.cntHeight = $this.height();
       self.opts.container = $this.children('.tasks-table').children('.tasks');
 
-      self.opts.currentState = 'open';
+      var curstate = 'open';
+      if (typeof self.opts.query === typeof '') {
+        try {
+          json = $.parseJSON(self.opts.query);
+          if (typeof json.Status === typeof '') {
+            curstate = json.Status;
+          }
+        } catch (e) {
+          erorr(e);
+        }
+      }
+      self.opts.currentState = curstate;
       $this.data('tasktracker_options', self.opts);
 
       if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
@@ -155,38 +166,29 @@
 
       var $tasks = self.opts.container;
       var $filter = $this.children('.filter');
-      var $status = $filter.find('select[name="status"]');
+      var $status = $filter.find('select[name="Status"]');
 
       var params = parseQueryParams();
-      if ( params.state ) {
-        self.opts.currentState = params.state;
-        $status.val(params.state);
+      if ( params.f_Status || params.state ) {
+        self.opts.currentState = params.f_Status || params.state;
+        $status.val(params.f_Status || params.state);
       }
 
       loadTasks( $this, self.opts.currentState, true );
+      hideInformees();
 
-      var handleStatusFilterChanged = function() {
-        var $select = $(this);
-        var url = getViewUrl() + '?state=' + $select.val();
-
-        if ( typeof window.location.hash === typeof '' && /jqTab/.test(window.location.hash) ) {
-          var tabId = window.location.hash.replace('!', '');
-          var $tab = $(tabId);
-          var cls = $tab.attr('class');
-          var tab = cls.replace(/(current|jqTab)/, '');
-          url += '&tab=' + tab;
-        }
-        window.location = url;
-      };
-
-      $status.on( 'change', handleStatusFilterChanged );
+      // $status.on( 'change', handleStatusFilterChanged );
       var findTask = function(id) {
         return self.opts.container.find('.task:visible').filter( function() {
           return $(this).data('id') === id;
         });
       };
 
-      self.tasksPanel.on( 'afterSave', function( evt, task ) {
+      $this.on( 'afterSave', function( evt, task ) {
+        if (evt.ignoreSelf) {
+          return;
+        }
+
         var $task = $(createTaskElement(task));
         var $existing = findTask($task.data('id'));
         var $next = $existing.next();
@@ -280,46 +282,6 @@
     ].join('');
   };
 
-  var invokeTablesorter = function(forceSort, updateOnly) {
-    try {
-      var $tbl = $(this);
-      if ( !forceSort && $tbl.find('> tbody .task').length === 0 ) {
-        return;
-      }
-
-      if ( updateOnly ) {
-        setTimeout(function() {
-          $tbl.trigger('update');
-        }, 10);
-      }
-
-      var opts = $tbl.data('sortopts');
-      if ( typeof opts === 'object' ) {
-        var $col = $tbl.find('> thead .headerSortUp, > thead .headerSortDown').first();
-
-        $tbl.trigger('update');
-        if ( $col.length > 0 ) {
-          var dir = $col.hasClass('headerSortUp') ? 1 : 0;
-          var index = $col[0].column;
-
-          // tablesorter's update event is processed by a timeout of 1.
-          // use something higher than 1 here...
-          setTimeout(function() {
-            $tbl.trigger('sorton', [[[index, dir]]]);
-          }, 10);
-        }
-
-        return;
-      }
-
-      opts = $tbl.metadata() || {};
-      $tbl.data('sortopts', opts);
-      $tbl.tablesorter(opts);
-    } catch(e) {
-      error(e);
-    }
-  };
-
   var unescapeHTML = function(obj) {
     if ( !obj.fields ) {
       return obj;
@@ -346,7 +308,7 @@
 
     if ( opts.query ) {
       var json = $.parseJSON( opts.query );
-      if ( json.Status && opts.currentState ) {
+      if ( !json.Status && opts.currentState ) {
         json.Status = opts.currentState;
         opts.query = JSON.stringify( json );
       }
@@ -408,7 +370,10 @@
       });
 
       deferred.resolve( response.data );
-    }).fail( deferred.reject );
+    }).fail(function(xhr, status, err) {
+      deferred.reject();
+      error(xhr, status, err);
+    });
 
     return deferred.promise();
   };
@@ -430,6 +395,15 @@
         console.error( msg );
       });
     }
+
+    swal({
+      type: 'error',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
+      timer: 2500,
+      showConfirmButton: true,
+      showCancelButton: false
+    });
   };
 
   var log = function( msg ) {
@@ -458,7 +432,8 @@
     var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
-    var opts = $task.closest('.tasktracker').data('tasktracker_options');
+    var $tracker = $task.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
     var payload = {
       id: $task.data('id'),
     };
@@ -538,6 +513,8 @@
           }
 
           $task.replaceWith($newTask);
+          var afterSave = $.Event('afterSave', {ignoreSelf: true});
+          $tracker.trigger(afterSave, $newTask.data('task_data'));
         } else {
           $task.remove();
           if ($next.hasClass('task-children-container')) {
@@ -556,8 +533,8 @@
             showCancelButton: false
           });
         }, 250);
-      }).fail(function(err) {
-        error(err);
+      }).fail(function(xhr, status, err) {
+        error(xhr, status, err);
         window.tasksapi.unblockUI();
       });
     });
@@ -639,11 +616,167 @@
     var url = window.location.pathname + '?' + search.join('&');
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
-    $table.children('.tasks').load(target, function() {
+    $table.children('.tasks').load(target, function(resp, status, xhr) {
+      window.tasksapi.unblockUI();
+
+      if (status === 'error') {
+        error(status, resp, xhr);
+      }
+    });
+
+    return false;
+  };
+
+  var applyFilter = function() {
+    var $filter = $(this);
+    var $tracker = $filter.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
+    var filter = readFilter.call($filter.closest('.filter'));
+    var params = ['tid=' + opts.id];
+
+    // respect query params (but ignore 'state')
+    var qparams = parseQueryParams();
+    ['pagesize', 'tab'].forEach(function(k) {
+      if (k in qparams) {
+        params.push(k + '=' + qparams[k]);
+      }
+    });
+
+    // keep sort order
+    $('.sortable.desc[data-sort], .sortable.asc[data-sort]').each(function(){
+      var $sort = $(this);
+      if ($sort.length) {
+        params.push('order=' + $sort.data('sort'));
+        var desc = $sort.is('.desc') ? 1 : 0;
+        params.push('desc=' + desc);
+      }
+    });
+
+    // stringify
+    for (var p in filter) {
+      if (typeof filter[p] === 'object') {
+        if (filter[p].type === 'range') {
+          params.push('f_' + p + '_r=' + filter[p].from + '_' + filter[p].to);
+        } else if (filter[p].type === 'like') {
+          params.push('f_' + p + '_l=' + filter[p].substring);
+        }
+      } else {
+        params.push('f_' + p + '=' + filter[p]);
+      }
+    }
+
+    var url = window.location.pathname + '?' + params.join('&');
+    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
+    var $table = $tracker.children('.tasks-table');
+    window.tasksapi.blockUI();
+    $('<div></div>').load(target, function(res, status, xhr) {
+      if (status === 'error') {
+        error(status, res, xhr);
+        return;
+      }
+
+      var $doc = $('<div></div>').append($.parseHTML(res));
+      var $filter = $tracker.children('.filter').detach();
+      var $newTracker = $doc.find('#' + opts.id);
+      $newTracker.children('.filter').replaceWith($filter);
+      $tracker.replaceWith($newTracker);
+      $newTracker.tasksGrid();
+
       window.tasksapi.unblockUI();
     });
 
     return false;
+  };
+
+  var resetFilter = function() {
+    var $tracker = $(this).closest('.tasktracker');
+    $tracker.find('> .filter input[name]').each(function() {
+      $(this).val('');
+    });
+
+    $tracker.find('> .filter select[name]').each(function() {
+      $(this).val($(this).children('option').first().val());
+    });
+
+    $tracker.find('.btn-filter.btn-apply').trigger('click');
+    return false;
+  };
+
+  var readFilter = function() {
+    var q = {};
+    $(this).find('input[name], select[name]').each(function() {
+      var $filter = $(this);
+      var name = $filter.attr('name');
+      if (!name || /^\s*$/.test(name)) {
+        return;
+      }
+
+      var val = $filter.val();
+      if (!val || /^\s*$/.test(val)) {
+        return;
+      }
+
+      if (/-/.test(name)) {
+        var type = /like$/.test(name) ? 'like' : 'range';
+        var aname = name.replace(/-(from|to|like)/, '');
+        if (!q[aname]) {
+          q[aname] = {type: type};
+        }
+
+        if (q[aname].type === 'range') {
+          q[aname].hasTo = $('input[name="' + aname + '-to"]').length > 0;
+          if (/-from$/.test(name)) {
+            q[aname].from = parseInt(val);
+          } else {
+            q[aname].to = parseInt(val);
+          }
+        } else {
+          q[aname].substring = val;
+        }
+      } else {
+        q[name] = val
+      }
+    });
+
+    // Fix 'from' and 'to' fields:
+    // When filtering by date (epoch) we need to make sure to ignore an epoch's
+    // time component.
+    for (var p in q) {
+      if (typeof q[p] !== 'object' || q[p].type !== 'range') {
+        continue;
+      }
+
+      if (q[p].from) {
+        var from = new Date();
+        from.setTime(q[p].from * 1e3);
+        from.setHours(0);
+        from.setMinutes(0);
+        from.setSeconds(0);
+        q[p].from = Math.round(from.getTime()/1e3);
+      } else {
+        q[p].from = 0;
+      }
+
+      var to = new Date();
+      if (q[p].to) {
+        to.setTime(q[p].to * 1e3);
+      } else {
+        // if there's no input field to specify the "to-date",
+        // just set it to the same day as the "from-date".
+        // Otherwise, if the user left that field empty, we gonna
+        // select today's date
+        if (!q[p].hasTo) {
+          to.setTime(q[p].from * 1e3)
+        }
+      }
+
+      to.setHours(23);
+      to.setMinutes(59);
+      to.setSeconds(59);
+      q[p].to = Math.round(to.getTime()/1e3);
+    }
+
+    return q;
   };
 
   var handlePager = function() {
@@ -697,23 +830,55 @@
     var tid = $this.closest('.tasktracker').attr('id');
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
-    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function() {
+    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
       window.tasksapi.unblockUI();
+
+      if (status === 'error') {
+        error(status, resp, xhr);
+      }
     });
 
     return false;
   };
 
+  var hideInformees = function(){
+    $('.task-details .task-meta-entry .fa-users').each(function(){
+      if($(this).parent().find('.task-informee').length == 0){
+        informeesElem = $(this).parent().find('span').last();
+        if(informeesElem.hasClass('title')){
+          return;
+        }
+
+        informeesArray = informeesElem.html().split(',');
+        if(informeesArray.length <2){
+          return;
+        }
+        firstInformee = informeesArray[0];
+        newDiv = '<span>'+firstInformee+',... <div class="task-informee">';
+        informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
+        $.each(informeesArray,function(index,value){
+          if(index == 0)
+            newDiv += this;
+          else
+            newDiv += ', '+this;
+        });
+        newDiv += '</div></span>';//<p class="task-informee-a"><a class="more-changes" href="#">'+jsi18n.get("tasksapi", "Show more")+'</a></p>
+        informeesElem.remove();
+        $(newDiv).insertAfter($(this).parent().find('span'));
+      }
+    });
+  };
 
   $(document).ready( function() {
     if (CKEDITOR) {
       CKEDITOR.disableAutoInline = true;
     }
 
+    $(document).on('click', '.tasktracker .btn-filter.btn-apply', applyFilter);
+    $(document).on('click', '.tasktracker .btn-filter.btn-reset', resetFilter);
+
     var $tracker = $('.tasktracker').tasksGrid();
     window.tasksapi = new TasksAPI();
-
-
 
     setTimeout(function() {
       if ( window.location.search ) {

@@ -224,7 +224,7 @@ TasksPanel = function(tasktracker) {
                 .done(function(response) {
                   if (response.status === 'ok' && response.data) {
                     var afterSave = $.Event('afterSave');
-                    self.trigger(afterSave, response.data);
+                    tasktracker.trigger(afterSave, response.data);
 
                     var $new = self.panel.children('.content.slide-in:last-child').detach();
                     self.panel.empty();
@@ -235,7 +235,10 @@ TasksPanel = function(tasktracker) {
                 });
 
             },
-            error: window.tasksapi.unblockUI
+            error: function(xhr, status, err) {
+              window.tasksapi.unblockUI();
+              error(xhr, status, err);
+            }
           });
         }
 
@@ -340,7 +343,7 @@ TasksPanel = function(tasktracker) {
         .done(function(response) {
           if ( response.status === 'ok' && response.data ) {
             var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, response.data );
+            tasktracker.trigger( afterSave, response.data );
             onCancel();
             if (!self.isInitialUpload) {
               toggleUpload();
@@ -447,7 +450,7 @@ TasksPanel = function(tasktracker) {
 
             var $dialog = $('.sweet-alert.show-sweet-alert.visible');
             var comment = $dialog.find('div[name="comment"]').html();
-            if ( !/^[\s\n\r]*$/.test(comment) ) {
+            if ( !/^[\s\n\r]*$/.test(comment) && !/^\s*<br\s*\/?>\s*$/.test(comment)) {
               payload.comment = comment;
             }
 
@@ -479,7 +482,7 @@ TasksPanel = function(tasktracker) {
             }, 500);
 
             var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, response.data );
+            tasktracker.trigger( afterSave, response.data );
           });
       });
 
@@ -559,17 +562,18 @@ TasksPanel = function(tasktracker) {
 
         // set by a previous call to fadeOut
         self.savedStates.details.attr('style', '');
-        self.savedStates.parent.fadeIn(200);
-        setTimeout(function() {
+initReadmore(self.savedStates.parent);
+sliceChanges(self.savedStates.parent.find('.changes'));
+        self.savedStates.parent.fadeIn(300, function() {
           var parent = self.savedStates.parent;
           if ( parent ) {
-            initReadmore(parent);
-            sliceChanges(parent.find('.changes'));
+            // initReadmore(parent);
+            // sliceChanges(parent.find('.changes'));
           }
 
           self.savedStates.details = self.savedStates.parent = null;
           cancelHelper(closeOverlay);
-        }, 250);
+        });
       });
     } else {
       cancelHelper(self.currentTask === null && closeOverlay !== false);
@@ -635,7 +639,7 @@ TasksPanel = function(tasktracker) {
     }
 
     var beforeSave = $.Event( 'beforeSave' );
-    self.trigger( beforeSave, task );
+    tasktracker.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
       return false;
     }
@@ -645,6 +649,16 @@ TasksPanel = function(tasktracker) {
       .always( window.tasksapi.unblockUI )
       .fail( error )
       .done( function( response ) {
+        var afterSaveFunc = function(data) {
+          cancelEdit(false);
+          if ( self.currentTask !== null ) {
+            self.currentTask.removeClass('highlight');
+          }
+
+          var afterSave = $.Event( 'afterSave' );
+          tasktracker.trigger( afterSave, data );
+        };
+
         if ( self.isCreate ) {
           task.id = response.id;
 
@@ -656,16 +670,6 @@ TasksPanel = function(tasktracker) {
             }
 
             self.panel.empty();
-          };
-
-          var afterSaveFunc = function(data) {
-            cancelEdit(false);
-            if ( self.currentTask !== null ) {
-              self.currentTask.removeClass('highlight');
-            }
-
-            var afterSave = $.Event( 'afterSave' );
-            self.trigger( afterSave, data );
           };
 
           var $dnd = self.panel.find('.qw-dnd-upload');
@@ -699,6 +703,9 @@ TasksPanel = function(tasktracker) {
     var $cb = self.comment.find('input[name="close"]');
     var $cmt = self.comment.children('div[contenteditable]');
     var comment = $cmt.html();
+    if (/^\s*<br\s*\/?>\s*$/.test(comment)) {
+      comment = '';
+    }
 
     var payload = {
       id: self.currentTask.data('id'),
@@ -720,7 +727,7 @@ TasksPanel = function(tasktracker) {
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
-      self.trigger( afterSave, response.data );
+      tasktracker.trigger( afterSave, response.data );
 
       // clear comment container
       $cmt.empty();
@@ -737,10 +744,15 @@ TasksPanel = function(tasktracker) {
     var $container = $set.parent();
     $container.data('saved_comment', '');
 
+    var cmt = $set.html() || '';
+    if (/^\s*<br\s*\/?>\s*$/.test(cmt)) {
+      cmt = '';
+    }
+
     var payload = {
       id: self.currentTask.data('id'),
       cid: $container.data('id'),
-      comment: $set.html() || ''
+      comment: cmt
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
@@ -753,7 +765,7 @@ TasksPanel = function(tasktracker) {
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).always(window.tasksapi.unblockUI).done(function(response) {
       var afterSave = $.Event( 'afterSave' );
-      self.trigger( afterSave, response.data );
+      tasktracker.trigger( afterSave, response.data );
       onCancel();
     });
   };
@@ -942,7 +954,7 @@ TasksPanel = function(tasktracker) {
 
     if ( self.isCreate ) {
       var beforeCreate = $.Event( 'beforeCreate' );
-      self.trigger( beforeCreate, opts );
+      tasktracker.trigger( beforeCreate, opts );
       if( beforeCreate.isDefaultPrevented() ) {
         return false;
       }
@@ -1044,6 +1056,15 @@ TasksPanel = function(tasktracker) {
           }
         });
       }
+
+      // Fixes MA #10193
+      $ed.find('select.foswikiSelect2Field option').each(function() {
+        if (this.attributes && this.attributes.selected) {
+          if (this.attributes.selected.value === 'selected') {
+            this.selected = true;
+          }
+        }
+      });
     }).fail( error ).always( window.tasksapi.unblockUI );
 
     return false;
@@ -1096,17 +1117,26 @@ TasksPanel = function(tasktracker) {
         return;
       }
       var val = $input.val();
+      if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
+        var $selected = $input.children('option[selected]');
+        if (!$selected.length || ($selected.length === 1 && !$selected.val())) {
+          $selected = $input.children('option:selected')
+        }
+
+        if ($selected.length > 1) {
+          val = [];
+          $selected.each(function() {
+            val.push($(this).val());
+          });
+        } else {
+          val = $selected.val();
+        }
+      }
 
       if ( _.isArray(val) ) {
         val = val.join(', ');
       }
 
-      if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
-        val = $input.children('option[selected]').val();
-        if (!val) {
-          val = $input.children('option:selected').val();
-        }
-      }
 
       if ( $input.hasClass('foswikiEditFormDateField') ) {
         try {
@@ -1142,7 +1172,12 @@ TasksPanel = function(tasktracker) {
 
     var $cmt = editor.find('div[name="comment"]');
     if ($cmt.length) {
-      data.comment = $cmt.html();
+      var cmt = $cmt.html();
+      if (/^\s*<br\s*\/?>\s*$/.test(cmt)) {
+        cmt = '';
+      }
+
+      data.comment = cmt;
     }
 
     return data;
@@ -1178,6 +1213,15 @@ TasksPanel = function(tasktracker) {
     if ( window.console && console.error ) {
       console.error.apply(console, arguments);
     }
+
+    swal({
+      type: 'error',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
+      timer: 1500,
+      showConfirmButton: true,
+      showCancelButton: false
+    });
   };
 
   var isTask = function($task) {
@@ -1210,19 +1254,39 @@ TasksPanel = function(tasktracker) {
 
     return $sibling;
   };
+  var initReadMoreInformees = function($content){
+		$content = $content || $(document);
+		var href = $content.find('.task-informee');
 
+		/*
+		* destroy does not work, cause the readmore element does not exists
+		* It does not exist because attach and detach from task
+		*
+        * href.readmore('destroy');
+		*/
+		href.attr({'data-readmore': null,'aria-expanded': null})
+			.css({maxHeight: '',height: ''})
+			.next('[data-readmore-toggle]')
+			.remove();
+		
+		href.readmore({
+			collapsedHeight: 0,
+			speed: 400,
+			lessLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show less") + "</a>",
+			moreLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show more") + "</a>"
+		});
+  }
   var initReadmore = function($content) {
     $content = $content || self.panel.find('.content.slide-in');
+
     var $article = $content.find('.task-details > .content > .description article');
-    setTimeout(function() {
-      $article.readmore('destroy');
-      $article.readmore({
-        collapsedHeight: 150,
-        speed: 400,
-        lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
-        moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
-      });
-    }, 100);
+    $article.readmore('destroy');
+    $article.readmore({
+      collapsedHeight: 150,
+      speed: 400,
+      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
+    });
   };
 
   var isAnimating = false;
@@ -1267,10 +1331,6 @@ TasksPanel = function(tasktracker) {
     $nextView.detach().appendTo($content);
     $content.appendTo(self.panel);
 
-    // destroy and re-init readmore.js
-    initReadmore($content);
-    sliceChanges($content.find('.changes'));
-
     setTimeout(function() {
       var $current = self.panel.children('.content.slide-in');
       $current.on('transitionend', function() {
@@ -1294,6 +1354,7 @@ TasksPanel = function(tasktracker) {
       } else {
         $content.addClass('slide-in').removeClass('slide-out');
       }
+			initReadMoreInformees($content);
     }, 25);
 
     return nextTask;
@@ -1320,6 +1381,7 @@ TasksPanel = function(tasktracker) {
       },
       error: function( xhr, sts, err ) {
         deferred.reject( err );
+        error(err);
       }
     });
 
@@ -1505,7 +1567,7 @@ TasksPanel = function(tasktracker) {
     }
 
     var beforeSave = $.Event( 'beforeSave' );
-    self.trigger( beforeSave, task );
+    tasktracker.trigger( beforeSave, task );
     if( beforeSave.isDefaultPrevented() ) {
       return false;
     }
@@ -1520,7 +1582,7 @@ TasksPanel = function(tasktracker) {
         }
 
         var afterSave = $.Event( 'afterSave' );
-        self.trigger( afterSave, response.data );
+        tasktracker.trigger( afterSave, response.data );
       });
   };
 
@@ -1548,11 +1610,14 @@ TasksPanel = function(tasktracker) {
     var $view = $task.children('.task-fullview-container').children('.task-fullview');
     $view.detach().appendTo($content);
     $content.appendTo(self.panel);
-    $content.addClass('slide-in');
 
     toggleOverlay(true);
-    initReadmore($content);
-    sliceChanges($content.find('.changes'));
+    setTimeout(function() {
+      initReadmore($content);
+			initReadMoreInformees($content);
+      $content.addClass('slide-in');
+      sliceChanges($content.find('.changes'));
+    }, 100);
   };
 
   this.next = function() {

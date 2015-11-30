@@ -69,6 +69,8 @@ A number of other fields, if used, should use these standard names:
    * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
    * =Created=: the creation time. Set the default value  to
      =%GMTIME{"$epoch"}=.
+   * =Changed=: the time of the most recent change. Set the default value  to
+     =%GMTIME{"$epoch"}=.
    * =Closed=: the time a task was closed. Handled internally.
    * =Title=: user-defined title of the task
    * =AssignedTo=: the user this task is assigned to. This is generally meant
@@ -114,6 +116,7 @@ following events exist:
    * =CLOSED= - triggered when the task's status changes to 'closed'.
    * =REOPENED= - triggered when the task's status changes from 'closed' to 'open'.
    * =CHANGED= - triggered when a task is changed and none of the other events apply.
+   * =REMIND= - triggered when a reminder is sent out for a task.
 
 Examples:
 
@@ -133,6 +136,13 @@ A date/time delta specification to automatically re-open a task after it has
 been closed. For example, if this is set to "2 weeks", the task will be
 re-opened two weeks after it is closed. By default, tasks are not reopened
 automatically.
+
+---++++ =TASKCFG_SCHEDULE_REMIND=
+
+A date/time delta specification to periodically send a reminder for a task
+based on the given delta. For example, if this is set to "2 weeks", users will
+receive a reminder about the task every two weeks until it is closed or the
+delta is changed. By default, no reminders are sent.
 
 ---++++ =TASKCFG_HAS_CHILDREN=
 
@@ -251,6 +261,9 @@ The following ACL types currently exist:
 
 ---+++ TASKSGRID
 %INCLUDE{"VarTASKSGRID"}%
+
+---+++ TASKSFILTER
+%INCLUDE{"VarTASKSFILTER"}%
 
 ---+++ TASKINFO
 %INCLUDE{"VarTASKINFO"}%
