@@ -1465,7 +1465,7 @@ SCRIPT
         my $pages = '';
         for (my $c = $settings{totalsize}/$settings{pagesize}; $c > 0; $c--) {
             my $cls = $page == $cur ? 'active' : '';
-            $pages .= "<li class=\"$cls\"><a href=\"/$web/$topic?page=$cur$qstr\">$cur</a></li>";
+            $pages .= "<li class=\"$cls\"><a href=\"%SCRIPTURLPATH{view}%/$web/$topic?page=$cur$qstr\">$cur</a></li>";
             $cur++;
         }
 
