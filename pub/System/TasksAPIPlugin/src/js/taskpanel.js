@@ -320,8 +320,7 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
-    self.overlay.on('queueEmpty', function() {
-      var $dnd = $(this);
+    self.overlay.on('queueEmpty', function(evt) {
       var payload = {
         id: self.currentTask.data('id')
       };
@@ -560,8 +559,8 @@ TasksPanel = function(tasktracker) {
 
         // set by a previous call to fadeOut
         self.savedStates.details.attr('style', '');
-initReadmore(self.savedStates.parent);
-sliceChanges(self.savedStates.parent.find('.changes'));
+        initReadmore(self.savedStates.parent);
+        sliceChanges(self.savedStates.parent.find('.changes'));
         self.savedStates.parent.fadeIn(300, function() {
           var parent = self.savedStates.parent;
           if ( parent ) {
@@ -647,14 +646,20 @@ sliceChanges(self.savedStates.parent.find('.changes'));
       .always( window.tasksapi.unblockUI )
       .fail( error )
       .done( function( response ) {
-        var afterSaveFunc = function(data) {
+        var afterSaveFunc = function(data, suppressEvent) {
           cancelEdit(false);
           if ( self.currentTask !== null ) {
             self.currentTask.removeClass('highlight');
+          } else {
+            // create
+            self.currentTask = $(data.html);
+            self.currentTask.data('id', data.id);
           }
 
-          var afterSave = $.Event( 'afterSave' );
-          tasktracker.trigger( afterSave, data );
+          if (!suppressEvent) {
+            var afterSave = $.Event( 'afterSave' );
+            tasktracker.trigger( afterSave, data );
+          }
         };
 
         if ( self.isCreate ) {
@@ -680,8 +685,7 @@ sliceChanges(self.savedStates.parent.find('.changes'));
               self.isInitialUpload = true;
               $dnd.upload();
               $dnd.on('queueEmpty', function() {
-                afterCreateFunc();
-                afterSaveFunc(response.data);
+                afterSaveFunc(response.data, true);
               });
 
               return false;
