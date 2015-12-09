@@ -205,7 +205,6 @@ TasksPanel = function(tasktracker) {
             success: function() {
               $row.remove();
 
-                    var $dnd = $(this);
               var payload = {
                 id: self.currentTask.data('id')
               };
@@ -224,11 +223,10 @@ TasksPanel = function(tasktracker) {
                 .done(function(response) {
                   if (response.status === 'ok' && response.data) {
                     var afterSave = $.Event('afterSave');
-                    tasktracker.trigger(afterSave, response.data);
-
-                    var $new = self.panel.children('.content.slide-in:last-child').detach();
-                    self.panel.empty();
-                    $new.appendTo(self.panel);
+                    self.tracker.trigger(afterSave, response.data);
+                    self.panel.find('.content.slide-in').removeClass('slide-in').addClass('slide-out').on('transitionend', function() {
+                      $(this).remove();
+                    });
 
                     // ToDo. switch to 'attachments tab' if it exists?
                   }
