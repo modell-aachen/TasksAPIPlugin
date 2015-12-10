@@ -788,7 +788,7 @@ sub tagFilter {
     return '' unless $filter;
 
     my $sys = $Foswiki::cfg{SystemWebName} || 'System';
-    my $ftopic = $params->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $ftopic = $params->{form} || $currentOptions->{form} || "$sys.TasksAPIDefaultTaskForm";
     my $isrange = $params->{range} || 0;
     my $ismulti = $params->{multi} || 0;
     my $min = $params->{min} || '';

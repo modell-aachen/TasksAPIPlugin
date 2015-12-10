@@ -662,6 +662,22 @@
         }
       } else {
         params.push('f_' + p + '=' + filter[p]);
+
+        // status mapping:
+        // check if we are applying a filter to a mapped field (field X -> field Status)
+        // (assume that the original field Status has no filter inputs)
+        if (opts.mapping && opts.mapping.field === p) {
+          if (filter[p] === 'all') {
+            params.push('f_Status=all');
+          } else {
+            for (var m in opts.mapping.mappings) {
+              if (opts.mapping.mappings[m].indexOf(filter[p]) > -1) {
+                params.push('f_Status=' + m);
+                break;
+              }
+            }
+          }
+        }
       }
     }
 
