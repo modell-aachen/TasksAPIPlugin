@@ -1583,8 +1583,11 @@ TasksPanel = function(tasktracker) {
           self.currentTask.removeClass('highlight');
         }
 
+        // Prevent re-adding content to DOM (modac #10291)
+        self.isEdit = true;
         var afterSave = $.Event( 'afterSave' );
         tasktracker.trigger( afterSave, response.data );
+        self.isEdit = false;
       });
   };
 
