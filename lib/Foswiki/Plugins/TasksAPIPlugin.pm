@@ -732,7 +732,7 @@ sub tagAmpel {
     my $status = $params->{status} || 'open';
     my $warn = $params->{warn} || 3;
 
-    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\">" if ( !$date && $status eq 'open' );
+    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\" />" if ( !$date && $status eq 'open' );
 
     my $src = '';
     if ( $status eq 'open' ) {
@@ -756,7 +756,7 @@ sub tagAmpel {
     }
 
     my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title">
+<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
 IMG
 
     return $img;
@@ -811,15 +811,15 @@ sub tagFilter {
         if ($f->{type} =~ /^date2?$/) {
             my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
             my $dmax = ($maxfrom || $max) ? "data-max=\"" . ($maxfrom || $max) . "\"" : '';
-            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             if ($isrange) {
                 $dmin = ($minto || $min) ? "data-min=\"" . ($minto || $min) . "\"" : '';
                 $dmax = ($maxto || $max) ? "data-max=\"" . ($maxto || $max) . "\"" : '';
                 push(@html, "<span>-</span>");
-                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\">");
+                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             }
         } elsif ($f->{type} =~ /^text$/) {
-            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\">");
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" />");
         } elsif ($f->{type} =~ /^select/) {
             push(@html, "<select name=\"$filter\" class=\"filter\">");
             my @opts = ();
