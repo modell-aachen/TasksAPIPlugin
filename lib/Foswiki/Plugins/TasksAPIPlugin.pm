@@ -1153,8 +1153,9 @@ sub tagGrid {
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
     my $statesMapping = $params->{statesmapping} || '';
     my $mappingField = $params->{mappingfield} || '';
-    my $pageSize = $params->{pagesize} || 9999;
-    my $paging = $params->{paging} || 0;
+    my $pageSize = $params->{pagesize} || 25;
+    my $paging = $params->{paging};
+    $paging = 1 unless defined $paging;
     my $query = $params->{query} || '{}';
     my $templateFile = $params->{templatefile};
     my $allowCreate = $params->{allowcreate};
