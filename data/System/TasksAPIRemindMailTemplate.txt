@@ -1,9 +1,9 @@
 %TMPL:INCLUDE{"TasksAPIDefaultMail"}%
 
-%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task reminder: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task reminder"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"The task '[_2]' is still open." args="%TMPL:P{ModacMailTitle}%"}%
+%MAKETEXT{"A task is still open"}%: %TMPL:P{"ModacMailTitle"}%
 
 %TASKINFO{type="changeset" nohtml="1"}%
 %MAKETEXT{"Direct link"}%:
