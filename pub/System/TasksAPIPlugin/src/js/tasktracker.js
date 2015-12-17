@@ -622,6 +622,8 @@
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
+      // reinit tasksGrid on "newly" loaded tasks
+      $tracker.tasksGrid();
       window.tasksapi.unblockUI();
 
       if (status === 'error') {
