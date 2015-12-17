@@ -800,9 +800,20 @@ sub tagFilter {
     my $format = $params->{format} || ''; # ToDo
     my $title = $params->{title} || '';
 
+    my $query = $currentOptions->{query} || '{}';
+    if ($query) {
+        $query = from_json($query);
+    }
+
     my $form = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $ftopic) );
     my $fields = $form->getFields;
     my @html = ('<div>');
+
+    my $isSelected = sub {
+        return 'selected="selected" data-default="1"' if $_[0] eq $_[1];
+        return '';
+    };
+
     foreach my $f (@$fields) {
         next unless $f->{name} eq $filter;
         $title = $f->{title} || $f->{name} unless $title;
@@ -819,7 +830,9 @@ sub tagFilter {
                 push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             }
         } elsif ($f->{type} =~ /^text$/) {
-            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" />");
+            my $value = $query->{$filter} ? "value=\"$query->{$filter}\"" : '';
+            my $default = 'data-default="' . $query->{$filter} . '"' if $value;
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default>");
         } elsif ($f->{type} =~ /^select/) {
             push(@html, "<select name=\"$filter\" class=\"filter\">");
             my @opts = ();
@@ -837,6 +850,8 @@ sub tagFilter {
                 }
             }
 
+            my $selected = '';
+            my $hasSelected = 0;
             my @options = ();
             if ( scalar @opts eq scalar @labels) {
                 for (my $i=0; $i < scalar @opts; $i++) {
@@ -844,20 +859,31 @@ sub tagFilter {
                     $val =~ s/(^\s*)|(\s*$)//g;
                     my $label = $labels[$i];
                     $label =~ s/(^\s*)|(\s*$)//g;
-                    push(@options, "<option value=\"$val\">$label</option>")
+
+                    $selected = $isSelected->($query->{$filter}, $val);
+                    $hasSelected = 1 if $selected;
+                    push(@options, "<option value=\"$val\" $selected>$label</option>")
                 }
             } else {
                 for (my $i=0; $i < scalar @opts; $i++) {
                     my $val = $opts[$i];
                     $val =~ s/(^\s*)|(\s*$)//g;
+                    $selected = $isSelected->($query->{$filter}, $val);
+                    $hasSelected = 1 if $selected;
                     push(@options, "<option value=\"$val\">$val</option>")
                 }
             }
 
-            my $selected = '';
-            if ($f->{name} ne 'Status') {
-                $selected = 'selected="selected"';
+            if ($hasSelected eq 0) {
+                $selected = 'selected="selected" data-default="1"';
+            } else {
+                $selected = '';
             }
+
+            # Assume 'all'.
+            # Note: Actually we have to render a multi-select here:
+            #       e.g. 'query={Status: ["closed", "deleted"]}'
+            # Would also result in type 'all'
 
             push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
             push(@html, @options);

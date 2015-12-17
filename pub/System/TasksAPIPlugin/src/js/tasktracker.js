@@ -613,7 +613,12 @@
       $a.attr('href', href);
     });
 
-    var url = window.location.pathname + '?' + search.join('&');
+    var $filter = $tracker.children('.filter').first();;
+    var opts = $tracker.data('tasktracker_options');
+    var filter = readFilter.call($filter);
+    var qfilter = stringifyFilter(opts, filter);
+
+    var url = window.location.pathname + '?' + search.join('&') + '&' + qfilter;
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
@@ -632,7 +637,31 @@
     var $tracker = $filter.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
     var filter = readFilter.call($filter.closest('.filter'));
-    var params = ['tid=' + opts.id];
+    var url = window.location.pathname + '?' + stringifyFilter(opts, filter);
+    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
+    var $table = $tracker.children('.tasks-table');
+    window.tasksapi.blockUI();
+    $('<div></div>').load(target, function(res, status, xhr) {
+      if (status === 'error') {
+        error(status, res, xhr);
+        return;
+      }
+
+      var $doc = $('<div></div>').append($.parseHTML(res));
+      var $filter = $tracker.children('.filter').detach();
+      var $newTracker = $doc.find('#' + opts.id);
+      $newTracker.children('.filter').replaceWith($filter);
+      $tracker.replaceWith($newTracker);
+      $newTracker.tasksGrid();
+
+      window.tasksapi.unblockUI();
+    });
+
+    return false;
+  };
+
+  var stringifyFilter = function(trackeropts, filter) {
+    var params = ['tid=' + trackeropts.id];
 
     // respect query params (but ignore 'state')
     var qparams = parseQueryParams();
@@ -666,12 +695,12 @@
         // status mapping:
         // check if we are applying a filter to a mapped field (field X -> field Status)
         // (assume that the original field Status has no filter inputs)
-        if (opts.mapping && opts.mapping.field === p) {
+        if (trackeropts.mapping && trackeropts.mapping.field === p) {
           if (filter[p] === 'all') {
             params.push('f_Status=all');
           } else {
-            for (var m in opts.mapping.mappings) {
-              if (opts.mapping.mappings[m].indexOf(filter[p]) > -1) {
+            for (var m in trackeropts.mapping.mappings) {
+              if (trackeropts.mapping.mappings[m].indexOf(filter[p]) > -1) {
                 params.push('f_Status=' + m);
                 break;
               }
@@ -681,37 +710,33 @@
       }
     }
 
-    var url = window.location.pathname + '?' + params.join('&');
-    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
-    var $table = $tracker.children('.tasks-table');
-    window.tasksapi.blockUI();
-    $('<div></div>').load(target, function(res, status, xhr) {
-      if (status === 'error') {
-        error(status, res, xhr);
-        return;
-      }
-
-      var $doc = $('<div></div>').append($.parseHTML(res));
-      var $filter = $tracker.children('.filter').detach();
-      var $newTracker = $doc.find('#' + opts.id);
-      $newTracker.children('.filter').replaceWith($filter);
-      $tracker.replaceWith($newTracker);
-      $newTracker.tasksGrid();
-
-      window.tasksapi.unblockUI();
-    });
-
-    return false;
+    return params.join('&');
   };
 
   var resetFilter = function() {
     var $tracker = $(this).closest('.tasktracker');
-    $tracker.find('> .filter input[name]').each(function() {
-      $(this).val('');
-    });
+    var opts = $tracker.data('tasktracker_options');
+    var query = $.parseJSON(opts.query);
 
-    $tracker.find('> .filter select[name]').each(function() {
-      $(this).val($(this).children('option').first().val());
+    $tracker.find('input.filter, select.filter').each(function() {
+      var $filter = $(this);
+      $filter.val('')
+      if ($filter.is('input')) {
+        if ($filter.data('default')) {
+          $filter.val($filter.data('default'));
+        }
+      }
+
+      if ($filter.is('select')) {
+        $filter.children('option').each(function() {
+          var $o = $(this);
+          $o.removeAttr('selected');
+          if ($o.data('default')) {
+            $o.attr('selected', 'selected');
+            $filter.val($o.val());
+          }
+        });
+      }
     });
 
     $tracker.find('.btn-filter.btn-apply').trigger('click');
