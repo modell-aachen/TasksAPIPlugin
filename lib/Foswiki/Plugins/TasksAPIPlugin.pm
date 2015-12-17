@@ -1439,7 +1439,7 @@ sub tagGrid {
 
     my @jqdeps = (
         "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
-        "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore",
+        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
         "jqp::readmore", "jqp::sweetalert2"
     );
     foreach (@jqdeps) {
