@@ -832,7 +832,7 @@ sub tagFilter {
         } elsif ($f->{type} =~ /^text$/) {
             my $value = $query->{$filter} ? "value=\"$query->{$filter}\"" : '';
             my $default = 'data-default="' . $query->{$filter} . '"' if $value;
-            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default>");
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
         } elsif ($f->{type} =~ /^select/) {
             push(@html, "<select name=\"$filter\" class=\"filter\">");
             my @opts = ();
