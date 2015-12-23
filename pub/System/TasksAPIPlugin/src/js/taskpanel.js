@@ -152,6 +152,7 @@ TasksPanel = function(tasktracker) {
       });
     }, 200);
 
+    // handle attachments: open/delete
     self.panel.on('click', '.task-attachments tbody tr', function(evt) {
       var $target = $(evt.target || evt. delegateTarget || evt.toElement);
       if ( $target.is('a.hidden') ) {
@@ -246,6 +247,7 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
+    // limit the length of a task title
     var restrictTitle = function() {
       var $in = $(this);
       var opts = self.tracker.data('tasktracker_options');
@@ -277,6 +279,7 @@ TasksPanel = function(tasktracker) {
     });
 
     self.panel.on('keydown', '.task-changeset-comment', function(evt) {
+      // ESC
       if ( evt.keyCode === 27 || evt.which === 27 ) {
         onCancel();
         return false;
@@ -286,12 +289,14 @@ TasksPanel = function(tasktracker) {
         return;
       }
 
+      // CTRL+S
       if ( evt.keyCode === 83 || evt.which === 83 ) {
         onSave();
         return false;
       }
     });
 
+    // Open links within a task's description always in a new window
     self.panel.on('click', '.task-details .description > article a', function(evt) {
       var $link = $(this);
       if ( $link.attr('href') !== '#' ) {
@@ -302,6 +307,7 @@ TasksPanel = function(tasktracker) {
       evt.preventDefault();
     });
 
+    // add/edit a comment of an existing changeset
     self.panel.on('click', '.task-changeset-add, .task-changeset-edit', function() {
       if ( self.isChangesetEdit ) {
         return;
@@ -320,6 +326,7 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
+    // handle DnDUpload's queueEmpty event (upload finished)
     self.overlay.on('queueEmpty', function(evt) {
       var payload = {
         id: self.currentTask.data('id')
@@ -351,6 +358,8 @@ TasksPanel = function(tasktracker) {
         });
     });
 
+    // remove an existing comment
+    // note: this functionality is restricted to self written comments only
     self.panel.on('click', '.task-changeset-remove', function() {
       var $container = $(this).closest('.task-changeset').find('.task-changeset-comment');
       var $comment = $container.children('.comment');
@@ -379,6 +388,7 @@ TasksPanel = function(tasktracker) {
       return false;
     });
 
+    // change the quick action icon (close, reopen, delete)
     self.panel.on('mouseenter', '.controls', function(evt) {
       isControlsHovered = true;
       var $i = $(this).find('i');
@@ -393,6 +403,7 @@ TasksPanel = function(tasktracker) {
       }
     });
 
+    // change the quick action icon (close, reopen, delete)
     self.panel.on('mouseleave', '.controls', function() {
       isControlsHovered = false;
       var $i = $(this).find('i');
@@ -403,6 +414,7 @@ TasksPanel = function(tasktracker) {
       }
     });
 
+    // handle quick actions (close, reopen, delete)
     self.panel.on('click', '.caption > .controls', function() {
       var isDelete = $(this).find('i').hasClass('fa-trash-o');
       var data = self.currentTask.data('task_data');
@@ -500,6 +512,8 @@ TasksPanel = function(tasktracker) {
     $btns.children('.' + name).addClass('active');
   };
 
+  // Checks if the user did any changes within the editor
+  // ToDo: currently buggy -> returns true in any case
   var checkDirty = function() {
     var dirty = false;
 
@@ -972,8 +986,9 @@ TasksPanel = function(tasktracker) {
       setButtons('edit');
 
       var $ed = $(response.editor).css('display', 'none');
-      self.savedStates.details = self.panel.find('.task-details:not(.attachments)');
-      self.savedStates.parent = self.savedStates.details.parent();
+      var $details = self.panel.find('.task-details:not(.attachments)');
+      self.savedStates.details = $details.length ? $details : null;
+      self.savedStates.parent = $details.length ? $details.parent() : null;
 
       if ( !self.isCreate ) {
         // fill the editor
@@ -1619,7 +1634,7 @@ TasksPanel = function(tasktracker) {
     toggleOverlay(true);
     setTimeout(function() {
       initReadmore($content);
-			initReadMoreInformees($content);
+      initReadMoreInformees($content);
       $content.addClass('slide-in');
       sliceChanges($content.find('.changes'));
     }, 100);
