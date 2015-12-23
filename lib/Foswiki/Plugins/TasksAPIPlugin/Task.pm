@@ -450,17 +450,19 @@ sub update {
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
 
-    $self->notify($notify);
-    delete $self->{changeset};
-    if ($notify eq 'closed') {
-        $self->_postClose;
-    } elsif ($notify eq 'reopened') {
-        $self->_postReopen;
-    } elsif ($notify eq 'reassigned') {
-        $self->_postReassign;
+    if ($changed) {
+        $self->notify($notify);
+        delete $self->{changeset};
+        if ($notify eq 'closed') {
+            $self->_postClose;
+        } elsif ($notify eq 'reopened') {
+            $self->_postReopen;
+        } elsif ($notify eq 'reassigned') {
+            $self->_postReassign;
+        }
     }
-    $self->_postUpdate;
 
+    $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
 
