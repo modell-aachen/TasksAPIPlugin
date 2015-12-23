@@ -43,6 +43,7 @@
       self.isTaskClicked = false;
       self.tasksPanel = new TasksPanel($this);
 
+      $('body').off('keydown', '.sweet-alert');
       $('body').on('keydown', '.sweet-alert', function(e) {
         if ($(e.target).is('[contenteditable="true"]')) {
           e.stopPropagation();
@@ -53,6 +54,9 @@
         if (e.which !== 13 && e.which !== 27)
           return false;
       });
+
+      // Detach all possibly existing event handlers.
+      $this.off();
 
       $this.on('mouseenter', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
@@ -84,11 +88,7 @@
         }
 
         var $task = $(this);
-        if (!$task.data('id') || !$task.data('task_data')) {
-          var raw = $task.find('> .task-data-container > .task-data').text();
-          var task = $.parseJSON(raw);
-          initTaskElement($task, task);
-        }
+        verifyTaskInitialized($task);
 
         if (evt.ctrlKey && evt.shiftKey) {
           if (window.console && console.log) {
@@ -378,6 +378,14 @@
     return deferred.promise();
   };
 
+  var verifyTaskInitialized = function($task) {
+    if (!$task.data('id') || !$task.data('task_data')) {
+      var raw = $task.find('> .task-data-container > .task-data').text();
+      var task = $.parseJSON(raw);
+      initTaskElement($task, task);
+    }
+  };
+
   var initTaskElement = function($task, task) {
     $task.data('id', task.id);
     $task.data('task_data', task);
@@ -429,6 +437,8 @@
   var toggleTaskState = function() {
     var deferred = $.Deferred();
     var $task = $(this).closest('.task');
+    verifyTaskInitialized($task);
+
     var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
@@ -622,8 +632,6 @@
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
-      // reinit tasksGrid on "newly" loaded tasks
-      $tracker.tasksGrid();
       window.tasksapi.unblockUI();
 
       if (status === 'error') {
