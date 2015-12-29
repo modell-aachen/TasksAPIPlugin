@@ -328,6 +328,9 @@ sub create {
 
 sub notify {
     my ($self, $type, %options) = @_;
+    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} || 0;
+    return if $disabled;
+
     my $notify = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { $self->getPref("NOTIFY_\U$type") });
     return unless $notify;
     my $tpl = $self->getPref("NOTIFY_\U${type}_TEMPLATE") || "TasksAPI\u${type}Mail";

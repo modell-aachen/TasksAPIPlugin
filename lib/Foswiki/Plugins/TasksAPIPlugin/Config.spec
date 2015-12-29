@@ -12,6 +12,10 @@ $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} = 0;
 $Foswiki::cfg{TasksAPIPlugin}{DBWeb} = 'Tasks';
 
 # **BOOLEAN**
+# Disables all notifications send by TasksAPIPlugin
+$Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} = 0;
+
+# **BOOLEAN**
 $Foswiki::cfg{TasksAPIPlugin}{Debug} = 0;
 
 # ---++ JQueryPlugin
