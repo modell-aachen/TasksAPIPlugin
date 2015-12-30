@@ -218,11 +218,15 @@ TasksPanel = function(tasktracker) {
                   if (response.status === 'ok' && response.data) {
                     var afterSave = $.Event('afterSave');
                     self.tracker.trigger(afterSave, response.data);
-                    self.panel.find('.content.slide-in').removeClass('slide-in').addClass('slide-out').on('transitionend', function() {
-                      $(this).off().remove();
-                    });
 
-                    // ToDo. switch to 'attachments tab' if it exists?
+                    // switch to 'attachments tab'
+                    // delay to respect task animations
+                    setTimeout(function() {
+                      var $tabs = self.panel.find('.jqTabGroup > li');
+                      if ( $tabs.length > 1 ) {
+                        $tabs.last().children('a').trigger('click');
+                      }
+                    }, 100);
                   }
                 });
 
