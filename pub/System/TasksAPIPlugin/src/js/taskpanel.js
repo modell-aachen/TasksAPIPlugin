@@ -1289,10 +1289,9 @@ TasksPanel = function(tasktracker) {
       var $current = self.panel.children('.content.slide-in');
 
       // switch contents
-      if ( direction === 'next' ) {
-        $content.addClass('slide-in');
-      } else {
-        $content.addClass('slide-in').removeClass('slide-out');
+      $content.addClass('slide-in');
+      if ( direction === 'prev' ) {
+        $content.removeClass('slide-out');
       }
 
       $current.fadeOut(300, function() {
