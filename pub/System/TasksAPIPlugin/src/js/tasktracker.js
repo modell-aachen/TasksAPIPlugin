@@ -177,7 +177,6 @@
       loadTasks( $this, self.opts.currentState, true );
       hideInformees();
 
-      // $status.on( 'change', handleStatusFilterChanged );
       var findTask = function(id) {
         return self.opts.container.find('.task:visible').filter( function() {
           return $(this).data('id') === id;

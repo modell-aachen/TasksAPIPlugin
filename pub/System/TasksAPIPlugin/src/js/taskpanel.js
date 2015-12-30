@@ -53,12 +53,6 @@ TasksPanel = function(tasktracker) {
     upload: this.overlay.find('> .panel-wrapper > .buttons > .view .upload'),
   };
 
-  // used to store a reference to the detached .task-details and its parent container
-  this.savedStates = {
-    details: null,
-    parent: null
-  };
-
   var detachHandler = function() {
     self.buttons.add.off('click');
     self.buttons.cancel.off('click');
@@ -79,8 +73,10 @@ TasksPanel = function(tasktracker) {
     self.panel.off('click', '.caption > .controls');
     self.panel.off('click', '.task-changeset-add, .task-changeset-edit');
     self.panel.off('click', '.task-changeset-remove');
+    self.panel.off('click', '.jqTabGroup > li > a');
     self.panel.off('click', '.task-details .description > article a');
     self.panel.off('click', '.task-attachments tbody tr');
+    self.panel.off('click', '.more-changes');
     self.panel.off('keydown', '.task-changeset-comment');
     self.panel.off('mouseenter', '.controls');
     self.panel.off('mouseleave', '.controls');
@@ -115,10 +111,7 @@ TasksPanel = function(tasktracker) {
       });
     };
 
-    self.buttons.cancel.on('click', function(evt, params) {
-      onCancel(params && params.close);
-      return false;
-    });
+    self.buttons.cancel.on('click', onCancel);
     self.buttons.close.on('click', onClose);
     self.buttons.comment.on('click', onComment);
     self.buttons.edit.on('click', onEdit);
@@ -226,7 +219,7 @@ TasksPanel = function(tasktracker) {
                     var afterSave = $.Event('afterSave');
                     self.tracker.trigger(afterSave, response.data);
                     self.panel.find('.content.slide-in').removeClass('slide-in').addClass('slide-out').on('transitionend', function() {
-                      $(this).remove();
+                      $(this).off().remove();
                     });
 
                     // ToDo. switch to 'attachments tab' if it exists?
@@ -296,6 +289,25 @@ TasksPanel = function(tasktracker) {
       }
     });
 
+    // Fix jqTabs click handler
+    self.panel.on('click', '.jqTabGroup > li > a', function() {
+      var newId = $(this).attr('data');
+      var $pane = $(this).closest('.jqTabPaneInitialized');
+      var oldId = $pane.find('li.current > a').attr('data');
+      var opts = $pane.metadata();
+      opts.currentTabId = oldId;
+
+      $.tabpane.switchTab($pane, opts, newId);
+      return false;
+    });
+
+    self.panel.on('click', '.more-changes', function() {
+      var $link = $(this);
+      $link.parent().children('.task-changeset').fadeIn();
+      $link.remove();
+      return false;
+    });
+
     // Open links within a task's description always in a new window
     self.panel.on('click', '.task-details .description > article a', function(evt) {
       var $link = $(this);
@@ -346,13 +358,17 @@ TasksPanel = function(tasktracker) {
         .fail(error)
         .done(function(response) {
           if ( response.status === 'ok' && response.data ) {
-            var afterSave = $.Event( 'afterSave' );
-            tasktracker.trigger( afterSave, response.data );
-            onCancel();
-            if (!self.isInitialUpload) {
-              toggleUpload();
-            } else {
+            var fireEvent = function() {
+              var afterSave = $.Event( 'afterSave' );
+              tasktracker.trigger( afterSave, response.data );
+            };
+
+            if (self.isInitialUpload) {
               self.isInitialUpload = false;
+              endEdit().done(fireEvent);
+            } else {
+              toggleUpload();
+              fireEvent();
             }
           }
         });
@@ -513,20 +529,35 @@ TasksPanel = function(tasktracker) {
   };
 
   // Checks if the user did any changes within the editor
-  // ToDo: currently buggy -> returns true in any case
   var checkDirty = function() {
     var dirty = false;
 
     if ( self.isEdit ) {
       if ( CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.Description ) {
-        dirty = CKEDITOR.instances.Description.checkDirty();
+        for (var instance in CKEDITOR.instances) {
+          if (CKEDITOR.instances[instance].checkDirty()){
+            dirty = true;
+          }
+        }
       }
     } else if ( self.isComment ) {
       var $tb = self.comment.children('[contenteditable]');
       dirty = !/^\s*$/.test($tb.html());
     }
 
-    // ToDo. do more checks here
+    if (!dirty) {
+      self.panel.find('input, select').each(function() {
+        var $in = $(this);
+        if ($in.val() !== $in.data('saved_val')) {
+          dirty = true;
+        }
+      });
+    }
+
+    if (!dirty) {
+      var txt = self.panel.find('div[name="comment"]').text();
+      dirty = !/^[\s\r\n]*$/.test(txt);
+    }
 
     return dirty;
   };
@@ -543,54 +574,31 @@ TasksPanel = function(tasktracker) {
     self.taskParent = null;
   };
 
-  var cancelEdit = function(closeOverlay) {
-    if ( !self.isCreate ) {
-      releaseTopic({ id: self.currentTask.data('id') });
-    } else {
-      // Hotfix: remove all empty container
-      self.panel.children().each(function() {
-        if ($(this).children().length === 0) {
-          $(this).remove();
-        }
-      });
+  var endEdit = function(closeOverlay, taskId) {
+    var deferred = $.Deferred();
 
-      var first = self.panel.children().first().detach();
+    var create = self.isCreate;
+    self.panel.children().fadeOut(250, function() {
       self.panel.empty();
-      first.appendTo(self.panel);
 
-      if ( self.currentTask !== null ) {
-        self.currentTask.addClass('highlight');
+      if (taskId && !self.isCreate) {
+        releaseTopic({id: taskId});
       }
-    }
 
-    if ( self.savedStates.details !== null && self.savedStates.parent !== null && self.savedStates.parent.length > 0 ) {
-      self.savedStates.parent.fadeOut(200, function() {
-        if ( !self.isCreate ) {
-          self.savedStates.parent.empty();
-        }
+      if (!closeOverlay && !_.isNull(self.currentTask) && taskId !== null) {
+        self.currentTask.addClass('highlight');
+        var $cnt = $('<div class="content slide-in"></div>').css('display', 'none');
+        $cnt.appendTo(self.panel);
+        var $view = self.currentTask.find('> .task-fullview-container > .task-fullview');
+        $cnt.append($view).fadeIn();
+      }
 
-        self.savedStates.details.appendTo(self.savedStates.parent);
+      cancelHelper(closeOverlay);
+      setButtons('view');
+      deferred.resolve();
+    });
 
-        // set by a previous call to fadeOut
-        self.savedStates.details.attr('style', '');
-        initReadmore(self.savedStates.parent);
-        sliceChanges(self.savedStates.parent.find('.changes'));
-        self.savedStates.parent.fadeIn(300, function() {
-          var parent = self.savedStates.parent;
-          if ( parent ) {
-            // initReadmore(parent);
-            // sliceChanges(parent.find('.changes'));
-          }
-
-          self.savedStates.details = self.savedStates.parent = null;
-          cancelHelper(closeOverlay);
-        });
-      });
-    } else {
-      cancelHelper(self.currentTask === null && closeOverlay !== false);
-    }
-
-    setButtons('view');
+    return deferred.promise();
   };
 
   var handleSaveTask = function() {
@@ -661,33 +669,17 @@ TasksPanel = function(tasktracker) {
       .fail( error )
       .done( function( response ) {
         var afterSaveFunc = function(data, suppressEvent) {
-          cancelEdit(false);
-          if ( self.currentTask !== null ) {
-            self.currentTask.removeClass('highlight');
-          } else {
-            // create
-            self.currentTask = $(data.html);
-            self.currentTask.data('id', data.id);
-          }
-
-          if (!suppressEvent) {
-            var afterSave = $.Event( 'afterSave' );
-            tasktracker.trigger( afterSave, data );
-          }
+          var taskId = self.isCreate ? null : data.id;
+          endEdit(false, taskId).done(function() {
+            if (!suppressEvent) {
+              var afterSave = $.Event('afterSave');
+              tasktracker.trigger( afterSave, data );
+            }
+          });
         };
 
         if ( self.isCreate ) {
           task.id = response.id;
-
-          var afterCreateFunc = function() {
-            if ( self.currentTask !== null && self.panel.children().length > 1 ) {
-              var current = self.panel.children().first().children('.task-fullview');
-              var $cnt = self.currentTask.children('.task-fullview-container');
-              current.detach().appendTo($cnt);
-            }
-
-            self.panel.empty();
-          };
 
           var $dnd = self.panel.find('.qw-dnd-upload');
           if (!$dnd.isEmpty()) {
@@ -697,16 +689,16 @@ TasksPanel = function(tasktracker) {
               $dnd.attr('data-topic', arr[1]);
               $dnd.data('tasksgrid', 1);
               self.isInitialUpload = true;
-              $dnd.upload();
-              $dnd.on('queueEmpty', function() {
-                afterSaveFunc(response.data, true);
-              });
 
-              return false;
+              // "pseudo update" current task;
+              // required to correctly update the current task after DnD has
+              // finished uploading...
+              self.currentTask = $(response.data.html);
+              self.currentTask.data('id', response.data.id);
+              $dnd.upload();
+              return;
             }
           }
-
-          afterCreateFunc();
         }
 
         afterSaveFunc(response.data);
@@ -798,11 +790,12 @@ TasksPanel = function(tasktracker) {
     return false;
   };
 
-  var onCancel = function(closeOverlay) {
-    var deferred = $.Deferred();
+  var onCancel = function() {
+    if (self.isEdit) {
+      var closeOverlay = self.isCreate && _.isNull(self.currentTask);
+      var taskId = self.currentTask ? self.currentTask.data('id') : null;
 
-    if ( self.isEdit ) {
-      if ( checkDirty() ) {
+      if (checkDirty()) {
         swal({
           title: jsi18n.get('tasksapi', 'Are you sure?'),
           text: jsi18n.get('tasksapi', 'Your previous changes will be lost.'),
@@ -814,24 +807,25 @@ TasksPanel = function(tasktracker) {
           cancelButtonText: jsi18n.get('tasksapi', 'No'),
           closeOnConfirm: true
         }, function(confirmed) {
-          if ( confirmed ) {
-            cancelEdit(closeOverlay);
-            deferred.resolve();
-          } else {
-            deferred.reject();
+          if (confirmed) {
+            endEdit(closeOverlay, taskId);
           }
         });
       } else {
-        cancelEdit(closeOverlay);
-        deferred.resolve();
+        endEdit(closeOverlay, taskId);
       }
-    } else if ( self.isComment ) {
+
+      return false;
+    }
+
+    if (self.isComment) {
       self.comment.children('div[contenteditable]').empty();
       self.isComment = false;
       setButtons('view');
       self.comment.removeClass('active');
-      deferred.resolve();
-    } else if ( self.isChangesetEdit ) {
+    }
+
+    if ( self.isChangesetEdit ) {
       var $comment = self.panel.find('[contenteditable="true"]');
       var $container = $comment.parent();
 
@@ -842,12 +836,9 @@ TasksPanel = function(tasktracker) {
       self.isChangesetEdit = false;
       self.panel.find('.task-changeset-add').fadeIn(150);
       self.panel.find('.task-changeset .icons').fadeIn(150);
-      deferred.resolve();
-    } else {
-      deferred.resolve();
     }
 
-    return deferred.promise();
+    return false;
   };
 
   var onClose = function() {
@@ -870,79 +861,6 @@ TasksPanel = function(tasktracker) {
     setButtons('edit');
     self.comment.addClass('active');
     return false;
-  };
-
-  var onCreate = function() {
-    self.isCreate = true;
-
-    var opts = {};
-    var topts = self.tracker.data('tasktracker_options');
-    for(var p in topts ) {
-      if ( /string|number|boolean/.test( typeof topts[p] ) ) {
-        opts[p] = topts[p];
-      }
-    }
-
-    opts.id = '';
-    opts.trackerId = self.tracker.attr('id');
-    opts.autoassign = topts.autoassign;
-    opts._depth = task.depth;
-
-    window.tasksapi.blockUI();
-    leaseTopic(opts).done(function(response) {
-      updateHead( response.scripts );
-      updateHead( response.styles );
-
-      self.isEdit = true;
-      self.isView = false;
-      setButtons('edit');
-
-      // fill the editor
-      // (missing data or at least reformat it; e.g. epoch to time string conversion)
-      var $ed = $(response.editor).css('display', 'none');
-      writeEditor($ed, task);
-      if ( topts.autoassign && topts.autoassignTarget ) {
-        var $type = $ed.find('select[name="Type"]');
-        var $target = $ed.find('input[name="' + topts.autoassignTarget + '"]');
-
-        var autoassign = topts.autoassign.split(',');
-        var assign = {};
-        var assignees = [];
-        _.each( topts.autoassign.split(','), function(a) {
-          var arr = a.split('=');
-          assign[arr[0]] = arr[1];
-          assignees.push(arr[1]);
-        });
-
-        var setAssignee = function() {
-          var $self = $(this);
-          var val = $self.val();
-          var assignTo = assign[val];
-          if ( assignTo ) {
-            $target.closest('.' + topts.autoassignTarget).css('display', 'none');
-            setTimeout(function() {
-              $target.trigger('Clear');
-              $target.trigger('AddValue', assignTo);
-            }, 100);
-          } else {
-            $target.closest('.' + topts.autoassignTarget).css('display', 'block');
-            var tval = $target.val();
-            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
-              $target.trigger('Clear');
-            }
-          }
-        };
-
-        $type.on('change', setAssignee);
-        setAssignee.call($type);
-      }
-
-      self.savedStates.details.fadeOut(150, function() {
-        self.savedStates.details.detach();
-        self.savedStates.parent.append($ed);
-        $ed.fadeIn(150);
-      });
-    }).fail( error ).always( window.tasksapi.unblockUI );
   };
 
   var onEdit = function() {
@@ -985,11 +903,7 @@ TasksPanel = function(tasktracker) {
       self.isView = false;
       setButtons('edit');
 
-      var $ed = $(response.editor).css('display', 'none');
-      var $details = self.panel.find('.task-details:not(.attachments)');
-      self.savedStates.details = $details.length ? $details : null;
-      self.savedStates.parent = $details.length ? $details.parent() : null;
-
+      var $ed = $(response.editor);
       if ( !self.isCreate ) {
         // fill the editor
         // (missing data or at least reformat it; e.g. epoch to time string conversion)
@@ -1054,25 +968,42 @@ TasksPanel = function(tasktracker) {
         $type.on('change', setAssignee);
       }
 
-      if ( self.isCreate ) {
-        var $content = $('<div class="content"></div>');
-        $content.append($ed);
-        $content.appendTo(self.panel);
-        toggleOverlay(true);
-        $content.addClass('slide-in');
-        $ed.fadeIn(150);
-      } else {
-        self.savedStates.details.fadeOut(150, function() {
-          self.savedStates.details.detach();
-          self.savedStates.parent.append($ed);
-          $ed.fadeIn(150);
-
-          var $tabs = self.panel.find('.jqTabGroup > li');
-          if ( $tabs.length > 1 ) {
-            $tabs.first().children('a').trigger('click');
-          }
-        });
+      // select the task details tab if it's not selected already
+      var $tabs = self.panel.find('.jqTabGroup > li');
+      if ( $tabs.length > 1 ) {
+        $tabs.first().children('a').trigger('click');
       }
+
+      var $full = self.panel.find('> .content > .task-fullview');
+      if ($full.length) {
+        $full.detach().appendTo(self.currentTask.children('.task-fullview-container'));
+        self.panel.empty();
+      }
+
+      var $content = $('<div class="content slide-in"></div>');
+      $content.css('display', 'none');
+      if ( self.isCreate ) {
+        toggleOverlay(true);
+        $content.append($ed).appendTo(self.panel);
+      } else {
+        var $clone = $full.clone();
+        self.panel.empty();
+
+        var $cnt = $clone.find('.task-details:not(.attachments)').parent();
+        $cnt.empty().append($ed);
+        $content.append($clone).appendTo(self.panel);
+      }
+
+      // show the editor; delay execution for smoother animation
+      setTimeout(function() {
+        $content.fadeIn();
+
+        // save state for possible dirty checks
+        $ed.find('input, select').each(function() {
+          $(this).data('saved_val', $(this).val());
+        });
+      }, 100);
+
 
       // Fixes MA #10193
       $ed.find('select.foswikiSelect2Field option').each(function() {
@@ -1119,6 +1050,12 @@ TasksPanel = function(tasktracker) {
         $input.val(field.value);
       }
     });
+
+    if ( CKEDITOR && CKEDITOR.instances ) {
+      for (var instance in CKEDITOR.instances) {
+        CKEDITOR.instances[instance].resetDirty();
+      }
+    }
   };
 
   var readEditor = function(editor) {
@@ -1296,7 +1233,7 @@ TasksPanel = function(tasktracker) {
   var initReadmore = function($content) {
     $content = $content || self.panel.find('.content.slide-in');
 
-    var $article = $content.find('.task-details > .content > .description article');
+    var $article = $content.find('.description article');
     $article.readmore('destroy');
     $article.readmore({
       collapsedHeight: 150,
@@ -1344,13 +1281,21 @@ TasksPanel = function(tasktracker) {
       $content.addClass('slide-out');
     }
 
-    var $nextView = nextTask.children('.task-fullview-container').children('.task-fullview');
+    var $nextView = nextTask.find('> .task-fullview-container > .task-fullview');
     $nextView.detach().appendTo($content);
     $content.appendTo(self.panel);
 
     setTimeout(function() {
       var $current = self.panel.children('.content.slide-in');
-      $current.on('transitionend', function() {
+
+      // switch contents
+      if ( direction === 'next' ) {
+        $content.addClass('slide-in');
+      } else {
+        $content.addClass('slide-in').removeClass('slide-out');
+      }
+
+      $current.fadeOut(300, function() {
         $current.off('transitionend').remove();
 
         var $view = $current.children('.task-fullview').detach();
@@ -1358,20 +1303,10 @@ TasksPanel = function(tasktracker) {
         self.currentTask = nextTask;
         isAnimating = false;
 
-        setTimeout(function() {
-          $current.remove();
-        }, 300);
+        $current.remove();
       });
 
-      // switch contents
-      $current.removeClass('slide-in');
-      if ( direction === 'next' ) {
-        $current.addClass('slide-out');
-        $content.addClass('slide-in');
-      } else {
-        $content.addClass('slide-in').removeClass('slide-out');
-      }
-			initReadMoreInformees($content);
+      initReadMoreInformees($content);
     }, 25);
 
     return nextTask;
@@ -1474,6 +1409,7 @@ TasksPanel = function(tasktracker) {
       self.overlay.fadeOut(function() {
         self.overlay.removeClass('active');
         self.overlay.children('.panel-wrapper').removeClass('active');
+        self.panel.empty();
       });
 
       return;
@@ -1500,11 +1436,6 @@ TasksPanel = function(tasktracker) {
       $changes.slice(3).hide();
       var $a = $('<a class="more-changes" href="#">' + jsi18n.get('tasksapi', 'Show more changes') + '</a>');
       $a.insertAfter(".task-overlay .task-changeset:last");
-      $a.on("click", function() {
-        $changes.fadeIn("slow");
-        $(this).remove();
-        return false;
-      });
     }
   };
 
@@ -1614,29 +1545,18 @@ TasksPanel = function(tasktracker) {
     self.isView = true;
     self.currentTask = $task;
     self.currentTask.addClass('highlight');
+    self.panel.empty();
 
-    var isEdit = self.isEdit || self.isCreate || self.isComment || self.isChangesetEdit || self.isUpload;
-    if ( isEdit && self.panel.children().length > 0 ) {
-      self.panel.children().each(function() {
-        var $child = $(this);
-        $child.addClass('slide-out');
-        setTimeout(function() {
-          $child.remove();
-        }, 400);
-      });
-    }
-
-    var $content = $('<div class="content"></div>');
-    var $view = $task.children('.task-fullview-container').children('.task-fullview');
-    $view.detach().appendTo($content);
-    $content.appendTo(self.panel);
+    var $content = $('<div class="content slide-in"></div>').css('display', 'none');
+    var $view = $task.find('> .task-fullview-container > .task-fullview').detach();
+    $content.append($view).appendTo(self.panel);
 
     toggleOverlay(true);
     setTimeout(function() {
       initReadmore($content);
       initReadMoreInformees($content);
-      $content.addClass('slide-in');
       sliceChanges($content.find('.changes'));
+      $content.fadeIn(300);
     }, 100);
   };
 
