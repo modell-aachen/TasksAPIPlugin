@@ -466,6 +466,7 @@ div[name="comment"] {
       border-radius: 0;
       padding: 14px;
       width: 31px; // 65 - 2*14
+      cursor: pointer;
 
       &:hover {
         i,
@@ -490,7 +491,6 @@ div[name="comment"] {
         color: darken($light-blue, 25%);
         transition: color 0.5s ease;
         font-size: 2.5em;
-        cursor: pointer;
 
         &:hover {
           color: $white;
@@ -498,7 +498,6 @@ div[name="comment"] {
 
         &.closed {
           color: $light-green;
-          cursor: default;
 
           &:hover{
             color: $white;

@@ -194,12 +194,11 @@
 
         if ( task.fields.Status.value === 'deleted' ) {
           if ( $existing.hasClass('expanded') ) {
-            $existing.next().remove();
+            $next.remove();
           }
 
           $next = self.tasksPanel.next();
           $existing.remove();
-          self.tasksPanel.viewTask($next);
           return false;
         }
 

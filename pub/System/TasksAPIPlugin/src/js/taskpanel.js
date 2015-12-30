@@ -30,9 +30,6 @@ TasksPanel = function(tasktracker) {
     }
   };
 
-  var isCtrlKeyDown = false;
-  var isControlsHovered = false;
-
   this.currentTask = null;
   this.tracker = tasktracker;
   this.overlay = this.tracker.find('> .overlay > .task-overlay');
@@ -86,30 +83,6 @@ TasksPanel = function(tasktracker) {
 
   var attachHandler = function() {
     detachHandler();
-
-    window.onkeydown = window.onkeyup = function(e) {
-      isCtrlKeyDown = e.ctrlKey;
-
-      if ( !isControlsHovered ) {
-        self.panel.find('.controls i').each(function() {
-          var $i = $(this);
-          $i.removeClass('fa-trash-o');
-          $i.addClass($i.hasClass('closed') ? 'fa-check-square' : 'fa-square-o');
-        });
-
-        return;
-      }
-
-      self.panel.find('.controls i').each(function() {
-        var $i = $(this);
-        if ( isCtrlKeyDown ) {
-          $i.removeClass('fa-square-o fa-check-square fa-check-square-o').addClass('fa-trash-o');
-        } else {
-          $i.removeClass('fa-trash-o');
-          $i.addClass($i.hasClass('closed') ? 'fa-square-o' : 'fa-check-square-o');
-        }
-      });
-    };
 
     self.buttons.cancel.on('click', onCancel);
     self.buttons.close.on('click', onClose);
@@ -410,9 +383,8 @@ TasksPanel = function(tasktracker) {
 
     // change the quick action icon (close, reopen, delete)
     self.panel.on('mouseenter', '.controls', function(evt) {
-      isControlsHovered = true;
       var $i = $(this).find('i');
-      if ( isCtrlKeyDown ) {
+      if ( evt.ctrlKey ) {
         $i.removeClass('fa-check-square fa-square-o').addClass('fa-trash-o');
       } else {
         if ( $i.hasClass('closed') ) {
@@ -425,7 +397,6 @@ TasksPanel = function(tasktracker) {
 
     // change the quick action icon (close, reopen, delete)
     self.panel.on('mouseleave', '.controls', function() {
-      isControlsHovered = false;
       var $i = $(this).find('i');
       if ( $i.hasClass('closed') ) {
         $i.removeClass('fa-square-o fa-trash-o').addClass('fa-check-square');
@@ -504,14 +475,10 @@ TasksPanel = function(tasktracker) {
           .fail(error)
           .always(window.tasksapi.unblockUI)
           .done(function(response) {
-            var $current = self.panel.children('.content.slide-in');
-            $current.removeClass('slide-in').addClass('slide-out');
-            setTimeout(function() {
-              $current.remove();
-            }, 500);
-
-            var afterSave = $.Event( 'afterSave' );
-            tasktracker.trigger( afterSave, response.data );
+            if (response && response.status === 'ok') {
+              var afterSave = $.Event( 'afterSave' );
+              tasktracker.trigger( afterSave, response.data );
+            }
           });
       });
 
@@ -1309,7 +1276,9 @@ TasksPanel = function(tasktracker) {
         $current.remove();
       });
 
+      initReadmore($content);
       initReadMoreInformees($content);
+      sliceChanges($content.find('.changes'));
     }, 25);
 
     return nextTask;
