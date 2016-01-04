@@ -1143,7 +1143,6 @@ TasksPanel = function(tasktracker) {
       type: 'error',
       title: jsi18n.get('tasksapi', 'Oops'),
       text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
-      timer: 1500,
       showConfirmButton: true,
       showCancelButton: false
     });

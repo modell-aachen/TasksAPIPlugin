@@ -4,26 +4,27 @@
     this.blockUI = function() {
       var p = foswiki.preferences;
       var url = [
-        p.PUBURLPATH,
+        p.PUBURL,
         '/',
         p.SYSTEMWEB,
         '/TasksAPIPlugin/assets/ajax-loader.gif'
       ];
 
-      swal({
-        text: jsi18n.get('tasksapi', 'Please wait...'),
-        type: null,
-        imageUrl: url.join(''),
-        imageSize: '220x19',
-        showCancelButton: false,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false
+      var txt = jsi18n.get('tasksapi', 'Please wait...')
+      $.blockUI({
+        css: {
+          backgroundColor: '#fff',
+          color: '#000',
+          height: '40px',
+          'z-index': 15000
+        },
+        message: '<div><strong>' + txt+ '</strong></div><img border="0" width="220" height="19" src="' + url.join('') + '" />'
       });
     };
 
+    // wrap method for compatibility reasons
     this.unblockUI = function() {
-      swal.closeModal();
+      $.unblockUI();
     };
   };
 
@@ -406,7 +407,6 @@
       type: 'error',
       title: jsi18n.get('tasksapi', 'Oops'),
       text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
-      timer: 2500,
       showConfirmButton: true,
       showCancelButton: false
     });
