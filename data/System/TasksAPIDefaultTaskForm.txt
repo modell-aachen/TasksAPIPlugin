@@ -12,7 +12,7 @@
 | Description | taskeditor | 50 | | Description | |
 | DueDate | date2 | 10 | | Due | |
 | Informees | user+multi | 50 | | Persons to notify on changes | |
-| Reminder | select+values | | %MAKETEXT{"never"}%=Never,%MAKETEXT{"daily"}%=Daily,%MAKETEXT{"weekly"}%=Weekly,%MAKETEXT{"monthly"}%=Monthly | Send reminder | |
+| Reminder | select+values | | %MAKETEXT{"never"}%=,%MAKETEXT{"daily"}%=1 day,%MAKETEXT{"weekly"}%=1 week,%MAKETEXT{"monthly"}%=1 month | Send reminder | |
 | Prioritize | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | High priority | |
 | HasChildren | select+values | | %MAKETEXT{"no"}%=No,%MAKETEXT{"yes"}%=Yes | Divided into sub-tasks | |
 | Type | select+values | | %MAKETEXT{"Task"}%=Task,%MAKETEXT{"Decision"}%=Decision,%MAKETEXT{"Information"}%=Information | Type | |
@@ -29,3 +29,5 @@
    * Set TASKCFG_NOTIFY_REOPENED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
    * Set TASKCFG_NOTIFY_CHANGED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
    * Set TASKCFG_NOTIFY_CLOSED = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+   * Set TASKCFG_NOTIFY_REMIND = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+   * Set TASKCFG_SCHEDULE_REMIND = $curvalue(Reminder)

@@ -70,7 +70,8 @@ sub process {
             if ($remind) {
                 my $date = new Date::Manip::Date();
                 $date->parse($remind);
-                $db->do("UPDATE jobs SET job_time=? WHERE rowid=?", $date, $job->{rowid});
+                my $time = $date->printf('%s');
+                $db->do("UPDATE jobs SET job_time=? WHERE rowid=?", {}, $time, $job->{rowid});
             }
         }
     }
