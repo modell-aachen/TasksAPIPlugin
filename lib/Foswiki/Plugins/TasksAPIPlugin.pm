@@ -1489,7 +1489,7 @@ SCRIPT
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
 
     # todo.. templates und so
-    if ( $paging && $settings{totalsize} > $settings{pagesize}) {
+    if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
         my $prev = $page - 1 || 1;
         my $next= $page + 1;
         my $pagination = '';
