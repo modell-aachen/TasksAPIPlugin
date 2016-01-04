@@ -1209,6 +1209,12 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
+    # if paging is disabled and no pagesize is given, return all tasks for the
+    # current context.
+    if ($paging eq 0 && !defined $params->{pagesize}) {
+        $pageSize = -1;
+    }
+
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
 
@@ -1233,6 +1239,7 @@ sub tagGrid {
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
+    my $isPrint = $req->param('cover') eq 'print' ? 1 : 0;
     my $override = $trackerid eq $id || ($gridCounter - 1 eq 1 && $trackerid eq '');
     if ( $req->param('order') && $override ) {
         $order = $req->param('order');
@@ -1242,14 +1249,21 @@ sub tagGrid {
         $desc = $req->param('desc') eq 0 ? 0 : $req->param('desc');
     }
 
-    if ( $req->param('pagesize') && $override ) {
+    if ( !$isPrint && $req->param('pagesize') && $override ) {
         $pageSize = $req->param('pagesize');
     }
 
     my $page = 1;
     $page = $req->param('page') if $req->param('page') && $override;
-    if ( $pageSize && $page gt 1  && $override ) {
+    if ( !$isPrint && $pageSize && $page gt 1  && $override ) {
         $offset = (int($page) - 1) * int($pageSize);
+    }
+
+    # disable paging if we gonna export the current tracker as PDF.
+    if ( $isPrint ) {
+        $offset = 0;
+        $page = 1;
+        $pageSize = -1;
     }
 
     my %settings = (
