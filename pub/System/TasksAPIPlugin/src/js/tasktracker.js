@@ -903,7 +903,7 @@
           return;
         }
         firstInformee = informeesArray[0];
-        newDiv = '<span>'+firstInformee+',... <div class="task-informee">';
+        newDiv = '<span>'+firstInformee+', <div class="task-informee">';
         informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
         $.each(informeesArray,function(index,value){
           if(index == 0)
@@ -911,7 +911,7 @@
           else
             newDiv += ', '+this;
         });
-        newDiv += '</div></span>';//<p class="task-informee-a"><a class="more-changes" href="#">'+jsi18n.get("tasksapi", "Show more")+'</a></p>
+        newDiv += '</div></span>';
         informeesElem.remove();
         $(newDiv).insertAfter($(this).parent().find('span'));
       }
