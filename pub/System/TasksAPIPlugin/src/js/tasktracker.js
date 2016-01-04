@@ -621,7 +621,7 @@
       $a.attr('href', href);
     });
 
-    var $filter = $tracker.children('.filter').first();;
+    var $filter = $tracker.children('.filter').first();
     var opts = $tracker.data('tasktracker_options');
     var filter = readFilter.call($filter);
     var qfilter = stringifyFilter(opts, filter);
@@ -918,6 +918,30 @@
     });
   };
 
+  // For now we only support exporting the first grid on a page.
+  var exportPDF = function() {
+    $(this).on('submit', function() {
+      var $form = $(this);
+
+      var $tracker = $('.tasktracker').first();
+      var $filter = $tracker.children('.filter').first();
+      var filter = readFilter.call($filter);
+
+      var opts = $tracker.data('tasktracker_options');
+      var filter = readFilter.call($filter.closest('.filter'));
+      var query = stringifyFilter(opts, filter);
+      _.each(query.split(/&/), function(param) {
+        var arr = param.split(/=/);
+        var name = arr[0];
+        var val = arr[1];
+
+        $form.find('input[name="' + name + '"]').remove();
+        var $in = $('<input type="hidden" name="' + name + '" value="' + val + '" />')
+        $in.appendTo($form);
+      });
+    });
+  };
+
   $(document).ready( function() {
     if (CKEDITOR) {
       CKEDITOR.disableAutoInline = true;
@@ -928,6 +952,9 @@
 
     var $tracker = $('.tasktracker').tasksGrid();
     window.tasksapi = new TasksAPI();
+
+    // Listen for PDF exports
+    $('#printDialogForm').livequery(exportPDF);
 
     setTimeout(function() {
       if ( window.location.search ) {
