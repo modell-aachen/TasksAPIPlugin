@@ -680,7 +680,8 @@
     });
 
     // keep sort order
-    $('.sortable.desc[data-sort], .sortable.asc[data-sort]').each(function(){
+    var $tracker = $('#' + trackeropts.id);
+    $tracker.find('> .tasks-table > thead .sortable.desc[data-sort], .sortable.asc[data-sort]').each(function(){
       var $sort = $(this);
       if ($sort.length) {
         params.push('order=' + $sort.data('sort'));

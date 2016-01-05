@@ -1361,31 +1361,33 @@ sub tagGrid {
         $mapstates->($query, %settings);
     }
 
-    my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
-    foreach my $l (@list) {
-        my $val = $req->param("f_$l");
-        if ($l !~ /_(l|r)$/) {
-            $query->{$l} = $val;
-        } else {
-            my %range;
-
-            if ($l =~ /_r$/) {
-                my @arr = split(/_/, $val);
-                $l =~ s/_r$//;
-                %range = (
-                    type => 'range',
-                    from => int($arr[0]),
-                    to => int($arr[1])
-                );
+    if ($override) {
+        my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
+        foreach my $l (@list) {
+            my $val = $req->param("f_$l");
+            if ($l !~ /_(l|r)$/) {
+                $query->{$l} = $val;
             } else {
-                $l =~ s/_l$//;
-                %range = (
-                    type => 'like',
-                    substring => $val,
-                );
-            }
+                my %range;
 
-            $query->{$l} = \%range;
+                if ($l =~ /_r$/) {
+                    my @arr = split(/_/, $val);
+                    $l =~ s/_r$//;
+                    %range = (
+                        type => 'range',
+                        from => int($arr[0]),
+                        to => int($arr[1])
+                    );
+                } else {
+                    $l =~ s/_l$//;
+                    %range = (
+                        type => 'like',
+                        substring => $val,
+                    );
+                }
+
+                $query->{$l} = \%range;
+            }
         }
     }
 
@@ -1411,7 +1413,7 @@ sub tagGrid {
         }
     }
 
-    if ( $req->param('id') ) {
+    if ( $req->param('id') && $override) {
         $query->{id} = $req->param('id');
     }
 
