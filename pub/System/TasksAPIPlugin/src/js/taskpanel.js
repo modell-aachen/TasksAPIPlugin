@@ -501,36 +501,67 @@ TasksPanel = function(tasktracker) {
 
   // Checks if the user did any changes within the editor
   var checkDirty = function() {
-    var dirty = false;
-
     if ( self.isEdit ) {
       if ( CKEDITOR && CKEDITOR.instances && CKEDITOR.instances.Description ) {
         for (var instance in CKEDITOR.instances) {
           if (CKEDITOR.instances[instance].checkDirty()){
-            dirty = true;
+            return true;
           }
         }
       }
-    } else if ( self.isComment ) {
+    }
+
+    if ( self.isComment ) {
       var $tb = self.comment.children('[contenteditable]');
-      dirty = !/^\s*$/.test($tb.html());
+      if ( !/^\s*$/.test($tb.html()) ) {
+        return true;
+      }
     }
 
-    if (!dirty) {
-      self.panel.find('input, select').each(function() {
-        var $in = $(this);
-        if ($in.val() !== $in.data('saved_val')) {
+    var dirty = false;
+    self.panel.find('input, select').each(function() {
+      var $in = $(this);
+      var val = $in.val();
+      var saved = $in.data('saved_val');
+
+      if (_.isArray(val)) {
+        if (!_.isArray(saved) || saved.length !== val.length) {
           dirty = true;
+          return false;
+        } else {
+          for (var i = 0; i < val.length; ++i) {
+            var matched = false;
+            for (var j = 0; j < val.length; ++j) {
+              matched = val[i] === saved[j];
+              if (matched) {
+                break;
+              }
+            }
+
+            if (!matched) {
+              dirty = true;
+              return false;
+            }
+          }
         }
-      });
+      } else {
+        if (val !== saved) {
+          dirty = true;
+          return false;
+        }
+      }
+    });
+
+    if (dirty) {
+      return true;
     }
 
-    if (!dirty) {
-      var txt = self.panel.find('div[name="comment"]').text();
-      dirty = !/^[\s\r\n]*$/.test(txt);
+    var txt = self.panel.find('div[name="comment"]').text();
+    if (!/^[\s\r\n]*$/.test(txt)) {
+      return true;
     }
 
-    return dirty;
+    return false;
   };
 
   var cancelHelper = function(closeOverlay) {
