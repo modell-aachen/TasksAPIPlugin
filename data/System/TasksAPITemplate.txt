@@ -110,21 +110,18 @@
           </span>
         </div>
       </div>
-      <div class="task-meta-entry">
-        <i class="fa fa-lightbulb-o"></i>
-        <div>
-          <span class="title">%MAKETEXT{"Reminder"}%</span>
-          <span>
-%RENDERFOREDIT{
+      <!-- Reminder -->%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Reminder"
-  format="$edit"
-  header=""
-  footer=""
-}%
-          </span>
+  format="
+      <div class=\"task-meta-entry\">
+        <i class=\"fa fa-lightbulb-o\"></i>
+        <div>
+          <span class=\"title\">%MAKETEXT{"Reminder"}%</span>
+          <span>$edit</span>
         </div>
-      </div>
+      </div>"
+}%
       <div class="task-meta-entry">
         <i class="fa fa-exclamation"></i>
         <div>
@@ -249,21 +246,18 @@
           </span>
         </div>
       </div>
-      <div class="task-meta-entry">
-        <i class="fa fa-lightbulb-o"></i>
-        <div>
-          <span class="title">%MAKETEXT{"Reminder"}%</span>
-          <span>
-%RENDERFOREDIT{
+      <!-- Reminder -->%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Reminder"
-  format="$edit"
-  header=""
-  footer=""
-}%
-          </span>
+  format="
+      <div class=\"task-meta-entry\">
+        <i class=\"fa fa-lightbulb-o\"></i>
+        <div>
+          <span class=\"title\">%MAKETEXT{"Reminder"}%</span>
+          <span>$edit</span>
         </div>
-      </div>
+      </div>"
+}%
       <div class="task-meta-entry">
         <i class="fa fa-exclamation"></i>
         <div>
@@ -325,7 +319,7 @@
     </div>
     <div class="textarea">
       <label>
-        <input type="checkbox" name="close" value="">
+        <input type="checkbox" name="close" value="" />
         %MAKETEXT{"Close task"}%
       </label>
       <div contenteditable="true"></div>

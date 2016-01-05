@@ -9,7 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 
-# use Date::Manip;
+use Date::Manip;
 use Digest::SHA;
 use Error qw( :try );
 use JSON;
@@ -328,12 +328,15 @@ sub create {
 
 sub notify {
     my ($self, $type, %options) = @_;
+    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} || 0;
+    return if $disabled;
+
     my $notify = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { $self->getPref("NOTIFY_\U$type") });
     return unless $notify;
     my $tpl = $self->getPref("NOTIFY_\U${type}_TEMPLATE") || "TasksAPI\u${type}Mail";
 
     require Foswiki::Contrib::MailTemplatesContrib;
-    Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{field}{Context}));
+    Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context}));
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
     Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl) });
@@ -426,8 +429,12 @@ sub update {
     } elsif (@changes || @comment) {
         # Find existing changesets to determine new ID
         my @changesets = $meta->find('TASKCHANGESET');
-        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
-        my $newid = 1 + pop(@ids);
+        my @ids;
+        if (scalar(@changesets)) {
+            @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        }
+
+        my $newid = 1 + (@ids && scalar(@ids) ? pop(@ids) : 0);
         $meta->putKeyed('TASKCHANGESET', {
             name => $newid,
             actor => $Foswiki::Plugins::SESSION->{user},
@@ -446,17 +453,19 @@ sub update {
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
 
-    $self->notify($notify);
-    delete $self->{changeset};
-    if ($notify eq 'closed') {
-        $self->_postClose;
-    } elsif ($notify eq 'reopened') {
-        $self->_postReopen;
-    } elsif ($notify eq 'reassigned') {
-        $self->_postReassign;
+    if ($changed) {
+        $self->notify($notify);
+        delete $self->{changeset};
+        if ($notify eq 'closed') {
+            $self->_postClose;
+        } elsif ($notify eq 'reopened') {
+            $self->_postReopen;
+        } elsif ($notify eq 'reassigned') {
+            $self->_postReassign;
+        }
     }
-    $self->_postUpdate;
 
+    $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
 }
 

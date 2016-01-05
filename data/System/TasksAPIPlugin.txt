@@ -124,6 +124,10 @@ Examples:
    * <code>Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(AssignedTo)</code> - notify the new assignee when a task is reassigned.
    * <code>Set TASKCFG_NOTIFY_CHANGED = $curvalue(AssignedTo), $curvalue(Informees)</code> - notify the assignee and users on the notification list on any normal changes to the task.
 
+*Note*:
+Email notifications can be disabled globally by setting =$Foswiki::cfg{TasksAPIPlugin}{DisableNotifications}=
+to a =true= value.
+
 ---++++ =TASKCFG_NOTIFY_(type)_TEMPLATE=
 
 Assigns a template used to render the e-mail notification (see previous

@@ -4,26 +4,27 @@
     this.blockUI = function() {
       var p = foswiki.preferences;
       var url = [
-        p.PUBURLPATH,
+        p.PUBURL,
         '/',
         p.SYSTEMWEB,
         '/TasksAPIPlugin/assets/ajax-loader.gif'
       ];
 
-      swal({
-        text: jsi18n.get('tasksapi', 'Please wait...'),
-        type: null,
-        imageUrl: url.join(''),
-        imageSize: '220x19',
-        showCancelButton: false,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false
+      var txt = jsi18n.get('tasksapi', 'Please wait...')
+      $.blockUI({
+        css: {
+          backgroundColor: '#fff',
+          color: '#000',
+          height: '40px',
+          'z-index': 15000
+        },
+        message: '<div><strong>' + txt+ '</strong></div><img border="0" width="220" height="19" src="' + url.join('') + '" />'
       });
     };
 
+    // wrap method for compatibility reasons
     this.unblockUI = function() {
-      swal.closeModal();
+      $.unblockUI();
     };
   };
 
@@ -43,6 +44,7 @@
       self.isTaskClicked = false;
       self.tasksPanel = new TasksPanel($this);
 
+      $('body').off('keydown', '.sweet-alert');
       $('body').on('keydown', '.sweet-alert', function(e) {
         if ($(e.target).is('[contenteditable="true"]')) {
           e.stopPropagation();
@@ -53,6 +55,9 @@
         if (e.which !== 13 && e.which !== 27)
           return false;
       });
+
+      // Detach all possibly existing event handlers.
+      $this.off();
 
       $this.on('mouseenter', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
@@ -84,11 +89,7 @@
         }
 
         var $task = $(this);
-        if (!$task.data('id') || !$task.data('task_data')) {
-          var raw = $task.find('> .task-data-container > .task-data').text();
-          var task = $.parseJSON(raw);
-          initTaskElement($task, task);
-        }
+        verifyTaskInitialized($task);
 
         if (evt.ctrlKey && evt.shiftKey) {
           if (window.console && console.log) {
@@ -177,7 +178,6 @@
       loadTasks( $this, self.opts.currentState, true );
       hideInformees();
 
-      // $status.on( 'change', handleStatusFilterChanged );
       var findTask = function(id) {
         return self.opts.container.find('.task:visible').filter( function() {
           return $(this).data('id') === id;
@@ -195,12 +195,11 @@
 
         if ( task.fields.Status.value === 'deleted' ) {
           if ( $existing.hasClass('expanded') ) {
-            $existing.next().remove();
+            $next.remove();
           }
 
           $next = self.tasksPanel.next();
           $existing.remove();
-          self.tasksPanel.viewTask($next);
           return false;
         }
 
@@ -378,6 +377,14 @@
     return deferred.promise();
   };
 
+  var verifyTaskInitialized = function($task) {
+    if (!$task.data('id') || !$task.data('task_data')) {
+      var raw = $task.find('> .task-data-container > .task-data').text();
+      var task = $.parseJSON(raw);
+      initTaskElement($task, task);
+    }
+  };
+
   var initTaskElement = function($task, task) {
     $task.data('id', task.id);
     $task.data('task_data', task);
@@ -400,7 +407,6 @@
       type: 'error',
       title: jsi18n.get('tasksapi', 'Oops'),
       text: jsi18n.get('tasksapi', 'Something went wrong! Try again later.'),
-      timer: 2500,
       showConfirmButton: true,
       showCancelButton: false
     });
@@ -429,6 +435,8 @@
   var toggleTaskState = function() {
     var deferred = $.Deferred();
     var $task = $(this).closest('.task');
+    verifyTaskInitialized($task);
+
     var isOpen = $task.data('task_data').fields.Status.value === 'open';
     var $next = $task.next();
 
@@ -613,7 +621,12 @@
       $a.attr('href', href);
     });
 
-    var url = window.location.pathname + '?' + search.join('&');
+    var $filter = $tracker.children('.filter').first();
+    var opts = $tracker.data('tasktracker_options');
+    var filter = readFilter.call($filter);
+    var qfilter = stringifyFilter(opts, filter);
+
+    var url = window.location.pathname + '?' + search.join('&') + '&' + qfilter;
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
@@ -632,7 +645,31 @@
     var $tracker = $filter.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
     var filter = readFilter.call($filter.closest('.filter'));
-    var params = ['tid=' + opts.id];
+    var url = window.location.pathname + '?' + stringifyFilter(opts, filter);
+    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
+    var $table = $tracker.children('.tasks-table');
+    window.tasksapi.blockUI();
+    $('<div></div>').load(target, function(res, status, xhr) {
+      if (status === 'error') {
+        error(status, res, xhr);
+        return;
+      }
+
+      var $doc = $('<div></div>').append($.parseHTML(res));
+      var $filter = $tracker.children('.filter').detach();
+      var $newTracker = $doc.find('#' + opts.id);
+      $newTracker.children('.filter').replaceWith($filter);
+      $tracker.replaceWith($newTracker);
+      $newTracker.tasksGrid();
+
+      window.tasksapi.unblockUI();
+    });
+
+    return false;
+  };
+
+  var stringifyFilter = function(trackeropts, filter) {
+    var params = ['tid=' + trackeropts.id];
 
     // respect query params (but ignore 'state')
     var qparams = parseQueryParams();
@@ -662,40 +699,52 @@
         }
       } else {
         params.push('f_' + p + '=' + filter[p]);
+
+        // status mapping:
+        // check if we are applying a filter to a mapped field (field X -> field Status)
+        // (assume that the original field Status has no filter inputs)
+        if (trackeropts.mapping && trackeropts.mapping.field === p) {
+          if (filter[p] === 'all') {
+            params.push('f_Status=all');
+          } else {
+            for (var m in trackeropts.mapping.mappings) {
+              if (trackeropts.mapping.mappings[m].indexOf(filter[p]) > -1) {
+                params.push('f_Status=' + m);
+                break;
+              }
+            }
+          }
+        }
       }
     }
 
-    var url = window.location.pathname + '?' + params.join('&');
-    var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
-    var $table = $tracker.children('.tasks-table');
-    window.tasksapi.blockUI();
-    $('<div></div>').load(target, function(res, status, xhr) {
-      if (status === 'error') {
-        error(status, res, xhr);
-        return;
-      }
-
-      var $doc = $('<div></div>').append($.parseHTML(res));
-      var $filter = $tracker.children('.filter').detach();
-      var $newTracker = $doc.find('#' + opts.id);
-      $newTracker.children('.filter').replaceWith($filter);
-      $tracker.replaceWith($newTracker);
-      $newTracker.tasksGrid();
-
-      window.tasksapi.unblockUI();
-    });
-
-    return false;
+    return params.join('&');
   };
 
   var resetFilter = function() {
     var $tracker = $(this).closest('.tasktracker');
-    $tracker.find('> .filter input[name]').each(function() {
-      $(this).val('');
-    });
+    var opts = $tracker.data('tasktracker_options');
+    var query = $.parseJSON(opts.query);
 
-    $tracker.find('> .filter select[name]').each(function() {
-      $(this).val($(this).children('option').first().val());
+    $tracker.find('input.filter, select.filter').each(function() {
+      var $filter = $(this);
+      $filter.val('')
+      if ($filter.is('input')) {
+        if ($filter.data('default')) {
+          $filter.val($filter.data('default'));
+        }
+      }
+
+      if ($filter.is('select')) {
+        $filter.children('option').each(function() {
+          var $o = $(this);
+          $o.removeAttr('selected');
+          if ($o.data('default')) {
+            $o.attr('selected', 'selected');
+            $filter.val($o.val());
+          }
+        });
+      }
     });
 
     $tracker.find('.btn-filter.btn-apply').trigger('click');
@@ -854,7 +903,7 @@
           return;
         }
         firstInformee = informeesArray[0];
-        newDiv = '<span>'+firstInformee+',... <div class="task-informee">';
+        newDiv = '<span>'+firstInformee+', <div class="task-informee">';
         informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
         $.each(informeesArray,function(index,value){
           if(index == 0)
@@ -862,10 +911,34 @@
           else
             newDiv += ', '+this;
         });
-        newDiv += '</div></span>';//<p class="task-informee-a"><a class="more-changes" href="#">'+jsi18n.get("tasksapi", "Show more")+'</a></p>
+        newDiv += '</div></span>';
         informeesElem.remove();
         $(newDiv).insertAfter($(this).parent().find('span'));
       }
+    });
+  };
+
+  // For now we only support exporting the first grid on a page.
+  var exportPDF = function() {
+    $(this).on('submit', function() {
+      var $form = $(this);
+
+      var $tracker = $('.tasktracker').first();
+      var $filter = $tracker.children('.filter').first();
+      var filter = readFilter.call($filter);
+
+      var opts = $tracker.data('tasktracker_options');
+      var filter = readFilter.call($filter.closest('.filter'));
+      var query = stringifyFilter(opts, filter);
+      _.each(query.split(/&/), function(param) {
+        var arr = param.split(/=/);
+        var name = arr[0];
+        var val = arr[1];
+
+        $form.find('input[name="' + name + '"]').remove();
+        var $in = $('<input type="hidden" name="' + name + '" value="' + val + '" />')
+        $in.appendTo($form);
+      });
     });
   };
 
@@ -879,6 +952,9 @@
 
     var $tracker = $('.tasktracker').tasksGrid();
     window.tasksapi = new TasksAPI();
+
+    // Listen for PDF exports
+    $('#printDialogForm').livequery(exportPDF);
 
     setTimeout(function() {
       if ( window.location.search ) {

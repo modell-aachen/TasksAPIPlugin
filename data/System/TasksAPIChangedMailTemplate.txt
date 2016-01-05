@@ -1,9 +1,9 @@
 %TMPL:INCLUDE{"TasksAPIDefaultMail"}%
 
-%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task updated: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task updated"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] updated the task '[_2]'" args="%TASKSAPI_ACTOR%,%TMPL:P{ModacMailTitle}%"}%
+%MAKETEXT{"[_1] updated a task" args="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
 
 %TASKINFO{type="changeset" nohtml="1"}%
 %MAKETEXT{"Direct link"}%:

@@ -4,6 +4,7 @@ data/System/TasksAPIDefaultMailTemplate.txt 0644 Common template for mail notifi
 data/System/TasksAPIChangedMailTemplate.txt 0644 Mail notify for changed task
 data/System/TasksAPICreatedMailTemplate.txt 0644 Mail notify for created task
 data/System/TasksAPIClosedMailTemplate.txt 0644 Mail notify for closed task
+data/System/TasksAPIRemindMailTemplate.txt 0644 Mail reminder for open tasks
 data/System/TasksAPIReopenedMailTemplate.txt 0644 Mail notify for reopened task
 data/System/TasksAPIReassignedMailTemplate.txt 0644 Mail notify for reassigned task
 data/System/TasksAPIDefaultTaskForm.txt 0644 Task form

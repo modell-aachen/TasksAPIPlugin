@@ -1,9 +1,9 @@
 %TMPL:INCLUDE{"TasksAPIDefaultMail"}%
 
-%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created: [_1]" args="%TMPL:P{ModacMailTitle}%"}%%TMPL:END%
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] created a task: [_2]" args="%TASKSAPI_ACTOR%,%TMPL:P{ModacMailTitle}%"}%
+%MAKETEXT{"[_1] created a task" args="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
 
 %MAKETEXT{"Assigned to"}%: %TASKINFO{field="AssignedTo"}%
 %MAKETEXT{"Due date"}%: %TASKINFO{field="DueDate" format="$day $month $year"}%

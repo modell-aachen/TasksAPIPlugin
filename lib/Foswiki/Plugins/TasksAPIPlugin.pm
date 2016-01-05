@@ -732,7 +732,7 @@ sub tagAmpel {
     my $status = $params->{status} || 'open';
     my $warn = $params->{warn} || 3;
 
-    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\">" if ( !$date && $status eq 'open' );
+    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\" />" if ( !$date && $status eq 'open' );
 
     my $src = '';
     if ( $status eq 'open' ) {
@@ -756,7 +756,7 @@ sub tagAmpel {
     }
 
     my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title">
+<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
 IMG
 
     return $img;
@@ -788,7 +788,7 @@ sub tagFilter {
     return '' unless $filter;
 
     my $sys = $Foswiki::cfg{SystemWebName} || 'System';
-    my $ftopic = $params->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $ftopic = $params->{form} || $currentOptions->{form} || "$sys.TasksAPIDefaultTaskForm";
     my $isrange = $params->{range} || 0;
     my $ismulti = $params->{multi} || 0;
     my $min = $params->{min} || '';
@@ -800,9 +800,20 @@ sub tagFilter {
     my $format = $params->{format} || ''; # ToDo
     my $title = $params->{title} || '';
 
+    my $query = $currentOptions->{query} || '{}';
+    if ($query) {
+        $query = from_json($query);
+    }
+
     my $form = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $ftopic) );
     my $fields = $form->getFields;
     my @html = ('<div>');
+
+    my $isSelected = sub {
+        return 'selected="selected" data-default="1"' if $_[0] eq $_[1];
+        return '';
+    };
+
     foreach my $f (@$fields) {
         next unless $f->{name} eq $filter;
         $title = $f->{title} || $f->{name} unless $title;
@@ -811,15 +822,17 @@ sub tagFilter {
         if ($f->{type} =~ /^date2?$/) {
             my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
             my $dmax = ($maxfrom || $max) ? "data-max=\"" . ($maxfrom || $max) . "\"" : '';
-            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\">");
+            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             if ($isrange) {
                 $dmin = ($minto || $min) ? "data-min=\"" . ($minto || $min) . "\"" : '';
                 $dmax = ($maxto || $max) ? "data-max=\"" . ($maxto || $max) . "\"" : '';
                 push(@html, "<span>-</span>");
-                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\">");
+                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             }
         } elsif ($f->{type} =~ /^text$/) {
-            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\">");
+            my $value = $query->{$filter} ? "value=\"$query->{$filter}\"" : '';
+            my $default = 'data-default="' . $query->{$filter} . '"' if $value;
+            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
         } elsif ($f->{type} =~ /^select/) {
             push(@html, "<select name=\"$filter\" class=\"filter\">");
             my @opts = ();
@@ -837,6 +850,8 @@ sub tagFilter {
                 }
             }
 
+            my $selected = '';
+            my $hasSelected = 0;
             my @options = ();
             if ( scalar @opts eq scalar @labels) {
                 for (my $i=0; $i < scalar @opts; $i++) {
@@ -844,20 +859,31 @@ sub tagFilter {
                     $val =~ s/(^\s*)|(\s*$)//g;
                     my $label = $labels[$i];
                     $label =~ s/(^\s*)|(\s*$)//g;
-                    push(@options, "<option value=\"$val\">$label</option>")
+
+                    $selected = $isSelected->($query->{$filter}, $val);
+                    $hasSelected = 1 if $selected;
+                    push(@options, "<option value=\"$val\" $selected>$label</option>")
                 }
             } else {
                 for (my $i=0; $i < scalar @opts; $i++) {
                     my $val = $opts[$i];
                     $val =~ s/(^\s*)|(\s*$)//g;
+                    $selected = $isSelected->($query->{$filter}, $val);
+                    $hasSelected = 1 if $selected;
                     push(@options, "<option value=\"$val\">$val</option>")
                 }
             }
 
-            my $selected = '';
-            if ($f->{name} ne 'Status') {
-                $selected = 'selected="selected"';
+            if ($hasSelected eq 0) {
+                $selected = 'selected="selected" data-default="1"';
+            } else {
+                $selected = '';
             }
+
+            # Assume 'all'.
+            # Note: Actually we have to render a multi-select here:
+            #       e.g. 'query={Status: ["closed", "deleted"]}'
+            # Would also result in type 'all'
 
             push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
             push(@html, @options);
@@ -1154,7 +1180,8 @@ sub tagGrid {
     my $statesMapping = $params->{statesmapping} || '';
     my $mappingField = $params->{mappingfield} || '';
     my $pageSize = $params->{pagesize} || 25;
-    my $paging = $params->{paging} || 0;
+    my $paging = $params->{paging};
+    $paging = 1 unless defined $paging;
     my $query = $params->{query} || '{}';
     my $templateFile = $params->{templatefile};
     my $allowCreate = $params->{allowcreate};
@@ -1182,6 +1209,12 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
 
+    # if paging is disabled and no pagesize is given, return all tasks for the
+    # current context.
+    if ($paging eq 0 && !defined $params->{pagesize}) {
+        $pageSize = -1;
+    }
+
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
 
@@ -1206,6 +1239,7 @@ sub tagGrid {
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
+    my $isPrint = $req->param('cover') eq 'print' ? 1 : 0;
     my $override = $trackerid eq $id || ($gridCounter - 1 eq 1 && $trackerid eq '');
     if ( $req->param('order') && $override ) {
         $order = $req->param('order');
@@ -1215,14 +1249,21 @@ sub tagGrid {
         $desc = $req->param('desc') eq 0 ? 0 : $req->param('desc');
     }
 
-    if ( $req->param('pagesize') && $override ) {
+    if ( !$isPrint && $req->param('pagesize') && $override ) {
         $pageSize = $req->param('pagesize');
     }
 
     my $page = 1;
     $page = $req->param('page') if $req->param('page') && $override;
-    if ( $pageSize && $page gt 1  && $override ) {
+    if ( !$isPrint && $pageSize && $page gt 1  && $override ) {
         $offset = (int($page) - 1) * int($pageSize);
+    }
+
+    # disable paging if we gonna export the current tracker as PDF.
+    if ( $isPrint ) {
+        $offset = 0;
+        $page = 1;
+        $pageSize = -1;
     }
 
     my %settings = (
@@ -1412,7 +1453,7 @@ sub tagGrid {
 
     my @jqdeps = (
         "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
-        "jqp::moment", "jqp::observe", "jqp::tooltipster", "jqp::underscore",
+        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
         "jqp::readmore", "jqp::sweetalert2"
     );
     foreach (@jqdeps) {
@@ -1448,7 +1489,7 @@ SCRIPT
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
 
     # todo.. templates und so
-    if ( $paging && $settings{totalsize} > $settings{pagesize}) {
+    if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
         my $prev = $page - 1 || 1;
         my $next= $page + 1;
         my $pagination = '';
@@ -1465,7 +1506,7 @@ SCRIPT
         my $pages = '';
         for (my $c = $settings{totalsize}/$settings{pagesize}; $c > 0; $c--) {
             my $cls = $page == $cur ? 'active' : '';
-            $pages .= "<li class=\"$cls\"><a href=\"/$web/$topic?page=$cur$qstr\">$cur</a></li>";
+            $pages .= "<li class=\"$cls\"><a href=\"%SCRIPTURLPATH{view}%/$web/$topic?page=$cur$qstr\">$cur</a></li>";
             $cur++;
         }
 
@@ -1731,7 +1772,9 @@ sub tagInfo {
 
             foreach my $v (@vals) {
                 unless(grep(/$v/, $currentOptions->{autouser})) {
+                    my $tmp = $v;
                     $v = _getDisplayName($v) if $v;
+                    $v = $tmp unless $v;
                 }
             }
 
