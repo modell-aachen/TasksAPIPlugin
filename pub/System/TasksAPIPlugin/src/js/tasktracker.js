@@ -726,7 +726,7 @@
     var opts = $tracker.data('tasktracker_options');
     var query = $.parseJSON(opts.query);
 
-    $tracker.find('input.filter, select.filter').each(function() {
+    $tracker.children('.filter').find('input, select').each(function() {
       var $filter = $(this);
       $filter.val('')
       if ($filter.is('input')) {
