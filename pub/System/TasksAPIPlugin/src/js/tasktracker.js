@@ -471,7 +471,7 @@
         cancelButtonColor: '#BDBDBD',
         confirmButtonText: jsi18n.get('tasksapi', 'Yes'),
         cancelButtonText: jsi18n.get('tasksapi', 'No'),
-        closeOnConfirm: false
+        closeOnConfirm: true
       }, function(confirmed) {
         if (confirmed) {
           payload.Status = 'closed';
