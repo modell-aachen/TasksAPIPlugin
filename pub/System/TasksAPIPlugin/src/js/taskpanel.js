@@ -1119,7 +1119,7 @@ TasksPanel = function(tasktracker) {
         return false;
       }
 
-      data[prop] = val !== null ? val : "";
+      data[prop] = (val !== null && typeof val !== 'undefined') ? val : "";
     });
 
     if ( data.hasError ) {
