@@ -1074,10 +1074,7 @@ TasksPanel = function(tasktracker) {
       }
       var val = $input.val();
       if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
-        var $selected = $input.children('option[selected]');
-        if (!$selected.length || ($selected.length === 1 && !$selected.val())) {
-          $selected = $input.children('option:selected')
-        }
+        var $selected = $input.children('option:selected');
 
         if ($selected.length > 1) {
           val = [];
