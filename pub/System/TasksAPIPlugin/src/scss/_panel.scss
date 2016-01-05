@@ -319,7 +319,7 @@ div[name="comment"] {
   background-color: lighten(#e9eff5, 2%);
   padding: 10px;
   transition: background-color .3s ease-in-out;
-  word-break: break-word;
+  word-break: break-all;
 
   i {
     color: #aaa;

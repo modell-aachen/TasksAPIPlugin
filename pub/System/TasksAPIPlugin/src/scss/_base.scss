@@ -216,6 +216,7 @@ table.task-attachments {
     padding: 10px 5px;
     transition: color .2s ease-in-out;
     vertical-align: middle;
+    word-break: break-all;
 
     &.by span {
       color: #777;
