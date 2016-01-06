@@ -581,6 +581,7 @@ TasksPanel = function(tasktracker) {
 
     var create = self.isCreate;
     self.panel.children().fadeOut(250, function() {
+      destroyEditorInstances();
       self.panel.empty();
 
       if (taskId && !self.isCreate) {
@@ -707,6 +708,18 @@ TasksPanel = function(tasktracker) {
       });
 
     return false;
+  };
+
+  var destroyEditorInstances = function() {
+    for (var i in CKEDITOR.instances) {
+      try {
+        CKEDITOR.instances[i].destroy();
+      } catch(e) {
+        if (window.console && console.error) {
+          console.error(e);
+        }
+      }
+    }
   };
 
   var handleSaveComment = function() {
