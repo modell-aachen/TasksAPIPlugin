@@ -711,6 +711,10 @@ TasksPanel = function(tasktracker) {
   };
 
   var destroyEditorInstances = function() {
+    if (typeof CKEDITOR !== 'object') {
+      return;
+    }
+
     for (var i in CKEDITOR.instances) {
       try {
         CKEDITOR.instances[i].destroy();
