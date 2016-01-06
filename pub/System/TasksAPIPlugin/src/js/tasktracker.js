@@ -28,13 +28,13 @@
     };
   };
 
-  $.fn.tasksGrid = function() {
+  $.fn.tasksGrid = function(fnOpts) {
     if ( typeof _ === typeof undefined ) {
       error( "Missing dependency underscore.js");
       return this;
     }
 
-    return this.each(function () {
+    return this.each(function() {
       var $this = $(this);
       if ( !$this.hasClass('tasktracker') ) {
         return this;
@@ -56,6 +56,67 @@
           return false;
       });
 
+      var id = $this.attr('id');
+      var json = $this.children('.settings').text();
+      self.opts = $.parseJSON( json );
+
+      self.opts.cntHeight = $this.height();
+      self.opts.container = $this.children('.tasks-table').children('.tasks');
+
+      var curstate = 'open';
+      if (typeof self.opts.query === typeof '') {
+        try {
+          json = $.parseJSON(self.opts.query);
+          if (typeof json.Status === typeof '') {
+            curstate = json.Status;
+          }
+        } catch (e) {
+          erorr(e);
+        }
+      }
+
+      self.opts.currentState = curstate;
+      $this.data('tasktracker_options', self.opts);
+
+      var $tasks = self.opts.container;
+      var $filter = $this.children('.filter');
+      var $status = $filter.find('select[name="Status"]');
+
+      var params = parseQueryParams();
+      if ( params.f_Status || params.state ) {
+        self.opts.currentState = params.f_Status || params.state;
+        $status.val(params.f_Status || params.state);
+      }
+
+      loadTasks( $this, self.opts.currentState, true );
+      hideInformees();
+
+      if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
+        $this.find('> .tasks-table > thead th').each(function() {
+          var $th = $(this);
+          var sortby = $th.data('sort');
+          if ( !sortby ) {
+            return;
+          }
+
+          $th.addClass('sortable');
+          $th.off('click', doSort);
+          $th.on('click', doSort);
+
+          if ( self.opts.order === sortby ) {
+            $th.addClass(/^(1|on|true|enabled?)$/i.test(self.opts.desc) ? 'desc' : 'asc');
+          }
+        });
+      }
+
+      $this.children('.pagination-container').off('click', 'li a', handlePager);
+      $this.children('.pagination-container').on('click', 'li a', handlePager);
+
+      // reinit: keep all events attached to .tasktracker
+      if (fnOpts === 'reinit' || (typeof fnOpts === 'object' && fnOpts.reinit === true)) {
+        return this;
+      }
+
       // Detach all possibly existing event handlers.
       $this.off();
 
@@ -76,7 +137,6 @@
         }
       });
 
-      $this.children('.pagination-container').on('click', 'li a', handlePager);
       $this.on('click', '.task > .close', toggleTaskState);
       $this.on('click', '.task', function(evt) {
         if ( $(evt.target).closest('.expander').length === 1 ) {
@@ -126,57 +186,6 @@
 
         return false;
       });
-
-      var id = $this.attr('id');
-      var json = $this.children('.settings').text();
-      self.opts = $.parseJSON( json );
-
-      self.opts.cntHeight = $this.height();
-      self.opts.container = $this.children('.tasks-table').children('.tasks');
-
-      var curstate = 'open';
-      if (typeof self.opts.query === typeof '') {
-        try {
-          json = $.parseJSON(self.opts.query);
-          if (typeof json.Status === typeof '') {
-            curstate = json.Status;
-          }
-        } catch (e) {
-          erorr(e);
-        }
-      }
-      self.opts.currentState = curstate;
-      $this.data('tasktracker_options', self.opts);
-
-      if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
-        $this.find('> .tasks-table > thead th').each(function() {
-          var $th = $(this);
-          var sortby = $th.data('sort');
-          if ( !sortby ) {
-            return;
-          }
-
-          $th.addClass('sortable');
-          $th.on('click', doSort);
-
-          if ( self.opts.order === sortby ) {
-            $th.addClass(/^(1|on|true|enabled?)$/i.test(self.opts.desc) ? 'desc' : 'asc');
-          }
-        });
-      }
-
-      var $tasks = self.opts.container;
-      var $filter = $this.children('.filter');
-      var $status = $filter.find('select[name="Status"]');
-
-      var params = parseQueryParams();
-      if ( params.f_Status || params.state ) {
-        self.opts.currentState = params.f_Status || params.state;
-        $status.val(params.f_Status || params.state);
-      }
-
-      loadTasks( $this, self.opts.currentState, true );
-      hideInformees();
 
       var findTask = function(id) {
         return self.opts.container.find('.task:visible').filter( function() {
@@ -647,7 +656,6 @@
     var filter = readFilter.call($filter.closest('.filter'));
     var url = window.location.pathname + '?' + stringifyFilter(opts, filter);
     var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
-    var $table = $tracker.children('.tasks-table');
     window.tasksapi.blockUI();
     $('<div></div>').load(target, function(res, status, xhr) {
       if (status === 'error') {
@@ -656,11 +664,10 @@
       }
 
       var $doc = $('<div></div>').append($.parseHTML(res));
-      var $filter = $tracker.children('.filter').detach();
       var $newTracker = $doc.find('#' + opts.id);
-      $newTracker.children('.filter').replaceWith($filter);
-      $tracker.replaceWith($newTracker);
-      $newTracker.tasksGrid();
+      $newTracker.children('.filter').replaceWith($tracker.children('.filter').detach());
+      $tracker.empty().append($newTracker.children());
+      $tracker.tasksGrid('reinit');
 
       window.tasksapi.unblockUI();
     });
