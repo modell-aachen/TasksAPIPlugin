@@ -207,7 +207,7 @@
             $next.remove();
           }
 
-          $next = self.tasksPanel.next();
+          self.tasksPanel.next();
           $existing.remove();
           return false;
         }
