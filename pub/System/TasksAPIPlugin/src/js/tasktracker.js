@@ -884,15 +884,21 @@
       url += '&tab=' + cls;
     }
 
-    var tid = $this.closest('.tasktracker').attr('id');
+    var $tracker = $this.closest('.tasktracker');
+    var tid = $tracker.attr('id');
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
-    $this.closest('.tasktracker').find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
+    $tracker.find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
       window.tasksapi.unblockUI();
 
       if (status === 'error') {
         error(status, resp, xhr);
+        return;
       }
+
+      $tracker.find('> .tasks-table > .tasks > .task').each(function() {
+        verifyTaskInitialized($(this));
+      });
     });
 
     return false;
