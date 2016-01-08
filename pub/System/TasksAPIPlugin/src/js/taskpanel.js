@@ -1156,12 +1156,12 @@ TasksPanel = function(tasktracker) {
   };
 
   var onNextTask = function() {
-    var task = self.next();
+    self.next();
     return false;
   };
 
   var onPrevTask = function() {
-    var task = self.prev();
+    self.prev();
     return false;
   };
 
@@ -1200,8 +1200,11 @@ TasksPanel = function(tasktracker) {
   };
 
   var getSibling = function($task, direction) {
+    var deferred = $.Deferred();
+
     if ( !isTask($task) ) {
-      return;
+      deferred.reject();
+      return deferred.promise();
     }
 
     var sel, func;
@@ -1218,12 +1221,72 @@ TasksPanel = function(tasktracker) {
       $sibling = $sibling[func]();
     }
 
-    if ( !$sibling.hasClass('task') ) {
-      var $children = $task.parent().children(sel);
-      $sibling = $task.parent().children('.task')[sel]();
+    if ($sibling.hasClass('task')) {
+      deferred.resolve($sibling);
+      return deferred.promise();
     }
 
-    return $sibling;
+
+    var $container = $task.parent();
+    var $tracker = $task.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
+
+    var paging = /^1|on|true$/i.test(opts.paging);
+    if (!paging) {
+      $sibling = $container.children('.task')[sel]();
+      deferred.resolve($sibling);
+      return deferred.promise();
+    }
+
+    var tasksLoadedFunc = function() {
+      var $this = $(this);
+      $this.off('tasksLoaded', tasksLoadedFunc);
+
+      var $tasks = $this.find('> .tasks-table > tbody.tasks > .task');
+      deferred.resolve($tasks[sel]());
+    };
+
+    $tracker.on('tasksLoaded', tasksLoadedFunc);
+
+    var pagesize = parseInt(opts.pagesize);
+    var total = parseInt(opts.totalsize);
+    var $pages = $('.pagination li');
+    var $current = $('.pagination li.active');
+    var current = parseInt($current.text());
+
+    if (func === 'next') {
+      // switch to next page
+      if (pagesize*current < total) {
+        $current.next().children('a').trigger('click');
+      } else {
+        // switch back to first page
+        for (var p = 0; p < $pages.length; ++p) {
+          var $page = $($pages[p]);
+          if (/^\s*1\s*$/.test($page.text())) {
+            $page.children('a').trigger('click');
+            break;
+          }
+        }
+      }
+
+      return deferred.promise();
+    }
+
+    // go to previous page
+    if (current > 1) {
+      $current.prev().children('a').trigger('click');
+    } else {
+      // go to last page
+      for (var p = $pages.length; p > 0; --p) {
+        var $page = $($pages[p]);
+        if (/^\s*\d+\s*$/.test($page.text())) {
+          $page.children('a').trigger('click');
+          break;
+        }
+      }
+    }
+
+    return deferred.promise();
   };
 
   var initReadMoreInformees = function($content){
@@ -1264,70 +1327,79 @@ TasksPanel = function(tasktracker) {
 
   var isAnimating = false;
   var animateTaskChange = function(direction) {
+    var deferred = $.Deferred();
+
     if ( isAnimating || !self.currentTask || self.isEdit ) {
-      return;
+      deferred.reject();
+      return deferred.promise();
     }
 
     isAnimating = true;
-    var nextTask = getSibling(self.currentTask, direction);
-    if ( nextTask[0] === self.currentTask[0] ) {
+    getSibling(self.currentTask, direction).always(function() {
       isAnimating = false;
-      return self.currentTask;
-    }
-
-    // scroll highlighted task into view...
-    self.currentTask.removeClass('highlight');
-    nextTask.addClass('highlight');
-    var wh = $(window).height();
-    var sy = window.scrollY;
-    var ot = nextTask.offset().top;
-    var th = nextTask.height();
-
-    if ( sy + wh < ot + th || sy > ot ) {
-      $('body,html').animate({
-        scrollTop: ot - th
-      });
-    }
-
-    // close upload panel (if active);
-    if ( self.isUpload ) {
-      toggleUpload();
-    }
-
-    // prepare content switching
-    var $content = $('<div class="content"></div>');
-    if ( direction === 'prev' ) {
-      $content.addClass('slide-out');
-    }
-
-    var $nextView = nextTask.find('> .task-fullview-container > .task-fullview');
-    $nextView.detach().appendTo($content);
-    $content.appendTo(self.panel);
-
-    setTimeout(function() {
-      var $current = self.panel.children('.content.slide-in');
-
-      // switch contents
-      $content.addClass('slide-in');
-      if ( direction === 'prev' ) {
-        $content.removeClass('slide-out');
+    }).done(function(nextTask) {
+      if ( nextTask[0] === self.currentTask[0] ) {
+        isAnimating = false;
+        deferred.resolve(self.currentTask);
+        return deferred.promise();
       }
 
-      $current.fadeOut(300, function() {
-        var $view = $current.children('.task-fullview').detach();
-        $view.appendTo(self.currentTask.children('.task-fullview-container'));
-        self.currentTask = nextTask;
-        isAnimating = false;
+      // scroll highlighted task into view...
+      self.currentTask.removeClass('highlight');
+      nextTask.addClass('highlight');
+      var wh = $(window).height();
+      var sy = window.scrollY;
+      var ot = nextTask.offset().top;
+      var th = nextTask.height();
 
-        $current.remove();
-      });
+      if ( sy + wh < ot + th || sy > ot ) {
+        $('body,html').animate({
+          scrollTop: ot - th
+        });
+      }
 
-      initReadmore($content);
-      initReadMoreInformees($content);
-      sliceChanges($content.find('.changes'));
-    }, 25);
+      // close upload panel (if active);
+      if ( self.isUpload ) {
+        toggleUpload();
+      }
 
-    return nextTask;
+      // prepare content switching
+      var $content = $('<div class="content"></div>');
+      if ( direction === 'prev' ) {
+        $content.addClass('slide-out');
+      }
+
+      var $nextView = nextTask.find('> .task-fullview-container > .task-fullview');
+      $nextView.detach().appendTo($content);
+      $content.appendTo(self.panel);
+
+      setTimeout(function() {
+        var $current = self.panel.children('.content.slide-in');
+
+        // switch contents
+        $content.addClass('slide-in');
+        if ( direction === 'prev' ) {
+          $content.removeClass('slide-out');
+        }
+
+        $current.fadeOut(300, function() {
+          var $view = $current.children('.task-fullview').detach();
+          $view.appendTo(self.currentTask.children('.task-fullview-container'));
+          self.currentTask = nextTask;
+          isAnimating = false;
+
+          $current.remove();
+        });
+
+        initReadmore($content);
+        initReadMoreInformees($content);
+        sliceChanges($content.find('.changes'));
+      }, 25);
+
+      deferred.resolve(nextTask);
+    });
+
+    return deferred.promise();
   };
 
   var handleLease = function( action, payload ) {
@@ -1579,11 +1651,15 @@ TasksPanel = function(tasktracker) {
   };
 
   this.next = function() {
-    return animateTaskChange('next');
+    var deferred = $.Deferred();
+    animateTaskChange('next').done(deferred.resolve);
+    return deferred.promise();
   };
 
   this.prev = function() {
-    return animateTaskChange('prev');
+    var deferred = $.Deferred();
+    animateTaskChange('prev').done(deferred.resolve);
+    return deferred.promise();
   };
 
   return this;

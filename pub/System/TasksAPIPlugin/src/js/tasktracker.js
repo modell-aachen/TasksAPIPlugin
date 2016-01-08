@@ -207,7 +207,7 @@
             $next.remove();
           }
 
-          $next = self.tasksPanel.next();
+          self.tasksPanel.next();
           $existing.remove();
           return false;
         }
@@ -643,7 +643,12 @@
 
       if (status === 'error') {
         error(status, resp, xhr);
+        return;
       }
+
+      var $tracker = $(this).closest('.tasktracker');
+      var loaded = $.Event('tasksLoaded');
+      $tracker.trigger(loaded);
     });
 
     return false;
@@ -670,6 +675,9 @@
       $tracker.tasksGrid('reinit');
 
       window.tasksapi.unblockUI();
+
+      var loaded = $.Event('tasksLoaded');
+      $tracker.trigger(loaded);
     });
 
     return false;
@@ -899,6 +907,9 @@
       $tracker.find('> .tasks-table > .tasks > .task').each(function() {
         verifyTaskInitialized($(this));
       });
+
+      var loaded = $.Event( 'tasksLoaded' );
+      $tracker.trigger(loaded);
     });
 
     return false;
