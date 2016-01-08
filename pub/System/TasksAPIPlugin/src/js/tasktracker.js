@@ -643,7 +643,12 @@
 
       if (status === 'error') {
         error(status, resp, xhr);
+        return;
       }
+
+      var $tracker = $(this).closest('.tasktracker');
+      var loaded = $.Event('tasksLoaded');
+      $tracker.trigger(loaded);
     });
 
     return false;
@@ -670,6 +675,9 @@
       $tracker.tasksGrid('reinit');
 
       window.tasksapi.unblockUI();
+
+      var loaded = $.Event('tasksLoaded');
+      $tracker.trigger(loaded);
     });
 
     return false;
@@ -892,7 +900,12 @@
 
       if (status === 'error') {
         error(status, resp, xhr);
+        return;
       }
+
+      var $tracker = $(this).closest('.tasktracker');
+      var loaded = $.Event( 'tasksLoaded' );
+      $tracker.trigger(loaded);
     });
 
     return false;
