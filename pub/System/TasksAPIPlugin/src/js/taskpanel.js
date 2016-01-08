@@ -1244,7 +1244,6 @@ TasksPanel = function(tasktracker) {
       deferred.resolve($tasks[sel]());
     };
 
-    $tracker.data('pagination_direction', direction);
     $tracker.on('tasksLoaded', tasksLoadedFunc);
 
     var pagesize = parseInt(opts.pagesize);
