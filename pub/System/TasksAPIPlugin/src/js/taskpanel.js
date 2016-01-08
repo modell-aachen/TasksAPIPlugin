@@ -1250,8 +1250,8 @@ TasksPanel = function(tasktracker) {
 
     var pagesize = parseInt(opts.pagesize);
     var total = parseInt(opts.totalsize);
-    var $pages = $('.pagination li');
-    var $current = $('.pagination li.active');
+    var $pages = $tracker.find('.pagination li');
+    var $current = $tracker.find('.pagination li.active');
     var current = parseInt($current.text());
 
     if (func === 'next') {
