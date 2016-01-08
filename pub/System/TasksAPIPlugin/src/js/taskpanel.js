@@ -747,6 +747,7 @@ TasksPanel = function(tasktracker) {
     }
 
     var close = $cb.attr('checked');
+    $cb.prop('checked', false);
     if ( close ) {
       payload.Status = 'closed';
     }
@@ -839,6 +840,7 @@ TasksPanel = function(tasktracker) {
 
     if (self.isComment) {
       self.comment.children('div[contenteditable]').empty();
+      self.comment.find('input[name="close"]').prop('checked', false);
       self.isComment = false;
       setButtons('view');
       self.comment.removeClass('active');
