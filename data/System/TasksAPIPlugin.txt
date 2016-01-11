@@ -167,6 +167,36 @@ See section _Task Flavors_ for further details.
 
 Relative or absolute url to an image (16x16) used to decorate Solr search results.
 
+---++++ =TASKCFG_MAP_STATUS=, =TASKCFG_MAP_STATUS_FIELD=
+
+With these options you can define a custom status field that allows you to
+define custom additional states. The built in statuses =open= and =closed= in
+the =Status= field remain but are no longer directly edited by the user; instead
+you let them use your custom status field in the edit interface.
+
+The =TASKCFG_MAP_STATUS_FIELD= option specifies the name of your custom status
+field.
+
+The =TASKCFG_MAP_STATUS= option defines a mapping of your custom statuses to the
+built in statuses, so that each of your custom statuses can be identified as
+corresponding to =open= or =closed=. This means that any wiki topic that renders
+tasks can, for example, show all open tasks, including any of your custom
+statuses.
+
+Example:
+
+<verbatim>
+   * Set TASKCFG_MAP_STATUS = rejected=closed, feedback=open, review=open
+</verbatim>
+
+This specifies that your custom "rejected" status maps to the internal "closed"
+status (rejection is a kind of closing, after all), and so on. Any status not
+listed in this option is used as-is.
+
+When defining custom statuses, remember to keep an "open" and "closed" status so
+that "quick close" widgets in the user interface still know which of your custom
+statuses to switch to.
+
 ---+++ Task Flavors
 
 In some circumstances you might want to include tasks, which are created in different contexts,

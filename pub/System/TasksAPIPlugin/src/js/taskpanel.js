@@ -641,20 +641,6 @@ TasksPanel = function(tasktracker) {
       }
     }
 
-    if ( opts.mapping && opts.mapping.field ) {
-      var field = task[opts.mapping.field];
-      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
-      task.Status = _.find(keys, function(key) {
-        if (!_.isUndefined(key)) {
-          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
-            return key;
-          }
-        }
-
-        return undefined;
-      });
-    }
-
     // remove invalid parent entries.
     if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {
       delete task.Parent;
@@ -1584,20 +1570,6 @@ TasksPanel = function(tasktracker) {
 
     task._depth = opts.depth > 0 ? opts.depth : 0;
     var apiFunc = 'update';
-
-    if ( opts.mapping && opts.mapping.field ) {
-      var field = task[opts.mapping.field];
-      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
-      task.Status = _.find(keys, function(key) {
-        if (!_.isUndefined(key)) {
-          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
-            return key;
-          }
-        }
-
-        return undefined;
-      });
-    }
 
     // remove invalid parent entries.
     if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {

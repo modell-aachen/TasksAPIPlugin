@@ -367,6 +367,18 @@ sub update {
 
     $self->_preUpdate;
 
+    my %skip_changeset;
+    if (my $statusmap = $self->getPref("MAP_STATUS_FIELD")) {
+        my $vals = $self->getPref("MAP_STATUS", "*");
+        $skip_changeset{Status} = 1;
+        if ($data{$statusmap}) {
+            my $val = $data{$statusmap};
+            $data{Status} = $vals->{$val} if $vals->{$val};
+        } elsif ($data{Status}) {
+            $data{$statusmap} = $data{Status};
+        }
+    }
+
     my @changes;
     delete $data{TopicType};
     my @comment = delete $data{comment};
@@ -377,16 +389,17 @@ sub update {
         next if !exists $data{$name};
         my $val = $data{$name};
         my $old = $self->{fields}{$name};
+
         if ($val eq '' && $old ne '') {
             $meta->remove('FIELD', $name);
             delete $self->{fields}{$name};
-            push @changes, { type => 'delete', name => $name, old => $old };
+            push @changes, { type => 'delete', name => $name, old => $old } unless $skip_changeset{$name};
             next;
         }
         if ($old eq '' && $val ne '') {
-            push @changes, { type => 'add', name => $name, new => $val };
+            push @changes, { type => 'add', name => $name, new => $val } unless $skip_changeset{$name};
         } elsif ($val ne $old) {
-            push @changes, { type => 'change', name => $name, old => $old, new => $val };
+            push @changes, { type => 'change', name => $name, old => $old, new => $val } unless $skip_changeset{$name};
         }
 
         if ($name eq 'AssignedTo' && $old ne $val) {
@@ -400,7 +413,7 @@ sub update {
             }
         }
 
-        $meta->putKeyed('FIELD', { name => $name, title => $f->{tooltip}, value => $val });
+        $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $val });
         $self->{fields}{$name} = $val;
     }
     if (@comment) {
@@ -457,18 +470,18 @@ sub update {
         }
     }
 
-    $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    return unless $changed;
 
-    if ($changed) {
-        $self->notify($notify);
-        delete $self->{changeset};
-        if ($notify eq 'closed') {
-            $self->_postClose;
-        } elsif ($notify eq 'reopened') {
-            $self->_postReopen;
-        } elsif ($notify eq 'reassigned') {
-            $self->_postReassign;
-        }
+
+    $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    $self->notify($notify);
+    delete $self->{changeset};
+    if ($notify eq 'closed') {
+        $self->_postClose;
+    } elsif ($notify eq 'reopened') {
+        $self->_postReopen;
+    } elsif ($notify eq 'reassigned') {
+        $self->_postReassign;
     }
 
     $self->_postUpdate;

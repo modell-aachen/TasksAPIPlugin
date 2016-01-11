@@ -33,7 +33,6 @@ The following parameters are available:
 | flavor="..." | Name of a task's template flavor to render each grid entry with | |
 | form="..." | The form to use for new tasks (in =Web.Topic= format) | %<nop>SYSTEMWEB%.TasksAPIDefaultTaskForm |
 | keepclosed="..." | Keep closed tasks within the grid until next page load | 0 |
-| mappingfield="..." | Name of the formfield container the custom state definitions | |
 | offset="..." | When paging is enabled, skips the amount of entries specified. | 0 |
 | order="..." | Which field to sort by. | Created |
 | pagesize="..." | Number of tasks to fetch per page | 25 |
@@ -43,8 +42,7 @@ The following parameters are available:
 | readonly="..." | Renders a grid readonly. Disables creation/editing of tasks. Denies uploading attachments | 0 |
 | showattachments="..." | Show existing attachments for each task | 1 |
 | sortable="..." | Enables sorting of tasks within a grid | 1 |
-| states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all'). See also =statesmapping= and =mappingfield= | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
-| statesmapping="..." | Maps custom task states to the required Status field. Format, e.g.: open=[state1, state2],closed=[state3],all=[state1,state2,state3] | |
+| states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all'). | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
 | tasktemplate="..." | Name of the template used to render a task entry | tasksapi::task |
 | templatefile="..." | Name of the template file to be read before applying templates | %<nop>SYSTEMWEB%.TasksAPITemplate |
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |

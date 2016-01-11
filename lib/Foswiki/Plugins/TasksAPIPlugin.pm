@@ -1666,26 +1666,10 @@ FORMAT
 
         my $changeOld = $change->{old} || '';
         my $changeNew = $change->{new} || '';
-        if ( $f->{type} =~ /date2?/ ) {
-            $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
-            $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
-            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-        }
 
-        if ( $f->{type} =~ /^select/ ) {
-            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-        }
-
-        if ( $f->{type} eq 'user') {
-            $changeOld = _getDisplayName($changeOld);
-            $changeNew = _getDisplayName($changeNew);
-        }
-
-        if ( $f->{type} eq 'user+multi') {
-            $changeOld = join(', ', map {_getDisplayName($_)} split(',', $changeOld));
-            $changeNew = join(', ', map {_getDisplayName($_)} split(',', $changeNew));
+        if ($f->can('getDisplayValue')) {
+            $changeOld = $f->getDisplayValue($changeOld);
+            $changeNew = $f->getDisplayValue($changeNew);
         }
 
         $out =~ s#\$name#$f->{name}#g;
