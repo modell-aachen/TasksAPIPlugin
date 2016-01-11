@@ -633,7 +633,10 @@
       <span class="title">%TASKINFO{field="Title" shorten="160"}%</span>
       <span class="attachments %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>
     </div>%{
-}%%IF{"'%TASKINFO{field="Context"}%'/Title" then="<div class=\"context\"><span><a href=\"$percntSCRIPTURL{$quotview$quot}$percnt/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%$percntIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"&tab=tasks_closed\"}$percnt\">$percntQUERY{\"'%TASKINFO{field="Context"}%'/Title\"}$percnt</a></span></div>"}%%{
+}%%IF{
+  "'%TASKINFO{field="Context"}%'/TopicTitle"
+  then="<div class=\"context\"><span><a href=\"$percntSCRIPTURL{$quotview$quot}$percnt/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%$percntIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"&tab=tasks_closed\"}$percnt\">$percntQUERY{\"'%TASKINFO{field="Context"}%'/TopicTitle\"}$percnt</a></span></div>"
+}%%{
 }%</td>
   <td class="due" data-value="%TASKINFO{field="DueDate"}%">
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
