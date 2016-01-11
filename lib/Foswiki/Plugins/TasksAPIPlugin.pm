@@ -163,6 +163,26 @@ sub indexTopicHandler {
     $task->solrize($indexer, $legacy);
 }
 
+sub afterRenameHandler {
+    my ( $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
+    return if $oldWeb eq $newWeb && $oldTopic eq $newTopic;
+
+    ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+    ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+    my $query = {
+        Context => "$oldWeb.$oldTopic"
+    };
+
+    Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+    my $res = _query(query => $query, count => -1);
+    my $tasks = $res->{tasks};
+    foreach my $task (@$tasks) {
+        $task->update(Context => "$newWeb.$newTopic");
+    }
+
+    Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+}
+
 sub db {
     return $db if defined $db;
     $db = DBI->connect("DBI:SQLite:dbname=$Foswiki::cfg{DataDir}/$Foswiki::cfg{TasksAPIPlugin}{DBWeb}/tasks.db",

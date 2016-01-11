@@ -328,7 +328,10 @@ sub create {
 
 sub notify {
     my ($self, $type, %options) = @_;
-    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} || 0;
+
+    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications}
+        || Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')
+        || 0;
     return if $disabled;
 
     my $notify = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { $self->getPref("NOTIFY_\U$type") });
@@ -412,43 +415,46 @@ sub update {
     }
 
     my $changed = 0;
-    # just update the comment if a changeset id is given
-    if ( $data{cid} ) {
-        my $cid = delete $data{cid};
-        my $set = $meta->get('TASKCHANGESET', $cid);
-        my $cmt = pop(@comment);
-        $set->{comment} = $cmt;
 
-        if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
-            $meta->remove('TASKCHANGESET', $cid);
-        } else {
-            $meta->putKeyed('TASKCHANGESET', $set);
+    unless (Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')) {
+        # just update the comment if a changeset id is given
+        if ( $data{cid} ) {
+            my $cid = delete $data{cid};
+            my $set = $meta->get('TASKCHANGESET', $cid);
+            my $cmt = pop(@comment);
+            $set->{comment} = $cmt;
+
+            if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
+                $meta->remove('TASKCHANGESET', $cid);
+            } else {
+                $meta->putKeyed('TASKCHANGESET', $set);
+            }
+
+            $changed = 1;
+        } elsif (@changes || @comment) {
+            # Find existing changesets to determine new ID
+            my @changesets = $meta->find('TASKCHANGESET');
+            my @ids;
+            if (scalar(@changesets)) {
+                @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+            }
+
+            my $newid = 1 + (@ids && scalar(@ids) ? pop(@ids) : 0);
+            $meta->putKeyed('TASKCHANGESET', {
+                name => $newid,
+                actor => $Foswiki::Plugins::SESSION->{user},
+                at => scalar(time),
+                changes => to_json(\@changes),
+                @comment
+            });
+            $self->{changeset} = $newid;
+            $changed = 1;
         }
 
-        $changed = 1;
-    } elsif (@changes || @comment) {
-        # Find existing changesets to determine new ID
-        my @changesets = $meta->find('TASKCHANGESET');
-        my @ids;
-        if (scalar(@changesets)) {
-            @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        if ($changed) {
+            $self->{fields}{Changed} = time;
+            $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
         }
-
-        my $newid = 1 + (@ids && scalar(@ids) ? pop(@ids) : 0);
-        $meta->putKeyed('TASKCHANGESET', {
-            name => $newid,
-            actor => $Foswiki::Plugins::SESSION->{user},
-            at => scalar(time),
-            changes => to_json(\@changes),
-            @comment
-        });
-        $self->{changeset} = $newid;
-        $changed = 1;
-    }
-
-    if ($changed) {
-        $self->{fields}{Changed} = time;
-        $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
     }
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
