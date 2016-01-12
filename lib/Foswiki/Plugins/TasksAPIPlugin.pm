@@ -1392,6 +1392,7 @@ sub tagGrid {
         $query->{id} = $req->param('id');
     }
 
+    $query->{Status} = ['open', 'closed'] unless $query->{Status};
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
