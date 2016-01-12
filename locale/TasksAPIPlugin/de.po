@@ -33,6 +33,9 @@ msgstr "Aufgaben"
 msgid "Add task"
 msgstr "Aufgabe hinzufügen"
 
+msgid "Add entry"
+msgstr "Eintrag hinzufügen"
+
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
 
