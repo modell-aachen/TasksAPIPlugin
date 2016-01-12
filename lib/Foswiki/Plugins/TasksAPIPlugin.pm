@@ -1225,7 +1225,7 @@ sub tagGrid {
     $desc = 1 unless defined $desc;
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
-    $createText = '%MAKETEXT{"Add entry"}%' unless defined $createText;
+    $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
 
     # if paging is disabled and no pagesize is given, return all tasks for the
     # current context.
