@@ -1224,6 +1224,18 @@ TasksPanel = function(tasktracker) {
       return deferred.promise();
     }
 
+    var pagesize = parseInt(opts.pagesize);
+    var total = parseInt(opts.totalsize);
+    var $pages = $tracker.find('.pagination li');
+    var $current = $tracker.find('.pagination li.active');
+    var current = parseInt($current.text());
+
+    if (!$pages.length) {
+      var $next = $container.children()[sel]();
+      deferred.resolve($next);
+      return deferred.promise();
+    }
+
     var tasksLoadedFunc = function() {
       var $this = $(this);
       $this.off('tasksLoaded', tasksLoadedFunc);
@@ -1233,12 +1245,6 @@ TasksPanel = function(tasktracker) {
     };
 
     $tracker.on('tasksLoaded', tasksLoadedFunc);
-
-    var pagesize = parseInt(opts.pagesize);
-    var total = parseInt(opts.totalsize);
-    var $pages = $tracker.find('.pagination li');
-    var $current = $tracker.find('.pagination li.active');
-    var current = parseInt($current.text());
 
     if (func === 'next') {
       // switch to next page
@@ -1321,9 +1327,7 @@ TasksPanel = function(tasktracker) {
     }
 
     isAnimating = true;
-    getSibling(self.currentTask, direction).always(function() {
-      isAnimating = false;
-    }).done(function(nextTask) {
+    getSibling(self.currentTask, direction).done(function(nextTask) {
       if ( nextTask[0] === self.currentTask[0] ) {
         isAnimating = false;
         deferred.resolve(self.currentTask);
@@ -1375,14 +1379,13 @@ TasksPanel = function(tasktracker) {
           isAnimating = false;
 
           $current.remove();
+          deferred.resolve(nextTask);
         });
 
         initReadmore($content);
         initReadMoreInformees($content);
         sliceChanges($content.find('.changes'));
       }, 25);
-
-      deferred.resolve(nextTask);
     });
 
     return deferred.promise();
@@ -1623,15 +1626,11 @@ TasksPanel = function(tasktracker) {
   };
 
   this.next = function() {
-    var deferred = $.Deferred();
-    animateTaskChange('next').done(deferred.resolve);
-    return deferred.promise();
+    return animateTaskChange('next');
   };
 
   this.prev = function() {
-    var deferred = $.Deferred();
-    animateTaskChange('prev').done(deferred.resolve);
-    return deferred.promise();
+    return animateTaskChange('prev');
   };
 
   return this;
