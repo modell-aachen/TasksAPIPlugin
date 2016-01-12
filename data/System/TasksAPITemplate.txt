@@ -467,7 +467,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">%{
-}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
+}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percentIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"$percentMAKETEXT{\"closed\"}$percent\" else=\"$percentMAKETEXT{\"deleted\"}$percent\"}$percent</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
 }%</td>%{
 }%%IF{"context task_canedit and not context task_readonly" then="<td class='close no-print' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>%TMPL:P{"tasksapi::task::controls::right"}%</td>"}%%{
 }%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
@@ -518,11 +518,34 @@
 }%</div>
 </div>%TMPL:END%
 
+%{title and filter (select) areas}%
+%TMPL:DEF{"tasksapi::grid::filter_perspage"}%%{
+}%<div class="filter no-print">
+  <div>
+    <div class="options">
+      <span class="title">$grid_title</span>%{
+      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
+      }%%TMPL:P{"tasksapi::grid::filter::collection_perspage"}%%{
+      }%%ENDTWISTY%%{
+    }%</div>%{
+    }%%TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%%{
+}%</div>
+</div>%TMPL:END%
+
 
 %{filter templates}%
 %TMPL:DEF{"tasksapi::grid::filter::collection"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::status"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::type"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::created"}%%{
+}%%TMPL:P{"tasksapi::grid::filter::changed"}%%{
+}%<div class="btn-filter-container">
+  <a class="btn-filter btn-apply" href="#">%MAKETEXT{"Apply"}%</a>
+  <a class="btn-filter btn-reset" href="#">%MAKETEXT{"Reset"}%</a>
+</div>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::grid::filter::collection_perspage"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::created"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::changed"}%%{
 }%<div class="btn-filter-container">
@@ -566,10 +589,10 @@
 }%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
   <th>%MAKETEXT{"Type"}%</th>
-  <th data-sort="AssignedTo">%MAKETEXT{"Assigned to"}%</th>
+  <th>%MAKETEXT{"Assigned to"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
-  <th data-sort="Status">%MAKETEXT{"Status"}%</th>%{
+  <th>%MAKETEXT{"Status"}%</th>%{
   }%%IF{"not context task_readonly" then="<td class=\"no-print\"></td>"}%%{
   }%<th class="hidden"></th>
   <th class="hidden"></th>
@@ -589,10 +612,10 @@
 %TMPL:DEF{"tasksapi::grid::caption_perspage"}%<tr>%{
 }%%IF{"context task_showexpandercol" then="<th class=\"no-print\"></th>"}%%{
 }%<th data-sort="Created">%MAKETEXT{"Created"}%</th>
-  <th data-sort="Type">%MAKETEXT{"Type"}%</th>
+  <th>%MAKETEXT{"Type"}%</th>
   <th data-sort="Title">%MAKETEXT{"Title"}%</th>
   <th data-sort="DueDate">%MAKETEXT{"Due date"}%</th>
-  <th data-sort="Status">%MAKETEXT{"Status"}%</th>%{
+  <th>%MAKETEXT{"Status"}%</th>%{
   }%%IF{"not context task_readonly" then="<td class=\"no-print\"></td>"}%%{
   }%<th class="hidden"></th>
   <th class="hidden"></th>
@@ -642,7 +665,7 @@
     <span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span>
   </td>
   <td class="ampel">%{
-}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percntMAKETEXT{\"closed\"}$percnt</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
+}%%IF{"'%TASKINFO{field="Status"}%'='open'" then='%TASKSAMPEL{"%TASKINFO{field="DueDate"}%" warn="7" status="%TASKINFO{field="Status"}%"}%' else="<span><div>$percentIF{\"'%TASKINFO{field="Status"}%'='closed'\" then=\"$percentMAKETEXT{\"closed\"}$percent\" else=\"$percentMAKETEXT{\"deleted\"}$percent\"}$percent</div>%TASKINFO{field="Closed" format="$day $month $year"}%</span>"}%%{
 }%</td>%{
 }%%IF{"context task_canedit and not context task_readonly" then="<td class='close' title='$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"$percentMAKETEXT{$quotClose task$quot}$percent\" else=\"$percentMAKETEXT{$quotReopen task$quot}$percent\"}$percnt'>%TMPL:P{"tasksapi::task::controls::right"}%</td>"}%%{
 }%<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
