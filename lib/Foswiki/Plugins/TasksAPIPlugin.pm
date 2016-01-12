@@ -1197,8 +1197,6 @@ sub tagGrid {
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
-    my $statesMapping = $params->{statesmapping} || '';
-    my $mappingField = $params->{mappingfield} || '';
     my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging};
     $paging = 1 unless defined $paging;
@@ -1311,21 +1309,6 @@ sub tagGrid {
         titlelength => int($titlelength)
     );
 
-    if ( $mappingField && $statesMapping ) {
-        my %map = ();
-        $map{field} = $mappingField;
-
-        $statesMapping =~ s/\s+//g;
-        my @mappings = split(/(?<=\]),?/, $statesMapping);
-        foreach my $mapping (@mappings) {
-            $mapping =~ /([^=]+)=\[([\w,]+)\]/;
-            my @arr = split(/,/, $2);
-            $map{mappings}{$1} = \@arr;
-        }
-
-        $settings{mapping} = \%map;
-    }
-
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
     $fctx->{task_readonly} = 1 if $readonly;
@@ -1350,36 +1333,8 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
-
-
-    my $mapstates = sub {
-        my $query = shift;
-        my $settings = shift;
-        if ( $settings{mapping} ) {
-            while ( my ($k, $v) = each %{$settings{mapping}{mappings}} ) {
-                next if $k eq 'all';
-                if ( grep(/$query->{Status}/, @$v) ) {
-                    $query->{$settings{mapping}{field}} = $query->{Status};
-                    $query->{Status} = $k;
-                    last;
-                }
-            }
-        }
-    };
-
-    if ( $req->param('state') && $override && !$req->param('f_Status') ) {
-        if ( $req->param('state') eq 'all' ) {
-            if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
-                $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
-            }
-        } else {
-            $query->{Status} = $req->param('state');
-            $mapstates->($query, %settings);
-        }
-    } else {
-        $query->{Status} = 'open' if !exists $query->{Status} && !$req->param('f_Status');
-        $mapstates->($query, %settings);
-    }
+    $query->{Status} = 'open' unless $query->{Status} || $override;
+    $query->{Status} = $req->param('state') if $override && $req->param('state');
 
     if ($override) {
         my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});

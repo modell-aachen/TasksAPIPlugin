@@ -373,7 +373,7 @@ sub update {
         $skip_changeset{Status} = 1;
         if ($data{$statusmap}) {
             my $val = $data{$statusmap};
-            $data{Status} = $vals->{$val} if $vals->{$val};
+            $data{Status} = $vals->{$val} || $val;
         } elsif ($data{Status}) {
             $data{$statusmap} = $data{Status};
         }

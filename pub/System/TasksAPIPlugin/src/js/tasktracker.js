@@ -79,8 +79,7 @@
       $this.data('tasktracker_options', self.opts);
 
       var $tasks = self.opts.container;
-      var $filter = $this.children('.filter');
-      var $status = $filter.find('select[name="Status"]');
+      var $status = $this.find('> .filter select[name="Status"]');
 
       var params = parseQueryParams();
       if ( params.f_Status || params.state ) {
@@ -715,22 +714,6 @@
         }
       } else {
         params.push('f_' + p + '=' + filter[p]);
-
-        // status mapping:
-        // check if we are applying a filter to a mapped field (field X -> field Status)
-        // (assume that the original field Status has no filter inputs)
-        if (trackeropts.mapping && trackeropts.mapping.field === p) {
-          if (filter[p] === 'all') {
-            params.push('f_Status=all');
-          } else {
-            for (var m in trackeropts.mapping.mappings) {
-              if (trackeropts.mapping.mappings[m].indexOf(filter[p]) > -1) {
-                params.push('f_Status=' + m);
-                break;
-              }
-            }
-          }
-        }
       }
     }
 
