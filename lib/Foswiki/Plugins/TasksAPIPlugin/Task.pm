@@ -605,6 +605,7 @@ sub solrize {
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
     $icon = $self->{meta}->expandMacros($icon) if $icon =~ /%[^%]+%/;
 
+    my ($taskWeb, $taskTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{id});
     my $doc = $indexer->newDocument();
     $doc->add_fields(
       'id' => $self->{id} . '@' . $self->{fields}{Context},
@@ -629,12 +630,14 @@ sub solrize {
       'task_due_dt' => $date,
       'task_state_s' => $self->{fields}{Status},
       'task_type_s' => $type,
-      'task_id_s' => $self->{id}
+      'task_id_s' => $self->{id},
+      'attachment' => map {$_->{name}} $self->{meta}->find('FILEATTACHMENT')
     );
 
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
+    my $granted;
     unless (scalar @acl) {
-        $doc->add_fields('access_granted' => 'all');
+        $granted = 'all'
     } else {
         my $aclstring = join(',', @acl);
         my $expanded = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
@@ -656,8 +659,9 @@ sub solrize {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $expanded);
         }
 
-        $doc->add_fields('access_granted' => $expanded);
+        $granted = $expanded;
     }
+    $doc->add_fields('access_granted' => $granted);
 
     if ( $legacy ) {
         my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
@@ -665,12 +669,86 @@ sub solrize {
             'collection' => $collection
         );
     }
+    try {
+        $indexer->add($doc);
+        my @attachments = $self->{meta}->find('FILEATTACHMENT');
+        my @extraFields = ('access_granted', $granted);
+        foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
+            push(@extraFields, $key, $doc->value_for($key));
+        }
+
+        foreach my $a (@attachments) {
+            $self->indexAttachment($indexer, $a, \@extraFields);
+        }
+    } catch Error::Simple with {
+        my $e = shift;
+        $indexer->log("ERROR: ".$e->{-text});
+    };
+}
+
+sub indexAttachment {
+    my ($self, $indexer, $attachment, $commonFields) = @_;
+
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{id});
+    my $name = $attachment->{'name'} || '';
+    my $extension = '';
+    my $title = $name;
+    if ($name =~ /^(.+)\.(\w+?)$/) {
+        $title = $1;
+        $extension = lc($2);
+    }
+
+    $title =~ s/_+/ /g;
+    $extension = 'jpg' if $extension =~ /jpe?g/i;
+
+    my $indexextensions = $indexer->indexExtensions();
+    my $attText = '';
+    if ($indexextensions->{$extension}) {
+        $attText = $indexer->getStringifiedVersion($web, $topic, $name);
+        $attText = $indexer->plainify($attText, $web, $topic);
+    }
+
+    my $doc = $indexer->newDocument();
+    my @contributors = $indexer->getContributors($web, $topic, $attachment);
+    my %contributors = map {$_ => 1} @contributors;
+    $doc->add_fields(contributor => [keys %contributors]);
+
+    my $file = Foswiki::urlEncode($name);
+    my $url = "$Foswiki::cfg{ScriptUrlPath}/rest$Foswiki::cfg{ScriptSuffix}/TasksAPIPlugin/download?id=$self->{id}&file=$file";
+    my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    $doc->add_fields(
+        id => "$web.$topic.$name\@$self->{fields}{Context}",
+        url => $url,
+        web => $ctxWeb,
+        topic => $ctxTopic,
+        webtopic => "$ctxWeb.$ctxTopic",
+        title => $title,
+        type => $extension,
+        text => $attText,
+        summary => '',
+        author => Foswiki::Func::getWikiName($attachment->{user}) || 'UnknownUser',
+        date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
+        version => $attachment->{'version'} || 1,
+        name => $name,
+        comment => $attachment->{'comment'} || '',
+        size => $attachment->{'size'} || 0,
+        icon => $indexer->mapToIconFileName($extension),
+        container_id => $self->{fields}{Context},
+        container_web => $ctxWeb,
+        container_topic => $ctxTopic,
+        container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic),
+        container_title => $self->{fields}{Title},
+    );
+
+    # add extra fields, i.e. ACLs
+    $doc->add_fields(@$commonFields) if $commonFields;
 
     try {
-      $indexer->add($doc);
-    } catch Error::Simple with {
-      my $e = shift;
-      $indexer->log("ERROR: ".$e->{-text});
+        $indexer->add($doc);
+    }
+    catch Error::Simple with {
+        my $e = shift;
+        $indexer->log("ERROR: " . $e->{-text});
     };
 }
 
