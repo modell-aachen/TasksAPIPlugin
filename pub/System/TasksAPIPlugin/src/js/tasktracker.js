@@ -958,7 +958,7 @@
     $(document).on('click', '.tasktracker .btn-filter.btn-apply', applyFilter);
     $(document).on('click', '.tasktracker .btn-filter.btn-reset', resetFilter);
 
-    var $tracker = $('.tasktracker').tasksGrid();
+    var $tracker = $('.tasktracker').livequery(function() { $(this).tasksGrid(); });
     window.tasksapi = new TasksAPI();
 
     // Listen for PDF exports
