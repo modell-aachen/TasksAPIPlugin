@@ -486,6 +486,10 @@ sub update {
 
     $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $self->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
 }
 
 sub close {
@@ -604,8 +608,9 @@ sub solrize {
     my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
     $icon = $self->{meta}->expandMacros($icon) if $icon =~ /%[^%]+%/;
+    my @attachments = $self->{meta}->find('FILEATTACHMENT');
+    my @attNames = map {$_->{name}} @attachments;
 
-    my ($taskWeb, $taskTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{id});
     my $doc = $indexer->newDocument();
     $doc->add_fields(
       'id' => $self->{id} . '@' . $self->{fields}{Context},
@@ -631,7 +636,9 @@ sub solrize {
       'task_state_s' => $self->{fields}{Status},
       'task_type_s' => $type,
       'task_id_s' => $self->{id},
-      'attachment' => map {$_->{name}} $self->{meta}->find('FILEATTACHMENT')
+      'task_context_s' => $self->{fields}{Context},
+      'attachment' => \@attNames,
+      'author_s' => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$self->{fields}{Author}\"}%", $topic, $web)
     );
 
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
@@ -671,7 +678,6 @@ sub solrize {
     }
     try {
         $indexer->add($doc);
-        my @attachments = $self->{meta}->find('FILEATTACHMENT');
         my @extraFields = ('access_granted', $granted);
         foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
             push(@extraFields, $key, $doc->value_for($key));
@@ -713,6 +719,7 @@ sub indexAttachment {
     my %contributors = map {$_ => 1} @contributors;
     $doc->add_fields(contributor => [keys %contributors]);
 
+    my $author = Foswiki::Func::getWikiName($attachment->{user}) || 'UnknownUser';
     my $file = Foswiki::urlEncode($name);
     my $url = "$Foswiki::cfg{ScriptUrlPath}/rest$Foswiki::cfg{ScriptSuffix}/TasksAPIPlugin/download?id=$self->{id}&file=$file";
     my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
@@ -726,7 +733,7 @@ sub indexAttachment {
         type => $extension,
         text => $attText,
         summary => '',
-        author => Foswiki::Func::getWikiName($attachment->{user}) || 'UnknownUser',
+        author => $author,
         date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
         version => $attachment->{'version'} || 1,
         name => $name,
@@ -736,8 +743,10 @@ sub indexAttachment {
         container_id => $self->{fields}{Context},
         container_web => $ctxWeb,
         container_topic => $ctxTopic,
-        container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic),
+        container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic) . "?id=$self->{id}",
         container_title => $self->{fields}{Title},
+        task_context_s => $self->{fields}{Context},
+        author_s => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$attachment->{user}\"}%", $ctxTopic, $ctxWeb)
     );
 
     # add extra fields, i.e. ACLs

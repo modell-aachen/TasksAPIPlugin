@@ -387,11 +387,19 @@ sub _fullindex {
     $db->begin_work;
     $db->do("DELETE FROM tasks");
     $db->do("DELETE FROM task_multi");
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $indexer->deleteByQuery('task_id_s:*');
+
     foreach my $t (Foswiki::Plugins::TasksAPIPlugin::Task::loadMany()) {
         print $t->{id} ."\n" unless $noprint;
         _index($t, 0);
+        $t->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
+
     $db->commit;
+    $indexer->commit();
 }
 
 sub _cachedACL {

@@ -52,15 +52,15 @@
     return deferred.promise();
   };
 
-  var showTask = function($task, taskId) {
+  var showTask = function($task, taskId, attachment) {
     getOverlay().done(function($overlay) {
       var $panel = $overlay.find('> .panel-wrapper > .panel');
       var $content = $('<div class="content"></div>');
       var $view = $task.find('> .task-fullview-container > .task-fullview').detach();
       $view.appendTo($content);
-      $panel.empty();
-      $content.appendTo($panel);
-      $overlay.find('.panel-btn, .controls').remove();
+      $panel.empty().append($content);
+
+      $overlay.find('.panel-btn').remove();
       $overlay.find('.delete-attachment').replaceWith('<td></td>');
       $overlay.find('.task-changeset-add').remove();
       $overlay.find('.task-changeset-edit').remove();
@@ -95,9 +95,29 @@
         initReadmore($content);
         sliceChanges($content.find('.task-details').children('.changes'));
         $content.addClass('slide-in');
+
+        if (attachment) {
+          $content.find('ul.jqTabGroup li:last-child > a').trigger('click');
+          var $links = $content.find('table.task-attachments tbody > tr a');
+          var $tr = $links.filter('[href="' + attachment + '"]').closest('tr');
+          highlightRow($tr, false);
+        }
+
         $.unblockUI();
       });
     });
+  };
+
+  var highlightRow = function($row, stop) {
+    setTimeout(function() {
+      $row.css('background-color', '#c5e6ff');
+      setTimeout(function() {
+        $row.removeAttr('style');
+        if (!stop) {
+          highlightRow($row, !stop);
+        }
+      }, 300);
+    }, 300);
   };
 
   var initReadmore = function($content) {
@@ -144,7 +164,7 @@
 
         var task = response.data[0];
         var $task = $(task.html);
-        showTask($task, id);
+        showTask($task, id, $this.data('attachment') || false);
       });
 
       return false;
