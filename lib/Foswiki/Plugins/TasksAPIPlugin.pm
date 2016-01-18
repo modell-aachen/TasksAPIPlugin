@@ -281,8 +281,10 @@ sub query {
             my $t = "j_$q";
             $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
             $joins{$q} = 1;
-            $order = "$t.value" if $order eq $q;
-            $joins{$order} = 1; # make sure we don't add this join again for ordering
+            if ($order eq $q) {
+                $order = "$t.value";
+                $joins{$order} = 1; # make sure we don't add this join again for ordering
+            }
             $q = "$t.value";
         }
 
