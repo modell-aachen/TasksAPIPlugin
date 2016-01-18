@@ -6,6 +6,5 @@
 %MAKETEXT{"[_1] closed a task" args="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
 
 %TASKINFO{type="changeset" nohtml="1"}%
-%MAKETEXT{"Direct link"}%:
-%SCRIPTURL{view}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%&tab=tasks_closed
+%TMPL:P{"tasksapi_maillink"}%
 %TMPL:END%
