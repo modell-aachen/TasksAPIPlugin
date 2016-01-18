@@ -16,6 +16,7 @@ lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0644
 lib/Foswiki/Plugins/TasksAPIPlugin/Job.pm 0644
+lib/Foswiki/Plugins/TasksAPIPlugin/Summary.pm 0644
 lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0644
 lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0644
 locale/TasksAPIPlugin/de.po 0644
@@ -47,3 +48,4 @@ tools/taskcron 0755
 tools/taskindex 0755
 tools/virtualhosts-taskindex 0755
 tools/taskconvert 0755
+tools/tasksummary 0755

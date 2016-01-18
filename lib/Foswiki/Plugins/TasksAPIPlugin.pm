@@ -1744,7 +1744,7 @@ sub tagInfo {
             }
 
             foreach my $v (@vals) {
-                unless(grep(/$v/, $currentOptions->{autouser})) {
+                unless(grep(/$v/, $currentOptions->{autouser} || 'Team')) {
                     my $tmp = $v;
                     $v = _getDisplayName($v) if $v;
                     $v = $tmp unless $v;
