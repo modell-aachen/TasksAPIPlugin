@@ -919,12 +919,7 @@ TasksPanel = function(tasktracker) {
 
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
-        var $target = $ed.find('input[name="' + topts.autoassignTarget + '"]');
-        var isSelect2 = false;
-        if ($target.length === 0) {
-          $target = $ed.find('select[name="' + topts.autoassignTarget + '"]');
-          isSelect2 = $target.length > 0;
-        }
+        var $target = $ed.find('select[name="' + topts.autoassignTarget + '"]');
 
         var autoassign = topts.autoassign.split(',');
         var assign = {};
@@ -935,44 +930,54 @@ TasksPanel = function(tasktracker) {
           assignees.push(arr[1]);
         });
 
-        var setAssignee = function() {
+        var setAssignee = function(evt, initial) {
           var $self = $(this);
           var val = $self.val();
           var assignTo = assign[val];
           if ( assignTo ) {
             $target.closest('.' + topts.autoassignTarget).css('display', 'none');
-            if (isSelect2) {
-              if ($target.children().length === 0) {
-                $target.append('<option selected="selected"></option>');
-              }
+            var $o = $target.children('option[selected],option:selected');
 
-              var $o = $target.children('option[selected],option:selected');
-              $o.val(assignTo).text(assignTo);
-              $target.next().find('.select2-selection__rendered').text(assignTo).attr('title', assignTo);
-            } else {
-              setTimeout(function() {
-                $target.trigger('Clear');
-                $target.trigger('AddValue', assignTo);
-              }, 100);
+            if ($target.children().length === 0) {
+              $target.append('<option selected="selected"></option>');
             }
+
+            if ($target.val() && $target.val() !== assignTo) {
+              $target.data('orig_value', $target.val());
+              $target.data('orig_text', $o.text());
+            }
+
+            $o.val(assignTo).text(assignTo);
+            $target.next().find('.select2-selection__rendered').text(assignTo).attr('title', assignTo);
+            $target.prop('disabled', true);
+
+            $target.parent().addClass('select2-hide-arrow');
           } else {
+            if (initial) {
+              return;
+            }
+
             $target.closest('.' + topts.autoassignTarget).css('display', 'block');
-            var tval = $target.val();
-            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
-              if (isSelect2) {
-                $target.children('option[selected],option:selected').remove();
-                $target.next().find('.select2-selection__rendered').text('').attr('title', '');
-              } else {
-                $target.trigger('Clear');
-              }
-            } else if (isSelect2) {
-              $target.children('option[selected],option:selected').remove();
-              $target.next().find('.select2-selection__rendered').text('').attr('title', '');
+            $target.children('option[selected],option:selected').remove();
+            $target.next().find('.select2-selection__rendered').text('').attr('title', '');
+            $target.prop('disabled', false);
+            $target.parent().removeClass('select2-hide-arrow');
+
+            if ($target.data('orig_value')) {
+              var $option = $('<option selected="selected"></option>');
+              var val = $target.data('orig_value');
+              var txt = $target.data('orig_text');
+
+              $option.val(val).text(txt);
+              $target.data('orig_value', null).data('orig_text', null);
+              $target.append($option);
+              $target.next().find('.select2-selection__rendered').text(txt).attr('title', txt);
             }
           }
         };
 
         $type.on('change', setAssignee);
+        $type.trigger('change', true);
       }
 
       // select the task details tab if it's not selected already
