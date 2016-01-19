@@ -8,21 +8,6 @@
 %TMPL:DEF{"ModacMailType"}%text/html%TMPL:END%
 %TMPL:DEF{"ModacMailContents"}%%TASKSAPI_SUMMARY_CONTENTS%%TMPL:END%
 
-%TMPL:DEF{"ModacMail"}%From: %TMPL:P{"ModacMailFrom"}%
-%to_expanded%%IF{"defined cc_expanded" then="
-%cc_expanded%"}%%IF{"defined bcc_expanded" then="
-%bcc_expanded%"}%%IF{"defined reply_to" then="
-Reply-To: %reply_to%"}%%IF{"defined message_id" then="
-Message-ID: %message_id%"}%%IF{"defined in_reply_to" then="
-In-Reply-To: %in_reply-to%"}%
-Subject: %TMPL:P{"ModacMailSubject"}%
-%TMPL:P{"ModacMailOtherHeaders"}%
-Content-Type: %TMPL:P{"ModacMailType"}%;%TMPL:P{"ModacMailCharset"}%format=flowed
-Content-Transfer-Encoding: 8bit
-
-%TMPL:P{"ModacMailContents"}%
-%TMPL:END%
-
 %TMPL:DEF{"tasksapi::summary::title::created"}%%{
 }%%MAKETEXT{"Created tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
 }%%TMPL:END%
