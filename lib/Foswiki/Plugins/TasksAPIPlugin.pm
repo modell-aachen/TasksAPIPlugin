@@ -18,6 +18,7 @@ use Encode;
 use File::MimeInfo;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
+use POSIX;
 
 our $VERSION = '0.1';
 our $RELEASE = '0.1';
@@ -758,7 +759,7 @@ sub _enrich_data {
 sub tagAmpel {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-    my $title = '%MAKETEXT{"Unknown status"}%';
+    my $title = '%MAKETEXT{"Missing due date"}%';
     my $date = $params->{_DEFAULT} || $params->{date};
     my $status = $params->{status} || 'open';
     my $warn = $params->{warn} || 3;
@@ -776,16 +777,16 @@ sub tagAmpel {
         $state = 'r' if $now >= $secs;
         $src = "ampel_$state";
 
-        my $delta = int(($secs - $now)/86400);
-        my $abs = abs($delta);
-        $title = '%MAKETEXT{"In one day"}%' if $delta eq 1;
-        $title = "%MAKETEXT{\"In [_1] days\" args=\"$delta\"}%" if $delta > 1;
-        $title = '%MAKETEXT{"One day over due"}%' if $delta eq -1;
-        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -1;
+        my $delta = ($secs - $now)/86400;
+        my $abs = ceil(abs($delta));
+        $title = '%MAKETEXT{"In one day"}%' if $delta > 0 && $delta <= 1;
+        $title = "%MAKETEXT{\"In [_1] days\" args=\"$abs\"}%" if $delta > 1;
+        $title = '%MAKETEXT{"One day over due"}%' if $delta >= -2 && $delta < -1;
+        $title = '%MAKETEXT{"This very day"}%' if $delta >= -1 && $delta < 0;
+        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -2;
     } else {
         $src = $status eq 'closed' ? 'closed' : 'deleted';
     }
-
     my $img = <<IMG;
 <img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
 IMG

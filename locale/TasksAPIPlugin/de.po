@@ -240,6 +240,12 @@ msgstr "Neue untergeordnete Aufgabe hinzufügen"
 msgid "Unknown status"
 msgstr "Unbekannter Status"
 
+msgid "Missing due date"
+msgstr "Fehlendes Fälligkeitsdatum"
+
+msgid "This very day"
+msgstr "Noch heute"
+
 msgid "Due date"
 msgstr "Zieltermin"
 
