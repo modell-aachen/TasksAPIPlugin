@@ -506,11 +506,10 @@
 
 %{title and filter (select) areas}%
 %TMPL:DEF{"tasksapi::grid::filter"}%%{
-}%<div class="filter no-print">
-  <div>
-    <div class="options">
-      <span class="title">$grid_title</span>%{
-      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="%MAKETEXT{"Show filter"}%" hidelink="%MAKETEXT{"Hide filter"}%" remember="on"}%%{
+}%<div class="filter no-print">%{
+}%<div>%{
+ }%<div class="options">%{
+      }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="<i class=\"fa fa-arrow-down\"></i> %MAKETEXT{"Show filter"}%" hidelink="<i class=\"fa fa-arrow-up\"></i> %MAKETEXT{"Hide filter"}%" remember="on" linkclass="btn-filter filter"}%%{
       }%%TMPL:P{"tasksapi::grid::filter::collection"}%%{
       }%%ENDTWISTY%%{
     }%</div>%{
@@ -535,7 +534,7 @@
 
 %{filter templates}%
 %TMPL:DEF{"tasksapi::grid::filter::collection"}%%{
-}%%TMPL:P{"tasksapi::grid::filter::status"}%%{
+}%<p/>%TMPL:P{"tasksapi::grid::filter::status"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::type"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::created"}%%{
 }%%TMPL:P{"tasksapi::grid::filter::changed"}%%{

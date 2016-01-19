@@ -7,6 +7,7 @@
 
   .create {
     float: right;
+    margin-top: 10px;
   }
 
   .tasks-btn-create {
@@ -75,10 +76,10 @@
       border: 1px solid darken($light-blue, 5%);
       color: $dark-blue;
       display: inline-block;
-      font-size: 0.9em;
+      font-size: 1em;
       font-weight: bold;
       min-width: 112px;
-      padding: 3px 6px;
+      padding: 5px 10px;
       text-align: center;
       text-decoration: none;
 
@@ -100,6 +101,9 @@
       &.btn-reset {
         margin-left: 8px;
       }
+    }
+    .fa {
+      margin-right: 10px;
     }
 
     input {
