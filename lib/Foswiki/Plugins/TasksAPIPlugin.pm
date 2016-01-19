@@ -315,7 +315,7 @@ sub query {
         $order = "$t";
         $order .= ".value" unless $order =~ /\.value$/;
     }
-    $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
+    $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
     $order .= " DESC" if $order && $opts{desc};
 
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
