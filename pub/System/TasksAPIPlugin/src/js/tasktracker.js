@@ -565,7 +565,7 @@
     }
 
     var retval = {};
-    var arr = q.split('&');
+    var arr = q.split(/[&;]/);
     for (var i = 0; i < arr.length; ++i) {
       var p = arr[i].split('=');
       retval[p[0]] = p[1];
@@ -958,7 +958,7 @@
     $(document).on('click', '.tasktracker .btn-filter.btn-apply', applyFilter);
     $(document).on('click', '.tasktracker .btn-filter.btn-reset', resetFilter);
 
-    var $tracker = $('.tasktracker').livequery(function() { $(this).tasksGrid(); });
+    $('.tasktracker').livequery(function() { $(this).tasksGrid(); });
     window.tasksapi = new TasksAPI();
 
     // Listen for PDF exports
@@ -966,11 +966,12 @@
 
     setTimeout(function() {
       if ( window.location.search ) {
-        var match = window.location.search.match(/id=([^&;]+)(;|&|$|.*)/);
-        if ( match && match.length > 1 ) {
-          var id = match[1];
-          var $task = $tracker.find('.task:visible');
-          if ( $task.data('id') === id ) {
+        var params = parseQueryParams(window.location.search);
+        if ( params.id ) {
+          var sel = (params.tid ? '#' + params.tid : '') + ' .task';
+          var $task = $(sel).first();
+          var $tracker = $task.closest('.tasktracker');
+          if ( $task.data('id') === params.id ) {
             $tracker[0].tasksPanel.viewTask($task);
           }
         }
