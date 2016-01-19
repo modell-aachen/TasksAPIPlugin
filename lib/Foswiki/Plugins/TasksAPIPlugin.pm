@@ -1664,7 +1664,13 @@ FORMAT
     $out =~ s#\$displayuser#_getDisplayName($cset->{actor})#eg;
     $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
-    $out =~ s#\$comment#$cset->{comment} || ''#eg;
+    my $cmt = $cset->{comment} || '';
+    if ($plain) {
+        $cmt =~ s#<br\s*/?>#\n#g;
+        $cmt =~ s#</p>#\n#g;
+        $cmt =~ s#<.+?>##g;
+    }
+    $out =~ s#\$comment#$cmt#g;
     $out;
 }
 
