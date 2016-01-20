@@ -935,11 +935,11 @@ TasksPanel = function(tasktracker) {
           var val = $self.val();
           var assignTo = assign[val];
           if ( assignTo ) {
-            $target.closest('.' + topts.autoassignTarget).css('display', 'none');
             var $o = $target.children('option[selected],option:selected');
 
             if ($target.children().length === 0) {
-              $target.append('<option selected="selected"></option>');
+              $o = $('<option selected="selected"></option>');
+              $target.append($o);
             }
 
             if ($target.val() && $target.val() !== assignTo) {
