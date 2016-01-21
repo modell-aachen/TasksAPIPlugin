@@ -20,8 +20,8 @@ use JSON;
 use Number::Bytes::Human qw(format_bytes);
 use POSIX;
 
-our $VERSION = '0.1';
-our $RELEASE = '0.1';
+our $VERSION = '0.2';
+our $RELEASE = '0.2';
 our $SHORTDESCRIPTION = 'API and frontend for managing assignable tasks';
 our $NO_PREFS_IN_TOPIC = 1;
 
