@@ -264,8 +264,14 @@ msgstr "Seit %1 Tagen abgelaufen"
 msgid "Close task"
 msgstr "Aufgabe schließen"
 
+msgid "Close entry"
+msgstr "Eintrag schließen"
+
 msgid "Reopen task"
 msgstr "Aufgabe wieder öffnen"
+
+msgid "Reopen entry"
+msgstr "Eintrag wieder öffnen"
 
 msgid "View details"
 msgstr "Details anzeigen"
@@ -273,14 +279,23 @@ msgstr "Details anzeigen"
 msgid "Edit task"
 msgstr "Aufgabe bearbeiten"
 
+msgid "Edit entry"
+msgstr "Eintrag bearbeiten"
+
 msgid "Do you really want to close the selected task?"
 msgstr "Möchten Sie die ausgewählte Aufgabe wirklich schließen?"
 
 msgid "Previous task"
 msgstr "Vorherige Aufgabe"
 
+msgid "Previous entry"
+msgstr "Vorherige Eintrag"
+
 msgid "Next task"
 msgstr "Nächste Aufgabe"
+
+msgid "Next entry"
+msgstr "Nächste Eintrag"
 
 msgid "Press 'Save' to start the upload"
 msgstr "Zum Hochladen 'Speichern' drücken"
