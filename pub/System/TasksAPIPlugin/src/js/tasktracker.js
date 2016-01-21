@@ -156,6 +156,10 @@
            var json = $task.data('task_data');
             console.log(id, json);
           }
+
+          if (evt.altKey) {
+            return false;
+          }
         }
 
         if ( self.isTaskClicked ) {
