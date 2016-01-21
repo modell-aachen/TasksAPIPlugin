@@ -100,7 +100,6 @@ my $aclExpands = {};
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
-
     # check for Plugins.pm versions
     if ( $Foswiki::Plugins::VERSION < 2.0 ) {
         Foswiki::Func::writeWarning( 'Version mismatch between ',
@@ -1084,6 +1083,8 @@ sub _renderTask {
     my $flavor = {};
     my $type = $task->getPref('TASK_TYPE');
     my $file = $task->getPref('TASK_TEMPLATE_FILE');
+    my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
+
     my $q = $Foswiki::Plugins::SESSION->{request};
     if ( ($currentOptions->{flavor} || $q->param('flavor')) && $taskTemplate ne 'tasksapi::empty' ) {
         $flavor->{name} = $currentOptions->{flavor} || $q->param('flavor');
@@ -1094,6 +1095,7 @@ sub _renderTask {
     if ( $flavor->{name} ) {
         my $tmpl = $taskTemplate . '_' . $flavor->{name};
         $type = ($flavor->{type} || '_default') . '_' . $flavor->{name};
+        my $ftype = $type . '_form';
 
         if ( $addtozone ) {
             unless ($flavorcss->{$type}) {
@@ -1110,19 +1112,37 @@ sub _renderTask {
         }
 
         if ( $storedTemplates->{$type} ) {
+            if ($storedTemplates->{"$ftype"} ne $taskForm) {
+                Foswiki::Func::writeWarning(
+                    "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
+                    . "Possible override of task templates specified in $storedTemplates->{$ftype}."
+                );
+            }
+
             $task = $meta->expandMacros($storedTemplates->{$type});
         } else {
             Foswiki::Func::loadTemplate($flavor->{file}) if $flavor->{file};
             $storedTemplates->{$type} = Foswiki::Func::expandTemplate($tmpl);
+            $storedTemplates->{"$ftype"} = $taskForm;
             $task = $meta->expandMacros($storedTemplates->{$type});
         }
     } else {
-        unless ($storedTemplates->{$type || "$taskTemplate"}) {
+        $type = $type || $taskTemplate;
+        my $ftype = $type . '_form';
+        unless ($storedTemplates->{$type}) {
             Foswiki::Func::loadTemplate($file) if $file;
-            $storedTemplates->{$type || "$taskTemplate"} = Foswiki::Func::expandTemplate($taskTemplate);
+            $storedTemplates->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
+            $storedTemplates->{"$ftype"} = $taskForm;
         }
 
-        $task = $meta->expandMacros($storedTemplates->{$type || "$taskTemplate"});
+        if ($storedTemplates->{"$ftype"} ne $taskForm) {
+            Foswiki::Func::writeWarning(
+                "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
+                . "Possible override of task templates specified in $storedTemplates->{$ftype}."
+            );
+        }
+
+        $task = $meta->expandMacros($storedTemplates->{$type});
     }
 
     if ($canChange && $haveCtx && !$readonly) {
@@ -1255,7 +1275,7 @@ sub tagGrid {
 
     unless ($ctx eq 'any') {
         $form = "$system.TasksAPIDefaultTaskForm" unless $form;
-        $templateFile = 'TasksAPI' unless $templateFile;
+        $templateFile = 'TasksAPIDefault' unless $templateFile;
     }
 
     my $_tplDefault = sub {
@@ -1263,7 +1283,7 @@ sub tagGrid {
         $_[0] = 'tasksapi::empty' if $_[0] eq '';
     };
     $_tplDefault->($captionTemplate, 'tasksapi::grid::caption');
-    $_tplDefault->($filterTemplate, 'tasksapi::grid::filter');
+    $_tplDefault->($filterTemplate, 'tasksapi::grid::filter::defaults');
 
     Foswiki::Func::loadTemplate( $templateFile );
 
@@ -1434,6 +1454,7 @@ sub tagGrid {
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
+    Foswiki::Func::loadTemplate('TasksAPIDefault');
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
     $grid =~ s/\$grid_title/$title/ge;
     $grid =~ s/\$create_text/$createText/ge;
@@ -1457,8 +1478,8 @@ sub tagGrid {
     my $lang = $session->i18n->language();
     $lang = 'en' unless ( $lang =~ /^(de|en)$/);
 
-require Foswiki::Form::Select2;
-Foswiki::Form::Select2->addJavascript();
+    require Foswiki::Form::Select2;
+    Foswiki::Form::Select2->addJavascript();
 
     Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
 <link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
