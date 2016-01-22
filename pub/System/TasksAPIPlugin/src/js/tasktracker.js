@@ -638,7 +638,8 @@
     var filter = readFilter.call($filter);
     var qfilter = stringifyFilter(opts, filter);
 
-    var url = window.location.pathname + '?' + search.join('&') + '&' + qfilter;
+    var url = opts.updateurl ? opts.updateurl : window.location.pathname;
+    url += (/\?/.test(url) ? '&' : '?') + search.join('&') + '&' + qfilter;
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
@@ -662,7 +663,8 @@
     var $tracker = $filter.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
     var filter = readFilter.call($filter.closest('.filter'));
-    var url = window.location.pathname + '?' + stringifyFilter(opts, filter);
+    var url = opts.updateurl ? opts.updateurl : window.location.pathname;
+    url += (/\?/.test(url) ? '&' : '?') + stringifyFilter(opts, filter);
     var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $('<div></div>').load(target, function(res, status, xhr) {

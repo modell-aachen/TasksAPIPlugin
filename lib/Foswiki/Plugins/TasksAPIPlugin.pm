@@ -1226,6 +1226,7 @@ sub tagGrid {
     my $template = $params->{template} || 'tasksapi::grid';
     my $taskTemplate = $params->{tasktemplate};
     my $editorTemplate = $params->{editortemplate};
+    my $updateurl = $params->{updateurl} || '';
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
@@ -1338,7 +1339,8 @@ sub tagGrid {
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
         autouser => \@autouser,
-        titlelength => int($titlelength)
+        titlelength => int($titlelength),
+        updateurl => $updateurl
     );
 
     my $fctx = Foswiki::Func::getContext();
