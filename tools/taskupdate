@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+do '../bin/setlib.cfg';
+require Foswiki;
+my $session = new Foswiki('admin');
+
+require Foswiki::Func;
+require Foswiki::Plugins::TasksAPIPlugin;
+
+use JSON;
+use v5.12;
+
+my $dry_run = 1;
+
+if (@ARGV < 2) {
+	die "Syntax: ./taskupdate <JSON query> field1=<wiki expr> field2=<wiki expr> ...\n";
+}
+
+my $tret = Foswiki::Plugins::TasksAPIPlugin::query(
+	query => from_json(shift @ARGV),
+	acl => 0,
+);
+unless (%$tret) {
+	print STDERR "No tasks match.\n";
+	exit;
+}
+my @tasks = @{$tret->{tasks}};
+
+my @updates = map {
+	my @u = split(/=/, $_, 2);
+	{ name => $u[0], value => $u[1] }
+} @ARGV;
+
+for my $t (@tasks) {
+	my %data;
+	print STDERR "$t->{id}...\n";
+	my $oldform = $t->{form}->web .".". $t->{form}->topic;
+	my $newform = $oldform;
+	foreach my $u (@updates) {
+		my $value = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($t, sub { $t->{meta}->expandMacros($u->{value} =~ s/\$tapi_oldvalue/$t->{fields}{$u->{name}}/r); });
+		if ($u->{name} eq 'form') {
+			$t->{form} = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $value));
+			$newform = $t->{form}->web .'.'. $t->{form}->topic;
+			next;
+		}
+		$data{$u->{name}} = $value;
+	}
+	if ($dry_run) {
+		print STDERR "    Form: old $oldform, new $newform\n" unless $oldform eq $newform;
+		for my $k (sort keys %data) {
+			next if $t->{fields}{$k} eq $data{$k};
+			print STDERR "  $k: '$t->{fields}{$k}' -> '$data{$k}'\n";
+		}
+		print STDERR "\n";
+	} else {
+		$t->update(%data);
+	}
+}
+
+Foswiki::Plugins::TasksAPIPlugin::_fullindex() unless $dry_run;
+
+1;
