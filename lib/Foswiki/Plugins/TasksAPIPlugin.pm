@@ -311,7 +311,7 @@ sub query {
     if ($order && !$singles{$order} && !$joins{$order}) {
         my $t = "$order";
         $t = "j_$t" unless $t =~ /^j_/;
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
+        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
         $order = "$t";
         $order .= ".value" unless $order =~ /\.value$/;
     }
