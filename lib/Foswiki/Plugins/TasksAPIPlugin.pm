@@ -125,6 +125,7 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'lease', \&restLease, %restopts );
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch, %restopts );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease, %restopts );
+    Foswiki::Func::registerRESTHandler( 'link', \&restLink, %restopts );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -1058,6 +1059,33 @@ sub restRelease {
 
     return to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"});
 }
+
+sub restLink {
+    my ($session, $subject, $verb, $response) = @_;
+    my $q = $session->{request};
+
+    my $id = $q->param('id');
+    my $params = $q->param('params') || '';
+    unless ($id) {
+        return 'Error: no task ID passed';
+    }
+
+    my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+    unless ($task && $task->checkACL('view')) {
+        return 'Error: task not found';
+    }
+    my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context});
+    my $url;
+    if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+        $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+    } else {
+        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+    }
+    Foswiki::Func::redirectCgiQuery(undef, $url);
+    return '';
+}
+
 
 # Gets a rendered version of a task
 sub _renderTask {
