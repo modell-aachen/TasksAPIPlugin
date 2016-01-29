@@ -160,7 +160,7 @@ sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
     return () unless $aclPref;
-    if ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
+    while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
         my $f = $this->get('FIELD', $1);
         if ( $f && $f->{value}) {
             $aclPref =~ s/\$curvalue\(([^)]+)\)/$f->{value}/eg;
@@ -188,7 +188,7 @@ sub _getACL {
 sub _checkACL {
     my $session = $Foswiki::Plugins::SESSION;
     my $acl = shift;
-    return 1 if !@$acl;
+    return 1 if !@$acl || Foswiki::Func::isAnAdmin();
     my $user = shift || $session->{user};
     my $aclstring = join(',', @$acl);
     my $cache = Foswiki::Plugins::TasksAPIPlugin::_cachedACL($aclstring);
