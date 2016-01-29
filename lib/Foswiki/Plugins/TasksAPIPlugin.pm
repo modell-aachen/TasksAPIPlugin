@@ -1290,7 +1290,10 @@ sub tagGrid {
 
     # if paging is disabled and no pagesize is given, return all tasks for the
     # current context.
-    if ($paging eq 0 && !defined $params->{pagesize}) {
+    my $query = $session->{request};
+    my $pdf = $query->param('contenttype');
+    $pdf = ($pdf =~ /pdf/) if defined $pdf;
+    if (($pdf || $paging eq 0) && !defined $params->{pagesize}) {
         $pageSize = -1;
     }
 
