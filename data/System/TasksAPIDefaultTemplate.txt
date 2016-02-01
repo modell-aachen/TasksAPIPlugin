@@ -43,7 +43,9 @@
 }%%TMPL:END%
 
 %{empty template}%
-%TMPL:DEF{"tasksapi::empty"}%%TMPL:END%
+%TMPL:DEF{"tasksapi::empty"}%%{
+}%%IF{"context DnDUploadPluginEnabled" then="$percntDNDUPLOAD{headonly=\"1\"}$percnt"}%%{
+}%%TMPL:END%
 
 %{active when in details view}%
 %TMPL:DEF{"tasksapi::overlay"}%%{
