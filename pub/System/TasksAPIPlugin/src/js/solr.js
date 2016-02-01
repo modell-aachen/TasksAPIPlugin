@@ -12,7 +12,7 @@
         '/rest',
         p.SCRIPTSUFFIX,
         '/RenderPlugin/template',
-        '?name=TasksAPI',
+        '?name=TasksAPIDefault',
         '&expand=tasksapi::overlay',
         '&render=on'
       ].join('');
