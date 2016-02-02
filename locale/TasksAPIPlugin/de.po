@@ -21,6 +21,9 @@ msgstr "offen"
 msgid "closed"
 msgstr "geschlossen"
 
+msgid "All items"
+msgstr "Alle Einträge"
+
 msgid "all"
 msgstr "alle"
 
