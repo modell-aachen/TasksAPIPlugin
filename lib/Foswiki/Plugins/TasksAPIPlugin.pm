@@ -1869,7 +1869,7 @@ sub tagInfo {
         return join($params->{separator} || '', @out);
     }
     if ($params->{taskcfg}) {
-        return $task->getPref(uc($params->{taskcfg}));
+        return $task->getPref(uc($params->{taskcfg})) || '';
     }
 
     if (my $meta = $params->{meta}) {

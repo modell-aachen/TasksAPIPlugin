@@ -6,5 +6,13 @@
 
 %TMPL:DEF{"tasksapi_maillink"}%%{
 }%%MAKETEXT{"Direct link"}%:
-%SCRIPTURL{view}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%%{
+%SCRIPTURL{view}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%&tid=%TMPL:P{"tasksapi_mailstate"}%&tab=%TMPL:P{"tasksapi_mailstate"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi_mailstate"}%%{
+}%%IF{
+"'%TASKINFO{taskcfg="MAP_STATUS_FIELD"}%'"
+then="%TASKINFO{field="%TASKINFO{taskcfg="MAP_STATUS_FIELD"}%"}%"
+else="%TASKINFO{field="Status"}%"
+}%%{
 }%%TMPL:END%
