@@ -257,6 +257,14 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
+      var params = parseQueryParams(window.location.search);
+      if (params.id) {
+        var $task = findTask(params.id);
+        if ($task.length) {
+          self.tasksPanel.viewTask($task);
+        }
+      }
+
       return this;
     });
   };
@@ -969,19 +977,5 @@
 
     // Listen for PDF exports
     $('#printDialogForm').livequery(exportPDF);
-
-    setTimeout(function() {
-      if ( window.location.search ) {
-        var params = parseQueryParams(window.location.search);
-        if ( params.id ) {
-          var sel = (params.tid ? '#' + params.tid : '') + ' .task';
-          var $task = $(sel).first();
-          var $tracker = $task.closest('.tasktracker');
-          if ( $task.data('id') === params.id ) {
-            $tracker[0].tasksPanel.viewTask($task);
-          }
-        }
-      }
-    }, 300);
   });
 }(jQuery, window._, window.document, window));

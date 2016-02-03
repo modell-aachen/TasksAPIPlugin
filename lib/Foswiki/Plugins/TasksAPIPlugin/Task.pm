@@ -603,7 +603,8 @@ sub solrize {
     my $ctxurl = Foswiki::Func::getViewUrl(
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
-    my $state = $self->{fields}{Status} || 'open';
+
+    my $state = $self->getPref('MAP_STATUS_FIELD') || $self->{fields}{Status} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
     my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
@@ -633,7 +634,7 @@ sub solrize {
       'container_title' => $self->{fields}{Title},
       'task_created_dt' => $created,
       'task_due_dt' => $date,
-      'task_state_s' => $self->{fields}{Status},
+      'task_state_s' => $state,
       'task_type_s' => $type,
       'task_id_s' => $self->{id},
       'task_context_s' => $self->{fields}{Context},
