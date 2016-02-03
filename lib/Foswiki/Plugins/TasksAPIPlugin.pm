@@ -1450,10 +1450,6 @@ sub tagGrid {
         }
     }
 
-    if ( $req->param('id') && $override) {
-        $query->{id} = $req->param('id');
-    }
-
     $query->{Status} = ['open', 'closed'] unless $query->{Status};
     $settings{query} = to_json($query);
     my $res = _query(
@@ -1464,6 +1460,14 @@ sub tagGrid {
         offset => $offset
     );
     _deepen($res->{tasks}, $depth, $params->{order});
+
+    my $id_param = $req->param('id');
+    if ($id_param && $override && !grep { $_->{id} eq $id_param } @{$res->{tasks}}) {
+        my $extrares = _query(
+            query => { id => $id_param },
+        );
+        unshift @{$res->{tasks}}, $extrares->{tasks} if $extrares && $extrares->{tasks};
+    }
 
     my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
