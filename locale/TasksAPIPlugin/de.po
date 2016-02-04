@@ -363,6 +363,9 @@ msgstr "Meine offenen Aufgaben"
 msgid "My closed tasks"
 msgstr "Meine geschlossenen Aufgaben"
 
+msgid "My watched tasks"
+msgstr "Meine beobachteten Aufgaben"
+
 msgid "Filter by state"
 msgstr "Filter nach Status"
 
