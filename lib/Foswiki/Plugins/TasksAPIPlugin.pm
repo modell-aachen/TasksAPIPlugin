@@ -1571,8 +1571,15 @@ SCRIPT
     $pages
     <li class="$nextState"><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=$next$qstr" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
   </ul>
+PAGER
+        $qstr =~ s#pagesize=[^&]+##;
+        $pager .= <<PAGER;
+  <ul class="pagination show-all">
+    <li><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=1&pagesize=-1$qstr" title="%MAKETEXT{"Show all"}%"><small>(%MAKETEXT{"Show all"}%)</small></a></li>
+  </ul>
 </nav>
 PAGER
+
         $cur = $cur - 1;
         if ( $cur gt 1 ) {
             $pager .= "<nav class=\"pagination-container print-only\">%MAKETEXT{\"Page [_1] of [_2]\" args=\"$page,$cur\"}%</nav>";

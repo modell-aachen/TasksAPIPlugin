@@ -844,45 +844,50 @@
       return false;
     }
 
+    var page, tab, url;
     var $ul = $this.closest('ul');
-    var $first = $ul.children('li').first();
-    var $last = $ul.children('li').last();
-    var $current = $ul.children('li.active').removeClass('active');
-    var url = $current.children('a').attr('href');
-    var page, tab;
-
-    if ( $this.parent()[0] === $first[0] ) {
-      var $prev = $current.prev().addClass('active');
-      page = $prev.text().replace(/\s/g, '');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
-    } else if ( $this.parent()[0] === $last[0] ) {
-      var $next = $current.next().addClass('active');
-      page = $next.text().replace(/\s/g, '');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
-    } else {
+    var showAll = $ul.hasClass('show-all');
+    if (showAll) {
       url = $this.attr('href');
-      page = url.match(/(?:page=(\d+))/)[1];
-      $this.parent().addClass('active');
-    }
+    } else {
+      var $first = $ul.children('li').first();
+      var $last = $ul.children('li').last();
+      var $current = $ul.children('li.active').removeClass('active');
+      url = $current.children('a').attr('href');
 
-    var total = $ul.children('li').length;
-    $ul.children('li').each(function(i) {
-      if ( !$(this).hasClass('active') ) {
-        return;
-      }
-
-      if ( i > 1 ) {
-        $first.removeClass('disabled');
-      }
-      if ( i === 1 ) {
-        $first.addClass('disabled');
-      }
-      if ( i + 2 === total ) {
-        $last.addClass('disabled');
+      if ( $this.parent()[0] === $first[0] ) {
+        var $prev = $current.prev().addClass('active');
+        page = $prev.text().replace(/\s/g, '');
+        url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
+      } else if ( $this.parent()[0] === $last[0] ) {
+        var $next = $current.next().addClass('active');
+        page = $next.text().replace(/\s/g, '');
+        url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
       } else {
-        $last.removeClass('disabled');
+        url = $this.attr('href');
+        page = url.match(/(?:page=(\d+))/)[1];
+        $this.parent().addClass('active');
       }
-    });
+
+      var total = $ul.children('li').length;
+      $ul.children('li').each(function(i) {
+        if ( !$(this).hasClass('active') ) {
+          return;
+        }
+
+        if ( i > 1 ) {
+          $first.removeClass('disabled');
+        }
+        if ( i === 1 ) {
+          $first.addClass('disabled');
+        }
+        if ( i + 2 === total ) {
+          $last.addClass('disabled');
+        } else {
+          $last.removeClass('disabled');
+        }
+      });
+    }
 
     var $tab = $this.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
@@ -894,7 +899,12 @@
     var opts = $tracker.data('tasktracker_options');
     var tid = $tracker.attr('id');
     if (opts.updateurl) {
-      url = opts.updateurl + '&page=' + page + '&tid=' + tid;
+      if (showAll) {
+        url = opts.updateurl + '&page=1&pagesize=-1&tid=' + tid;
+      } else {
+        url = opts.updateurl + '&page=' + page + '&tid=' + tid;
+      }
+
       if (tab) {
         url += '&tab=' + tab;
       }
@@ -916,6 +926,10 @@
 
       var loaded = $.Event( 'tasksLoaded' );
       $tracker.trigger(loaded);
+
+      if (showAll) {
+        $ul.parent().css('display', 'none');
+      }
     });
 
     return false;

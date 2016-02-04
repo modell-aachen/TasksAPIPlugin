@@ -312,6 +312,9 @@ msgstr "Nächste Seite"
 msgid "Previous page"
 msgstr "Vorherige Seite"
 
+msgid "Show all"
+msgstr "Alle anzeigen"
+
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
 
