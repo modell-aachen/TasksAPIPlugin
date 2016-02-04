@@ -88,8 +88,6 @@
       }
 
       loadTasks( $this, self.opts.currentState, true );
-      hideInformees();
-
       if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
         $this.find('> .tasks-table > thead th').each(function() {
           var $th = $(this);
@@ -921,34 +919,6 @@
     });
 
     return false;
-  };
-
-  var hideInformees = function(){
-    $('.task-details .task-meta-entry .fa-users').each(function(){
-      if($(this).parent().find('.task-informee').length == 0){
-        informeesElem = $(this).parent().find('span').last();
-        if(informeesElem.hasClass('title')){
-          return;
-        }
-
-        informeesArray = informeesElem.html().split(',');
-        if(informeesArray.length <2){
-          return;
-        }
-        firstInformee = informeesArray[0];
-        newDiv = '<span>'+firstInformee+', <div class="task-informee">';
-        informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
-        $.each(informeesArray,function(index,value){
-          if(index == 0)
-            newDiv += this;
-          else
-            newDiv += ', '+this;
-        });
-        newDiv += '</div></span>';
-        informeesElem.remove();
-        $(newDiv).insertAfter($(this).parent().find('span'));
-      }
-    });
   };
 
   // For now we only support exporting the first grid on a page.

@@ -1287,25 +1287,15 @@ TasksPanel = function(tasktracker) {
   };
 
   var initReadMoreInformees = function($content){
-    $content = $content || $(document);
-    var href = $content.find('.task-informee');
-
-    /*
-    * destroy does not work, cause the readmore element does not exists
-    * It does not exist because attach and detach from task
-    *
-    * href.readmore('destroy');
-    */
-    href.attr({'data-readmore': null,'aria-expanded': null})
-      .css({maxHeight: '',height: ''})
-      .next('[data-readmore-toggle]')
-      .remove();
-
-    href.readmore({
-      collapsedHeight: 0,
+    $content = $content || self.panel.find('.content.slide-in');
+    var $informees = $content.find('.task-meta-entry .fa-users').next().children('span:last-child');
+    $informees.css('display', 'block');
+    $informees.readmore('destroy');
+    $informees.readmore({
+      collapsedHeight: 20,
       speed: 400,
-      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show less") + "</a>",
-      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show more") + "</a>"
+      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
     });
   }
 

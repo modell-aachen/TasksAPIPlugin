@@ -1820,7 +1820,7 @@ sub tagInfo {
                 }
             }
 
-            $val = join(',', @vals);
+            $val = join('<br>', sort { lc($a) cmp lc($b) } @vals);
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
