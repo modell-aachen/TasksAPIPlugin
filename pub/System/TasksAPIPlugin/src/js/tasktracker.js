@@ -935,18 +935,35 @@
     return false;
   };
 
-  // For now we only support exporting the first grid on a page.
+  // For now we only support exporting the first (visible) grid on a page.
   var exportPDF = function() {
     $(this).on('submit', function() {
       var $form = $(this);
-
-      var $tracker = $('.tasktracker').first();
-      var $filter = $tracker.children('.filter').first();
-      var filter = readFilter.call($filter);
-
+      var $tracker = $('.tasktracker:visible').first();
       var opts = $tracker.data('tasktracker_options');
+      var $tabPane = $tracker.closest('.jqTabPane');
+      var isTabbed = $tabPane.length !== 0;
+
+      var $filter = $tracker.children('.filter').first();
       var filter = readFilter.call($filter.closest('.filter'));
+      delete filter.id;
+      delete filter.tab;
+      delete filter.tid;
+
       var query = stringifyFilter(opts, filter);
+      if (isTabbed) {
+        var $li = $tabPane.find('> ul.jqTabGroup > li.current');
+        var id = $li.children('a').attr('data');
+        var $pane = $('#' + id);
+        var tabId = $pane.attr('class');
+        tabId = tabId.replace(/\s|current|jq(Ajax)?Tab|\{[^\}]*\}/g, '');
+        if (/tab=[^;&]+/.test(query)) {
+          query = query.replace(/tab=[^;&]+/, 'tab=' + tabId);
+        } else {
+          query += '&tab=' + tabId;
+        }
+      }
+
       _.each(query.split(/&/), function(param) {
         var arr = param.split(/=/);
         var name = arr[0];
