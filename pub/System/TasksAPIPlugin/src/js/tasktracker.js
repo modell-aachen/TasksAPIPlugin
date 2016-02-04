@@ -257,8 +257,7 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
-      var params = parseQueryParams(window.location.search);
-      if (params.id && params.tid == opts.id) {
+      if (params.id && params.tid == self.opts.id) {
         var $task = findTask(params.id);
         if ($task.length) {
           self.tasksPanel.viewTask($task);

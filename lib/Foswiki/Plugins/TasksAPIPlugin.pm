@@ -1288,14 +1288,58 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
 
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
+    my @jqdeps = (
+        "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
+        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
+        "jqp::readmore", "jqp::sweetalert2"
+    );
+    foreach (@jqdeps) {
+        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
+    }
+
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
+    my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
+    my $lang = $session->i18n->language();
+    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
+    require Foswiki::Form::Select2;
+    Foswiki::Form::Select2->addJavascript();
+
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
+<link rel='stylesheet' type='text/css' media='print' href='$pluginURL/css/tasktracker.print$suffix.css?version=$RELEASE' />
+STYLE
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
+    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
+    require Foswiki::Plugins::CKEditorPlugin;
+    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
+
+    # stop further processing if a dummy grid was requested...
+    if ($template eq 'tasksapi::empty') {
+        Foswiki::Func::loadTemplate('TasksAPIDefault');
+        return $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
+    }
+
     # if paging is disabled and no pagesize is given, return all tasks for the
     # current context.
     if ($paging eq 0 && !defined $params->{pagesize}) {
         $pageSize = -1;
     }
 
-    require Foswiki::Contrib::PickADateContrib;
-    Foswiki::Contrib::PickADateContrib::initDatePicker();
 
     if ($readonly) {
         $allowCreate = 0;
@@ -1318,7 +1362,7 @@ sub tagGrid {
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
-    my $isPrint = $req->param('cover') eq 'print' ? 1 : 0;
+    my $isPrint = defined $req->param('cover') && $req->param('cover') eq 'print' ? 1 : 0;
     my $override = $trackerid eq $id || ($gridCounter - 1 eq 1 && $trackerid eq '');
     if ( $req->param('order') && $override ) {
         $order = $req->param('order');
@@ -1459,15 +1503,15 @@ sub tagGrid {
         count => $pageSize,
         offset => $offset
     );
-    _deepen($res->{tasks}, $depth, $params->{order});
 
     my $id_param = $req->param('id');
     if ($id_param && $override && !grep { $_->{id} eq $id_param } @{$res->{tasks}}) {
         my $extrares = _query(
             query => { id => $id_param },
         );
-        unshift @{$res->{tasks}}, $extrares->{tasks} if $extrares && $extrares->{tasks};
+        unshift @{$res->{tasks}}, @{$extrares->{tasks}} if $extrares && $extrares->{tasks};
     }
+    _deepen($res->{tasks}, $depth, $params->{order});
 
     my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
@@ -1495,43 +1539,6 @@ sub tagGrid {
 
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_showexpandercol};
-
-    my @jqdeps = (
-        "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
-        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
-        "jqp::readmore", "jqp::sweetalert2"
-    );
-    foreach (@jqdeps) {
-        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
-    }
-
-    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
-    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
-    my $suffix = $debug ? '' : '.min';
-    my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
-    my $lang = $session->i18n->language();
-    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
-
-    require Foswiki::Form::Select2;
-    Foswiki::Form::Select2->addJavascript();
-
-    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
-<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
-<link rel='stylesheet' type='text/css' media='print' href='$pluginURL/css/tasktracker.print$suffix.css?version=$RELEASE' />
-STYLE
-
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
-<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
-SCRIPT
-
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
-<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
-SCRIPT
-
-    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
-    require Foswiki::Plugins::CKEditorPlugin;
-    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
 
     # todo.. templates und so
     if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
