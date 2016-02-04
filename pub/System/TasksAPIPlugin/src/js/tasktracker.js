@@ -258,7 +258,7 @@
       });
 
       var params = parseQueryParams(window.location.search);
-      if (params.id) {
+      if (params.id && params.tid == opts.id) {
         var $task = findTask(params.id);
         if ($task.length) {
           self.tasksPanel.viewTask($task);
@@ -612,7 +612,7 @@
     var $tab = $th.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class');
-      query.tab = cls.replace(/\s|jqTab|current/g, '');
+      query.tab = cls.replace(/\s|jq(Ajax)?Tab|current|\{[^\}]*\}/g, '');
     }
 
     var search = [];
@@ -852,15 +852,19 @@
     var $last = $ul.children('li').last();
     var $current = $ul.children('li.active').removeClass('active');
     var url = $current.children('a').attr('href');
+    var page, tab;
 
     if ( $this.parent()[0] === $first[0] ) {
       var $prev = $current.prev().addClass('active');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $prev.text().replace(/\s/g, ''));
+      page = $prev.text().replace(/\s/g, '');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
     } else if ( $this.parent()[0] === $last[0] ) {
       var $next = $current.next().addClass('active');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $next.text().replace(/\s/g, ''));
+      page = $next.text().replace(/\s/g, '');
+      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
     } else {
       url = $this.attr('href');
+      page = url.match(/(?:page=(\d+))/)[1];
       $this.parent().addClass('active');
     }
 
@@ -885,12 +889,20 @@
 
     var $tab = $this.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
-      var cls = $tab.attr('class').replace(/(\s|jqTab|current)/g, '');
-      url += '&tab=' + cls;
+      var cls = $tab.attr('class').replace(/(\s|jq(Ajax)?Tab|current|\{[^\}]*\})/g, '');
+      tab = '&tab=' + cls;
     }
 
     var $tracker = $this.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
     var tid = $tracker.attr('id');
+    if (opts.updateurl) {
+      url = opts.updateurl + '&page=' + page + '&tid=' + tid;
+      if (tab) {
+        url += '&tab=' + tab;
+      }
+    }
+
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $tracker.find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
