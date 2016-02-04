@@ -1523,6 +1523,18 @@ TasksPanel = function(tasktracker) {
     }
   };
 
+  var highlightRow = function($row, stop) {
+    setTimeout(function() {
+      $row.css('background-color', '#c5e6ff');
+      setTimeout(function() {
+        $row.removeAttr('style');
+        if (!stop) {
+          highlightRow($row, !stop);
+        }
+      }, 300);
+    }, 300);
+  };
+
   this.close = function() {
     if ( self.isUpload ) {
       toggleUpload();
@@ -1623,7 +1635,17 @@ TasksPanel = function(tasktracker) {
 
     toggleOverlay(true);
     setTimeout(function() {
-      $content.fadeIn(300);
+      $content.fadeIn(300, function() {
+        var m = window.location.search.match(/(?:attachment=([^;&]+))/);
+        if (m && m.length > 1) {
+          var file = m[1];
+          $content.find('ul.jqTabGroup li:last-child > a').trigger('click');
+          var $links = $content.find('table.task-attachments tbody > tr a');
+          var $tr = $links.filter('[href="' + file + '"]').closest('tr');
+          highlightRow($tr, false);
+        }
+      });
+
       initReadmore($content);
       initReadMoreInformees($content);
       sliceChanges($content.find('.changes'));
