@@ -169,8 +169,7 @@ sub _getACL {
 
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
-    my $parent = $this->get('FIELD', 'Parent');
-    my $ctx = $this->get('FIELD', 'Context');
+    my $ctx = $this->get('FIELD', 'Context') || {};
     my $aclFromRef = sub {
         my $ref = $this->get('FIELD', shift);
         return () unless $ref;
@@ -179,7 +178,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$contextACL\b/\$wikiACL($this->{fields}{Context}{value},$type)/;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value},$type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
