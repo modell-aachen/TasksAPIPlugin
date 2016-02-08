@@ -18,9 +18,10 @@ use Encode;
 use File::MimeInfo;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
+use POSIX;
 
-our $VERSION = '0.1';
-our $RELEASE = '0.1';
+our $VERSION = '0.2';
+our $RELEASE = '0.2';
 our $SHORTDESCRIPTION = 'API and frontend for managing assignable tasks';
 our $NO_PREFS_IN_TOPIC = 1;
 
@@ -99,7 +100,6 @@ my $aclExpands = {};
 
 sub initPlugin {
     my ( $topic, $web, $user, $installWeb ) = @_;
-
     # check for Plugins.pm versions
     if ( $Foswiki::Plugins::VERSION < 2.0 ) {
         Foswiki::Func::writeWarning( 'Version mismatch between ',
@@ -125,6 +125,7 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'lease', \&restLease, %restopts );
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch, %restopts );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease, %restopts );
+    Foswiki::Func::registerRESTHandler( 'link', \&restLink, %restopts );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -161,6 +162,26 @@ sub indexTopicHandler {
 
     my $legacy = $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} || 0;
     $task->solrize($indexer, $legacy);
+}
+
+sub afterRenameHandler {
+    my ( $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
+    return if $oldWeb eq $newWeb && $oldTopic eq $newTopic;
+
+    ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+    ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+    my $query = {
+        Context => "$oldWeb.$oldTopic"
+    };
+
+    Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+    my $res = _query(query => $query, count => -1);
+    my $tasks = $res->{tasks};
+    foreach my $task (@$tasks) {
+        $task->update(Context => "$newWeb.$newTopic");
+    }
+
+    Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
 }
 
 sub db {
@@ -261,7 +282,10 @@ sub query {
             my $t = "j_$q";
             $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
             $joins{$q} = 1;
-            $order = "$t.value" if $order eq $q;
+            if ($order eq $q) {
+                $order = "$t.value";
+                $joins{$order} = 1; # make sure we don't add this join again for ordering
+            }
             $q = "$t.value";
         }
 
@@ -288,11 +312,11 @@ sub query {
     if ($order && !$singles{$order} && !$joins{$order}) {
         my $t = "$order";
         $t = "j_$t" unless $t =~ /^j_/;
-        $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
+        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
         $order = "$t";
         $order .= ".value" unless $order =~ /\.value$/;
     }
-    $order = " ORDER BY $order" if $order && $order =~ /^[\w.]+$/;
+    $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
     $order .= " DESC" if $order && $opts{desc};
 
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
@@ -367,11 +391,19 @@ sub _fullindex {
     $db->begin_work;
     $db->do("DELETE FROM tasks");
     $db->do("DELETE FROM task_multi");
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $indexer->deleteByQuery('task_id_s:*');
+
     foreach my $t (Foswiki::Plugins::TasksAPIPlugin::Task::loadMany()) {
         print $t->{id} ."\n" unless $noprint;
         _index($t, 0);
+        $t->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
+
     $db->commit;
+    $indexer->commit();
 }
 
 sub _cachedACL {
@@ -727,7 +759,7 @@ sub _enrich_data {
 sub tagAmpel {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-    my $title = '%MAKETEXT{"Unknown status"}%';
+    my $title = '%MAKETEXT{"Missing due date"}%';
     my $date = $params->{_DEFAULT} || $params->{date};
     my $status = $params->{status} || 'open';
     my $warn = $params->{warn} || 3;
@@ -745,16 +777,16 @@ sub tagAmpel {
         $state = 'r' if $now >= $secs;
         $src = "ampel_$state";
 
-        my $delta = int(($secs - $now)/86400);
-        my $abs = abs($delta);
-        $title = '%MAKETEXT{"In one day"}%' if $delta eq 1;
-        $title = "%MAKETEXT{\"In [_1] days\" args=\"$delta\"}%" if $delta > 1;
-        $title = '%MAKETEXT{"One day over due"}%' if $delta eq -1;
-        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -1;
+        my $delta = ($secs - $now)/86400;
+        my $abs = ceil(abs($delta));
+        $title = '%MAKETEXT{"In one day"}%' if $delta > 0 && $delta <= 1;
+        $title = "%MAKETEXT{\"In [_1] days\" args=\"$abs\"}%" if $delta > 1;
+        $title = '%MAKETEXT{"One day over due"}%' if $delta >= -2 && $delta < -1;
+        $title = '%MAKETEXT{"This very day"}%' if $delta >= -1 && $delta < 0;
+        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -2;
     } else {
         $src = $status eq 'closed' ? 'closed' : 'deleted';
     }
-
     my $img = <<IMG;
 <img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
 IMG
@@ -1028,6 +1060,33 @@ sub restRelease {
     return to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"});
 }
 
+sub restLink {
+    my ($session, $subject, $verb, $response) = @_;
+    my $q = $session->{request};
+
+    my $id = $q->param('id');
+    my $params = $q->param('params') || '';
+    unless ($id) {
+        return 'Error: no task ID passed';
+    }
+
+    my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
+    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+    unless ($task && $task->checkACL('view')) {
+        return 'Error: task not found';
+    }
+    my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context});
+    my $url;
+    if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+        $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+    } else {
+        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+    }
+    Foswiki::Func::redirectCgiQuery(undef, $url);
+    return '';
+}
+
+
 # Gets a rendered version of a task
 sub _renderTask {
     my ($meta, $taskTemplate, $task, $addtozone) = @_;
@@ -1052,6 +1111,8 @@ sub _renderTask {
     my $flavor = {};
     my $type = $task->getPref('TASK_TYPE');
     my $file = $task->getPref('TASK_TEMPLATE_FILE');
+    my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
+
     my $q = $Foswiki::Plugins::SESSION->{request};
     if ( ($currentOptions->{flavor} || $q->param('flavor')) && $taskTemplate ne 'tasksapi::empty' ) {
         $flavor->{name} = $currentOptions->{flavor} || $q->param('flavor');
@@ -1062,6 +1123,7 @@ sub _renderTask {
     if ( $flavor->{name} ) {
         my $tmpl = $taskTemplate . '_' . $flavor->{name};
         $type = ($flavor->{type} || '_default') . '_' . $flavor->{name};
+        my $ftype = $type . '_form';
 
         if ( $addtozone ) {
             unless ($flavorcss->{$type}) {
@@ -1078,19 +1140,37 @@ sub _renderTask {
         }
 
         if ( $storedTemplates->{$type} ) {
+            if ($storedTemplates->{"$ftype"} ne $taskForm) {
+                Foswiki::Func::writeWarning(
+                    "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
+                    . "Possible override of task templates specified in $storedTemplates->{$ftype}."
+                );
+            }
+
             $task = $meta->expandMacros($storedTemplates->{$type});
         } else {
             Foswiki::Func::loadTemplate($flavor->{file}) if $flavor->{file};
             $storedTemplates->{$type} = Foswiki::Func::expandTemplate($tmpl);
+            $storedTemplates->{"$ftype"} = $taskForm;
             $task = $meta->expandMacros($storedTemplates->{$type});
         }
     } else {
-        unless ($storedTemplates->{$type || "$taskTemplate"}) {
+        $type = $type || $taskTemplate;
+        my $ftype = $type . '_form';
+        unless ($storedTemplates->{$type}) {
             Foswiki::Func::loadTemplate($file) if $file;
-            $storedTemplates->{$type || "$taskTemplate"} = Foswiki::Func::expandTemplate($taskTemplate);
+            $storedTemplates->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
+            $storedTemplates->{"$ftype"} = $taskForm;
         }
 
-        $task = $meta->expandMacros($storedTemplates->{$type || "$taskTemplate"});
+        if ($storedTemplates->{"$ftype"} ne $taskForm) {
+            Foswiki::Func::writeWarning(
+                "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
+                . "Possible override of task templates specified in $storedTemplates->{$ftype}."
+            );
+        }
+
+        $task = $meta->expandMacros($storedTemplates->{$type});
     }
 
     if ($canChange && $haveCtx && !$readonly) {
@@ -1174,11 +1254,10 @@ sub tagGrid {
     my $template = $params->{template} || 'tasksapi::grid';
     my $taskTemplate = $params->{tasktemplate};
     my $editorTemplate = $params->{editortemplate};
+    my $updateurl = $params->{updateurl} || '';
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
     my $states = $params->{states} || '%MAKETEXT{"open"}%=open,%MAKETEXT{"closed"}%=closed,%MAKETEXT{"all"}%=all';
-    my $statesMapping = $params->{statesmapping} || '';
-    my $mappingField = $params->{mappingfield} || '';
     my $pageSize = $params->{pagesize} || 25;
     my $paging = $params->{paging};
     $paging = 1 unless defined $paging;
@@ -1207,7 +1286,53 @@ sub tagGrid {
     $desc = 1 unless defined $desc;
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
-    $createText = '%MAKETEXT{"Add task"}%' unless defined $createText;
+    $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
+
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
+    my @jqdeps = (
+        "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
+        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
+        "jqp::readmore", "jqp::sweetalert2"
+    );
+    foreach (@jqdeps) {
+        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
+    }
+
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
+    my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
+    my $lang = $session->i18n->language();
+    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
+    require Foswiki::Form::Select2;
+    Foswiki::Form::Select2->addJavascript();
+
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
+<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
+<link rel='stylesheet' type='text/css' media='print' href='$pluginURL/css/tasktracker.print$suffix.css?version=$RELEASE' />
+STYLE
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
+<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
+    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
+    require Foswiki::Plugins::CKEditorPlugin;
+    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
+
+    # stop further processing if a dummy grid was requested...
+    if ($template eq 'tasksapi::empty') {
+        Foswiki::Func::loadTemplate('TasksAPIDefault');
+        return $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
+    }
 
     # if paging is disabled and no pagesize is given, return all tasks for the
     # current context.
@@ -1215,8 +1340,6 @@ sub tagGrid {
         $pageSize = -1;
     }
 
-    require Foswiki::Contrib::PickADateContrib;
-    Foswiki::Contrib::PickADateContrib::initDatePicker();
 
     if ($readonly) {
         $allowCreate = 0;
@@ -1225,7 +1348,7 @@ sub tagGrid {
 
     unless ($ctx eq 'any') {
         $form = "$system.TasksAPIDefaultTaskForm" unless $form;
-        $templateFile = 'TasksAPI' unless $templateFile;
+        $templateFile = 'TasksAPIDefault' unless $templateFile;
     }
 
     my $_tplDefault = sub {
@@ -1233,13 +1356,13 @@ sub tagGrid {
         $_[0] = 'tasksapi::empty' if $_[0] eq '';
     };
     $_tplDefault->($captionTemplate, 'tasksapi::grid::caption');
-    $_tplDefault->($filterTemplate, 'tasksapi::grid::filter');
+    $_tplDefault->($filterTemplate, 'tasksapi::grid::filter::defaults');
 
     Foswiki::Func::loadTemplate( $templateFile );
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
-    my $isPrint = $req->param('cover') eq 'print' ? 1 : 0;
+    my $isPrint = defined $req->param('cover') && $req->param('cover') eq 'print' ? 1 : 0;
     my $override = $trackerid eq $id || ($gridCounter - 1 eq 1 && $trackerid eq '');
     if ( $req->param('order') && $override ) {
         $order = $req->param('order');
@@ -1288,23 +1411,9 @@ sub tagGrid {
         autoassign => $autoassign,
         autoassignTarget => $autoassignTarget,
         autouser => \@autouser,
-        titlelength => int($titlelength)
+        titlelength => int($titlelength),
+        updateurl => $updateurl
     );
-
-    if ( $mappingField && $statesMapping ) {
-        my %map = ();
-        $map{field} = $mappingField;
-
-        $statesMapping =~ s/\s+//g;
-        my @mappings = split(/(?<=\]),?/, $statesMapping);
-        foreach my $mapping (@mappings) {
-            $mapping =~ /([^=]+)=\[([\w,]+)\]/;
-            my @arr = split(/,/, $2);
-            $map{mappings}{$1} = \@arr;
-        }
-
-        $settings{mapping} = \%map;
-    }
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
@@ -1330,36 +1439,8 @@ sub tagGrid {
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
-
-
-    my $mapstates = sub {
-        my $query = shift;
-        my $settings = shift;
-        if ( $settings{mapping} ) {
-            while ( my ($k, $v) = each %{$settings{mapping}{mappings}} ) {
-                next if $k eq 'all';
-                if ( grep(/$query->{Status}/, @$v) ) {
-                    $query->{$settings{mapping}{field}} = $query->{Status};
-                    $query->{Status} = $k;
-                    last;
-                }
-            }
-        }
-    };
-
-    if ( $req->param('state') && $override && !$req->param('f_Status') ) {
-        if ( $req->param('state') eq 'all' ) {
-            if ( $settings{mapping} && $settings{mapping}{mappings}{all}) {
-                $query->{$settings{mapping}{field}} = $settings{mapping}{mappings}{all};
-            }
-        } else {
-            $query->{Status} = $req->param('state');
-            $mapstates->($query, %settings);
-        }
-    } else {
-        $query->{Status} = 'open' if !exists $query->{Status} && !$req->param('f_Status');
-        $mapstates->($query, %settings);
-    }
+    $query->{Status} = 'open' unless $query->{Status} || $override;
+    $query->{Status} = $req->param('state') if $override && $req->param('state');
 
     if ($override) {
         my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
@@ -1413,10 +1494,7 @@ sub tagGrid {
         }
     }
 
-    if ( $req->param('id') && $override) {
-        $query->{id} = $req->param('id');
-    }
-
+    $query->{Status} = ['open', 'closed'] unless $query->{Status};
     $settings{query} = to_json($query);
     my $res = _query(
         query => $query,
@@ -1425,6 +1503,14 @@ sub tagGrid {
         count => $pageSize,
         offset => $offset
     );
+
+    my $id_param = $req->param('id');
+    if ($id_param && $override && !grep { $_->{id} eq $id_param } @{$res->{tasks}}) {
+        my $extrares = _query(
+            query => { id => $id_param },
+        );
+        unshift @{$res->{tasks}}, @{$extrares->{tasks}} if $extrares && $extrares->{tasks};
+    }
     _deepen($res->{tasks}, $depth, $params->{order});
 
     my $select = join('\n', @options);
@@ -1446,49 +1532,13 @@ sub tagGrid {
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
+    Foswiki::Func::loadTemplate('TasksAPIDefault');
     my $grid = $topicObject->expandMacros(Foswiki::Func::expandTemplate($template));
     $grid =~ s/\$grid_title/$title/ge;
     $grid =~ s/\$create_text/$createText/ge;
 
     delete $fctx->{task_allowcreate};
     delete $fctx->{task_showexpandercol};
-
-    my @jqdeps = (
-        "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
-        "jqp::moment", "jqp::tooltipster", "jqp::underscore",
-        "jqp::readmore", "jqp::sweetalert2"
-    );
-    foreach (@jqdeps) {
-        Foswiki::Plugins::JQueryPlugin::createPlugin( $_ );
-    }
-
-    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
-    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
-    my $suffix = $debug ? '' : '.min';
-    my $scriptDeps = 'JQUERYPLUGIN::JQP::UNDERSCORE';
-    my $lang = $session->i18n->language();
-    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
-
-require Foswiki::Form::Select2;
-Foswiki::Form::Select2->addJavascript();
-
-    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome$suffix.css?version=$RELEASE' />
-<link rel='stylesheet' type='text/css' media='all' href='$pluginURL/css/tasktracker$suffix.css?version=$RELEASE' />
-<link rel='stylesheet' type='text/css' media='print' href='$pluginURL/css/tasktracker.print$suffix.css?version=$RELEASE' />
-STYLE
-
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::SCRIPTS', <<SCRIPT, $scriptDeps );
-<script type="text/javascript" src="$pluginURL/js/tasktracker$suffix.js?version=$RELEASE"></script>
-SCRIPT
-
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
-<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
-SCRIPT
-
-    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
-    require Foswiki::Plugins::CKEditorPlugin;
-    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
 
     # todo.. templates und so
     if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
@@ -1521,8 +1571,15 @@ SCRIPT
     $pages
     <li class="$nextState"><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=$next$qstr" title="%MAKETEXT{"Next page"}%"><span>&raquo;</span></a></li>
   </ul>
+PAGER
+        $qstr =~ s#pagesize=[^&]+##;
+        $pager .= <<PAGER;
+  <ul class="pagination show-all">
+    <li><a href="%SCRIPTURLPATH{"view"}%/$web/$topic?page=1&pagesize=-1$qstr" title="%MAKETEXT{"Show all"}%"><small>(%MAKETEXT{"Show all"}%)</small></a></li>
+  </ul>
 </nav>
 PAGER
+
         $cur = $cur - 1;
         if ( $cur gt 1 ) {
             $pager .= "<nav class=\"pagination-container print-only\">%MAKETEXT{\"Page [_1] of [_2]\" args=\"$page,$cur\"}%</nav>";
@@ -1646,26 +1703,10 @@ FORMAT
 
         my $changeOld = $change->{old} || '';
         my $changeNew = $change->{new} || '';
-        if ( $f->{type} =~ /date2?/ ) {
-            $changeOld = Foswiki::Time::formatTime($changeOld, $params->{timeformat} || '$day $month $year') if $changeOld =~ /^\d+$/;
-            $changeNew = Foswiki::Time::formatTime($changeNew, $params->{timeformat} || '$day $month $year') if $changeNew =~ /^\d+$/;
-            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-        }
 
-        if ( $f->{type} =~ /^select/ ) {
-            $changeOld =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-            $changeNew =~ s/([A-Za-z]+)/%MAKETEXT{"$1"}%/;
-        }
-
-        if ( $f->{type} eq 'user') {
-            $changeOld = _getDisplayName($changeOld);
-            $changeNew = _getDisplayName($changeNew);
-        }
-
-        if ( $f->{type} eq 'user+multi') {
-            $changeOld = join(', ', map {_getDisplayName($_)} split(',', $changeOld));
-            $changeNew = join(', ', map {_getDisplayName($_)} split(',', $changeNew));
+        if ($f->can('getDisplayValue')) {
+            $changeOld = $f->getDisplayValue($changeOld);
+            $changeNew = $f->getDisplayValue($changeNew);
         }
 
         $out =~ s#\$name#$f->{name}#g;
@@ -1693,7 +1734,13 @@ FORMAT
     $out =~ s#\$displayuser#_getDisplayName($cset->{actor})#eg;
     $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
-    $out =~ s#\$comment#$cset->{comment} || ''#eg;
+    my $cmt = $cset->{comment} || '';
+    if ($plain) {
+        $cmt =~ s#<br\s*/?>#\n#g;
+        $cmt =~ s#</p>#\n#g;
+        $cmt =~ s#<.+?>##g;
+    }
+    $out =~ s#\$comment#$cmt#g;
     $out;
 }
 
@@ -1773,14 +1820,14 @@ sub tagInfo {
             }
 
             foreach my $v (@vals) {
-                unless(grep(/$v/, $currentOptions->{autouser})) {
+                unless(grep(/$v/, $currentOptions->{autouser} || 'Team')) {
                     my $tmp = $v;
                     $v = _getDisplayName($v) if $v;
                     $v = $tmp unless $v;
                 }
             }
 
-            $val = join(',', @vals);
+            $val = join('<br>', sort { lc($a) cmp lc($b) } @vals);
         }
         if (Foswiki::isTrue($params->{escape}, 0)) {
             $val =~ s/&/&amp;/g;
@@ -1836,7 +1883,7 @@ sub tagInfo {
         return join($params->{separator} || '', @out);
     }
     if ($params->{taskcfg}) {
-        return $task->getPref(uc($params->{taskcfg}));
+        return $task->getPref(uc($params->{taskcfg})) || '';
     }
 
     if (my $meta = $params->{meta}) {

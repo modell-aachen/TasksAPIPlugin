@@ -1,0 +1,66 @@
+%TMPL:INCLUDE{"mailtemplatescontrib"}%
+
+%TMPL:DEF{"ModacMailTo"}%%TASKSAPI_MAIL_TO%%TMPL:END%
+%TMPL:DEF{"ModacMailTitle"}%%MAKETEXT{"Task summary"}%%TMPL:END%
+%TMPL:DEF{"ModacMailFrom"}%%WIKIWEBMASTERNAME% <%WIKIWEBMASTER%>%TMPL:END%
+
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %TMPL:P{"ModacMailTitle"}%%TMPL:END%
+%TMPL:DEF{"ModacMailType"}%text/html%TMPL:END%
+%TMPL:DEF{"ModacMailContents"}%%TASKSAPI_SUMMARY_CONTENTS%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::title::created"}%%{
+}%%MAKETEXT{"Created tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::title::changed"}%%{
+}%%MAKETEXT{"Changed tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::title::closed"}%%{
+}%%MAKETEXT{"Closed tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::title::duedate"}%%{
+}%%MAKETEXT{"Tasks past due within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%TMPL:END%
+
+
+%TMPL:DEF{"tasksapi::summary::table"}%%{
+}%<strong style="font-size: 18px;">%TASKSAPI_SUMMARY_TITLE%</strong><hr>%{
+}%<table style="width: 100%; border-spacing: 0;" cellspacing="0">
+  <thead>%TMPL:P{"tasksapi::summary::caption"}%</thead>
+  <tbody>%TASKSAPI_SUMMARY_TASKS%</tbody>
+</table>
+<br><br>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::caption"}%%{
+}%<tr style="background-color: #003764; color: #fff;">
+  <th style="text-align: left;">%MAKETEXT{"Due date"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Title"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Type"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Created in"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Created by"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Assigned to"}%</th>
+  <th style="text-align: left;">%MAKETEXT{"Informees"}%</th>
+</tr>%{
+}%%TMPL:END%
+
+%TMPL:DEF{"tasksapi::summary::task"}%%{
+}%<tr %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="style=\"background-color:#ffaeae;\""}%>
+  <td style="width:100px;"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></td>
+  <td><span>%TASKINFO{field="Title" shorten="160"}%</span></td>
+  <td style="width:100px;">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</td>
+  <td>
+   <a href='%SCRIPTURL{"view"}%/%SUBST{text="%TASKINFO{field="Context"}%" pattern="\." format="/"}%'>%{
+}%%IF{
+  "'%TASKINFO{field="Context"}%'/TopicTitle"
+  then="$percntQUERY{\"'%TASKINFO{field="Context"}%'/TopicTitle\"}$percnt"
+  else="%TASKINFO{field="Context"}%"
+}%%{
+}%</a></td>
+  <td style="width: 125px;"><span>%TASKINFO{field="Author" user="1"}%</span></td>
+  <td style="width: 125px;"><span>%TASKINFO{field="AssignedTo" user="1"}%</span></td>
+  <td><span>%TASKINFO{field="Informees" user="1"}%</span></td>
+</tr>%{
+}%%TMPL:END%

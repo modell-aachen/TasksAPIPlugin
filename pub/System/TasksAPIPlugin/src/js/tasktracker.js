@@ -79,8 +79,7 @@
       $this.data('tasktracker_options', self.opts);
 
       var $tasks = self.opts.container;
-      var $filter = $this.children('.filter');
-      var $status = $filter.find('select[name="Status"]');
+      var $status = $this.find('> .filter select[name="Status"]');
 
       var params = parseQueryParams();
       if ( params.f_Status || params.state ) {
@@ -89,8 +88,6 @@
       }
 
       loadTasks( $this, self.opts.currentState, true );
-      hideInformees();
-
       if ( /^(1|on|true|enabled?)$/i.test(self.opts.sortable) ) {
         $this.find('> .tasks-table > thead th').each(function() {
           var $th = $(this);
@@ -156,6 +153,10 @@
            var id = $task.data('id');
            var json = $task.data('task_data');
             console.log(id, json);
+          }
+
+          if (evt.altKey) {
+            return false;
           }
         }
 
@@ -253,6 +254,13 @@
         // view task
         self.tasksPanel.viewTask($nextActive);
       });
+
+      if (params.id && params.tid == self.opts.id) {
+        var $task = findTask(params.id);
+        if ($task.length) {
+          self.tasksPanel.viewTask($task);
+        }
+      }
 
       return this;
     });
@@ -566,7 +574,7 @@
     }
 
     var retval = {};
-    var arr = q.split('&');
+    var arr = q.split(/[&;]/);
     for (var i = 0; i < arr.length; ++i) {
       var p = arr[i].split('=');
       retval[p[0]] = p[1];
@@ -601,7 +609,7 @@
     var $tab = $th.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class');
-      query.tab = cls.replace(/\s|jqTab|current/g, '');
+      query.tab = cls.replace(/\s|jq(Ajax)?Tab|current|\{[^\}]*\}/g, '');
     }
 
     var search = [];
@@ -635,7 +643,8 @@
     var filter = readFilter.call($filter);
     var qfilter = stringifyFilter(opts, filter);
 
-    var url = window.location.pathname + '?' + search.join('&') + '&' + qfilter;
+    var url = opts.updateurl ? opts.updateurl : window.location.pathname;
+    url += (/\?/.test(url) ? '&' : '?') + search.join('&') + '&' + qfilter;
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $table.children('.tasks').load(target, function(resp, status, xhr) {
@@ -659,7 +668,8 @@
     var $tracker = $filter.closest('.tasktracker');
     var opts = $tracker.data('tasktracker_options');
     var filter = readFilter.call($filter.closest('.filter'));
-    var url = window.location.pathname + '?' + stringifyFilter(opts, filter);
+    var url = opts.updateurl ? opts.updateurl : window.location.pathname;
+    url += (/\?/.test(url) ? '&' : '?') + stringifyFilter(opts, filter);
     var target = url + ' #' + opts.id + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $('<div></div>').load(target, function(res, status, xhr) {
@@ -715,22 +725,6 @@
         }
       } else {
         params.push('f_' + p + '=' + filter[p]);
-
-        // status mapping:
-        // check if we are applying a filter to a mapped field (field X -> field Status)
-        // (assume that the original field Status has no filter inputs)
-        if (trackeropts.mapping && trackeropts.mapping.field === p) {
-          if (filter[p] === 'all') {
-            params.push('f_Status=all');
-          } else {
-            for (var m in trackeropts.mapping.mappings) {
-              if (trackeropts.mapping.mappings[m].indexOf(filter[p]) > -1) {
-                params.push('f_Status=' + m);
-                break;
-              }
-            }
-          }
-        }
       }
     }
 
@@ -850,50 +844,72 @@
       return false;
     }
 
+    var page, tab, url;
     var $ul = $this.closest('ul');
-    var $first = $ul.children('li').first();
-    var $last = $ul.children('li').last();
-    var $current = $ul.children('li.active').removeClass('active');
-    var url = $current.children('a').attr('href');
-
-    if ( $this.parent()[0] === $first[0] ) {
-      var $prev = $current.prev().addClass('active');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $prev.text().replace(/\s/g, ''));
-    } else if ( $this.parent()[0] === $last[0] ) {
-      var $next = $current.next().addClass('active');
-      url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + $next.text().replace(/\s/g, ''));
-    } else {
+    var showAll = $ul.hasClass('show-all');
+    if (showAll) {
       url = $this.attr('href');
-      $this.parent().addClass('active');
-    }
+    } else {
+      var $first = $ul.children('li').first();
+      var $last = $ul.children('li').last();
+      var $current = $ul.children('li.active').removeClass('active');
+      url = $current.children('a').attr('href');
 
-    var total = $ul.children('li').length;
-    $ul.children('li').each(function(i) {
-      if ( !$(this).hasClass('active') ) {
-        return;
-      }
-
-      if ( i > 1 ) {
-        $first.removeClass('disabled');
-      }
-      if ( i === 1 ) {
-        $first.addClass('disabled');
-      }
-      if ( i + 2 === total ) {
-        $last.addClass('disabled');
+      if ( $this.parent()[0] === $first[0] ) {
+        var $prev = $current.prev().addClass('active');
+        page = $prev.text().replace(/\s/g, '');
+        url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
+      } else if ( $this.parent()[0] === $last[0] ) {
+        var $next = $current.next().addClass('active');
+        page = $next.text().replace(/\s/g, '');
+        url = url.replace('page=' + $current.text().replace(/\s/g, ''), 'page=' + page);
       } else {
-        $last.removeClass('disabled');
+        url = $this.attr('href');
+        page = url.match(/(?:page=(\d+))/)[1];
+        $this.parent().addClass('active');
       }
-    });
+
+      var total = $ul.children('li').length;
+      $ul.children('li').each(function(i) {
+        if ( !$(this).hasClass('active') ) {
+          return;
+        }
+
+        if ( i > 1 ) {
+          $first.removeClass('disabled');
+        }
+        if ( i === 1 ) {
+          $first.addClass('disabled');
+        }
+        if ( i + 2 === total ) {
+          $last.addClass('disabled');
+        } else {
+          $last.removeClass('disabled');
+        }
+      });
+    }
 
     var $tab = $this.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
-      var cls = $tab.attr('class').replace(/(\s|jqTab|current)/g, '');
-      url += '&tab=' + cls;
+      var cls = $tab.attr('class').replace(/(\s|jq(Ajax)?Tab|current|\{[^\}]*\})/g, '');
+      tab = '&tab=' + cls;
     }
 
     var $tracker = $this.closest('.tasktracker');
+    var opts = $tracker.data('tasktracker_options');
     var tid = $tracker.attr('id');
+    if (opts.updateurl) {
+      if (showAll) {
+        url = opts.updateurl + '&page=1&pagesize=-1&tid=' + tid;
+      } else {
+        url = opts.updateurl + '&page=' + page + '&tid=' + tid;
+      }
+
+      if (tab) {
+        url += '&tab=' + tab;
+      }
+    }
+
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';
     window.tasksapi.blockUI();
     $tracker.find('> .tasks-table > .tasks').load(target, function(resp, status, xhr) {
@@ -910,51 +926,44 @@
 
       var loaded = $.Event( 'tasksLoaded' );
       $tracker.trigger(loaded);
+
+      if (showAll) {
+        $ul.parent().css('display', 'none');
+      }
     });
 
     return false;
   };
 
-  var hideInformees = function(){
-    $('.task-details .task-meta-entry .fa-users').each(function(){
-      if($(this).parent().find('.task-informee').length == 0){
-        informeesElem = $(this).parent().find('span').last();
-        if(informeesElem.hasClass('title')){
-          return;
-        }
-
-        informeesArray = informeesElem.html().split(',');
-        if(informeesArray.length <2){
-          return;
-        }
-        firstInformee = informeesArray[0];
-        newDiv = '<span>'+firstInformee+', <div class="task-informee">';
-        informeesArray.splice( $.inArray(firstInformee,informeesArray) ,1 );
-        $.each(informeesArray,function(index,value){
-          if(index == 0)
-            newDiv += this;
-          else
-            newDiv += ', '+this;
-        });
-        newDiv += '</div></span>';
-        informeesElem.remove();
-        $(newDiv).insertAfter($(this).parent().find('span'));
-      }
-    });
-  };
-
-  // For now we only support exporting the first grid on a page.
+  // For now we only support exporting the first (visible) grid on a page.
   var exportPDF = function() {
     $(this).on('submit', function() {
       var $form = $(this);
-
-      var $tracker = $('.tasktracker').first();
-      var $filter = $tracker.children('.filter').first();
-      var filter = readFilter.call($filter);
-
+      var $tracker = $('.tasktracker:visible').first();
       var opts = $tracker.data('tasktracker_options');
+      var $tabPane = $tracker.closest('.jqTabPane');
+      var isTabbed = $tabPane.length !== 0;
+
+      var $filter = $tracker.children('.filter').first();
       var filter = readFilter.call($filter.closest('.filter'));
+      delete filter.id;
+      delete filter.tab;
+      delete filter.tid;
+
       var query = stringifyFilter(opts, filter);
+      if (isTabbed) {
+        var $li = $tabPane.find('> ul.jqTabGroup > li.current');
+        var id = $li.children('a').attr('data');
+        var $pane = $('#' + id);
+        var tabId = $pane.attr('class');
+        tabId = tabId.replace(/\s|current|jq(Ajax)?Tab|\{[^\}]*\}/g, '');
+        if (/tab=[^;&]+/.test(query)) {
+          query = query.replace(/tab=[^;&]+/, 'tab=' + tabId);
+        } else {
+          query += '&tab=' + tabId;
+        }
+      }
+
       _.each(query.split(/&/), function(param) {
         var arr = param.split(/=/);
         var name = arr[0];
@@ -975,23 +984,10 @@
     $(document).on('click', '.tasktracker .btn-filter.btn-apply', applyFilter);
     $(document).on('click', '.tasktracker .btn-filter.btn-reset', resetFilter);
 
-    var $tracker = $('.tasktracker').tasksGrid();
+    $('.tasktracker').livequery(function() { $(this).tasksGrid(); });
     window.tasksapi = new TasksAPI();
 
     // Listen for PDF exports
     $('#printDialogForm').livequery(exportPDF);
-
-    setTimeout(function() {
-      if ( window.location.search ) {
-        var match = window.location.search.match(/id=([^&;]+)(;|&|$|.*)/);
-        if ( match && match.length > 1 ) {
-          var id = match[1];
-          var $task = $tracker.find('.task:visible');
-          if ( $task.data('id') === id ) {
-            $tracker[0].tasksPanel.viewTask($task);
-          }
-        }
-      }
-    }, 300);
   });
 }(jQuery, window._, window.document, window));

@@ -160,7 +160,7 @@ sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
     return () unless $aclPref;
-    if ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
+    while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
         my $f = $this->get('FIELD', $1);
         if ( $f && $f->{value}) {
             $aclPref =~ s/\$curvalue\(([^)]+)\)/$f->{value}/eg;
@@ -169,8 +169,7 @@ sub _getACL {
 
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
-    my $parent = $this->get('FIELD', 'Parent');
-    my $ctx = $this->get('FIELD', 'Context');
+    my $ctx = $this->get('FIELD', 'Context') || {};
     my $aclFromRef = sub {
         my $ref = $this->get('FIELD', shift);
         return () unless $ref;
@@ -179,7 +178,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$contextACL\b/\$wikiACL($this->{fields}{Context}{value},$type)/;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -188,7 +187,7 @@ sub _getACL {
 sub _checkACL {
     my $session = $Foswiki::Plugins::SESSION;
     my $acl = shift;
-    return 1 if !@$acl;
+    return 1 if !@$acl || Foswiki::Func::isAnAdmin();
     my $user = shift || $session->{user};
     my $aclstring = join(',', @$acl);
     my $cache = Foswiki::Plugins::TasksAPIPlugin::_cachedACL($aclstring);
@@ -199,7 +198,7 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
         }
-        if ($item =~ /\$wikiACL\(([^,]+),([^)]+)\)/) {
+        if ($item =~ /\$wikiACL\((\S+)\s+([^)]+)\)/) {
             my ($aclwt, $type) = ($1, $2);
             $type = uc $type;
             my $ccache = Foswiki::Plugins::TasksAPIPlugin::_cachedContextACL("$aclwt,$type");
@@ -319,6 +318,26 @@ sub create {
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     my $task = load($meta);
 
+    if (my $statusmap = $task->getPref("MAP_STATUS_FIELD")) {
+        my $vals = $task->getPref("MAP_STATUS", "*");
+        if ($data{$statusmap}) {
+            my $val = $data{$statusmap};
+            $data{Status} = $vals->{$val} || $val;
+        } elsif ($data{Status}) {
+            $data{$statusmap} = $data{Status};
+        }
+
+        if ( $data{Status} eq 'closed' ) {
+            $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        }
+
+        my $mstatus = $meta->get('FIELD', $statusmap);
+        $meta->putKeyed('FIELD', {name => 'Status', title => '', value => $data{Status}});
+        $meta->putKeyed('FIELD', {name => $statusmap, title => '', value => $mstatus->{value}});
+        $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+        $task = load($meta);
+    }
+
     $task->notify('created');
     $task->_postCreate();
     $task->_postUpdate();
@@ -328,7 +347,10 @@ sub create {
 
 sub notify {
     my ($self, $type, %options) = @_;
-    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} || 0;
+
+    my $disabled = $Foswiki::cfg{TasksAPIPlugin}{DisableNotifications}
+        || Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')
+        || 0;
     return if $disabled;
 
     my $notify = Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { $self->getPref("NOTIFY_\U$type") });
@@ -364,6 +386,18 @@ sub update {
 
     $self->_preUpdate;
 
+    my %skip_changeset;
+    if (my $statusmap = $self->getPref("MAP_STATUS_FIELD")) {
+        my $vals = $self->getPref("MAP_STATUS", "*");
+        $skip_changeset{Status} = 1;
+        if ($data{$statusmap}) {
+            my $val = $data{$statusmap};
+            $data{Status} = $vals->{$val} || $val;
+        } elsif ($data{Status}) {
+            $data{$statusmap} = $data{Status};
+        }
+    }
+
     my @changes;
     delete $data{TopicType};
     my @comment = delete $data{comment};
@@ -374,16 +408,17 @@ sub update {
         next if !exists $data{$name};
         my $val = $data{$name};
         my $old = $self->{fields}{$name};
+
         if ($val eq '' && $old ne '') {
             $meta->remove('FIELD', $name);
             delete $self->{fields}{$name};
-            push @changes, { type => 'delete', name => $name, old => $old };
+            push @changes, { type => 'delete', name => $name, old => $old } unless $skip_changeset{$name};
             next;
         }
         if ($old eq '' && $val ne '') {
-            push @changes, { type => 'add', name => $name, new => $val };
+            push @changes, { type => 'add', name => $name, new => $val } unless $skip_changeset{$name};
         } elsif ($val ne $old) {
-            push @changes, { type => 'change', name => $name, old => $old, new => $val };
+            push @changes, { type => 'change', name => $name, old => $old, new => $val } unless $skip_changeset{$name};
         }
 
         if ($name eq 'AssignedTo' && $old ne $val) {
@@ -397,7 +432,7 @@ sub update {
             }
         }
 
-        $meta->putKeyed('FIELD', { name => $name, title => $f->{tooltip}, value => $val });
+        $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $val });
         $self->{fields}{$name} = $val;
     }
     if (@comment) {
@@ -412,61 +447,68 @@ sub update {
     }
 
     my $changed = 0;
-    # just update the comment if a changeset id is given
-    if ( $data{cid} ) {
-        my $cid = delete $data{cid};
-        my $set = $meta->get('TASKCHANGESET', $cid);
-        my $cmt = pop(@comment);
-        $set->{comment} = $cmt;
 
-        if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
-            $meta->remove('TASKCHANGESET', $cid);
-        } else {
-            $meta->putKeyed('TASKCHANGESET', $set);
+    unless (Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')) {
+        # just update the comment if a changeset id is given
+        if ( $data{cid} ) {
+            my $cid = delete $data{cid};
+            my $set = $meta->get('TASKCHANGESET', $cid);
+            my $cmt = pop(@comment);
+            $set->{comment} = $cmt;
+
+            if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
+                $meta->remove('TASKCHANGESET', $cid);
+            } else {
+                $meta->putKeyed('TASKCHANGESET', $set);
+            }
+
+            $changed = 1;
+        } elsif (@changes || @comment) {
+            # Find existing changesets to determine new ID
+            my @changesets = $meta->find('TASKCHANGESET');
+            my @ids;
+            if (scalar(@changesets)) {
+                @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+            }
+
+            my $newid = 1 + (@ids && scalar(@ids) ? pop(@ids) : 0);
+            $meta->putKeyed('TASKCHANGESET', {
+                name => $newid,
+                actor => $Foswiki::Plugins::SESSION->{user},
+                at => scalar(time),
+                changes => to_json(\@changes),
+                @comment
+            });
+            $self->{changeset} = $newid;
+            $changed = 1;
         }
 
-        $changed = 1;
-    } elsif (@changes || @comment) {
-        # Find existing changesets to determine new ID
-        my @changesets = $meta->find('TASKCHANGESET');
-        my @ids;
-        if (scalar(@changesets)) {
-            @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+        if ($changed) {
+            $self->{fields}{Changed} = time;
+            $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
         }
-
-        my $newid = 1 + (@ids && scalar(@ids) ? pop(@ids) : 0);
-        $meta->putKeyed('TASKCHANGESET', {
-            name => $newid,
-            actor => $Foswiki::Plugins::SESSION->{user},
-            at => scalar(time),
-            changes => to_json(\@changes),
-            @comment
-        });
-        $self->{changeset} = $newid;
-        $changed = 1;
     }
 
-    if ($changed) {
-        $self->{fields}{Changed} = time;
-        $meta->putKeyed('FIELD', { name => 'Changed', title => '', value => $self->{fields}{Changed} });
-    }
+    return unless $changed;
+
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
-
-    if ($changed) {
-        $self->notify($notify);
-        delete $self->{changeset};
-        if ($notify eq 'closed') {
-            $self->_postClose;
-        } elsif ($notify eq 'reopened') {
-            $self->_postReopen;
-        } elsif ($notify eq 'reassigned') {
-            $self->_postReassign;
-        }
+    $self->notify($notify);
+    delete $self->{changeset};
+    if ($notify eq 'closed') {
+        $self->_postClose;
+    } elsif ($notify eq 'reopened') {
+        $self->_postReopen;
+    } elsif ($notify eq 'reassigned') {
+        $self->_postReassign;
     }
 
     $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self);
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $self->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
 }
 
 sub close {
@@ -580,11 +622,14 @@ sub solrize {
     my $ctxurl = Foswiki::Func::getViewUrl(
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
-    my $state = $self->{fields}{Status} || 'open';
+
+    my $state = $self->getPref('MAP_STATUS_FIELD') || $self->{fields}{Status} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
     my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
     $icon = $self->{meta}->expandMacros($icon) if $icon =~ /%[^%]+%/;
+    my @attachments = $self->{meta}->find('FILEATTACHMENT');
+    my @attNames = map {$_->{name}} @attachments;
 
     my $doc = $indexer->newDocument();
     $doc->add_fields(
@@ -608,14 +653,18 @@ sub solrize {
       'container_title' => $self->{fields}{Title},
       'task_created_dt' => $created,
       'task_due_dt' => $date,
-      'task_state_s' => $self->{fields}{Status},
+      'task_state_s' => $state,
       'task_type_s' => $type,
-      'task_id_s' => $self->{id}
+      'task_id_s' => $self->{id},
+      'task_context_s' => $self->{fields}{Context},
+      'attachment' => \@attNames,
+      'author_s' => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$self->{fields}{Author}\"}%", $topic, $web)
     );
 
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
+    my $granted;
     unless (scalar @acl) {
-        $doc->add_fields('access_granted' => 'all');
+        $granted = 'all'
     } else {
         my $aclstring = join(',', @acl);
         my $expanded = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
@@ -637,8 +686,9 @@ sub solrize {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $expanded);
         }
 
-        $doc->add_fields('access_granted' => $expanded);
+        $granted = $expanded;
     }
+    $doc->add_fields('access_granted' => $granted);
 
     if ( $legacy ) {
         my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
@@ -646,12 +696,88 @@ sub solrize {
             'collection' => $collection
         );
     }
+    try {
+        $indexer->add($doc);
+        my @extraFields = ('access_granted', $granted);
+        foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
+            push(@extraFields, $key, $doc->value_for($key));
+        }
+
+        foreach my $a (@attachments) {
+            $self->indexAttachment($indexer, $a, \@extraFields);
+        }
+    } catch Error::Simple with {
+        my $e = shift;
+        $indexer->log("ERROR: ".$e->{-text});
+    };
+}
+
+sub indexAttachment {
+    my ($self, $indexer, $attachment, $commonFields) = @_;
+
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{id});
+    my $name = $attachment->{'name'} || '';
+    my $extension = '';
+    my $title = $name;
+    if ($name =~ /^(.+)\.(\w+?)$/) {
+        $title = $1;
+        $extension = lc($2);
+    }
+
+    $title =~ s/_+/ /g;
+    $extension = 'jpg' if $extension =~ /jpe?g/i;
+
+    my $indexextensions = $indexer->indexExtensions();
+    my $attText = '';
+    if ($indexextensions->{$extension}) {
+        $attText = $indexer->getStringifiedVersion($web, $topic, $name);
+        $attText = $indexer->plainify($attText, $web, $topic);
+    }
+
+    my $doc = $indexer->newDocument();
+    my @contributors = $indexer->getContributors($web, $topic, $attachment);
+    my %contributors = map {$_ => 1} @contributors;
+    $doc->add_fields(contributor => [keys %contributors]);
+
+    my $author = Foswiki::Func::getWikiName($attachment->{user}) || 'UnknownUser';
+    my $file = Foswiki::urlEncode($name);
+    my $url = "$Foswiki::cfg{ScriptUrlPath}/rest$Foswiki::cfg{ScriptSuffix}/TasksAPIPlugin/download?id=$self->{id}&file=$file";
+    my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    $doc->add_fields(
+        id => "$web.$topic.$name\@$self->{fields}{Context}",
+        url => $url,
+        web => $ctxWeb,
+        topic => $ctxTopic,
+        webtopic => "$ctxWeb.$ctxTopic",
+        title => $title,
+        type => $extension,
+        text => $attText,
+        summary => '',
+        author => $author,
+        date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
+        version => $attachment->{'version'} || 1,
+        name => $name,
+        comment => $attachment->{'comment'} || '',
+        size => $attachment->{'size'} || 0,
+        icon => $indexer->mapToIconFileName($extension),
+        container_id => $self->{fields}{Context},
+        container_web => $ctxWeb,
+        container_topic => $ctxTopic,
+        container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic) . "?id=$self->{id}",
+        container_title => $self->{fields}{Title},
+        task_context_s => $self->{fields}{Context},
+        author_s => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$attachment->{user}\"}%", $ctxTopic, $ctxWeb)
+    );
+
+    # add extra fields, i.e. ACLs
+    $doc->add_fields(@$commonFields) if $commonFields;
 
     try {
-      $indexer->add($doc);
-    } catch Error::Simple with {
-      my $e = shift;
-      $indexer->log("ERROR: ".$e->{-text});
+        $indexer->add($doc);
+    }
+    catch Error::Simple with {
+        my $e = shift;
+        $indexer->log("ERROR: " . $e->{-text});
     };
 }
 

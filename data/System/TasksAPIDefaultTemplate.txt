@@ -1,0 +1,90 @@
+%{<verbatim>}%
+
+%{the entire grid}%
+%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
+}%%TMPL:P{"tasksapi::grid::filter"}%%{
+}%<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
+    <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
+    <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
+  </table>
+  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
+  <div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
+</div></noautolink>%TMPL:END%
+
+
+%{defines the surrounding markup for task filters}%
+%TMPL:DEF{"tasksapi::grid::filter"}%%{
+}%<div class="filter no-print">%{
+}%<div>
+  <div class="options">
+    <span class="title">$grid_title</span>%{
+  }%%TWISTY{id="%TASKINFO{expand="id"}%-filter-%WEB%-%TOPIC%" showlink="<i class=\"fa fa-arrow-down\"></i> %MAKETEXT{"Show filter"}%" hidelink="<i class=\"fa fa-arrow-up\"></i> %MAKETEXT{"Hide filter"}%" remember="on" linkclass="btn-filter filter"}%%{
+    }%%TASKINFO{expandtemplate="%TASKINFO{expand="filtertemplate"}%"}%%{
+    }%<div class="btn-filter-container">
+      <a class="btn-filter btn-apply" href="#">%MAKETEXT{"Apply"}%</a>
+      <a class="btn-filter btn-reset" href="#">%MAKETEXT{"Reset"}%</a>
+    </div>%ENDTWISTY%%{
+  }%</div>%{
+  }%%TMPL:P{context="task_allowcreate" then="tasksapi::grid::filter::create"}%%{
+}%</div>
+</div>%TMPL:END%
+
+%{defines the button used to create a new grid entry}%
+%TMPL:DEF{"tasksapi::grid::filter::create"}%%{
+}%<div class="create">
+  <a href="#" class="tasks-btn-create"><i class="fa fa-plus"></i>$create_text</a>
+</div><span class="clear"></span>%{
+}%%TMPL:END%
+
+
+%TMPL:DEF{"tasksapi::grid::filter::defaults"}%%{
+}%%TASKSFILTER{"Created" range="1" max="true"}%%{
+}%%TASKSFILTER{"Changed" range="1" max="true"}%%{
+}%%TMPL:END%
+
+%{empty template}%
+%TMPL:DEF{"tasksapi::empty"}%%{
+}%%IF{"context DnDUploadPluginEnabled" then="$percntDNDUPLOAD{headonly=\"1\"}$percnt"}%%{
+}%%TMPL:END%
+
+%{active when in details view}%
+%TMPL:DEF{"tasksapi::overlay"}%%{
+}%<div class="task-overlay">
+  <div class="panel-wrapper">
+    <div class="close noselect" title="%MAKETEXT{"Hide"}%"><i class="fa fa-times"></i></div>
+    <div class="panel"></div>
+    <div class="buttons">
+      <div class="view active">
+        <div>
+          <a href="#" title="%MAKETEXT{"Previous entry"}%" class="panel-btn previous"><i class="fa fa-chevron-left"></i></a>
+          <a href="#" title="%MAKETEXT{"Next entry"}%" class="panel-btn next"><i class="fa fa-chevron-right"></i></a>%{
+}%%IF{"not context task_readonly and context task_allowcreate" then="<div style='border-left: 1px solid #4b6b8e; display: inline-block;'><a href='#' title='$percntMAKETEXT{\"Add entry\"}$percnt' class='panel-btn add'><i class='fa fa-plus'></i></a></div>"}%%{
+        }%</div>
+        <div>%{
+}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit entry\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a><a href='#' title='$percntMAKETEXT{\"Attach file(s)\"}$percnt' class='panel-btn upload'><i class='fa fa-upload'></i></a><a href='#' title='$percntMAKETEXT{\"Add comment\"}$percnt' class='panel-btn comment'><i class='fa fa-commenting-o'></i></a>"}%%{
+        }%</div>
+      </div>
+      <div class="edit">
+        <div>
+          <a href="#" title="%MAKETEXT{"Save"}%" class="panel-btn save"><i class="fa fa-save"></i></a>
+          <a href="#" title="%MAKETEXT{"Cancel"}%" class="panel-btn cancel"><i class="fa fa-remove"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="textarea">
+      <label>
+        <input type="checkbox" name="close" value="" />
+        %MAKETEXT{"Close entry"}%
+      </label>
+      <div contenteditable="true"></div>
+    </div>%{
+    }%%TMPL:P{"tasksapi::overlay::upload"}%%{
+}%</div>
+</div>%TMPL:END%
+
+%{DnDUpload}%
+%TMPL:DEF{"tasksapi::overlay::upload"}%%{
+}%%IF{"not context task_readonly" then="<div class='upload'>$percntDNDUPLOAD{extraclass=\"task-dnd\"}$percnt</div>"}%%{
+}%%TMPL:END%
+
+%{</verbatim>}%

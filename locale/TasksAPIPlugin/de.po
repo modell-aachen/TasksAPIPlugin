@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Foswiki $Id\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2015-10-01 00:09+0200\n"
+"PO-Revision-Date: 2016-01-12 11:29+0100\n"
 "Last-Translator: Modell Aachen <support@modell-aachen.de>\n"
 "Language-Team: Foswiki German Translation Team <none>\n"
 "Language: de\n"
@@ -21,6 +21,9 @@ msgstr "offen"
 msgid "closed"
 msgstr "geschlossen"
 
+msgid "All items"
+msgstr "Alle Einträge"
+
 msgid "all"
 msgstr "alle"
 
@@ -30,8 +33,11 @@ msgstr "gelöscht"
 msgid "Tasks"
 msgstr "Aufgaben"
 
-msgid "Add task"
-msgstr "Aufgabe hinzufügen"
+msgid "Add item"
+msgstr "Eintrag hinzufügen"
+
+msgid "Add entry"
+msgstr "Eintrag hinzufügen"
 
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
@@ -237,6 +243,12 @@ msgstr "Neue untergeordnete Aufgabe hinzufügen"
 msgid "Unknown status"
 msgstr "Unbekannter Status"
 
+msgid "Missing due date"
+msgstr "Fehlendes Fälligkeitsdatum"
+
+msgid "This very day"
+msgstr "Noch heute"
+
 msgid "Due date"
 msgstr "Zieltermin"
 
@@ -255,8 +267,14 @@ msgstr "Seit %1 Tagen abgelaufen"
 msgid "Close task"
 msgstr "Aufgabe schließen"
 
+msgid "Close entry"
+msgstr "Eintrag schließen"
+
 msgid "Reopen task"
 msgstr "Aufgabe wieder öffnen"
+
+msgid "Reopen entry"
+msgstr "Eintrag wieder öffnen"
 
 msgid "View details"
 msgstr "Details anzeigen"
@@ -264,14 +282,23 @@ msgstr "Details anzeigen"
 msgid "Edit task"
 msgstr "Aufgabe bearbeiten"
 
+msgid "Edit entry"
+msgstr "Eintrag bearbeiten"
+
 msgid "Do you really want to close the selected task?"
 msgstr "Möchten Sie die ausgewählte Aufgabe wirklich schließen?"
 
 msgid "Previous task"
 msgstr "Vorherige Aufgabe"
 
+msgid "Previous entry"
+msgstr "Vorherige Eintrag"
+
 msgid "Next task"
 msgstr "Nächste Aufgabe"
+
+msgid "Next entry"
+msgstr "Nächste Eintrag"
 
 msgid "Press 'Save' to start the upload"
 msgstr "Zum Hochladen 'Speichern' drücken"
@@ -284,6 +311,9 @@ msgstr "Nächste Seite"
 
 msgid "Previous page"
 msgstr "Vorherige Seite"
+
+msgid "Show all"
+msgstr "Alle anzeigen"
 
 msgid "Add comment"
 msgstr "Kommentar hinzufügen"
@@ -335,6 +365,9 @@ msgstr "Meine offenen Aufgaben"
 
 msgid "My closed tasks"
 msgstr "Meine geschlossenen Aufgaben"
+
+msgid "My watched tasks"
+msgstr "Meine beobachteten Aufgaben"
 
 msgid "Filter by state"
 msgstr "Filter nach Status"

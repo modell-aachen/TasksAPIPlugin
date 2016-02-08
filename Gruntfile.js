@@ -55,9 +55,6 @@ module.exports = function(grunt) {
           '<%= pkg.pubDir %>/js/tasktracker.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
-          ],
-          '<%= pkg.pubDir %>/js/tasksapi.solr.js': [
-            '<%= pkg.pubDir %>/src/js/solr.js'
           ]
         }
       },
@@ -71,9 +68,6 @@ module.exports = function(grunt) {
           '<%= pkg.pubDir %>/js/tasktracker.min.js': [
             '<%= pkg.pubDir %>/src/js/tasktracker.js',
             '<%= pkg.pubDir %>/src/js/taskpanel.js'
-          ],
-          '<%= pkg.pubDir %>/js/tasksapi.solr.min.js': [
-            '<%= pkg.pubDir %>/src/js/solr.js'
           ]
         }
       },

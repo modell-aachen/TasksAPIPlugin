@@ -641,20 +641,6 @@ TasksPanel = function(tasktracker) {
       }
     }
 
-    if ( opts.mapping && opts.mapping.field ) {
-      var field = task[opts.mapping.field];
-      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
-      task.Status = _.find(keys, function(key) {
-        if (!_.isUndefined(key)) {
-          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
-            return key;
-          }
-        }
-
-        return undefined;
-      });
-    }
-
     // remove invalid parent entries.
     if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {
       delete task.Parent;
@@ -933,12 +919,7 @@ TasksPanel = function(tasktracker) {
 
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
-        var $target = $ed.find('input[name="' + topts.autoassignTarget + '"]');
-        var isSelect2 = false;
-        if ($target.length === 0) {
-          $target = $ed.find('select[name="' + topts.autoassignTarget + '"]');
-          isSelect2 = $target.length > 0;
-        }
+        var $target = $ed.find('select[name="' + topts.autoassignTarget + '"]');
 
         var autoassign = topts.autoassign.split(',');
         var assign = {};
@@ -949,44 +930,54 @@ TasksPanel = function(tasktracker) {
           assignees.push(arr[1]);
         });
 
-        var setAssignee = function() {
+        var setAssignee = function(evt, initial) {
           var $self = $(this);
           var val = $self.val();
           var assignTo = assign[val];
           if ( assignTo ) {
-            $target.closest('.' + topts.autoassignTarget).css('display', 'none');
-            if (isSelect2) {
-              if ($target.children().length === 0) {
-                $target.append('<option selected="selected"></option>');
-              }
+            var $o = $target.children('option[selected],option:selected');
 
-              var $o = $target.children('option[selected],option:selected');
-              $o.val(assignTo).text(assignTo);
-              $target.next().find('.select2-selection__rendered').text(assignTo).attr('title', assignTo);
-            } else {
-              setTimeout(function() {
-                $target.trigger('Clear');
-                $target.trigger('AddValue', assignTo);
-              }, 100);
+            if ($target.children().length === 0) {
+              $o = $('<option selected="selected"></option>');
+              $target.append($o);
             }
+
+            if ($target.val() && $target.val() !== assignTo) {
+              $target.data('orig_value', $target.val());
+              $target.data('orig_text', $o.text());
+            }
+
+            $o.val(assignTo).text(assignTo);
+            $target.next().find('.select2-selection__rendered').text(assignTo).attr('title', assignTo);
+            $target.prop('disabled', true);
+
+            $target.parent().addClass('select2-hide-arrow');
           } else {
+            if (initial) {
+              return;
+            }
+
             $target.closest('.' + topts.autoassignTarget).css('display', 'block');
-            var tval = $target.val();
-            if ( assignees.indexOf(val) === -1 && assignees.indexOf(tval) === -1 ) {
-              if (isSelect2) {
-                $target.children('option[selected],option:selected').remove();
-                $target.next().find('.select2-selection__rendered').text('').attr('title', '');
-              } else {
-                $target.trigger('Clear');
-              }
-            } else if (isSelect2) {
-              $target.children('option[selected],option:selected').remove();
-              $target.next().find('.select2-selection__rendered').text('').attr('title', '');
+            $target.children('option[selected],option:selected').remove();
+            $target.next().find('.select2-selection__rendered').text('').attr('title', '');
+            $target.prop('disabled', false);
+            $target.parent().removeClass('select2-hide-arrow');
+
+            if ($target.data('orig_value')) {
+              var $option = $('<option selected="selected"></option>');
+              var val = $target.data('orig_value');
+              var txt = $target.data('orig_text');
+
+              $option.val(val).text(txt);
+              $target.data('orig_value', null).data('orig_text', null);
+              $target.append($option);
+              $target.next().find('.select2-selection__rendered').text(txt).attr('title', txt);
             }
           }
         };
 
         $type.on('change', setAssignee);
+        $type.trigger('change', true);
       }
 
       // select the task details tab if it's not selected already
@@ -1296,25 +1287,15 @@ TasksPanel = function(tasktracker) {
   };
 
   var initReadMoreInformees = function($content){
-    $content = $content || $(document);
-    var href = $content.find('.task-informee');
-
-    /*
-    * destroy does not work, cause the readmore element does not exists
-    * It does not exist because attach and detach from task
-    *
-    * href.readmore('destroy');
-    */
-    href.attr({'data-readmore': null,'aria-expanded': null})
-      .css({maxHeight: '',height: ''})
-      .next('[data-readmore-toggle]')
-      .remove();
-
-    href.readmore({
-      collapsedHeight: 0,
+    $content = $content || self.panel.find('.content.slide-in');
+    var $informees = $content.find('.task-meta-entry .fa-users').next().children('span:last-child');
+    $informees.css('display', 'block');
+    $informees.readmore('destroy');
+    $informees.readmore({
+      collapsedHeight: 20,
       speed: 400,
-      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show less") + "</a>",
-      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get("tasksapi", "Show more") + "</a>"
+      lessLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show less') + '</a>',
+      moreLink: '<a class="readmore_link" href="#">' + jsi18n.get('tasksapi', 'Show more') + '</a>'
     });
   }
 
@@ -1532,6 +1513,18 @@ TasksPanel = function(tasktracker) {
     }
   };
 
+  var highlightRow = function($row, stop) {
+    setTimeout(function() {
+      $row.css('background-color', '#c5e6ff');
+      setTimeout(function() {
+        $row.removeAttr('style');
+        if (!stop) {
+          highlightRow($row, !stop);
+        }
+      }, 300);
+    }, 300);
+  };
+
   this.close = function() {
     if ( self.isUpload ) {
       toggleUpload();
@@ -1588,20 +1581,6 @@ TasksPanel = function(tasktracker) {
     task._depth = opts.depth > 0 ? opts.depth : 0;
     var apiFunc = 'update';
 
-    if ( opts.mapping && opts.mapping.field ) {
-      var field = task[opts.mapping.field];
-      var keys = _.without(_.keys(opts.mapping.mappings), 'all');
-      task.Status = _.find(keys, function(key) {
-        if (!_.isUndefined(key)) {
-          if (_.indexOf(opts.mapping.mappings[key], field) > -1) {
-            return key;
-          }
-        }
-
-        return undefined;
-      });
-    }
-
     // remove invalid parent entries.
     if ( task.Parent && !/^[^\.]+\.Task-\w+$/.test(task.Parent) ) {
       delete task.Parent;
@@ -1646,7 +1625,17 @@ TasksPanel = function(tasktracker) {
 
     toggleOverlay(true);
     setTimeout(function() {
-      $content.fadeIn(300);
+      $content.fadeIn(300, function() {
+        var m = window.location.search.match(/(?:attachment=([^;&]+))/);
+        if (m && m.length > 1) {
+          var file = m[1];
+          $content.find('ul.jqTabGroup li:last-child > a').trigger('click');
+          var $links = $content.find('table.task-attachments tbody > tr a');
+          var $tr = $links.filter('[href="' + file + '"]').closest('tr');
+          highlightRow($tr, false);
+        }
+      });
+
       initReadmore($content);
       initReadMoreInformees($content);
       sliceChanges($content.find('.changes'));

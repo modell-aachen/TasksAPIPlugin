@@ -3,10 +3,12 @@
 
   > div {
     padding: $filter-padding;
+    padding-top: 0px;
   }
 
   .create {
     float: right;
+    margin-top: 16px;
   }
 
   .tasks-btn-create {
@@ -27,6 +29,9 @@
     &:active {
       border-color: darken($light-blue, 15%);
       background-color: darken($light-blue, 15%);
+        div {
+            margin-top: 0px;
+         }
     }
 
     i {
@@ -37,6 +42,14 @@
   .options {
     display: inline-block;
     padding: 5px 10px;
+
+    .twistyPlugin {
+      div {
+         &:first-child {
+            margin-top: 10px;
+         }
+      }
+    }
 
     .title {
       color: #39526d;
@@ -75,10 +88,10 @@
       border: 1px solid darken($light-blue, 5%);
       color: $dark-blue;
       display: inline-block;
-      font-size: 0.9em;
+      font-size: 1em;
       font-weight: bold;
       min-width: 112px;
-      padding: 3px 6px;
+      padding: 5px 10px;
       text-align: center;
       text-decoration: none;
 
@@ -94,22 +107,27 @@
       }
 
       &.btn-apply {
-        margin-left: 85px;
+        margin-left: 0px;
       }
 
       &.btn-reset {
         margin-left: 8px;
       }
     }
+    .fa {
+      margin-right: 10px;
+    }
 
     input {
       min-width: 118px;
       width: 118px;
+      padding: 3px;
     }
 
     select {
       min-width: 125px;
       width: 125px;
+      padding: 2px;
     }
 
     input, select {
@@ -121,7 +139,6 @@
       display: inline-block;
       margin: 0;
       outline: none;
-      padding: 3px;
 
       &:hover {
         border-color: darken($light-blue, 10%);
