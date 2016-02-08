@@ -178,7 +178,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value},$type)/;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -198,7 +198,7 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
         }
-        if ($item =~ /\$wikiACL\(([^,]+),([^)]+)\)/) {
+        if ($item =~ /\$wikiACL\((\S+)\s+([^)]+)\)/) {
             my ($aclwt, $type) = ($1, $2);
             $type = uc $type;
             my $ccache = Foswiki::Plugins::TasksAPIPlugin::_cachedContextACL("$aclwt,$type");

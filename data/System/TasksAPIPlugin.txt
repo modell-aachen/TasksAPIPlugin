@@ -265,7 +265,7 @@ placeholders as in task preferences can be used, plus these:
 
    * =$parentACL=: includes the parent task's ACL
    * =$contextACL=: applies the context's Foswiki permissions
-   * =$wikiACL(Web.Topic,VIEW)=: applies Foswiki's VIEW permissions for
+   * =$wikiACL(Web.Topic VIEW)=: applies Foswiki's VIEW permissions for
      =Web.Topic=
 
 The ACL itself is a comma-separated list of users and/or groups; additionally
