@@ -318,6 +318,26 @@ sub create {
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     my $task = load($meta);
 
+    if (my $statusmap = $task->getPref("MAP_STATUS_FIELD")) {
+        my $vals = $task->getPref("MAP_STATUS", "*");
+        if ($data{$statusmap}) {
+            my $val = $data{$statusmap};
+            $data{Status} = $vals->{$val} || $val;
+        } elsif ($data{Status}) {
+            $data{$statusmap} = $data{Status};
+        }
+
+        if ( $data{Status} eq 'closed' ) {
+            $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        }
+
+        my $mstatus = $meta->get('FIELD', $statusmap);
+        $meta->putKeyed('FIELD', {name => 'Status', title => '', value => $data{Status}});
+        $meta->putKeyed('FIELD', {name => $statusmap, title => '', value => $mstatus->{value}});
+        $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+        $task = load($meta);
+    }
+
     $task->notify('created');
     $task->_postCreate();
     $task->_postUpdate();
