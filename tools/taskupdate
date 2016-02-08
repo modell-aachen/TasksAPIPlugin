@@ -44,6 +44,8 @@ for my $t (@tasks) {
 		if ($u->{name} eq 'form') {
 			$t->{form} = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $value));
 			$newform = $t->{form}->web .'.'. $t->{form}->topic;
+			$t->{meta}->remove('FORM');
+			$t->{meta}->putKeyed('FORM', {name => $newform});
 			next;
 		}
 		$data{$u->{name}} = $value;
