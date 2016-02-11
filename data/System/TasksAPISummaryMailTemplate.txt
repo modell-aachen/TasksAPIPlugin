@@ -47,11 +47,11 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::summary::task"}%%{
-}%<tr %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="style=\"background-color:#ffaeae;\""}%>
-  <td style="width:100px;"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></td>
-  <td><span>%TASKINFO{field="Title" shorten="160"}%</span></td>
-  <td style="width:100px;">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</td>
-  <td>
+}%<tr style="%IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="background-color:#ffaeae;"}%">
+  <td style="width:100px; border-bottom: 1px solid #003764;"><span>%TASKINFO{field="DueDate" format="$day $month $year"}%</span></td>
+  <td style="border-bottom: 1px solid #003764;"><span>%TASKINFO{field="Title" shorten="160"}%</span></td>
+  <td style="width:100px; border-bottom: 1px solid #003764;">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</td>
+  <td style="border-bottom: 1px solid #003764;">
    <a href='%SCRIPTURL{"view"}%/%SUBST{text="%TASKINFO{field="Context"}%" pattern="\." format="/"}%'>%{
 }%%IF{
   "'%TASKINFO{field="Context"}%'/TopicTitle"
@@ -59,8 +59,8 @@
   else="%TASKINFO{field="Context"}%"
 }%%{
 }%</a></td>
-  <td style="width: 125px;"><span>%TASKINFO{field="Author" user="1"}%</span></td>
-  <td style="width: 125px;"><span>%TASKINFO{field="AssignedTo" user="1"}%</span></td>
-  <td><span>%TASKINFO{field="Informees" user="1"}%</span></td>
+  <td style="width: 125px; border-bottom: 1px solid #003764;"><span>%TASKINFO{field="Author" user="1"}%</span></td>
+  <td style="width: 125px; border-bottom: 1px solid #003764;"><span>%TASKINFO{field="AssignedTo" user="1"}%</span></td>
+  <td style="border-bottom: 1px solid #003764;"><span>%TASKINFO{field="Informees" user="1"}%</span></td>
 </tr>%{
 }%%TMPL:END%

@@ -20,6 +20,7 @@ my %cfg = (
     fields      => '',
     help        => 0,
     hours       => 24,
+    lang        => 'en',
     order       => 'DueDate',
     status      => 'open'
 );
@@ -30,6 +31,7 @@ Getopt::Long::GetOptions(
     'fields|f=s'      => \$cfg{fields},
     'help'            => \$cfg{help},
     'hours|h=i'       => \$cfg{hours},
+    'lang|l=s'        => \$cfg{lang},
     'order|o=s'       => \$cfg{order},
     'status|s=s'      => \$cfg{status},
 ) or die("Error in command line arguments\n");
@@ -45,6 +47,18 @@ sub process {
     my @fields = split(/,/, $cfg{fields});
     $cfg{status} =~ s/\s*//g;
     my @status = split(/,/, $cfg{status});
+
+    # Set Language
+    my $language = Foswiki::Func::expandCommonVariables($cfg{lang});
+    Foswiki::Func::setPreferencesValue( 'LANGUAGE', $language );
+    # Copy/Paste from MailerContrib:
+    if ( $Foswiki::Plugins::SESSION->can('reset_i18n') ) {
+        $Foswiki::Plugins::SESSION->reset_i18n();
+    } elsif ( $Foswiki::Plugins::SESSION->{i18n} ) {
+        # Muddy boots.
+        $Foswiki::Plugins::SESSION->i18n->finish();
+        undef $Foswiki::Plugins::SESSION->{i18n};
+    }
 
     my %hash = ();
     my %unique = ();

@@ -333,6 +333,12 @@ msgstr "%1 hinzugefügt: %2"
 msgid "%1 removed: %2"
 msgstr "%1 entfernt: %2"
 
+msgid "Created by"
+msgstr "Erstellt von"
+
+msgid "Created in"
+msgstr "Erstellt in"
+
 msgid "Created by me"
 msgstr "Von mir erstellt"
 
@@ -398,3 +404,15 @@ msgstr "Anwenden"
 
 msgid "Reset"
 msgstr "Zurücksetzen"
+
+msgid "Created tasks within the last %1 hours:"
+msgstr "Erstellte Aufgaben innerhalb der letzten %1 Stunden:"
+
+msgid "Changed tasks within the last %1 hours:"
+msgstr "Geänderte Aufgaben innerhalb der letzten %1 Stunden:"
+
+msgid "Closed tasks within the last %1 hours:"
+msgstr "Geschlossene Aufgaben innerhalb der letzten %1 Stunden:"
+
+msgid "Tasks past due within the last %1 hours:"
+msgstr "Überfällige Aufgaben seit den letzten %1 Stunden:"
