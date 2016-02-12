@@ -35,14 +35,14 @@ The following paramters are supported:
 Creates two date pickers by which the user can select a date interval. Tasks
 within that interval are shown within the grid. Both pickers can only select
 dates before today's date (max="true").
-<verbatim>%TASKSFILTER{"Created" range="1" max="true"}%</verbatim>
+<verbatim class="tml">%TASKSFILTER{"Created" range="1" max="true"}%</verbatim>
 
 Renders a single date picker by which the user can filter a task grid by a task's
 changed date.
-<verbatim>%TASKSFILTER{"Changed"}%</verbatim>
+<verbatim class="tml">%TASKSFILTER{"Changed"}%</verbatim>
 
 Renders a select element to allow filtering tasks by their form field 'Status'.
-<verbatim>%TASKSFILTER{"Status"}%</verbatim>
+<verbatim class="tml">%TASKSFILTER{"Status"}%</verbatim>
 
 Renders an input element to allow filtering tasks by their title.
-<verbatim>%TASKSFILTER{"Title"}%</verbatim>
+<verbatim class="tml">%TASKSFILTER{"Title"}%</verbatim>

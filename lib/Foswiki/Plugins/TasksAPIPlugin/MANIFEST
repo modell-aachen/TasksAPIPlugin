@@ -1,5 +1,6 @@
 !noci
 data/System/TasksAPIPlugin.txt 0644 Docs
+data/System/TasksAPIPluginExamples.txt 0644 Docs
 data/System/TasksAPIDefaultMailTemplate.txt 0644 Common template for mail notifications
 data/System/TasksAPIChangedMailTemplate.txt 0644 Mail notify for changed task
 data/System/TasksAPICreatedMailTemplate.txt 0644 Mail notify for created task

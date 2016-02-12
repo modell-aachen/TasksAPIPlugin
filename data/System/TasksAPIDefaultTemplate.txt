@@ -1,4 +1,5 @@
-%{<verbatim>}%
+<!-- %JQREQUIRE{"chili"}% -->
+%{<verbatim class="tml">}%
 
 %{the entire grid}%
 %TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{

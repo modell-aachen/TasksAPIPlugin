@@ -7,13 +7,14 @@
 
 ---++ Introduction
 
+%JQREQUIRE{"chili"}%
 This plugin provides a task management system for Foswiki. It stores each task
 as a separate topic, so that files and arbitrary metadata can be attached to
 it using the standard mechanisms. Tasks are additionally indexed in a
 database.
 
 In addition to the TASKSGRID macro which provides a complete user interface
-out of the box, a JavaScript/REST API is available.
+out of the box, a Javascript/REST API is available.
 
 %IF{
    "$USERNAME ingroup 'AdminGroup'"
@@ -39,7 +40,7 @@ The following Perl packages are required:
 
 Debian packages exist for all of these:
 
-<verbatim>aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl libfile-mimeinfo-perl</verbatim>
+<verbatim class="bash">aptitude install libdbd-sqlite3-perl libdbi-perl libnumber-bytes-human-perl libdate-manip-perl libfile-mimeinfo-perl</verbatim>
 
 Before the plugin can be used, a web must created which is used for storing
 the tasks. If you use the default configuration, its name has to be =Tasks=.
@@ -58,19 +59,19 @@ required:
    * =Context=: a reference to the topic which "owns" the task (e.g.
      !Foo.BazProjectMeetingMinutes or !Main.JohnDoe)
    * =Status=: one of =open=, =closed=, =deleted=. Other values should not be
-     added; instead, a different field can be used to further distinguish
-     between different states of a task.
+     added; instead, a different field can and *should* be used to further distinguish
+     between different states of a task. See =TASKCFG_MAP_STATUS= and =TASKCFG_MAP_STATUS_FIELD=.
 
 A number of other fields, if used, should use these standard names:
 
    * =Parent=: a reference to the parent task (if this is a child task), empty
      otherwise. This field does not need to exist for tasks which don't ever
      appear as children.
-   * =Author=: the creator of the task. Set the default value to =%WIKINAME%=.
+   * =Author=: the creator of the task. Set the default value to =%<nop>WIKINAME%=.
    * =Created=: the creation time. Set the default value  to
-     =%GMTIME{"$epoch"}=.
+     =%<nop>GMTIME{"$epoch"}%=.
    * =Changed=: the time of the most recent change. Set the default value  to
-     =%GMTIME{"$epoch"}=.
+     =%<nop>GMTIME{"$epoch"}%=.
    * =Closed=: the time a task was closed. Handled internally.
    * =Title=: user-defined title of the task
    * =AssignedTo=: the user this task is assigned to. This is generally meant
@@ -120,9 +121,9 @@ following events exist:
 
 Examples:
 
-   * <code>Set TASKCFG_NOTIFY_CREATED = AdminUser</code> - notify the administrator when a task is created.
-   * <code>Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(AssignedTo)</code> - notify the new assignee when a task is reassigned.
-   * <code>Set TASKCFG_NOTIFY_CHANGED = $curvalue(AssignedTo), $curvalue(Informees)</code> - notify the assignee and users on the notification list on any normal changes to the task.
+   * <code>Set TASKCFG_NOTIFY_CREATED = !AdminUser</code> - notify the administrator when a task is created.
+   * <code>Set TASKCFG_NOTIFY_REASSIGNED = $curvalue(!AssignedTo)</code> - notify the new assignee when a task is reassigned.
+   * <code>Set TASKCFG_NOTIFY_CHANGED = $curvalue(!AssignedTo), $curvalue(Informees)</code> - notify the assignee and users on the notification list on any normal changes to the task.
 
 *Note*:
 Email notifications can be disabled globally by setting =$Foswiki::cfg{TasksAPIPlugin}{DisableNotifications}=
@@ -157,11 +158,20 @@ nested within it.
 
 A unique string used as identifier for tasks created with the given form.
 See section _Task Flavors_ for further details.
+=TasksAPIPlugin= uses a kind of caching mechanism for its templates. For that reason
+this string should be *unique* across all =task forms=. =TasksAPIPlugin= will print
+a warning into Foswiki's =error.log= if it detects a non-unique task type.
 
 ---++++ =TASKCFG_TASK_TEMPLATE_FILE=
 
 A webtopic containing (all) templates used to render tasks created with the given form.
 See section _Task Flavors_ for further details.
+
+---++++ =TASKCFG_TASK_TEMPLATE=
+The name of the template used to render a task within its task tracker.
+
+---++++ =TASKCFG_EDITOR_TEMPLATE=
+The name of the template used to render an editor to create or manipulate the task.s
 
 ---++++ =TASKCFG_SOLRHIT_ICON=
 
@@ -185,7 +195,8 @@ statuses.
 
 Example:
 
-<verbatim>
+<verbatim class="tml">
+   * Set TASKCFG_MAP_STATUS_FIELD = MyCustomStatus
    * Set TASKCFG_MAP_STATUS = rejected=closed, feedback=open, review=open
 </verbatim>
 
@@ -202,7 +213,7 @@ statuses to switch to.
 In some circumstances you might want to include tasks, which are created in different contexts,
 in a single grid. For instance, render all tasks asigned to yourself into your
 personal page by specifying a macro like the following one:
-<verbatim>
+<verbatim class="tml">
 %TASKSGRID{
   context="any"
   query="...""
@@ -215,7 +226,7 @@ other not only by their context but by the given form as well as the used templa
 To render a grid which includes tasks from more than context *and* which renders
 each task with its own template within that grid, specify the grid's =flavor=
 parameter:
-<verbatim>
+<verbatim class="tml">
 %TASKSGRID{
   context="any"
   query="...""
@@ -234,7 +245,7 @@ template definition.
 
 To avoid hard coded web names within your form you may also use the variable
 =$formweb= which expands to the web containing the task form. E.g.:
-<verbatim>
+<verbatim class="tml">
    * Set TASKCFG_TASK_TYPE = minute
    * Set TASKCFG_TASK_TEMPLATE_FILE = $formweb.TaskTemplates
 </verbatim>
@@ -242,13 +253,13 @@ To avoid hard coded web names within your form you may also use the variable
 Additionaly, you may want to include some extra styles or scripts used by a
 taskgrid in case flavors are active.
 To do so update your task form as shown below
-<verbatim>
+<verbatim class="tml">
    * Set TASKCFG_FLAVOR_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css1,%PUBURLPATH%/%SYSTEMWEB%/path/to/css2
    * Set TASKCFG_FLAVOR_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js1,%PUBURLPATH%/%SYSTEMWEB%/path/to/js2
 </verbatim>
 
 In case those styles and/or scripts should be applied to a 'single' flavor only:
-<verbatim>
+<verbatim class="tml">
    * Set TASKCFG_(flavor)_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css
    * Set TASKCFG_(flavor)_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js
 </verbatim>
@@ -296,15 +307,190 @@ The following ACL types currently exist:
 ---+++ TASKSGRID
 %INCLUDE{"VarTASKSGRID"}%
 
+---++++ Enhanced queries
+A query is defined as JSON string and passed to the macro (or RESTful API) as shown below:
+<verbatim class="tml">
+%TASKSGRID{
+  ...
+  query="{\"Status\": \"open\"}"
+  ...
+}%
+</verbatim>
+
+You may also limit the result set to a specific form by extending the query by
+the =form= key:
+<verbatim class="tml">
+%TASKSGRID{
+  ...
+  query="{\"form\": \"FormWeb.FormTopic\"}"
+  ...
+}%
+
+%TASKSGRID{
+  ...
+  query="{\"Status\": \"open\", \"form\": \"FormWeb.FormTopic\"}"
+  ...
+}%
+</verbatim>
+
+Multi-values are formatted as JSON array:
+<verbatim class="tml">
+%TASKSGRID{
+  ...
+  query="{\"Status\": [\"open\", \"closed\"]}"
+  ...
+}%
+</verbatim>
+
+It is even possible to select only tasks matching a given substring or between
+a date range:
+<verbatim class="tml">
+%TASKSGRID{
+  ...
+  query="{\"Title\": {\"type\": \"like\", \"substring\": \"foo\"}}"
+  ...
+}%
+
+%TASKSGRID{
+  ...
+  query="{\"DueDate\": {\"type\": \"range\", \"from\": 0, \"to\": 1455292071}}"
+  ...
+}%
+</verbatim>
+
 ---+++ TASKSFILTER
 %INCLUDE{"VarTASKSFILTER"}%
 
 ---+++ TASKINFO
 %INCLUDE{"VarTASKINFO"}%
 
----++ Converting actions from previous ActionTrackerPlugin
+---++ Task Templates
+Templates as used by =TasksAPIPlugin= split into two sections:
+   * user defined; *mostly mandatory*
+   * internal templates
+
+While it's neither necessary nor advisable to override =TasksAPI's= internal templates,
+an wiki application which uses =TasksAPIPlugin= has to provide templates for displaying
+its tasks. Due to the fact that a task tracker is based on HTML tables, an application
+must also specify a so called caption template, which is used to render that table's
+header.
+
+---+++ User defined tempaltes
+---++++ Content template
+%MAROON% *mandatory* %ENDCOLOR%<br>
+Used to render a task in details view aka the task panel which opens after a
+task has been clicked by a user. =TasksAPIPlugin= includes the content of that
+template into its internal overlay definitions.
+<verbatim class="tml">
+%TMPL:DEF{"myapp::overlay::content"}%
+...
+%TMPL:END%
+</verbatim>
+
+---++++ Caption template
+%MAROON% *mandatory* %ENDCOLOR%<br>
+A HTML table row defining the task tracker's table head. In order to enable sorting
+for a column, specify the _data-sort_ attribute as shown below.
+<verbatim class="tml">
+%TMPL:DEF{"myapp::caption"}%
+<tr>
+  <th data-sort="MyFormFieldName">...</th>
+  <th>...</th>
+  <th>...</th>
+</tr>
+%TMPL:END%
+</verbatim>
+
+---++++ Editor template
+%MAROON% *mandatory* %ENDCOLOR%<br>
+A template to render the task editor. =TasksAPIPlugin= sets a context so that it's
+possible to distinguish between editing and creating a task.
+<verbatim class="tml">
+%TMPL:DEF{"myapp::editor"}%%{
+}%%IF{
+  "'%taskeditor_isnew%'='0'"
+  then="$percntTMPL:P{\"myapp::editor::edit\"}$percnt"
+  else="$percntTMPL:P{\"myapp::editor::new\"}$percnt"
+}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"myapp::editor::edit"}%
+%{ template used to edit an existing task }%
+%TMPL:END%
+
+%TMPL:DEF{"myapp::editor::new"}%
+%{ template used to create a new task }%
+%TMPL:END%
+</verbatim>
+
+---++++ Filter template
+%GREEN% *optional* %ENDCOLOR%<br>
+A custom template specifying the filter controls to include within a task tracker
+<verbatim class="tml">
+%TMPL:DEF{"myapp::filter"}%
+%TASKSFILTER{"Title"}%
+%TMPL:END%
+</verbatim>
+
+---++++ Task template
+%MAROON% *mandatory* %ENDCOLOR%<br>
+Defines a task's representation within a tasks table. In equivalence to the caption
+template a task (entry) template has to be a table row.<br>
+In addition, there are several requirements for a task template
+   * *must* to be classed by =task=
+   * *must* include two extra columns containing a task's raw data and it's rendered overlay content
+      * You may just =copy and paste= those two columns from the example below.
+
+<verbatim class="tml">
+%TMPL:DEF{"myapp::task"}%
+<tr class="task">
+  <td>...</td>
+  <td>...</td>
+  <td>...</td>
+  <td class="hidden task-data-container">
+    <div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div>
+  </td>
+  <td class="hidden task-fullview-container">
+    <div class="task-fullview">%TMPL:P{"myapp::overlay::content"}%</div>
+  </td>
+</tr>
+%TMPL:END%
+</verbatim>
+
+---+++ Internal templates
+=TasksAPIPlugin= ships with [[TasksAPIDefaultTemplate][several templates]] used to wire up a task tracker.
+Be *careful* if you decide to override one of the following templates:
+---++++ tasksapi::empty
+Dummy template for loading scripts and styles. Especially useful when one or more
+grid is loaded asynchronously, e.g. by !RenderPlugin. The following snippet will
+just inject all required scripts and styles but will *NOT* render any HTML.
+<verbatim class="tml">
+%TASKSGRID{id="_dummy_for_loading_scripts" template="tasksapi::empty"}%
+</verbatim>
+
+---++++ tasksapi::grid
+Surrounding markup for a task tracker.
+
+---++++ tasksapi::grid::filter
+Defines a tracker's "head" area containing definitions for task filters as well
+as the possibility to create new tasks.
+
+---+++++ tasksapi::grid::filter::create
+A button to invoke the task editor for task creation.
+
+---+++++ tasksapi::grid::filter::defaults
+The default task filter shown to the user: =Created= and =Changed=.
+
+---++++ tasksapi::overlay
+Defines the overlay which is shown to the user when a task is edited or at least
+in details view.
+
+---++++ tasksapi::overlay::upload
+Implements the !DnDUpload (drag'n drop uploads) area.
+
+---++ Converting actions from previous !ActionTrackerPlugin
 TasksAPIPlugin ships with a script called *taskconvert* which allows
-converting actions created by ActionTrackerPlugin. To convert an AT controlled
+converting actions created by [[http://foswiki.org/Extensions/ActionTrackerPlugin][ActionTrackerPlugin]]. To convert an AT controlled
 topic just execute *taskconvert* as web server user. You will be prompted for
 all necessary parameters during the convertion process. Alternatively you may
 supply those parameters as command line arguments:
@@ -312,9 +498,9 @@ supply those parameters as command line arguments:
 | *Parameter* | *Description* | *Default* |
 | web | The source web name to read from | |
 | topic | The source topic name ro read from | |
-| form | The TasksAPIPlugin compatibly form to use for converted tasks | System.TasksAPIDefaultTaskForm |
+| form | The =TasksAPIPlugin= compatibly form to use for converted tasks | System.TasksAPIDefaultTaskForm |
 | context | The context for the newly created task | web.topic |
-| mapping | A comma separated list of key-value pairs to map AT fields to TasksAPI form fields | who=AssignedTo,creator=Author,created=Created,text=Description,due=DueDate,result=Result,state=Status,task=Title |
+| mapping | A comma separated list of key-value pairs to map AT fields to !TasksAPI form fields | who=AssignedTo,creator=Author,created=Created,text=Description,due=DueDate,result=Result,state=Status,task=Title |
 | dateformat | A comma separated list of key-value pairs to map AT fields to a date representation. This is useful to convert epoch time strings to date strings | due="$day $month $year" |
 | verbose | Flag. Output some information about converted tasks | 0 |
 | reindex | Flag. Trigger a reindex when the convertion has finished | 0 |
@@ -323,14 +509,52 @@ supply those parameters as command line arguments:
 
 *Examples:* <br />
 Run the script without any parameters (you will be prompted instead)
-<verbatim>sudo -u www-data ./taskconvert</verbatim>
+<verbatim class="bash">sudo -u www-data ./taskconvert</verbatim>
 Run the script and supply the source web and topic. Also print some verbose messages and force a reindex of all tasks.
-<verbatim>sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
+<verbatim class="bash">sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
+
+---++ Javascript Events
+=TasksAPIPlugin= exposes some useful to manipulate requests or just indicate something has happened.
+All events are fired on the =.tasktracker= itself. To listen to such an event just bind to the desired tracker, e.g.
+<verbatim class="js">
+$('.tasktracker').on(...)
+</verbatim>
+
+Some events are _cancelable_ and marked as such in the description below. Returning a =false value= tells =TasksAPIPlugin=
+to stop further processing.
+
+---+++ beforeCreate
+*cancelable* <br>
+Fired after the user clicked the =Create new entry= button and before the =task editor= has become visible.<br>
+An object containing all preferences used to retreive the =task editor= is passed in as parameter. You may
+set additional keys by manipulating the =opts= object, e.g. =opts.parent = taskid;=.
+<verbatim class="js">
+$tracker.on('beforeCreate', function(evt, opts) {...});
+</verbatim>
+
+---+++ beforeSave
+*cancelable* <br>
+Fired just before an edited task is send back to the server. The task is passed in as paramter and my be modified as well.
+<verbatim class="js">
+$tracker.on('beforeSave', function(evt, task) {...});
+</verbatim>
+
+---+++ afterSave
+Fired when a task has been saved successfully. The raw task data is passed into the handler.
+<verbatim class="js">
+$tracker.on('afterSave', function(evt, data) {...});
+</verbatim>
+
+---+++ tasksLoaded
+An event indicating a =.tasktracker= has finished loading tasks, e.g. on initial page render or after sorting a grid.
+<verbatim class="js">
+$tracker.on('tasksLoaded', function(evt) {...});
+</verbatim>
 
 ---++ RESTful API
 Load the jQuery plugin by adding the following macro to your page. Make sure
-it's enabled in _configure_.
-<verbatim>
+it's enabled in =/bin/configure=.
+<verbatim class="tml">
 %JQREQUIRE{"tasksapi"}%
 </verbatim>
 
@@ -339,7 +563,7 @@ it's enabled in _configure_.
 
 Creates a new task.
 
-<verbatim>
+<verbatim class="js">
 var task = {
   form: 'Web.FooForm',
   Field1: 'value',
@@ -359,7 +583,7 @@ $.taskapi.create(task).done( function( response ) {
 
 Retrieves tasks by a given query.
 
-<verbatim>
+<verbatim class="js">
 $.taskapi.get({Responsible: "AdminUser"}).done( function( res ) {
   _.each( res.data, function( result ) {
     console.log( result );
@@ -373,7 +597,7 @@ $.taskapi.get({Responsible: "AdminUser"}).done( function( res ) {
 
 Retrieves all tasks.
 
-<verbatim>
+<verbatim class="js">
 $.taskapi.getAll().done( function( res ) {
   _.each( res.data, function( result ) {
     console.log( result );
@@ -387,7 +611,7 @@ $.taskapi.getAll().done( function( res ) {
 
 Updates an existing task identified by its id.
 
-<verbatim>
+<verbatim class="js">
 var taskToUpdate = {
   id: 'Tasks.Task-134n213kj4hjk',
   UpdatedField: 'updatedValue'
@@ -404,7 +628,7 @@ $.taskapi.update( taskToUpdate ).done( function( response ) {
 
 Same as *update* but takes multiple tasks identified by their id.
 
-<verbatim>
+<verbatim class="js">
 var tasksToUpdate = {
   'Tasks.Task-1': {
     UpdatedField: 'updatedValue'
@@ -422,6 +646,29 @@ $.taskapi.multiupdate( tasksToUpdate ).done( function( response ) {
 });
 </verbatim>
 
+---++ Scripts
+All scripts are located in the =tools= directory of your Foswiki installation.
+
+---+++ taskconvert
+A script used to convert the previous [[http://foswiki.org/Extensions/ActionTrackerPlugin][ActionTrackerPlugin]]
+tasks into =TasksAPIPlugin= tasks. See [[TasksAPIPlugin#Converting_actions_from_previous_ActionTrackerPlugin]]
+for further details.
+
+---+++ taskcron
+TBD.
+
+---+++ taskindex
+Tiny little helper script to rebuild =tasks.db=.
+
+---+++ tasksummary
+TBD.
+
+---+++ taskupdate
+A script to easily modify stored tasks, e.g. replace an assigned task form.
+
+---++ Examples
+%INCLUDE{"TasksAPIPluginExamples"}%
+
 ---++ Plugin Info
 
 | Author: | Foswiki:Main.JanKrueger, Foswiki:Main.SvenMeyer |
@@ -431,5 +678,3 @@ $.taskapi.multiupdate( tasksToUpdate ).done( function( response ) {
 | Version: | %$VERSION% |
 | Home: | http://www.modell-aachen.de |
 | Support: | http://www.modell-aachen.de |
-
-
