@@ -416,3 +416,6 @@ msgstr "Geschlossene Aufgaben innerhalb der letzten %1 Stunden:"
 
 msgid "Tasks past due within the last %1 hours:"
 msgstr "Überfällige Aufgaben seit den letzten %1 Stunden:"
+
+msgid "Task summary"
+msgstr "Aufgaben-Zusammenfassung"
