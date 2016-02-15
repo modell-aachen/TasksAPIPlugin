@@ -34,6 +34,8 @@ my @updates = map {
 	{ name => $u[0], value => $u[1] }
 } @ARGV;
 
+$Foswiki::cfg{TasksAPIPlugin}{DisableNotifications} = 1;
+
 for my $t (@tasks) {
 	my %data;
 	print STDERR "$t->{id}...\n";
@@ -46,6 +48,7 @@ for my $t (@tasks) {
 			$newform = $t->{form}->web .'.'. $t->{form}->topic;
 			$t->{meta}->remove('FORM');
 			$t->{meta}->putKeyed('FORM', {name => $newform});
+			$data{_force_update} = 1;
 			next;
 		}
 		$data{$u->{name}} = $value;
@@ -61,7 +64,5 @@ for my $t (@tasks) {
 		$t->update(%data);
 	}
 }
-
-Foswiki::Plugins::TasksAPIPlugin::_fullindex() unless $dry_run;
 
 1;

@@ -489,8 +489,7 @@ sub update {
         }
     }
 
-    return unless $changed;
-
+    return unless $changed || $data{_force_update};
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
     $self->notify($notify);
