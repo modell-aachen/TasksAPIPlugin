@@ -820,7 +820,7 @@ sub tagFilter {
     return '' unless $filter;
 
     my $sys = $Foswiki::cfg{SystemWebName} || 'System';
-    my $ftopic = $params->{form} || $currentOptions->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $ftopic = $params->{form} || $currentOptions->{form};
     my $isrange = $params->{range} || 0;
     my $ismulti = $params->{multi} || 0;
     my $min = $params->{min} || '';
@@ -988,7 +988,7 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_task', $r->{id});
     } else {
         $meta = Foswiki::Meta->new($session, $web, $topic);
-        my $f = $r->{form} || 'System.TasksAPIDefaultTaskForm';
+        my $f = $r->{form};
         Foswiki::Func::setPreferencesValue('taskeditor_form', $f);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
 
@@ -1347,8 +1347,8 @@ SCRIPT
     }
 
     unless ($ctx eq 'any') {
-        $form = "$system.TasksAPIDefaultTaskForm" unless $form;
         $templateFile = 'TasksAPIDefault' unless $templateFile;
+        return "<strong>%RED%TASKSGRID: missing parameter form!%ENDCOLOR%<strong>"unless $form
     }
 
     my $_tplDefault = sub {
@@ -1955,6 +1955,100 @@ sub beforeCommonTagsHandler {
         $_[0] = 'Disabled for performance reasons in this web.';
         return;
     }
+}
+
+sub maintenanceHandler {
+    my $sys = $Foswiki::cfg{SystemWebName} || 'System';
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:checkoldform", {
+        name => "TasksAPI: TasksAPIDefaultTaskForm",
+        description => "Check for existence of outdated TasksAPIDefaultTaskForm",
+        check => sub {
+            my $result = { result => 0 };
+            if (Foswiki::Func::topicExists($sys, "TasksAPIDefaultTaskForm")) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Make sure every installed app is using its own form. Afterwards delete $sys.TasksAPIDefaultTaskForm";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:checkoldtemplate", {
+        name => "TasksAPI: TasksAPITemplate",
+        description => "Check for existence of outdated TasksAPITemplate",
+        check => sub {
+            my $result = { result => 0 };
+            if (Foswiki::Func::topicExists($sys, "TasksAPITemplate")) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Make sure every installed app is using its task templates. Afterwards delete $sys.TasksAPITemplate";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:debug", {
+        name => "TasksAPI: Debug Mode",
+        description => "Check whether TasksAPI is running in debug mode",
+        check => sub {
+            my $result = { result => 0 };
+            if ($Foswiki::cfg{TasksAPIPlugin}{Debug}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Set Foswiki::cfg{TasksAPIPlugin}{Debug} to 0.";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:legacysolr", {
+        name => "TasksAPI: Legacy Solr Integration",
+        description => "Check whether TasksAPI is running in legacy Solr mode (support for Solr <5)",
+        check => sub {
+            my $result = { result => 0 };
+            if ($Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Set Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} to 0 if you're running a Solr release >= 5.";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:tasksweb", {
+        name => "TasksAPI: Existence of tasks web",
+        description => "Check for valid Foswiki::cfg{TasksAPIPlugin}{DBWeb} configuration",
+        check => sub {
+            my $result = { result => 0 };
+            my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
+            return $result if $web && Foswiki::Func::webExists($web);
+
+            $result->{result} = 1;
+            $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::CRITICAL;
+            $result->{solution} = "Foswiki::cfg{TasksAPIPlugin}{DBWeb} is either unset or specified web doesn't exist! You have to manually create this web.";
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:jquery", {
+        name => "TasksAPI: jQuery Plugin",
+        description => "Check whether TasksAPI's jQuery plugin is enabled",
+        check => sub {
+            my $result = { result => 0 };
+            unless ($Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Enabled}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::CRITICAL;
+                $result->{solution} = "Set Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Enabled} to 1.";
+            }
+
+            return $result;
+       }
+    });
 }
 
 1;
