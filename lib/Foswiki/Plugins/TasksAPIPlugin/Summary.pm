@@ -75,9 +75,11 @@ sub process {
         my %query = (Status => \@status);
         $query{$field} = \%filter;
 
+        my $order = $cfg{order};
+        $order = from_json($order) if $order =~ /^\s*\{/;
         my $res = Foswiki::Plugins::TasksAPIPlugin::query(
             query => \%query,
-            order => $cfg{order},
+            order => $order,
             desc => $cfg{asc} ? 0 : 1,
             count => -1
         );

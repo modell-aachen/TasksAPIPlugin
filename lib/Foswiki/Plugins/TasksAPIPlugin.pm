@@ -309,16 +309,36 @@ sub query {
         $filterprefix = ' AND';
     }
 
-    if ($order && !$singles{$order} && !$joins{$order}) {
-        my $t = "$order";
-        $t = "j_$t" unless $t =~ /^j_/;
-        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
-        $order = "$t";
-        $order .= ".value" unless $order =~ /\.value$/;
-    }
-    $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
-    $order .= " DESC" if $order && $opts{desc};
+    if ($order) {
+        my $isArray = ref($order) eq 'ARRAY';
+        if ($isArray) {
+            my @orders = ();
+            foreach my $o (@$order) {
+                while ( my ($k, $v) = each %$o ) {
+                    if (!$singles{$k}) {
+                        my $t = "$k";
+                        $t = "j_$t" unless $t =~ /^j_/;
+                        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$k')";
+                        $k = "$t";
+                        $k .= ".value" unless $order =~ /\.value$/;
+                    }
+                    push(@orders, "$k COLLATE NOCASE" . ($v ? ' DESC' : ''));
+                }
+            }
+            $order = " ORDER BY " . join(', ', @orders);
+        } elsif (!$singles{$order} && !$joins{$order}) {
+            my $t = "$order";
+            $t = "j_$t" unless $t =~ /^j_/;
+            $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
+            $order = "$t";
+            $order .= ".value" unless $order =~ /\.value$/;
+        }
 
+        if (!$isArray) {
+            $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
+            $order .= " DESC" if $order && $opts{desc};
+        }
+    }
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $limit = " LIMIT $offset, $count" if $count;
     my $group = '';
@@ -1287,6 +1307,17 @@ sub tagGrid {
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
+
+    eval {
+        $order =~s /^\s*//g;
+        $order = from_json($order) if $order =~ /^\[/;
+    };
+    if ($@) {
+        my $err = $@;
+        $err =~ s/&/&amp;/;
+        $err =~ s/</&lt;/;
+        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
+    }
 
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
