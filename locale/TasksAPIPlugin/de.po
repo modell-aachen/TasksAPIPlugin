@@ -419,3 +419,6 @@ msgstr "Überfällige Aufgaben seit den letzten %1 Stunden:"
 
 msgid "Task summary"
 msgstr "Aufgaben-Zusammenfassung"
+
+msgid "Create permanent link"
+msgstr "Permanenten Link erzeugen"

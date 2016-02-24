@@ -126,6 +126,7 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch, %restopts );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease, %restopts );
     Foswiki::Func::registerRESTHandler( 'link', \&restLink, %restopts );
+    Foswiki::Func::registerRESTHandler( 'permalink', \&restLink, %restopts );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -1097,12 +1098,34 @@ sub restLink {
     }
     my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context});
     my $url;
-    if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
-        $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
-    } else {
+
+    if ($verb eq 'link') {
+        if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+            $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+        } else {
+            $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+        }
+    } elsif ($verb eq 'permalink') {
+        my $state = $task->{fields}{Status} || '';
+        my $assignee = $task->{fields}{AssignedTo} || '';
+        my @informees = split(/\s*,\s*/, $task->{fields}{Informees} || '');
+        my $login = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName());
+        $login = 'BaseUserMapping_333' if $login eq 'admin';
+        $login = 'BaseUserMapping_666' if $login eq 'guest';
+        my $author = $task->{fields}{Author} || '';
+        if ($author eq $login) {
+            $params = "tid=taskgrid_own;tab=tasks_own";
+        } elsif($assignee eq $login) {
+            $params = "tid=taskgrid_open;tab=tasks_open" if $state eq 'open';
+            $params = "tid=taskgrid_closed;tab=tasks_closed" if $state eq 'closed';
+        } elsif (grep(/^$login$/, @informees)) {
+            $params = "tid=taskgrid_inform;tab=tasks_inform";
+        }
+
         $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
     }
-    Foswiki::Func::redirectCgiQuery(undef, $url);
+
+    Foswiki::Func::redirectCgiQuery(undef, $url) if $url;
     return '';
 }
 
