@@ -449,7 +449,7 @@
     return undefined;
   };
 
-  var toggleTaskState = function() {
+  var toggleTaskState = function(evt) {
     var deferred = $.Deferred();
     var $task = $(this).closest('.task');
     verifyTaskInitialized($task);
@@ -469,7 +469,7 @@
       }
     }
 
-    if ( isOpen ) {
+    if ( !evt.ctrlKey && isOpen ) {
       var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
       var cmtTxt = jsi18n.get('tasksapi', 'Comment');
       var html = [
@@ -511,8 +511,9 @@
         return confirmed;
       });
     } else {
-      payload.Status = 'open';
-      var mappedState = getMappedState(opts, 'open');
+      var state = isOpen ? 'closed' : 'open';
+      payload.Status = state
+      var mappedState = getMappedState(opts, state);
       if ( !_.isUndefined(mappedState) ) {
         payload[mappedState.field] = mappedState.value;
       }
