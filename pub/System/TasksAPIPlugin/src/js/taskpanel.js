@@ -1177,7 +1177,7 @@ TasksPanel = function(tasktracker) {
       self.currentTask.data('id')
     ].join('');
 
-    self.permalink.val(url);
+    self.permalink.val(url).focus();
     self.permalink[0].setSelectionRange(0, url.length);
     var success = document.execCommand('copy');
 
