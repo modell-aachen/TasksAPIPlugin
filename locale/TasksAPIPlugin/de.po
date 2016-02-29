@@ -422,3 +422,6 @@ msgstr "Aufgaben-Zusammenfassung"
 
 msgid "Create permanent link"
 msgstr "Permanenten Link erzeugen"
+
+msgid "Move entry to"
+msgstr "Eintrag verschieben nach"

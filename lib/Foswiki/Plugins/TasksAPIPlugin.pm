@@ -112,6 +112,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
+    Foswiki::Func::registerTagHandler( 'TASKCONTEXTSELECTOR', \&tagContextSelector );
 
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
     Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %restopts );
@@ -1818,6 +1819,53 @@ sub _decodeChanges {
         $changes = { map { ($_->{name}, $_) } @$changes };
     }
     $changes;
+}
+
+sub _getTopicTitle {
+    my $topic = shift;
+    my ($w, $t) = Foswiki::Func::normalizeWebTopicName(undef, $topic);
+    my ($meta) = Foswiki::Func::readTopic($w, $t);
+    my $title = $meta->get('FIELD', 'TopicTitle');
+    return  $title->{value} || $topic;
+}
+
+sub tagContextSelector {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $task = $currentTask;
+    if ($params->{task}) {
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
+    }
+    if (!$task) {
+        return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
+    }
+    my $type = $task->getPref('TASK_TYPE') || '';
+    if (!$type) {
+        return '%RED%TASKCONTEXTSELECTOR: missing preference TASK_TYPE for given task%ENDCOLOR%%BR%';
+    }
+
+    my $title = _getTopicTitle($task->{fields}{Context});
+    my @options = (<<OPTION);
+<option class="foswikiOption" value="$task->{fields}{Context}" selected="selected">$title</option>
+OPTION
+
+    my %retval;
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    foreach my $a (@$ctx) {
+        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
+            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
+        );
+        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            $title = _getTopicTitle($a->[0]);
+            my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
+            push(@options, $option);
+        }
+    }
+
+    my $inner = join('', @options);
+    return <<SELECT;
+<select class="foswikiSelect" name="Context">$inner</select>
+SELECT
 }
 
 sub tagInfo {
