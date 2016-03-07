@@ -203,7 +203,7 @@
         var $existing = findTask($task.data('id'));
         var $next = $existing.next();
 
-        var ctxChanged = $existing.data('task_data').fields.Context.value !== $task.data('task_data').fields.Context.value;
+        var ctxChanged = !!$existing.length && $existing.data('task_data').fields.Context.value !== $task.data('task_data').fields.Context.value;
         if ( task.fields.Status.value === 'deleted' || ctxChanged ) {
           if ( $existing.hasClass('expanded') ) {
             $next.remove();
