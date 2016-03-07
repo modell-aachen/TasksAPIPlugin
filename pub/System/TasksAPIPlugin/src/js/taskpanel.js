@@ -272,6 +272,10 @@ TasksPanel = function(tasktracker) {
 
     // Fix jqTabs click handler
     self.panel.on('click', '.jqTabGroup > li > a', function() {
+      if (self.isEdit) {
+        return false;
+      }
+
       var newId = $(this).attr('data');
       var $pane = $(this).closest('.jqTabPaneInitialized');
       var oldId = $pane.find('li.current > a').attr('data');
