@@ -418,7 +418,11 @@ sub update {
         if ($old eq '' && $val ne '') {
             push @changes, { type => 'add', name => $name, new => $val } unless $skip_changeset{$name};
         } elsif ($val ne $old) {
-            push @changes, { type => 'change', name => $name, old => $old, new => $val } unless $skip_changeset{$name};
+            if ($name eq 'Context') {
+                push @changes, { type => 'change', name => $name, old => _ctxToTitle($old), new => _ctxToTitle($val) } unless $skip_changeset{$name};
+            } else {
+                push @changes, { type => 'change', name => $name, old => $old, new => $val } unless $skip_changeset{$name};
+            }
         }
 
         if ($name eq 'AssignedTo' && $old ne $val) {
@@ -540,6 +544,15 @@ sub cached_children {
     $acl = 1 unless defined $acl;
     return $self->{children_acl} if $acl;
     return $self->{children};
+}
+
+sub _ctxToTitle {
+    my $webtopic = shift;
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $webtopic);
+    my ($meta) = Foswiki::Func::readTopic($web, $topic);
+    my $title = $meta->get('FIELD', 'TopicTitle');
+    return $title->{value} if defined $title && $title->{value};
+    return $webtopic;
 }
 
 sub _postCreate {
