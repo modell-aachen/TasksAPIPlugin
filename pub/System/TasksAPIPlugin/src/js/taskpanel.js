@@ -141,7 +141,7 @@ TasksPanel = function(tasktracker) {
       var endpoint = isDelete ? 'delete' : 'download';
       var url = [
         p.SCRIPTURL,
-        '/rest',
+        '/restauth',
         p.SCRIPTSUFFIX,
         '/TasksAPIPlugin/',
         endpoint
@@ -1175,7 +1175,7 @@ TasksPanel = function(tasktracker) {
     var p = foswiki.preferences;
     var url = [
       p.SCRIPTURL,
-      '/rest',
+      '/restauth',
       p.SCRIPTSUFFIX,
       '/TasksAPIPlugin/permalink?id=',
       self.currentTask.data('id')
@@ -1458,7 +1458,7 @@ TasksPanel = function(tasktracker) {
     var prefs = foswiki.preferences;
     var url = [
       prefs.SCRIPTURL,
-      '/rest',
+      '/restauth',
       prefs.SCRIPTSUFFIX,
       '/TasksAPIPlugin/',
       action

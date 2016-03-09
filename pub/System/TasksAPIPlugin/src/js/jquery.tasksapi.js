@@ -2,7 +2,7 @@
   function restEndpoint( endpoint ) {
     var url = [
       foswiki.getPreference('SCRIPTURLPATH'),
-      '/rest',
+      '/restauth',
       foswiki.getPreference('SCRIPTSUFFIX')
     ].join('');
 
