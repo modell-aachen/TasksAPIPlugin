@@ -62,9 +62,7 @@
 }%%IF{"not context task_readonly and context task_allowcreate" then="<div style='border-left: 1px solid #4b6b8e; display: inline-block;'><a href='#' title='$percntMAKETEXT{\"Add entry\"}$percnt' class='panel-btn add'><i class='fa fa-plus'></i></a></div>"}%%{
         }%</div>
         <div>
-          <a href="#" title="%MAKETEXT{"Create permanent link"}%" class="panel-btn link">
-            <i class="fa fa-link"></i>
-          </a>%{
+          <a href="#" title="%MAKETEXT{"Create permanent link"}%" class="panel-btn link"><i class="fa fa-link"></i></a>%{
 }%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit entry\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a><a href='#' title='$percntMAKETEXT{\"Attach file(s)\"}$percnt' class='panel-btn upload'><i class='fa fa-upload'></i></a><a href='#' title='$percntMAKETEXT{\"Add comment\"}$percnt' class='panel-btn comment'><i class='fa fa-commenting-o'></i></a>"}%%{
         }%</div>
       </div>
