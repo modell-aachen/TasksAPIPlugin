@@ -256,22 +256,31 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
+
       if (params.id && params.tid == self.opts.id) {
         var $task = findTask(params.id);
         if ($task.length) {
           self.tasksPanel.viewTask($task);
         } else {
-          swal({
-            type: 'warning',
-            title: jsi18n.get('tasksapi', 'Oops'),
-            text: jsi18n.get('tasksapi', "Seems you're trying to open a task which doesn't exist anymore or you don't have sufficient access permissions to view that task."),
-            showConfirmButton: true,
-            showCancelButton: false
-          });
+          hintNoAccess();
         }
       }
 
+      if (params.type === 'invalid') {
+        hintNoAccess();
+      }
+
       return this;
+    });
+  };
+
+  var hintNoAccess = function() {
+    swal({
+      type: 'warning',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', "Seems you're trying to open a task which doesn't exist anymore or you don't have sufficient access permissions to view that task."),
+      showConfirmButton: true,
+      showCancelButton: false
     });
   };
 

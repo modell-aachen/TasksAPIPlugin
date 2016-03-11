@@ -1089,13 +1089,36 @@ sub restLink {
     my $id = $q->param('id');
     my $params = $q->param('params') || '';
     unless ($id) {
-        return 'Error: no task ID passed';
+        throw Foswiki::OopsException(
+            "oopstasknotfound",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef,
+            params => ["1"]
+        );
     }
 
     my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
-    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
-    unless ($task && $task->checkACL('view')) {
-        return 'Error: task not found';
+    my $task;
+    eval {
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+    };
+    if ($@) {
+        throw Foswiki::OopsException(
+            "oopstasknotfound",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef
+        );
+    }
+
+    unless ($task->checkACL('view')) {
+        throw Foswiki::OopsException(
+            "oopstaskacl",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef
+        );
     }
     my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context});
     my $url;
@@ -1121,6 +1144,8 @@ sub restLink {
             $params = "tid=taskgrid_closed;tab=tasks_closed" if $state eq 'closed';
         } elsif (grep(/^$login$/, @informees)) {
             $params = "tid=taskgrid_inform;tab=tasks_inform";
+        } else {
+            $params = "type=invalid";
         }
 
         $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";

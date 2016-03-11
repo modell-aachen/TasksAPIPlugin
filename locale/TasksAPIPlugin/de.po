@@ -425,3 +425,15 @@ msgstr "Permanenten Link erzeugen"
 
 msgid "Move entry to"
 msgstr "Eintrag verschieben nach"
+
+msgid "Task not found"
+msgstr "Aufgabe nicht gefunden"
+
+msgid "You are not allowed to view this task"
+msgstr "Sie sind nicht berechtigt diese Aufgabe zu sehen"
+
+msgid "Insufficient permissions"
+msgstr "Zugriff verweigert"
+
+msgid "The link you clicked seems to be invalid."
+msgstr "Der Link, den Sie geklickt haben scheint ungültig zu sein."
