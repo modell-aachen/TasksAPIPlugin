@@ -203,7 +203,8 @@
         var $existing = findTask($task.data('id'));
         var $next = $existing.next();
 
-        if ( task.fields.Status.value === 'deleted' ) {
+        var ctxChanged = !!$existing.length && $existing.data('task_data').fields.Context.value !== $task.data('task_data').fields.Context.value;
+        if ( task.fields.Status.value === 'deleted' || ctxChanged ) {
           if ( $existing.hasClass('expanded') ) {
             $next.remove();
           }
@@ -255,14 +256,31 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
+
       if (params.id && params.tid == self.opts.id) {
         var $task = findTask(params.id);
         if ($task.length) {
           self.tasksPanel.viewTask($task);
+        } else {
+          hintNoAccess();
         }
       }
 
+      if (params.type === 'invalid') {
+        hintNoAccess();
+      }
+
       return this;
+    });
+  };
+
+  var hintNoAccess = function() {
+    swal({
+      type: 'warning',
+      title: jsi18n.get('tasksapi', 'Oops'),
+      text: jsi18n.get('tasksapi', "Seems you're trying to open a task which doesn't exist anymore or you don't have sufficient access permissions to view that task."),
+      showConfirmButton: true,
+      showCancelButton: false
     });
   };
 
@@ -449,7 +467,7 @@
     return undefined;
   };
 
-  var toggleTaskState = function() {
+  var toggleTaskState = function(evt) {
     var deferred = $.Deferred();
     var $task = $(this).closest('.task');
     verifyTaskInitialized($task);
@@ -469,7 +487,7 @@
       }
     }
 
-    if ( isOpen ) {
+    if ( !evt.ctrlKey && isOpen ) {
       var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
       var cmtTxt = jsi18n.get('tasksapi', 'Comment');
       var html = [
@@ -511,8 +529,9 @@
         return confirmed;
       });
     } else {
-      payload.Status = 'open';
-      var mappedState = getMappedState(opts, 'open');
+      var state = isOpen ? 'closed' : 'open';
+      payload.Status = state
+      var mappedState = getMappedState(opts, state);
       if ( !_.isUndefined(mappedState) ) {
         payload[mappedState.field] = mappedState.value;
       }

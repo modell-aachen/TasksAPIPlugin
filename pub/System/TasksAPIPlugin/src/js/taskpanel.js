@@ -37,6 +37,7 @@ TasksPanel = function(tasktracker) {
   this.comment = this.overlay.find('> .panel-wrapper > .textarea');
   this.panel = this.overlay.find('> .panel-wrapper > .panel');
   this.upload = this.overlay.find('> .panel-wrapper > .upload');
+  this.permalink = this.overlay.find('> .panel-wrapper > .permalink input[name="taskid"]');
 
   this.buttons = {
     add: this.overlay.find('> .panel-wrapper > .buttons > .view .add'),
@@ -45,9 +46,10 @@ TasksPanel = function(tasktracker) {
     comment: this.overlay.find('> .panel-wrapper > .buttons > .view .comment'),
     edit: this.overlay.find('> .panel-wrapper > .buttons > .view .edit'),
     next: this.overlay.find('> .panel-wrapper > .buttons > .view .next'),
+    permalink: this.overlay.find('> .panel-wrapper > .buttons > .view .link'),
     previous: this.overlay.find('> .panel-wrapper > .buttons > .view .previous'),
     save: this.overlay.find('> .panel-wrapper > .buttons > .edit .save'),
-    upload: this.overlay.find('> .panel-wrapper > .buttons > .view .upload'),
+    upload: this.overlay.find('> .panel-wrapper > .buttons > .view .upload')
   };
 
   var detachHandler = function() {
@@ -57,6 +59,7 @@ TasksPanel = function(tasktracker) {
     self.buttons.comment.off('click');
     self.buttons.edit.off('click');
     self.buttons.next.off('click');
+    self.buttons.permalink.off('click');
     self.buttons.previous.off('click');
     self.buttons.save.off('click');
     self.buttons.upload.off('click');
@@ -90,6 +93,7 @@ TasksPanel = function(tasktracker) {
     self.buttons.edit.on('click', onEdit);
     self.buttons.next.on('click', onNextTask);
     self.buttons.previous.on('click', onPrevTask);
+    self.buttons.permalink.on('click', onCreatePermalink);
     self.buttons.save.on('click', onSave);
     self.buttons.upload.on('click', toggleUpload);
 
@@ -137,7 +141,7 @@ TasksPanel = function(tasktracker) {
       var endpoint = isDelete ? 'delete' : 'download';
       var url = [
         p.SCRIPTURL,
-        '/rest',
+        '/restauth',
         p.SCRIPTSUFFIX,
         '/TasksAPIPlugin/',
         endpoint
@@ -268,6 +272,10 @@ TasksPanel = function(tasktracker) {
 
     // Fix jqTabs click handler
     self.panel.on('click', '.jqTabGroup > li > a', function() {
+      if (self.isEdit) {
+        return false;
+      }
+
       var newId = $(this).attr('data');
       var $pane = $(this).closest('.jqTabPaneInitialized');
       var oldId = $pane.find('li.current > a').attr('data');
@@ -861,6 +869,7 @@ TasksPanel = function(tasktracker) {
   var onComment = function() {
     self.isComment = true;
 
+    self.permalink.parent().removeClass('active');
     if ( self.isUpload ) {
       toggleUpload();
     }
@@ -871,6 +880,7 @@ TasksPanel = function(tasktracker) {
   };
 
   var onEdit = function() {
+    self.permalink.parent().removeClass('active');
     if ( self.isUpload ) {
       toggleUpload();
     }
@@ -1156,9 +1166,45 @@ TasksPanel = function(tasktracker) {
     return false;
   };
 
+  var onCreatePermalink = function(evt) {
+    if (self.permalink.parent().hasClass('active')) {
+      self.permalink.parent().removeClass('active');
+      return false;
+    }
+
+    var p = foswiki.preferences;
+    var url = [
+      p.SCRIPTURL,
+      '/restauth',
+      p.SCRIPTSUFFIX,
+      '/TasksAPIPlugin/permalink?id=',
+      self.currentTask.data('id')
+    ].join('');
+
+    self.permalink.val(url).focus();
+    self.permalink[0].setSelectionRange(0, url.length);
+    var success = document.execCommand('copy');
+
+    if (!success || evt.ctrlKey) {
+      self.permalink.parent().addClass('active');
+    } else {
+      swal({
+        type: 'success',
+        title: jsi18n.get('tasksapi', 'Copied!'),
+        text: jsi18n.get('tasksapi', 'The link has been copied into your clipboard.'),
+        timer: 2500,
+        showConfirmButton: true,
+        showCancelButton: false
+      });
+    }
+
+    return false;
+  };
+
   var toggleUpload = function() {
     self.isUpload = !self.isUpload;
     self.upload.toggleClass('active');
+    self.permalink.parent().removeClass('active');
     if ( self.upload.hasClass('active') ) {
       var id = self.currentTask.data('id');
       var arr =id.split('.');
@@ -1316,6 +1362,7 @@ TasksPanel = function(tasktracker) {
   var animateTaskChange = function(direction) {
     var deferred = $.Deferred();
 
+    self.permalink.parent().removeClass('active');
     if ( isAnimating || !self.currentTask || self.isEdit ) {
       deferred.reject();
       return deferred.promise();
@@ -1332,6 +1379,7 @@ TasksPanel = function(tasktracker) {
       // scroll highlighted task into view...
       self.currentTask.removeClass('highlight');
       nextTask.addClass('highlight');
+      togglePermalinkButton(nextTask);
       var wh = $(window).height();
       var sy = window.scrollY;
       var ot = nextTask.offset().top;
@@ -1386,13 +1434,31 @@ TasksPanel = function(tasktracker) {
     return deferred.promise();
   };
 
+  var togglePermalinkButton = function(task) {
+    var data = task.data('task_data');
+    var user = foswiki.getPreference('USERNAME');
+    if (user === 'admin') user = 'BaseUserMapping_333';
+    if (user === 'guest') user = 'BaseUserMapping_666';
+    var canPermalink = false;
+    try {
+      canPermalink = data.fields.Author.value === user
+        || data.fields.AssignedTo.value === user
+        || data.fields.Informees.value.split(/\s*,\s*/).indexOf(user) > -1;
+    } catch (e) {
+      // ignore;
+    }
+
+    var linkFunc = canPermalink ? 'show' : 'hide';
+    self.buttons.permalink[linkFunc]();
+  };
+
   var handleLease = function( action, payload ) {
     var deferred = $.Deferred();
 
     var prefs = foswiki.preferences;
     var url = [
       prefs.SCRIPTURL,
-      '/rest',
+      '/restauth',
       prefs.SCRIPTSUFFIX,
       '/TasksAPIPlugin/',
       action
@@ -1617,6 +1683,7 @@ TasksPanel = function(tasktracker) {
     self.isView = true;
     self.currentTask = $task;
     self.currentTask.addClass('highlight');
+    togglePermalinkButton($task);
     self.panel.empty();
 
     var $content = $('<div class="content slide-in"></div>').css('display', 'none');

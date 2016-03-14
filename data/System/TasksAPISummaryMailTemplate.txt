@@ -26,8 +26,8 @@
 
 
 %TMPL:DEF{"tasksapi::summary::table"}%%{
-}%<strong style="font-size: 18px;">%TASKSAPI_SUMMARY_TITLE%</strong><hr>%{
-}%<table style="width: 100%; border-spacing: 0;" cellspacing="0">
+}%<strong style="font-family: Calibri, Candara, Segoe, 'Segoe UI', Optima, Arial, sans-serif; font-size: 14pt;">%TASKSAPI_SUMMARY_TITLE%</strong><hr>%{
+}%<table style="width: 100%; border-spacing: 0; font-family: Calibri, Candara, Segoe, 'Segoe UI', Optima, Arial, sans-serif; font-size: 12pt;" cellspacing="0">
   <thead>%TMPL:P{"tasksapi::summary::caption"}%</thead>
   <tbody>%TASKSAPI_SUMMARY_TASKS%</tbody>
 </table>

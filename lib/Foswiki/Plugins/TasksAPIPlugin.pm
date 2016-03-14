@@ -112,6 +112,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
+    Foswiki::Func::registerTagHandler( 'TASKCONTEXTSELECTOR', \&tagContextSelector );
 
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
     Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %restopts );
@@ -126,6 +127,7 @@ sub initPlugin {
     Foswiki::Func::registerRESTHandler( 'search', \&restSearch, %restopts );
     Foswiki::Func::registerRESTHandler( 'release', \&restRelease, %restopts );
     Foswiki::Func::registerRESTHandler( 'link', \&restLink, %restopts );
+    Foswiki::Func::registerRESTHandler( 'permalink', \&restLink, %restopts );
 
     if ($Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
       require Foswiki::Plugins::SolrPlugin;
@@ -309,16 +311,36 @@ sub query {
         $filterprefix = ' AND';
     }
 
-    if ($order && !$singles{$order} && !$joins{$order}) {
-        my $t = "$order";
-        $t = "j_$t" unless $t =~ /^j_/;
-        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
-        $order = "$t";
-        $order .= ".value" unless $order =~ /\.value$/;
-    }
-    $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
-    $order .= " DESC" if $order && $opts{desc};
+    if ($order) {
+        my $isArray = ref($order) eq 'ARRAY';
+        if ($isArray) {
+            my @orders = ();
+            foreach my $o (@$order) {
+                while ( my ($k, $v) = each %$o ) {
+                    if (!$singles{$k}) {
+                        my $t = "$k";
+                        $t = "j_$t" unless $t =~ /^j_/;
+                        $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$k')";
+                        $k = "$t";
+                        $k .= ".value" unless $order =~ /\.value$/;
+                    }
+                    push(@orders, "$k COLLATE NOCASE" . ($v ? ' DESC' : ''));
+                }
+            }
+            $order = " ORDER BY " . join(', ', @orders);
+        } elsif (!$singles{$order} && !$joins{$order}) {
+            my $t = "$order";
+            $t = "j_$t" unless $t =~ /^j_/;
+            $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
+            $order = "$t";
+            $order .= ".value" unless $order =~ /\.value$/;
+        }
 
+        if (!$isArray) {
+            $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
+            $order .= " DESC" if $order && $opts{desc};
+        }
+    }
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $limit = " LIMIT $offset, $count" if $count;
     my $group = '';
@@ -820,7 +842,7 @@ sub tagFilter {
     return '' unless $filter;
 
     my $sys = $Foswiki::cfg{SystemWebName} || 'System';
-    my $ftopic = $params->{form} || $currentOptions->{form} || "$sys.TasksAPIDefaultTaskForm";
+    my $ftopic = $params->{form} || $currentOptions->{form};
     my $isrange = $params->{range} || 0;
     my $ismulti = $params->{multi} || 0;
     my $min = $params->{min} || '';
@@ -988,7 +1010,7 @@ sub restLease {
         Foswiki::Func::setPreferencesValue('taskeditor_task', $r->{id});
     } else {
         $meta = Foswiki::Meta->new($session, $web, $topic);
-        my $f = $r->{form} || 'System.TasksAPIDefaultTaskForm';
+        my $f = $r->{form};
         Foswiki::Func::setPreferencesValue('taskeditor_form', $f);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '1');
 
@@ -1067,22 +1089,69 @@ sub restLink {
     my $id = $q->param('id');
     my $params = $q->param('params') || '';
     unless ($id) {
-        return 'Error: no task ID passed';
+        throw Foswiki::OopsException(
+            "oopstasknotfound",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef,
+            params => ["1"]
+        );
     }
 
     my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
-    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
-    unless ($task && $task->checkACL('view')) {
-        return 'Error: task not found';
+    my $task;
+    eval {
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+    };
+    if ($@) {
+        throw Foswiki::OopsException(
+            "oopstasknotfound",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef
+        );
+    }
+
+    unless ($task->checkACL('view')) {
+        throw Foswiki::OopsException(
+            "oopstaskacl",
+            web => $session->{webName},
+            topic => $session->{topicName},
+            def => undef
+        );
     }
     my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $task->{fields}{Context});
     my $url;
-    if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
-        $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
-    } else {
+
+    if ($verb eq 'link') {
+        if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+            $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+        } else {
+            $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+        }
+    } elsif ($verb eq 'permalink') {
+        my $state = $task->{fields}{Status} || '';
+        my $assignee = $task->{fields}{AssignedTo} || '';
+        my @informees = split(/\s*,\s*/, $task->{fields}{Informees} || '');
+        my $login = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName());
+        $login = 'BaseUserMapping_333' if $login eq 'admin';
+        $login = 'BaseUserMapping_666' if $login eq 'guest';
+        my $author = $task->{fields}{Author} || '';
+        if ($author eq $login) {
+            $params = "tid=taskgrid_own;tab=tasks_own";
+        } elsif($assignee eq $login) {
+            $params = "tid=taskgrid_open;tab=tasks_open" if $state eq 'open';
+            $params = "tid=taskgrid_closed;tab=tasks_closed" if $state eq 'closed';
+        } elsif (grep(/^$login$/, @informees)) {
+            $params = "tid=taskgrid_inform;tab=tasks_inform";
+        } else {
+            $params = "type=invalid";
+        }
+
         $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
     }
-    Foswiki::Func::redirectCgiQuery(undef, $url);
+
+    Foswiki::Func::redirectCgiQuery(undef, $url) if $url;
     return '';
 }
 
@@ -1288,6 +1357,17 @@ sub tagGrid {
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
 
+    eval {
+        $order =~s /^\s*//g;
+        $order = from_json($order) if $order =~ /^\[/;
+    };
+    if ($@) {
+        my $err = $@;
+        $err =~ s/&/&amp;/;
+        $err =~ s/</&lt;/;
+        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
+    }
+
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
 
@@ -1347,8 +1427,8 @@ SCRIPT
     }
 
     unless ($ctx eq 'any') {
-        $form = "$system.TasksAPIDefaultTaskForm" unless $form;
         $templateFile = 'TasksAPIDefault' unless $templateFile;
+        return "<strong>%RED%TASKSGRID: missing parameter form!%ENDCOLOR%<strong>"unless $form
     }
 
     my $_tplDefault = sub {
@@ -1766,6 +1846,53 @@ sub _decodeChanges {
     $changes;
 }
 
+sub _getTopicTitle {
+    my $topic = shift;
+    my ($w, $t) = Foswiki::Func::normalizeWebTopicName(undef, $topic);
+    my ($meta) = Foswiki::Func::readTopic($w, $t);
+    my $title = $meta->get('FIELD', 'TopicTitle');
+    return  $title->{value} || $topic;
+}
+
+sub tagContextSelector {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $task = $currentTask;
+    if ($params->{task}) {
+        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
+    }
+    if (!$task) {
+        return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
+    }
+    my $type = $task->getPref('TASK_TYPE') || '';
+    if (!$type) {
+        return '%RED%TASKCONTEXTSELECTOR: missing preference TASK_TYPE for given task%ENDCOLOR%%BR%';
+    }
+
+    my $title = _getTopicTitle($task->{fields}{Context});
+    my @options = (<<OPTION);
+<option class="foswikiOption" value="$task->{fields}{Context}" selected="selected">$title</option>
+OPTION
+
+    my %retval;
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    foreach my $a (@$ctx) {
+        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
+            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
+        );
+        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            $title = _getTopicTitle($a->[0]);
+            my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
+            push(@options, $option);
+        }
+    }
+
+    my $inner = join('', @options);
+    return <<SELECT;
+<select class="foswikiSelect" name="Context">$inner</select>
+SELECT
+}
+
 sub tagInfo {
     my ( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -1955,6 +2082,100 @@ sub beforeCommonTagsHandler {
         $_[0] = 'Disabled for performance reasons in this web.';
         return;
     }
+}
+
+sub maintenanceHandler {
+    my $sys = $Foswiki::cfg{SystemWebName} || 'System';
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:checkoldform", {
+        name => "TasksAPI: TasksAPIDefaultTaskForm",
+        description => "Check for existence of outdated TasksAPIDefaultTaskForm",
+        check => sub {
+            my $result = { result => 0 };
+            if (Foswiki::Func::topicExists($sys, "TasksAPIDefaultTaskForm")) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Make sure every installed app is using its own form. Afterwards delete $sys.TasksAPIDefaultTaskForm";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:checkoldtemplate", {
+        name => "TasksAPI: TasksAPITemplate",
+        description => "Check for existence of outdated TasksAPITemplate",
+        check => sub {
+            my $result = { result => 0 };
+            if (Foswiki::Func::topicExists($sys, "TasksAPITemplate")) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Make sure every installed app is using its task templates. Afterwards delete $sys.TasksAPITemplate";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:debug", {
+        name => "TasksAPI: Debug Mode",
+        description => "Check whether TasksAPI is running in debug mode",
+        check => sub {
+            my $result = { result => 0 };
+            if ($Foswiki::cfg{TasksAPIPlugin}{Debug}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Set Foswiki::cfg{TasksAPIPlugin}{Debug} to 0.";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:legacysolr", {
+        name => "TasksAPI: Legacy Solr Integration",
+        description => "Check whether TasksAPI is running in legacy Solr mode (support for Solr <5)",
+        check => sub {
+            my $result = { result => 0 };
+            if ($Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::WARN;
+                $result->{solution} = "Set Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration} to 0 if you're running a Solr release >= 5.";
+            }
+
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:tasksweb", {
+        name => "TasksAPI: Existence of tasks web",
+        description => "Check for valid Foswiki::cfg{TasksAPIPlugin}{DBWeb} configuration",
+        check => sub {
+            my $result = { result => 0 };
+            my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
+            return $result if $web && Foswiki::Func::webExists($web);
+
+            $result->{result} = 1;
+            $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::CRITICAL;
+            $result->{solution} = "Foswiki::cfg{TasksAPIPlugin}{DBWeb} is either unset or specified web doesn't exist! You have to manually create this web.";
+            return $result;
+       }
+    });
+
+    Foswiki::Plugins::MaintenancePlugin::registerCheck("tasksapi:jquery", {
+        name => "TasksAPI: jQuery Plugin",
+        description => "Check whether TasksAPI's jQuery plugin is enabled",
+        check => sub {
+            my $result = { result => 0 };
+            unless ($Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Enabled}) {
+                $result->{result} = 1;
+                $result->{priority} = $Foswiki::Plugins::MaintenancePlugin::CRITICAL;
+                $result->{solution} = "Set Foswiki::cfg{JQueryPlugin}{Plugins}{TasksAPI}{Enabled} to 1.";
+            }
+
+            return $result;
+       }
+    });
 }
 
 1;

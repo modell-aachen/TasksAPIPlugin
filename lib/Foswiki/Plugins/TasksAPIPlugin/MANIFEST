@@ -9,7 +9,6 @@ data/System/TasksAPIRemindMailTemplate.txt 0644 Mail reminder for open tasks
 data/System/TasksAPIReopenedMailTemplate.txt 0644 Mail notify for reopened task
 data/System/TasksAPIReassignedMailTemplate.txt 0644 Mail notify for reassigned task
 data/System/TasksAPISummaryMailTemplate.txt 0644
-data/System/TasksAPIDefaultTaskForm.txt 0644 Task form
 data/System/TasksAPIDefaultTemplate.txt 0644 Common templates
 data/System/VarTASKINFO.txt 0644 Docs
 data/System/VarTASKSGRID.txt 0644 Docs
@@ -44,6 +43,8 @@ pub/System/TasksAPIPlugin/css/tasktracker.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.print.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.print.min.css 0644
+templates/oopstasknotfound.tmpl 0644
+templates/oopstaskacl.tmpl 0644
 tools/taskcron 0755
 tools/taskindex 0755
 tools/virtualhosts-taskindex 0755

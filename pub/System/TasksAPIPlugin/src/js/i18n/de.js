@@ -20,7 +20,11 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "Title": "Titel",
     "AssignedTo": "Zugewiesen an",
     "Comment": "Kommentar",
+    "Copied!": "Kopiert!",
+    "The link has been copied into your clipboard.": "Der Link wurde in Ihre Zwischenablage kopiert.",
     "The entry has been reopened": "Der Eintrag wurde wieder eröffnet",
+    "Seems you're trying to open a task which doesn't exist anymore or you don't have sufficient access permissions to view that task.":
+        "Es scheint als versuchen Sie eine Aufgabe zu öffnen, die entweder nicht mehr existiert oder für die Sie nicht die nötigen Zugriffsrechte besitzen.",
     "Task": "Aufgabe",
     "task": "Aufgabe",
     "minute": "Protokollpunkt",

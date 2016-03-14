@@ -203,7 +203,16 @@ div[name="comment"] {
       }
     }
 
-    > .textarea {
+    > .permalink > input {
+      background: white;
+      border-color: white;
+      border-radius: 4px;
+      width: calc(100% - 34px);
+      padding: 5px;
+      margin-top: 5px;
+    }
+
+    > .textarea, >.permalink {
       position: absolute;
       bottom: 48px;
       left: 48px;
@@ -233,6 +242,7 @@ div[name="comment"] {
         min-height: 100px;
         padding: 5px;
         margin-top: 5px;
+        word-wrap: break-word;
       }
     }
 
