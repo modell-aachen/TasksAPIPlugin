@@ -647,7 +647,9 @@ sub restCreate {
     $res->{_depth} = $depth;
 
     if ( $q->param('templatefile') ) {
-        Foswiki::Func::loadTemplate( $q->param('templatefile') );
+        my $templatefile = $q->param('templatefile');
+        $templatefile =~ s#/#.#g;
+        Foswiki::Func::loadTemplate( $templatefile );
     }
 
     return to_json({
@@ -829,7 +831,9 @@ sub tagSearch {
     }
 
     if ( $params->{templatefile}) {
-        Foswiki::Func::loadTemplate( $params->{templatefile} );
+        my $templatefile = $params->{templatefile};
+        $templatefile =~ s#/#.#g;
+        Foswiki::Func::loadTemplate( $templatefile );
     }
 
     my @res = map { _enrich_data($_, $params->{tasktemplate}) } @{$res->{tasks}};
@@ -1028,7 +1032,9 @@ sub restLease {
 
     Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
-    Foswiki::Func::loadTemplate( $r->{templatefile} || $tplfile || 'TasksAPI' );
+    my $templatefile = $r->{templatefile} || $tplfile || 'TasksAPI';
+    $templatefile =~ s#/#.#g;
+    Foswiki::Func::loadTemplate( $templatefile );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || $edtpl || 'tasksapi::editor' );
     $editor = $meta->expandMacros( $editor );
 
@@ -1218,7 +1224,11 @@ sub _renderTask {
 
             $task = $meta->expandMacros($storedTemplates->{$type});
         } else {
-            Foswiki::Func::loadTemplate($flavor->{file}) if $flavor->{file};
+            my $flavorfile = $flavor->{file};
+            if($flavorfile) {
+                    $flavorfile =~ s#/#.#g;
+                    Foswiki::Func::loadTemplate($flavorfile);
+            }
             $storedTemplates->{$type} = Foswiki::Func::expandTemplate($tmpl);
             $storedTemplates->{"$ftype"} = $taskForm;
             $task = $meta->expandMacros($storedTemplates->{$type});
@@ -1227,6 +1237,7 @@ sub _renderTask {
         $type = $type || $taskTemplate;
         my $ftype = $type . '_form';
         unless ($storedTemplates->{$type}) {
+            $file =~ s#/#.#g;
             Foswiki::Func::loadTemplate($file) if $file;
             $storedTemplates->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
             $storedTemplates->{"$ftype"} = $taskForm;
@@ -1438,6 +1449,7 @@ SCRIPT
     $_tplDefault->($captionTemplate, 'tasksapi::grid::caption');
     $_tplDefault->($filterTemplate, 'tasksapi::grid::filter::defaults');
 
+    $templateFile =~ s#/#.#g if $templateFile;
     Foswiki::Func::loadTemplate( $templateFile );
 
     my $req = $session->{request};
