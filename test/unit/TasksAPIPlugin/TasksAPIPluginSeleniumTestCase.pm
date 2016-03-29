@@ -45,13 +45,144 @@ sub checkConfig {
 
 sub verify_task_create {
   my $this = shift;
-  my @tasks = $this->createTasks(1);
-  $this->assert(scalar(@tasks) eq 1 );
+  my @tasks = $this->createTasks(10);
+  $this->assert(scalar(@tasks) eq 10);
 
-  # crash!!
   foreach my $task (@tasks) {
     $task->update(Status => "deleted");
   }
+}
+
+sub verify_task_update {
+  my $this = shift;
+
+  my $task = $this->createSingleTask();
+  my $id = $task->{id};
+
+  my $title = 'My awesome title text!!!';
+  $task->update(Title => $title, Status => 'deleted');
+
+  $task = $this->taskById($id);
+  $this->assert($task->{fields}{Title} eq $title);
+}
+
+sub verify_task_changesets {
+  my $this = shift;
+
+  my $task = $this->createSingleTask();
+  my $id = $task->{id};
+
+  $task->update(Status => 'deleted');
+  $task->update(DueDate => time + 1);
+  $task = $this->taskById($id);
+
+  my @changes = $task->{meta}->find('TASKCHANGESET');
+  $this->assert(scalar(@changes) eq 2);
+}
+
+sub verify_task_close {
+  my $this = shift;
+
+  my $task = $this->createSingleTask();
+  $task->close();
+
+  $task = $this->taskById($task->{id});
+  $this->assert($task->{fields}{Status} eq 'closed');
+
+  my $closed = $task->{fields}{Closed};
+  $this->assert(defined $closed);
+
+  $task->update(Status => 'deleted');
+}
+
+sub verify_task_parent {
+  my $this = shift;
+
+  my ($parent, $child) = $this->createTasks(2);
+  my ($pid, $cid) = ($parent->{id}, $child->{id});
+
+  $child->update(Parent => $parent->{id});
+  $child = $this->taskById($cid);
+  $parent = $child->parent();
+
+  $this->assert($child->{fields}{Parent} eq $parent->{id});
+
+  $child->update(Status => 'deleted');
+  $parent->update(Status => 'deleted');
+}
+
+sub verify_task_children {
+  my $this = shift;
+
+  my $childCount = 3;
+  my $parent = $this->createSingleTask();
+  $parent->update(Status => 'deleted');
+
+  my @children = $this->createTasks($childCount);
+  foreach my $child (@children) {
+    $child->update(Parent => $parent->{id}, Status => 'deleted');
+  }
+
+  my $res = $parent->children();
+  $this->assert($childCount eq $res->{total});
+  @children = @{$res->{tasks}};
+  my @cids = map {$_->{id}} @children;
+  foreach my $child (@children) {
+    $this->assert(scalar(grep(/$child->{id}/, @cids)));
+  }
+}
+
+sub verify_task_search {
+  my $this = shift;
+
+  my $cnt = 10;
+  my $time = time;
+  my $due = $time + 7200;
+  my $title = "My awesome title text: $time";
+  my @tasks = $this->createTasks($cnt, $due);
+  foreach my $task (@tasks) {
+    $task->update(Title => $title, Status => 'deleted');
+  }
+
+  my @queries = (
+    {query => {
+      Title => $title,
+      Status => 'deleted'
+    }},
+    {query => {
+      Status => 'deleted',
+      Title => {
+        type => 'like',
+        substring => "text: $time"
+      }
+    }},
+    {query => {
+      Status => 'deleted',
+      DueDate => {
+        type => 'range',
+        from => $due - 1,
+        to => $due + 1
+      }
+    }}
+  );
+
+  foreach my $q (@queries) {
+    my $res = Foswiki::Plugins::TasksAPIPlugin::Task::search(query => $q->{query});
+    $this->assert($cnt eq $res->{total});
+    foreach my $task (@{$res->{tasks}}) {
+      $this->assert($title eq $task->{fields}{Title});
+    }
+  }
+}
+
+sub taskById {
+  my ($this, $id) = @_;
+
+  my $res = Foswiki::Plugins::TasksAPIPlugin::Task::search(query => {id => $id});
+  $this->assert(defined $res);
+  $this->assert($res->{total} eq 1);
+  my @tasks = @{$res->{tasks}};
+  $tasks[0];
 }
 
 sub createForm {
@@ -94,6 +225,7 @@ TEXT
 sub createTasks {
   my $this = shift;
   my $count = shift;
+  my $due = shift || time + 3600;
 
   unless (Foswiki::Func::topicExists($this->{test_web}, $this->{test_form})) {
     $this->createForm();
@@ -109,9 +241,7 @@ sub createTasks {
       TopicType => 'task',
       Author => $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{Username},
       AssignedTo => $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{Username},
-      Created => time,
-      Changed => time,
-      DueDate => time + $i*3600,
+      DueDate => $due,
       Type => 'Task'
     );
 
@@ -119,6 +249,13 @@ sub createTasks {
   }
 
   @tasks;
+}
+
+sub createSingleTask {
+  my $this = shift;
+  my $due = shift;
+  my @tasks = $this->createTasks(1, $due);
+  $tasks[0];
 }
 
 1;
