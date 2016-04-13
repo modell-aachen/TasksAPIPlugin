@@ -240,7 +240,7 @@ sub getPref {
     return unless defined $pref;
 
     $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
-    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
+    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg if $1;
     $pref =~ s/\$formweb/$prefmeta->web/eg;
 
     if (!defined $subkey) {
@@ -312,7 +312,10 @@ sub create {
     }
 
     if ( $meta->get('FIELD', 'Status')->{value} eq 'closed' ) {
-        $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        my $clsd = $meta->get('FIELD', 'Closed');
+        unless (defined $clsd && $clsd->{value}) {
+            $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        }
     }
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -328,6 +331,10 @@ sub create {
         }
 
         if ( $data{Status} eq 'closed' ) {
+            my $clsd = $meta->get('FIELD', 'Closed');
+            unless (defined $clsd && $clsd->{value}) {
+                $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+            }
             $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
         }
 
@@ -595,6 +602,7 @@ sub _preUpdate {
 sub _postUpdate {
     my $self = shift;
     my $remind = $self->getPref('SCHEDULE_REMIND');
+    $self->{_remindPrev} = '' unless defined $self->{_remindPrev};
     if (defined $remind && $remind ne $self->{_remindPrev}) {
         delete $self->{_remindPrev};
         Foswiki::Plugins::TasksAPIPlugin::Job::remove(

@@ -25,6 +25,7 @@ my %cfg = (
   form       => '',
   help       => 0,
   host       => '',
+  list       => 0,
   map        => {},
   nodry      => 0,
   reindex    => 0,
@@ -41,6 +42,7 @@ Getopt::Long::GetOptions(
   'form|f=s'         => \$cfg{form},
   'help|h'           => \$cfg{help},
   'host=s'           => \$cfg{host},
+  'list-fields|l'    => \$cfg{list},
   'map|m=s%'         => \$cfg{map},
   'nodry'            => \$cfg{nodry},
   'reindex'          => \$cfg{reindex},
@@ -56,10 +58,12 @@ $cfg{source} = [split(/,/, join(',', @{$cfg{source}}))];
 
 # collect form and date field mappings
 collectHashValues('dateformats', 'defaults', 'map');
-print $cfg{context} . "\n";
-quit(1,1) unless $cfg{context};
-quit(1,1) unless $cfg{form};
+
 quit(1,1) unless scalar @{$cfg{source}};
+unless ($cfg{list}) {
+  quit(1,1) unless $cfg{context};
+  quit(1,1) unless $cfg{form};
+}
 
 if ($cfg{host}) {
   require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
@@ -77,7 +81,8 @@ sub printHelp {
                                       Usage:
                                         --context '\$source'
                                         --context 'MyWeb.MyTaskTopic'
-                                        --context 'regexp:Tasks//' --source 'MyWeb.ActionTrackerTasks0001'
+                                        --context 'regexp:Tasks/' --source 'MyWeb.ActionTrackerTasks0001'
+                                        --context 'regexp:Actions/' --source 'MyWeb.MyTopic00*Actions'
 
         --defaults                    List of key/value pairs holding default values for empty/missing form field values.
                                       Usage:
@@ -89,9 +94,6 @@ sub printHelp {
                                       Usage:
                                         --dateformats 'created=\$epoch,due=\$epoch'
                                         --dateformats 'created=\$epoch' --dateformats 'due=\$epoch'
-
-                                      See:
-                                        http://foswiki.org/System/PerlDoc?module=Foswiki::Time#A_61StaticMethod_61_formatTime_40_36epochSeconds_44_36formatString_44_36outputTimeZone_41_36value
 
         --force                       Forces 'taskconvert' to create a TasksAPIPlugin task even if the according action
                                       is missing a mapped form field value. See also parameter '--defaults'.
@@ -106,6 +108,8 @@ sub printHelp {
                                       Usage:
                                         --host 'virtual.domain.tld'
 
+  -l    --list-fields                 Reads source topics given by '--source' and prints all used field names of found actions.
+
   -m    --map                         List of key/value pairs to map old ActionTracker fields to new TasksAPI form fields.
                                       Usage:
                                         --map 'creator=Author,created=Created'
@@ -118,14 +122,14 @@ sub printHelp {
         --reindex                     Forces TasksAPI to recreate its internal tasks index.
 
   -s    --source                      List of webtopics to read ActionTracker actions from.
+                                      You may also use an asterisk as wildcard symbol.
                                       Usage:
                                         --source 'MyWeb.Topic1,MyWeb.Topic2'
                                         --source 'MyWeb.Topic1' --source 'MyWeb.Topic2'
+                                        --source 'MyWeb.Topic00*'
+                                        --source 'MyWeb.Topic00*Actions'
 
   -v    --verbose                     Enables verbose logging.
-
-Example usage:
-  TODO
 
 HELP
   print $help;
@@ -141,7 +145,7 @@ sub collectHashValues {
         $cfg{$field}{$k} = shift @pairs;
         foreach my $pair (@pairs) {
           my @map = split(/=/, $pair);
-          $cfg{$field}{shift @map} = shift @map;
+          $cfg{$field}{$map[0]} = $map[1];
         }
       }
     }
@@ -153,8 +157,20 @@ sub process {
 
   Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
   foreach my $source (@{$cfg{source}}) {
-    print "Processing source topic '$source'...\n" if $cfg{verbose};
-    processSource($source);
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
+    if ($topic =~ /\*/) {
+      $topic =~ s/\*/\.\*/g;
+      my @topics = Foswiki::Func::getTopicList($web);
+      foreach my $t (@topics) {
+        if ($t =~ /$topic/) {
+          print "Processing source topic '$web.$t'...\n" if $cfg{verbose};
+          processSource($web, $t) ;
+        }
+      }
+    } else {
+      print "Processing source topic '$web.$topic'...\n" if $cfg{verbose};
+      processSource($web, $topic);
+    }
   }
   Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
   Foswiki::Plugins::TasksAPIPlugin::_fullindex() if $cfg{reindex};
@@ -162,37 +178,51 @@ sub process {
 }
 
 sub processSource {
-  my $source = shift;
+  my ($web, $topic) = @_;
 
-  my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
   unless (Foswiki::Func::topicExists($web, $topic)) {
     print STDERR "Skipping given source '$web.$topic'. The specified webtopic doesn't exist!\n";
     return;
   }
 
-  my ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $cfg{form});
-  unless ($cfg{form} && Foswiki::Func::topicExists($fweb, $ftopic)) {
-    print STDERR "The given form '$cfg{form}' doesn't exist! Aborting!\n";
-    exit 1;
-  }
+  my ($fweb, $ftopic, $ctx);
+  unless ($cfg{list}) {
+    ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $cfg{form});
+    unless ($cfg{form} && Foswiki::Func::topicExists($fweb, $ftopic)) {
+      print STDERR "The given form '$cfg{form}' doesn't exist! Aborting!\n";
+      exit 1;
+    }
 
-  my $ctx = $cfg{context};
-  $ctx = "$web.$topic" if $ctx =~ /^\$source$/;
-  if (my ($pattern, $replace) = ($ctx =~ /^regexp:(.*?)\/(.*)$/)) {
-    my $src = "$web.$topic";
-    $src =~ s/$pattern/$replace/;
-    $ctx = $src;
+    $ctx = $cfg{context};
+    $ctx = "$web.$topic" if $ctx =~ /^\$source$/;
+    if (my ($pattern, $replace) = ($ctx =~ /^regexp:(.*?)\/(.*)$/)) {
+      my $src = "$web.$topic";
+      $src =~ s/$pattern/$replace/;
+      $ctx = $src;
+    }
   }
 
   my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
   my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
   unless (scalar @{$set->{ACTIONS}}) {
-    print "No actions found in source topic '$source'!\n" if $cfg{verbose};
+    print "No actions found in source topic '$web.$topic'!\n" if $cfg{verbose};
     return;
   }
 
   foreach my $action (@{$set->{ACTIONS}}) {
     next unless $action && ref($action) && $action->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+
+    if ($cfg{list}) {
+      while (my ($k, $v) = each %$action) {
+        next if $k eq 'unloaded_fields';
+        print "$k -> $v\n";
+      }
+      while (my ($k, $v) = each %{$action->{unloaded_fields}}) {
+        print "$k -> $v\n";
+      }
+      print "\n\n";
+      next;
+    }
 
     my %task;
     my @missing;
@@ -202,7 +232,7 @@ sub processSource {
       } elsif ($action->{unloaded_fields}->{$k}) {
         $task{$v} = $action->{unloaded_fields}->{$k};
       } elsif ($cfg{defaults}{$v}) {
-        print "Using default value for mapping $k -> $v\n." if $cfg{verbose};
+        print "Using default value for mapping of field '$k': $v -> $cfg{defaults}{$v}.\n" if $cfg{verbose};
         $task{$v} = $cfg{defaults}{$v};
       } else {
         push(@missing, $k);
@@ -215,9 +245,9 @@ sub processSource {
     }
 
     if (scalar @missing) {
-      my $m = join(',', @missing);
-      my $a = $action->stringify();
-      print "Missing keys: '$m' in action:\n$a\n" if $cfg{verbose};
+      @missing = map {"$_ ($cfg{map}{$_})"} @missing;
+      my $m = join(', ', @missing);
+      print "Missing keys: $m for action $action->{uid}\n" if $cfg{verbose};
       next unless $cfg{force};
     }
 
@@ -227,7 +257,13 @@ sub processSource {
     if ($cfg{nodry}) {
       my $t = Foswiki::Plugins::TasksAPIPlugin::Task::create(%task);
       print "Created task '$t->{id}'\n" if $cfg{verbose};
-    } elsif ($cfg{verbose}) {}
+    } elsif ($cfg{verbose}) {
+      print "---START NEW TASK---\n";
+      while ( my ($k, $v) = each %task ) {
+        print "$k -> $v\n";
+      }
+      print "---END NEW TASK---\n\n";
+    }
   }
 }
 
