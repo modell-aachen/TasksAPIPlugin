@@ -99,7 +99,7 @@ sub printHelp {
 
         --filter                      List of key/value pairs used to filter ActionTrackerPlugin actions by field values.
                                       Usage:
-                                        -- filter 'context=AppTopic001'
+                                        --filter 'context=AppTopic001'
 
         --force                       Forces 'taskconvert' to create a TasksAPIPlugin task even if the according action
                                       is missing a mapped form field value. See also parameter '--defaults'.
@@ -128,7 +128,7 @@ sub printHelp {
         --reindex                     Forces TasksAPI to recreate its internal tasks index.
 
   -s    --source                      List of webtopics to read ActionTracker actions from.
-                                      You may also use an asterisk as wildcard symbol.
+                                      You may also use an asterisk as wildcard character.
                                       Usage:
                                         --source 'MyWeb.Topic1,MyWeb.Topic2'
                                         --source 'MyWeb.Topic1' --source 'MyWeb.Topic2'
