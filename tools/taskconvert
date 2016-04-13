@@ -21,6 +21,7 @@ my %cfg = (
   context    => '',
   defaults   => {},
   dateformat => {},
+  filter     => {},
   force      => 0,
   form       => '',
   help       => 0,
@@ -38,6 +39,7 @@ Getopt::Long::GetOptions(
   'context|c=s'      => \$cfg{context},
   'defaults=s%'      => \$cfg{defaults},
   'dateformats|d=s%' => \$cfg{dateformat},
+  'filter=s%'        => \$cfg{filter},
   'force'            => \$cfg{force},
   'form|f=s'         => \$cfg{form},
   'help|h'           => \$cfg{help},
@@ -57,7 +59,7 @@ quit(0, 1) if $cfg{help};
 $cfg{source} = [split(/,/, join(',', @{$cfg{source}}))];
 
 # collect form and date field mappings
-collectHashValues('dateformats', 'defaults', 'map');
+collectHashValues('dateformats', 'defaults', 'filter', 'map');
 
 quit(1,1) unless scalar @{$cfg{source}};
 unless ($cfg{list}) {
@@ -94,6 +96,10 @@ sub printHelp {
                                       Usage:
                                         --dateformats 'created=\$epoch,due=\$epoch'
                                         --dateformats 'created=\$epoch' --dateformats 'due=\$epoch'
+
+        --filter                      List of key/value pairs used to filter ActionTrackerPlugin actions by field values.
+                                      Usage:
+                                        -- filter 'context=AppTopic001'
 
         --force                       Forces 'taskconvert' to create a TasksAPIPlugin task even if the according action
                                       is missing a mapped form field value. See also parameter '--defaults'.
@@ -209,15 +215,22 @@ sub processSource {
     return;
   }
 
-  foreach my $action (@{$set->{ACTIONS}}) {
-    next unless $action && ref($action) && $action->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+  foreach my $a (@{$set->{ACTIONS}}) {
+    next unless $a && ref($a) && $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+    my $action = {%$a, %{$a->{unloaded_fields}}};
+
+    my $skip = 0;
+    foreach my $k (keys $cfg{filter}) {
+      if ($action->{$k} ne $cfg{filter}{$k}) {
+        $skip = 1;
+        last;
+      }
+    }
+    next if $skip;
 
     if ($cfg{list}) {
       while (my ($k, $v) = each %$action) {
         next if $k eq 'unloaded_fields';
-        print "$k -> $v\n";
-      }
-      while (my ($k, $v) = each %{$action->{unloaded_fields}}) {
         print "$k -> $v\n";
       }
       print "\n\n";
@@ -229,8 +242,6 @@ sub processSource {
     while (my ($k, $v) = each %{$cfg{map}}) {
       if ($action->{$k}) {
         $task{$v} = $action->{$k};
-      } elsif ($action->{unloaded_fields}->{$k}) {
-        $task{$v} = $action->{unloaded_fields}->{$k};
       } elsif ($cfg{defaults}{$v}) {
         print "Using default value for mapping of field '$k': $v -> $cfg{defaults}{$v}.\n" if $cfg{verbose};
         $task{$v} = $cfg{defaults}{$v};
