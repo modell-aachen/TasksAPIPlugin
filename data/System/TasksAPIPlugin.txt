@@ -490,28 +490,76 @@ Implements the !DnDUpload (drag'n drop uploads) area.
 
 ---++ Converting actions from previous !ActionTrackerPlugin
 TasksAPIPlugin ships with a script called *taskconvert* which allows
-converting actions created by [[http://foswiki.org/Extensions/ActionTrackerPlugin][ActionTrackerPlugin]]. To convert an AT controlled
-topic just execute *taskconvert* as web server user. You will be prompted for
-all necessary parameters during the convertion process. Alternatively you may
-supply those parameters as command line arguments:
+converting actions created by [[http://foswiki.org/Extensions/ActionTrackerPlugin][ActionTrackerPlugin]].
 
-| *Parameter* | *Description* | *Default* |
-| web | The source web name to read from | |
-| topic | The source topic name ro read from | |
-| form | The =TasksAPIPlugin= compatibly form to use for converted tasks | System.TasksAPIDefaultTaskForm |
-| context | The context for the newly created task | web.topic |
-| mapping | A comma separated list of key-value pairs to map AT fields to !TasksAPI form fields | who=AssignedTo,creator=Author,created=Created,text=Description,due=DueDate,result=Result,state=Status,task=Title |
-| dateformat | A comma separated list of key-value pairs to map AT fields to a date representation. This is useful to convert epoch time strings to date strings | due="$day $month $year" |
-| verbose | Flag. Output some information about converted tasks | 0 |
-| reindex | Flag. Trigger a reindex when the convertion has finished | 0 |
-| ignoreErrors | Flag. Ignore errors during convertion. Forces the creation of a task | 0 |
-| skipErrors | Flag. Skips all tasks for which an error occurred during convertion. | 0 |
+<verbatim class="bash">> ./taskconvert --help</verbatim>
+<verbatim class="bash">
+  -c    --context                     Defines the context to use for converted tasks.
+                                      One of 'Web.Topic', '$source' or 'regexp:PATTERN/REPLACEMENT'
+                                      Usage:
+                                        --context '$source'
+                                        --context 'MyWeb.MyTaskTopic'
+                                        --context 'regexp:Tasks/' --source 'MyWeb.ActionTrackerTasks0001'
+                                        --context 'regexp:Actions/' --source 'MyWeb.MyTopic00*Actions'
 
-*Examples:* <br />
-Run the script without any parameters (you will be prompted instead)
-<verbatim class="bash">sudo -u www-data ./taskconvert</verbatim>
-Run the script and supply the source web and topic. Also print some verbose messages and force a reindex of all tasks.
-<verbatim class="bash">sudo -u www-data ./taskconvert web=Minutes topic=Protocol005 --verbose --reindex</verbatim>
+        --defaults                    List of key/value pairs holding default values for empty/missing form field values.
+                                      Usage:
+                                        --defaults 'AssignedTo=Team,Type=Information'
+                                        --defaults 'AssignedTo=Team' --defaults 'Type=Information'
+
+  -d    --dateformats                 List of key/value pairs defining a parsable date format to use for converting old
+                                      date strings to new epoch strings.
+                                      Usage:
+                                        --dateformats 'created=$epoch,due=$epoch'
+                                        --dateformats 'created=$epoch' --dateformats 'due=$epoch'
+
+        --filter                      List of key/value pairs used to filter ActionTrackerPlugin actions by field values.
+                                      Usage:
+                                        --filter 'context=AppTopic001'
+
+        --force                       Forces 'taskconvert' to create a TasksAPIPlugin task even if the according action
+                                      is missing a mapped form field value. See also parameter '--defaults'.
+
+  -f    --form                        The form to use for converted TasksAPI tasks.
+                                      Usage:
+                                        --form 'MyWeb.MyTaskForm'
+
+  -h    --help                        Shows this help.
+
+        --host                        Runs this script for the given virtual host. [requires VirtualHostingContrib]
+                                      Usage:
+                                        --host 'virtual.domain.tld'
+
+  -l    --list-fields                 Reads source topics given by '--source' and prints all used field names of found actions.
+
+  -m    --map                         List of key/value pairs to map old ActionTracker fields to new TasksAPI form fields.
+                                      Usage:
+                                        --map 'creator=Author,created=Created'
+                                        --map 'creator=Author' --map 'created=Created'
+
+        --nodry                       By default 'taskconvert' will not commit any changes to TasksAPIPlugin.
+                                      Passing this flag will turn off that kind of a "dry run".
+                                      Each found Action will be converted to a TasksAPIPlugin task.
+
+        --reindex                     Forces TasksAPI to recreate its internal tasks index.
+
+  -s    --source                      List of webtopics to read ActionTracker actions from.
+                                      You may also use an asterisk as wildcard character.
+                                      Usage:
+                                        --source 'MyWeb.Topic1,MyWeb.Topic2'
+                                        --source 'MyWeb.Topic1' --source 'MyWeb.Topic2'
+                                        --source 'MyWeb.Topic00*'
+                                        --source 'MyWeb.Topic00*Actions'
+
+  -u    --user-field                  List of ActionTracker fields container user information.
+                                      Field values specified by this parameter will be converted and
+                                      stored as CUID.
+                                      Usage:
+                                        --user-field 'creator' --user-field 'who'
+                                        --user-field 'creator,who'
+
+  -v    --verbose                     Enables verbose logging.
+</verbatim>
 
 ---++ Javascript Events
 =TasksAPIPlugin= exposes some useful to manipulate requests or just indicate something has happened.
