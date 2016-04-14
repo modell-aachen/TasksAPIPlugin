@@ -468,12 +468,12 @@ sub restDownload {
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
-    unless ($task->checkACL('change')) {
+    unless ($task->checkACL('view')) {
         $response->header(-status => 403);
         return to_json({
             status => 'error',
-            code => 'acl_change',
-            msg => 'No permission to attach files to this task'
+            code => 'acl_view',
+            msg => 'No permission to download files from this task'
         });
     }
 
