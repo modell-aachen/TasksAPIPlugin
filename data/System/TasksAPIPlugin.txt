@@ -302,6 +302,18 @@ The following ACL types currently exist:
    * =VIEW=: see the task (it will not show up anywhere if this is not set)
    * =CHANGE=: edit the task
 
+*Example* %BR%
+Assume we're having a form used by =TasksAPIPlugin= containing at least the fields
+=AssignedTo=, =Author=, =Context= and =Informees=. In field =Context= holds,
+by default, a webtopic. The other fields are user fields.
+
+The preference below will set =VIEW permissions= for all tasks, which are defined
+by the used form, to all users mentioned in =AssignedTo=, =Author= and =Informees=.
+In addition, Foswiki's =VIEW permissions= are inherited.
+<verbatim class="tml">
+   * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees),$wikiACL($curvalue(Context) VIEW)
+</verbatim>
+
 ---++ Macros
 
 ---+++ TASKSGRID
