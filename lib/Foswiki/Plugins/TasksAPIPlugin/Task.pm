@@ -160,7 +160,7 @@ sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
     my $ctx = $this->get('FIELD', 'Context') || {};
-    return () unless $aclPref && Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
+    return () unless $aclPref && Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0) eq 0;
     return ("\$wikiACL($ctx->{value} $type)") unless $aclPref;
 
     while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
@@ -647,7 +647,8 @@ sub solrize {
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
 
-    my $state = $self->getPref('MAP_STATUS_FIELD') || $self->{fields}{Status} || 'open';
+    my $mappedState = $self->getPref('MAP_STATUS_FIELD') || 'Status';
+    my $state = $self->{fields}{$mappedState} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
     my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
@@ -746,7 +747,8 @@ sub solrize {
         $granted = $expanded;
     }
 
-    $doc->add_fields('access_granted' => $granted);
+    my @users = split(/,/, $granted);
+    $doc->add_fields('access_granted' => \@users);
 
     if ( $legacy ) {
         my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
@@ -756,13 +758,13 @@ sub solrize {
     }
     try {
         $indexer->add($doc);
-        my @extraFields = ('access_granted', $granted);
+        my %extraFields = ('access_granted' => \@users);
         foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
-            push(@extraFields, $key, $doc->value_for($key));
+            $extraFields{$key} = $doc->value_for($key);
         }
 
         foreach my $a (@attachments) {
-            $self->indexAttachment($indexer, $a, \@extraFields);
+            $self->indexAttachment($indexer, $a, \%extraFields);
         }
     } catch Error::Simple with {
         my $e = shift;
@@ -835,7 +837,7 @@ sub indexAttachment {
     );
 
     # add extra fields, i.e. ACLs
-    $doc->add_fields(@$commonFields) if $commonFields;
+    $doc->add_fields(%$commonFields) if $commonFields;
 
     try {
         $indexer->add($doc);
