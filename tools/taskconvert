@@ -3,201 +3,303 @@
 use strict;
 use warnings;
 
+use Cwd;
+use Getopt::Long;
+
 do '../bin/setlib.cfg';
 require Foswiki;
-
 require Foswiki::Func;
 require Foswiki::Time;
-
 require Foswiki::Plugins::ActionTrackerPlugin;
 require Foswiki::Plugins::ActionTrackerPlugin::Action;
 require Foswiki::Plugins::ActionTrackerPlugin::ActionSet;
 require Foswiki::Plugins::ActionTrackerPlugin::Format;
 require Foswiki::Plugins::TasksAPIPlugin;
 
-my %defaultMap = (
-  who => 'AssignedTo',
-  creator => 'Author',
-  created => 'Created',
-  text => 'Description',
-  due => 'DueDate',
-  result => 'Type',
-  state => 'Status',
-  task => 'Title'
+# Configuration default values
+my %cfg = (
+  context    => '',
+  defaults   => {},
+  dateformat => {},
+  filter     => {},
+  force      => 0,
+  form       => '',
+  help       => 0,
+  host       => '',
+  list       => 0,
+  logins     => [],
+  map        => {},
+  nodry      => 0,
+  reindex    => 0,
+  source     => [],
+  verbose    => 0,
 );
 
-my %defaultDate = (
-  due => '$epoch'
-);
+# Parse command line parameters
+Getopt::Long::GetOptions(
+  'context|c=s'      => \$cfg{context},
+  'defaults=s%'      => \$cfg{defaults},
+  'dateformats|d=s%' => \$cfg{dateformat},
+  'filter=s%'        => \$cfg{filter},
+  'force'            => \$cfg{force},
+  'form|f=s'         => \$cfg{form},
+  'help|h'           => \$cfg{help},
+  'host=s'           => \$cfg{host},
+  'list-fields|l'    => \$cfg{list},
+  'map|m=s%'         => \$cfg{map},
+  'nodry'            => \$cfg{nodry},
+  'reindex'          => \$cfg{reindex},
+  'source|s=s@'      => \$cfg{source},
+  'user-field|u=s@'  => \$cfg{logins},
+  'verbose|v'        => \$cfg{verbose},
+) or quit(1,1);
 
-my ($form, $web, $topic, $context, $mapping, $dateformat, $verbose, $reindex, $ignoreErrors, $skipErrors, $help, $host);
-foreach my $arg (@ARGV) {
-  if ($arg =~ /^([^=]*)=(.*)$/) {
-    my ($k, $v) = ($1, $2);
-    $host = $v if $k =~ /^host$/i;
-    $form = $v if $k =~ /^form$/i;
-    $web = $v if $k =~ /^web$/i;
-    $topic = $v if $k =~ /^topic$/i;
-    $context = $v if $k =~ /^context$/i;
-    $mapping = $v if $k =~ /^mapping$/i;
-    $dateformat = $v if $k =~ /^dateformat$/i;
-  } elsif ($arg =~ /^--(.*)$/) {
-    my $k = $1;
-    $verbose = 1 if $k =~ /^verbose$/i;
-    $reindex = 1 if $k =~ /^reindex$/i;
-    $ignoreErrors = 1 if $k =~ /^ignoreErrors$/i;
-    $skipErrors = 1 if $k =~ /^skipErrors$/i;
+# Check whether to print the help page
+quit(0, 1) if $cfg{help};
+
+# collect possible source topics
+$cfg{source} = [split(/,/, join(',', @{$cfg{source}}))];
+
+# collect user field names
+$cfg{logins} = [split(/,/, join(',', @{$cfg{logins}}))];
+
+# collect form and date field mappings
+collectHashValues('dateformats', 'defaults', 'filter', 'map');
+
+quit(1,1) unless scalar @{$cfg{source}};
+unless ($cfg{list}) {
+  quit(1,1) unless $cfg{context};
+  quit(1,1) unless $cfg{form};
+}
+
+if ($cfg{host}) {
+  require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
+  print "Processing host '$cfg{host}'...\n";
+  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($cfg{host}, \&process);
+} else {
+  process();
+}
+
+sub printHelp {
+  my $help = <<HELP;
+
+  -c    --context                     Defines the context to use for converted tasks.
+                                      One of 'Web.Topic', '\$source' or 'regexp:PATTERN/REPLACEMENT'
+                                      Usage:
+                                        --context '\$source'
+                                        --context 'MyWeb.MyTaskTopic'
+                                        --context 'regexp:Tasks/' --source 'MyWeb.ActionTrackerTasks0001'
+                                        --context 'regexp:Actions/' --source 'MyWeb.MyTopic00*Actions'
+
+        --defaults                    List of key/value pairs holding default values for empty/missing form field values.
+                                      Usage:
+                                        --defaults 'AssignedTo=Team,Type=Information'
+                                        --defaults 'AssignedTo=Team' --defaults 'Type=Information'
+
+  -d    --dateformats                 List of key/value pairs defining a parsable date format to use for converting old
+                                      date strings to new epoch strings.
+                                      Usage:
+                                        --dateformats 'created=\$epoch,due=\$epoch'
+                                        --dateformats 'created=\$epoch' --dateformats 'due=\$epoch'
+
+        --filter                      List of key/value pairs used to filter ActionTrackerPlugin actions by field values.
+                                      Usage:
+                                        --filter 'context=AppTopic001'
+
+        --force                       Forces 'taskconvert' to create a TasksAPIPlugin task even if the according action
+                                      is missing a mapped form field value. See also parameter '--defaults'.
+
+  -f    --form                        The form to use for converted TasksAPI tasks.
+                                      Usage:
+                                        --form 'MyWeb.MyTaskForm'
+
+  -h    --help                        Shows this help.
+
+        --host                        Runs this script for the given virtual host. [requires VirtualHostingContrib]
+                                      Usage:
+                                        --host 'virtual.domain.tld'
+
+  -l    --list-fields                 Reads source topics given by '--source' and prints all used field names of found actions.
+
+  -m    --map                         List of key/value pairs to map old ActionTracker fields to new TasksAPI form fields.
+                                      Usage:
+                                        --map 'creator=Author,created=Created'
+                                        --map 'creator=Author' --map 'created=Created'
+
+        --nodry                       By default 'taskconvert' will not commit any changes to TasksAPIPlugin.
+                                      Passing this flag will turn off that kind of a "dry run".
+                                      Each found Action will be converted to a TasksAPIPlugin task.
+
+        --reindex                     Forces TasksAPI to recreate its internal tasks index.
+
+  -s    --source                      List of webtopics to read ActionTracker actions from.
+                                      You may also use an asterisk as wildcard character.
+                                      Usage:
+                                        --source 'MyWeb.Topic1,MyWeb.Topic2'
+                                        --source 'MyWeb.Topic1' --source 'MyWeb.Topic2'
+                                        --source 'MyWeb.Topic00*'
+                                        --source 'MyWeb.Topic00*Actions'
+
+  -u    --user-field                  List of ActionTracker fields container user information.
+                                      Field values specified by this parameter will be converted and
+                                      stored as CUID.
+                                      Usage:
+                                        --user-field 'creator' --user-field 'who'
+                                        --user-field 'creator,who'
+
+  -v    --verbose                     Enables verbose logging.
+
+HELP
+  print $help;
+}
+
+sub collectHashValues {
+  foreach my $field (@_) {
+    my @keys = keys %{$cfg{$field}};
+    for my $k (@keys) {
+      my $v = $cfg{$field}{$k};
+      if ($v =~ /,/ && $v =~ /=/) {
+        my @pairs = split(/,/, $v);
+        $cfg{$field}{$k} = shift @pairs;
+        foreach my $pair (@pairs) {
+          my @map = split(/=/, $pair);
+          $cfg{$field}{$map[0]} = $map[1];
+        }
+      }
+    }
   }
 }
 
 sub process {
   new Foswiki('admin');
 
-  unless ($web) {
-    print "Source web: ";
-    $web = <STDIN>;
-    chomp($web);
-    exit 1 unless $web;
+  Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+  foreach my $source (@{$cfg{source}}) {
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
+    if ($topic =~ /\*/) {
+      $topic =~ s/\*/\.\*/g;
+      my @topics = Foswiki::Func::getTopicList($web);
+      foreach my $t (@topics) {
+        if ($t =~ /$topic/) {
+          print "Processing source topic '$web.$t'...\n" if $cfg{verbose};
+          processSource($web, $t);
+        }
+      }
+    } else {
+      print "Processing source topic '$web.$topic'...\n" if $cfg{verbose};
+      processSource($web, $topic);
+    }
+  }
+  Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+  Foswiki::Plugins::TasksAPIPlugin::_fullindex() if $cfg{reindex};
+  exit 0;
+}
+
+sub processSource {
+  my ($web, $topic) = @_;
+
+  unless (Foswiki::Func::topicExists($web, $topic)) {
+    print STDERR "Skipping given source '$web.$topic'. The specified webtopic doesn't exist!\n";
+    return;
   }
 
-  unless ($topic) {
-    print "Source topic: ";
-    $topic = <STDIN>;
-    chomp($topic);
-    exit 1 unless $topic;
-  }
+  my ($fweb, $ftopic, $ctx);
+  unless ($cfg{list}) {
+    ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $cfg{form});
+    unless ($cfg{form} && Foswiki::Func::topicExists($fweb, $ftopic)) {
+      print STDERR "The given form '$cfg{form}' doesn't exist! Aborting!\n";
+      exit 1;
+    }
 
-  ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
-  unless ( Foswiki::Func::topicExists($web, $topic) ) {
-    print STDERR "Specified webtopic doesn't exist!\n";
-    exit 1;
-  }
-
-  unless ($form) {
-    print "Task form to use [System.TasksAPIDefaultTaskForm]: ";
-    $form = <STDIN>;
-    chomp($form);
-    $form = "System.TasksAPIDefaultTaskForm" unless $form;
-  }
-
-  my ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $form);
-  unless ( $form && Foswiki::Func::topicExists($fweb, $ftopic) ) {
-    print STDERR "Specified form doesn't exist!\n";
-    exit 1;
-  }
-
-  unless ($context) {
-    print "Task context to use [$web.$topic]: ";
-    $context = <STDIN>;
-    chomp($context);
-    $context = "$web.$topic" unless $context;
+    $ctx = $cfg{context};
+    $ctx = "$web.$topic" if $ctx =~ /^\$source$/;
+    if (my ($pattern, $replace) = ($ctx =~ /^regexp:(.*?)\/(.*)$/)) {
+      my $src = "$web.$topic";
+      $src =~ s/$pattern/$replace/;
+      $ctx = $src;
+    }
   }
 
   my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
   my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
   unless (scalar @{$set->{ACTIONS}}) {
-    print "No actions found!\n";
-    exit 0;
-  }
-
-  my %mapping = %defaultMap;
-  unless ($mapping) {
-    $mapping = join(",", map {"$_=$mapping{$_}"} keys %mapping);
-    print "Mapping [$mapping]: ";
-    $mapping = <STDIN>;
-    chomp($mapping);
-    %mapping = %defaultMap unless $mapping;
-  }
-
-  if ($mapping) {
-    $mapping =~ s/\s//g;
-    my @maps = split(',', $mapping);
-    %mapping = ();
-    for my $map (@maps) {
-      if ( $map =~ /^(.*)=(.*)$/ ) {
-        $mapping{$1} = $2;
-      }
-    }
-  }
-
-  my %format = %defaultDate;
-  unless ($dateformat) {
-    $dateformat = join(",", map {"$_=$format{$_}"} keys %format);
-    print "Convert dates [$dateformat]: ";
-    $dateformat = <STDIN>;
-    chomp($dateformat);
-    %format = %defaultDate unless $dateformat;
-  }
-
-  if ($dateformat) {
-    my @dates = split(',', $dateformat);
-    %format = ();
-    for my $date (@dates) {
-      if ( $date =~ /^(.*)=(.*)$/ ) {
-        $format{$1} = $2;
-      }
-    }
+    print "No actions found in source topic '$web.$topic'!\n" if $cfg{verbose};
+    return;
   }
 
   foreach my $a (@{$set->{ACTIONS}}) {
     next unless $a && ref($a) && $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
-    my %data = ();
-    my $err = 0;
-    my @map =();
+    my $action = {%$a, %{$a->{unloaded_fields}}};
 
-    while (my ($k, $v) = each %mapping) {
-      my $val;
-      if ($a->{$k}) {
-        $val = $a->{$k};
-      } elsif ($a->{unloaded_fields}->{$k}) {
-        $val = $a->{unloaded_fields}->{$k};
+    my $skip = 0;
+    foreach my $k (keys %{$cfg{filter}}) {
+      if ($action->{$k} ne $cfg{filter}{$k}) {
+        $skip = 1;
+        last;
+      }
+    }
+    next if $skip;
+
+    if ($cfg{list}) {
+      while (my ($k, $v) = each %$action) {
+        next if $k eq 'unloaded_fields';
+        print "$k -> $v\n";
+      }
+      print "\n\n";
+      next;
+    }
+
+    my %task;
+    my @missing;
+    while (my ($k, $v) = each %{$cfg{map}}) {
+      if ($action->{$k}) {
+        if (grep (/^$k$/, @{$cfg{logins}})) {
+          my $wikiName = Foswiki::Func::getWikiName($action->{$k});
+          $task{$v} = Foswiki::Func::getCanonicalUserID($wikiName);
+          $task{$v} = $action->{$k} unless $task{$v};
+        } else {
+          $task{$v} = $action->{$k};
+        }
+      } elsif ($cfg{defaults}{$v}) {
+        print "Using default value for mapping of field '$k': $v -> $cfg{defaults}{$v}.\n" if $cfg{verbose};
+        $task{$v} = $cfg{defaults}{$v};
       } else {
-        push(@map,$k);
-        $err = 1;
+        push(@missing, $k);
         next;
       }
 
-      if ( $format{$k} ) {
-        $data{$v} = Foswiki::Time::formatTime($val, ''.$format{$k});
-      } else {
-        $data{$v} = $val;
+      if (defined $cfg{dateformat}{$k}) {
+        $task{$v} = Foswiki::Time::formatTime($task{$v}, "$cfg{dateformat}{$k}");
       }
     }
 
-    next if $err && $skipErrors;
-
-    if ($err && $ignoreErrors ne 1) {
-      $err = 0;
-      print "Missing keys: '" . join(',', @map) . "'\nAction:\n" . $a->stringify() . "\nSkip task? [YES|no|quit] ";
-      my $continue = <STDIN>;
-      chomp($continue);
-      exit 0 if $continue =~ /q|quit/i;
-      next if $continue =~ /y|yes/i;
+    if (scalar @missing) {
+      @missing = map {"$_ ($cfg{map}{$_})"} @missing;
+      my $m = join(', ', @missing);
+      print "Missing keys: $m for action $action->{uid}\n" if $cfg{verbose};
+      next unless $cfg{force};
     }
 
-    $data{Context} = $context;
-    $data{form} = $form;
-    my $task = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
+    $task{Context} = $ctx;
+    $task{form} = "$fweb.$ftopic";
 
-    if ($verbose) {
-      print "Created task:\nid -> $task->{id}\n";
-      while (my ($k, $v) = each %data) {
-        print "$k -> $v\n"
+    if ($cfg{nodry}) {
+      my $t = Foswiki::Plugins::TasksAPIPlugin::Task::create(%task);
+      print "Created task '$t->{id}'\n" if $cfg{verbose};
+    } elsif ($cfg{verbose}) {
+      print "---START NEW TASK---\n";
+      while ( my ($k, $v) = each %task ) {
+        print "$k -> $v\n";
       }
-      print "---------------------------\n\n";
+      print "---END NEW TASK---\n\n";
     }
-  }
-
-  if ($reindex) {
-    Foswiki::Plugins::TasksAPIPlugin::_fullindex();
   }
 }
 
-if ($host) {
-  require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
-  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($host, \&process);
-} else {
-  process();
+sub quit{
+  my ($c, $h) = @_;
+  printHelp() if $h;
+  exit $c;
 }
 
 1;

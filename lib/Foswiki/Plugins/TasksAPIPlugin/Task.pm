@@ -159,17 +159,19 @@ sub _reduce {
 sub _getACL {
     my ($this, $form, $type) = @_;
     my $aclPref = $form->getPreference("TASKACL_\U$type");
-    return () unless $aclPref;
+    my $ctx = $this->get('FIELD', 'Context') || {};
+    return () unless $aclPref && Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
+    return ("\$wikiACL($ctx->{value} $type)") unless $aclPref;
+
     while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
         my $f = $this->get('FIELD', $1);
         if ( $f && $f->{value}) {
-            $aclPref =~ s/\$curvalue\(([^)]+)\)/$f->{value}/eg;
+            $aclPref =~ s/\$curvalue\($1\)/$f->{value}/eg;
         }
     }
 
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
-    my $ctx = $this->get('FIELD', 'Context') || {};
     my $aclFromRef = sub {
         my $ref = $this->get('FIELD', shift);
         return () unless $ref;
@@ -178,6 +180,7 @@ sub _getACL {
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
+    $aclPref =~ s/\$wikiACL\([^\)]*\)//g if Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_WIKI_ACL'), 0);
     $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/;
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
@@ -240,7 +243,7 @@ sub getPref {
     return unless defined $pref;
 
     $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
-    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
+    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg if $1;
     $pref =~ s/\$formweb/$prefmeta->web/eg;
 
     if (!defined $subkey) {
@@ -312,7 +315,10 @@ sub create {
     }
 
     if ( $meta->get('FIELD', 'Status')->{value} eq 'closed' ) {
-        $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        my $clsd = $meta->get('FIELD', 'Closed');
+        unless (defined $clsd && $clsd->{value}) {
+            $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+        }
     }
 
     $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -328,6 +334,10 @@ sub create {
         }
 
         if ( $data{Status} eq 'closed' ) {
+            my $clsd = $meta->get('FIELD', 'Closed');
+            unless (defined $clsd && $clsd->{value}) {
+                $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
+            }
             $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
         }
 
@@ -595,6 +605,7 @@ sub _preUpdate {
 sub _postUpdate {
     my $self = shift;
     my $remind = $self->getPref('SCHEDULE_REMIND');
+    $self->{_remindPrev} = '' unless defined $self->{_remindPrev};
     if (defined $remind && $remind ne $self->{_remindPrev}) {
         delete $self->{_remindPrev};
         Foswiki::Plugins::TasksAPIPlugin::Job::remove(
@@ -622,7 +633,8 @@ sub solrize {
     return if $self->{fields}{Status} eq 'deleted';
 
     my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
-    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    my $ctx = $self->{fields}{Context};
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
     my $webtopic = "$web.$topic";
 
     my $date = '1970-01-01T00:00:00Z';
@@ -673,16 +685,25 @@ sub solrize {
       'author_s' => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$self->{fields}{Author}\"}%", $topic, $web)
     );
 
+    my $ignoreContextACL = $self->getBoolPref('IGNORE_CONTEXT_ACL') || 0;
+    my $ignoreWikiACL = $self->getBoolPref('IGNORE_WIKI_ACL') || 0;
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
     my $granted;
     unless (scalar @acl) {
-        $granted = 'all'
+        $granted = $ignoreContextACL ? 'all' : join(',', topicACL($indexer, $web, $topic));
     } else {
         my $aclstring = join(',', @acl);
+        $aclstring .= ",\$wikiACL($ctx VIEW)" unless grep(/\$wikiACL\($ctx[^\)]+\)/, @acl);
         my $expanded = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
         unless ($expanded) {
             my @arr = ();
             foreach my $entry (@acl) {
+                next if $entry =~ /Team/;
+                if ($entry =~ /^\$wikiACL/) {
+                    push @arr, $entry;
+                    next;
+                }
+
                 if ( Foswiki::Func::isGroup($entry) ) {
                     my $members = Foswiki::Func::eachGroupMember($entry, {expand => 'true'});
                     while ($members->hasNext()) {
@@ -694,12 +715,37 @@ sub solrize {
                 }
             }
 
-            $expanded = join(',', @arr);
+            # unless explicitely defined, we're going to inherit context's ACLs
+            my @users;
+            unless ($ignoreContextACL) {
+                push @users, topicACL($indexer, $web, $topic);
+            }
+
+            for (my $i = 0; $i < scalar(@arr); $i++) {
+                if ($arr[$i] =~ /\$wikiACL\($ctx[^\)]+\)/) {
+                    $arr[$i] = undef;
+                } elsif ($arr[$i] =~ /\$wikiACL\(([^\)]+) VIEW\)/) {
+                    $arr[$i] = undef;
+                    unless ($ignoreWikiACL) {
+                        push @users, topicACL(
+                            $indexer,
+                            Foswiki::Func::normalizeWebTopicName(undef, $1)
+                        );
+                    }
+                }
+            }
+
+            my %unique;
+            push @users, grep defined, @arr;
+            @users = grep !$unique{$_}++, @users;
+
+            $expanded = join(',', @users);
             Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $expanded);
         }
 
         $granted = $expanded;
     }
+
     $doc->add_fields('access_granted' => $granted);
 
     if ( $legacy ) {
@@ -722,6 +768,13 @@ sub solrize {
         my $e = shift;
         $indexer->log("ERROR: ".$e->{-text});
     };
+}
+
+sub topicACL {
+    my ($indexer, $web, $topic) = @_;
+    my ($meta) = Foswiki::Func::readTopic($web, $topic);
+    my ($str, $aclFields) = $indexer->getAclFields($web, $topic, $meta);
+    @{$aclFields};
 }
 
 sub indexAttachment {

@@ -45,6 +45,8 @@ pub/System/TasksAPIPlugin/css/tasktracker.print.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.print.min.css 0644
 templates/oopstasknotfound.tmpl 0644
 templates/oopstaskacl.tmpl 0644
+test/unit/TasksAPIPlugin/TasksAPIPluginSeleniumTestCase.pm 0444
+test/unit/TasksAPIPlugin/qwikitest 0444
 tools/taskcron 0755
 tools/taskindex 0755
 tools/virtualhosts-taskindex 0755
