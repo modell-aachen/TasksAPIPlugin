@@ -294,8 +294,15 @@ one of the Foswiki ACL placeholders is used, its result is taken as definite
 and the rest of the task ACL will be ignored. Therefore, if you use
 =$contextACL= or =$wikiACL(...)=, always put it last.
 
-If an ACL is not set, or set to an empty value, it defaults to no restrictions
-whatsoever, i.e. anyone, including guests, can view and edit.
+If an ACL is not set, or set to an empty value, it defaults to its context's
+ACL. To avoid inheriting ACLs from a task's context an additional boolean
+preference may be used:
+   * =TASKCFG_IGNORE_CONTEXT_ACL=
+Setting =TASKCFG_IGNORE_CONTEXT_ACL= to a true value will ignore all inherited
+access permissions.
+Equivalent to =TASKCFG_IGNORE_CONTEXT_ACL= you may also specify
+=TASKCFG_IGNORE_WIKI_ACL= which will forece =TasksAPIPlugin= to ignore all
+specified =$wikiACL= settings.
 
 The following ACL types currently exist:
 
@@ -312,6 +319,21 @@ by the used form, to all users mentioned in =AssignedTo=, =Author= and =Informee
 In addition, Foswiki's =VIEW permissions= are inherited.
 <verbatim class="tml">
    * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees),$wikiACL($curvalue(Context) VIEW)
+
+   # ... is the same as ...
+   * Set TASKCFG_IGNORE_CONTEXT_ACL = 0
+   * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees),$wikiACL($curvalue(Context) VIEW)
+
+   # ... is the same as ...
+   * Set TASKCFG_IGNORE_CONTEXT_ACL = 0
+   * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees),$contextACL
+
+   # ... is the same as ...
+   * Set TASKCFG_IGNORE_CONTEXT_ACL = 0
+   * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
+
+   # ... is the same as ...
+   * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
 </verbatim>
 
 ---++ Macros
