@@ -10,6 +10,7 @@ use Foswiki::Plugins ();
 use Foswiki::Time ();
 
 use Foswiki::Plugins::JQueryPlugin;
+use Foswiki::Plugins::SolrPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
 
@@ -27,6 +28,7 @@ our $NO_PREFS_IN_TOPIC = 1;
 
 my $db;
 my %schema_versions;
+my %tmpWikiACLs;
 my @schema_updates = (
     [
         # Basic relations
@@ -184,6 +186,92 @@ sub afterRenameHandler {
     }
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+}
+
+sub beforeSaveHandler {
+    my ($text, $topic, $web, $meta) = @_;
+
+    my ($oldMeta) = Foswiki::Func::readTopic($web, $topic);
+    $tmpWikiACLs{acls} = {
+        ALLOWTOPICVIEW   => $oldMeta->getPreference('ALLOWTOPICVIEW'),
+        ALLOWTOPICCHANGE => $oldMeta->getPreference('ALLOWTOPICCHANGE'),
+        DENYTOPICVIEW    => $oldMeta->getPreference('DENYTOPICVIEW'),
+        DENYTOPICCHANGE  => $oldMeta->getPreference('DENYTOPICCHANGE')
+    };
+
+    my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
+    my $search = $solr->entityDecode('topic:*Form text:"$wikiACL"', 1);
+    my $raw = $solr->solrSearch($search)->{raw_response};
+    my $content = from_json($raw->{_content});
+    my $r = $content->{response};
+    return unless $r->{numFound};
+
+    my @forms;
+    foreach my $doc (@{$r->{docs}}) {
+        my ($formMeta) = Foswiki::Func::readTopic(
+            Foswiki::Func::normalizeWebTopicName(undef, $doc->{webtopic})
+        );
+
+        my $aclView = $formMeta->getPreference('TASKACL_VIEW');
+        my $aclChange = $formMeta->getPreference('TASKACL_CHANGE');
+        if ($aclView =~ /\$wikiACL\($web\.$topic/) {
+            push @forms, $doc->{webtopic};
+        } elsif ($aclChange =~ /\$wikiACL\($web\.$topic/) {
+            push @forms, $doc->{webtopic};
+        }
+    }
+
+    $tmpWikiACLs{forms} = \@forms;
+}
+
+
+sub afterSaveHandler {
+    my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    my $skipIndex = 0;
+    foreach my $key (keys $tmpWikiACLs{acls}) {
+        $skipIndex = $tmpWikiACLs{acls}->{$key} ne $meta->getPreference($key);
+        last if $skipIndex;
+    }
+
+    unless ($skipIndex) {
+        undef %tmpWikiACLs;
+        return;
+    }
+
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+
+    # First, look for tasks in the current context
+    my $res = _query(acl => 0, query => {Context => "$web.$topic"});
+    if (defined $res->{tasks}) {
+        foreach my $task (@{$res->{tasks}}) {
+            $task->solrize(
+                $indexer,
+                $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration}
+            );
+        }
+    }
+
+    # If one or more $wikiACL were present within a task form,
+    # process them as well
+    unless (defined $tmpWikiACLs{forms}) {
+        undef %tmpWikiACLs;
+        return;
+    }
+
+    foreach my $form (@{$tmpWikiACLs{forms}}) {
+        $res = _query(acl => 0, query => {form => "$form"});
+        if (defined $res->{tasks}) {
+            foreach my $task (@{$res->{tasks}}) {
+                $task->solrize(
+                    $indexer,
+                    $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration}
+                );
+            }
+        }
+    }
+
+    undef %tmpWikiACLs;
 }
 
 sub db {
