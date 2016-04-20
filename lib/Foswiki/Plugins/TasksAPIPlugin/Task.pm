@@ -158,18 +158,24 @@ sub _reduce {
 
 sub _getACL {
     my ($this, $form, $type) = @_;
-    my $aclPref = $form->getPreference("TASKACL_\U$type");
+    my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
     my $ctx = $this->get('FIELD', 'Context') || {};
-    return () unless $aclPref && Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
-    return ("\$wikiACL($ctx->{value} $type)") unless $aclPref;
+    my $ignoreContextACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
+    my $ignoreWikiACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_WIKI_ACL'), 0);
+
+    return () if $aclPref =~ /^\s*$/ && $ignoreContextACL;
+    return ("\$wikiACL($ctx->{value} $type)") if $aclPref =~ /^\s*$/;
 
     while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
         my $f = $this->get('FIELD', $1);
         if ( $f && $f->{value}) {
             $aclPref =~ s/\$curvalue\($1\)/$f->{value}/eg;
+        } else {
+            $aclPref =~ s/\$curvalue\($1\)//g;
         }
     }
 
+    $aclPref .= ",\$contextACL";
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
     my $aclFromRef = sub {
@@ -179,9 +185,14 @@ sub _getACL {
         return () unless $refedTopic;
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
+
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$wikiACL\([^\)]*\)//g if Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_WIKI_ACL'), 0);
-    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/;
+    $aclPref =~ s/\$wikiACL\($ctx->{value} $type\)/\$contextACL/g;
+    $aclPref =~ s/\$wikiACL\([^\)]*\)//g if $ignoreWikiACL;
+    $aclPref =~ s/\$contextACL\b//g if $ignoreContextACL;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/g;
+    $aclPref =~ s/Team\b//g;
+
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -647,7 +658,8 @@ sub solrize {
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
 
-    my $state = $self->getPref('MAP_STATUS_FIELD') || $self->{fields}{Status} || 'open';
+    my $mappedState = $self->getPref('MAP_STATUS_FIELD') || 'Status';
+    my $state = $self->{fields}{$mappedState} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
     my $type = $self->getPref('TASK_TYPE') || $self->{fields}{Type} || 'task';
     my $icon = $self->getPref('SOLRHIT_ICON') || '';
@@ -746,7 +758,8 @@ sub solrize {
         $granted = $expanded;
     }
 
-    $doc->add_fields('access_granted' => $granted);
+    my @users = split(/,/, $granted);
+    $doc->add_fields('access_granted' => \@users);
 
     if ( $legacy ) {
         my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
@@ -756,13 +769,13 @@ sub solrize {
     }
     try {
         $indexer->add($doc);
-        my @extraFields = ('access_granted', $granted);
+        my %extraFields = ('access_granted' => \@users);
         foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
-            push(@extraFields, $key, $doc->value_for($key));
+            $extraFields{$key} = $doc->value_for($key);
         }
 
         foreach my $a (@attachments) {
-            $self->indexAttachment($indexer, $a, \@extraFields);
+            $self->indexAttachment($indexer, $a, \%extraFields);
         }
     } catch Error::Simple with {
         my $e = shift;
@@ -835,7 +848,7 @@ sub indexAttachment {
     );
 
     # add extra fields, i.e. ACLs
-    $doc->add_fields(@$commonFields) if $commonFields;
+    $doc->add_fields(%$commonFields) if $commonFields;
 
     try {
         $indexer->add($doc);
