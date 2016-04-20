@@ -868,7 +868,7 @@ sub tagFilter {
     my @html = ('<div>');
 
     my $isSelected = sub {
-        return 'selected="selected" data-default="1"' if $_[0] eq $_[1];
+        return 'selected="selected" data-default="1"' if defined $_[0] && defined $_[1] && $_[0] eq $_[1];
         return '';
     };
 
@@ -1633,7 +1633,7 @@ SCRIPT
     delete $fctx->{task_showexpandercol};
 
     # todo.. templates und so
-    if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
+    if ( $pageSize ne -1 && $paging && defined $settings{totalsize} && defined $settings{pagesize} && $settings{totalsize} > $settings{pagesize}) {
         my $prev = $page - 1 || 1;
         my $next= $page + 1;
         my $pagination = '';
