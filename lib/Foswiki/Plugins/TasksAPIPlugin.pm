@@ -229,7 +229,7 @@ sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
 
     my $skipIndex = 0;
-    foreach my $key (keys $tmpWikiACLs{acls}) {
+    foreach my $key (keys %{$tmpWikiACLs{acls}}) {
         $skipIndex = $tmpWikiACLs{acls}->{$key} ne $meta->getPreference($key);
         last if $skipIndex;
     }

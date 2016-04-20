@@ -158,18 +158,24 @@ sub _reduce {
 
 sub _getACL {
     my ($this, $form, $type) = @_;
-    my $aclPref = $form->getPreference("TASKACL_\U$type");
+    my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
     my $ctx = $this->get('FIELD', 'Context') || {};
-    return () unless $aclPref && Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0) eq 0;
-    return ("\$wikiACL($ctx->{value} $type)") unless $aclPref;
+    my $ignoreContextACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
+    my $ignoreWikiACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_WIKI_ACL'), 0);
+
+    return () if $aclPref =~ /^\s*$/ && $ignoreContextACL;
+    return ("\$wikiACL($ctx->{value} $type)") if $aclPref =~ /^\s*$/;
 
     while ( $aclPref =~ /\$curvalue\(([^)]+)\)/g ) {
         my $f = $this->get('FIELD', $1);
         if ( $f && $f->{value}) {
             $aclPref =~ s/\$curvalue\($1\)/$f->{value}/eg;
+        } else {
+            $aclPref =~ s/\$curvalue\($1\)//g;
         }
     }
 
+    $aclPref .= ",\$contextACL";
     $aclPref = $this->expandMacros($aclPref);
     my @acl;
     my $aclFromRef = sub {
@@ -179,9 +185,14 @@ sub _getACL {
         return () unless $refedTopic;
         return _getACL($refedTopic->{meta}, $refedTopic->{form}, $type);
     };
+
     $aclPref =~ s/\$parentACL\b/push @acl, $aclFromRef->('Parent'); ''/e;
-    $aclPref =~ s/\$wikiACL\([^\)]*\)//g if Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_WIKI_ACL'), 0);
-    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/;
+    $aclPref =~ s/\$wikiACL\($ctx->{value} $type\)/\$contextACL/g;
+    $aclPref =~ s/\$wikiACL\([^\)]*\)//g if $ignoreWikiACL;
+    $aclPref =~ s/\$contextACL\b//g if $ignoreContextACL;
+    $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/g;
+    $aclPref =~ s/Team\b//g;
+
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
