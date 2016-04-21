@@ -234,7 +234,11 @@ sub afterSaveHandler {
 
     my $skipIndex = 0;
     foreach my $key (keys %{$tmpWikiACLs{acls}}) {
-        $skipIndex = $tmpWikiACLs{acls}->{$key} ne $meta->getPreference($key);
+        my $topicPref = $meta->getPreference($key);
+        $topicPref = '' unless defined $topicPref;
+        my $wikiPref = $tmpWikiACLs{acls}->{$key};
+        $wikiPref = '' unless defined $wikiPref;
+        $skipIndex = $wikiPref ne $topicPref;
         last if $skipIndex;
     }
 
