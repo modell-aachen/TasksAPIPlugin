@@ -1622,6 +1622,18 @@ TasksPanel = function(tasktracker) {
     toggleOverlay(true);
   };
 
+  this.getCurrentTask = function() {
+    return self.currentTask;
+  };
+
+  this.getCurrentTaskData = function() {
+    if (_.isUndefined(self.currentTask) || self.currentTask.length === 0) {
+      return undefined;
+    }
+
+    return self.currentTask.data('task_data');
+  };
+
   this.updateCurrentTask = function(changedFields) {
     if ( typeof changedFields !== typeof {} || _.isUndefined(self.currentTask)) {
       return undefined;

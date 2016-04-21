@@ -191,6 +191,12 @@ sub afterRenameHandler {
 sub beforeSaveHandler {
     my ($text, $topic, $web, $meta) = @_;
 
+    my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
+    my $search = $solr->entityDecode('topic:*Form text:"$wikiACL"', 1);
+    my $raw = $solr->solrSearch($search)->{raw_response};
+    $tmpWikiACLs{solrStatus} = $raw->{_rc};
+    return unless $raw->{_rc} == 200;
+
     my ($oldMeta) = Foswiki::Func::readTopic($web, $topic);
     $tmpWikiACLs{acls} = {
         ALLOWTOPICVIEW   => $oldMeta->getPreference('ALLOWTOPICVIEW'),
@@ -199,9 +205,6 @@ sub beforeSaveHandler {
         DENYTOPICCHANGE  => $oldMeta->getPreference('DENYTOPICCHANGE')
     };
 
-    my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
-    my $search = $solr->entityDecode('topic:*Form text:"$wikiACL"', 1);
-    my $raw = $solr->solrSearch($search)->{raw_response};
     my $content = from_json($raw->{_content});
     my $r = $content->{response};
     return unless $r->{numFound};
@@ -227,6 +230,7 @@ sub beforeSaveHandler {
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+    return unless $tmpWikiACLs{solrStatus} == 200;
 
     my $skipIndex = 0;
     foreach my $key (keys %{$tmpWikiACLs{acls}}) {
@@ -956,7 +960,7 @@ sub tagFilter {
     my @html = ('<div>');
 
     my $isSelected = sub {
-        return 'selected="selected" data-default="1"' if $_[0] eq $_[1];
+        return 'selected="selected" data-default="1"' if defined $_[0] && defined $_[1] && $_[0] eq $_[1];
         return '';
     };
 
@@ -1721,7 +1725,7 @@ SCRIPT
     delete $fctx->{task_showexpandercol};
 
     # todo.. templates und so
-    if ( $pageSize ne -1 && $paging && $settings{totalsize} > $settings{pagesize}) {
+    if ( $pageSize ne -1 && $paging && defined $settings{totalsize} && defined $settings{pagesize} && $settings{totalsize} > $settings{pagesize}) {
         my $prev = $page - 1 || 1;
         my $next= $page + 1;
         my $pagination = '';

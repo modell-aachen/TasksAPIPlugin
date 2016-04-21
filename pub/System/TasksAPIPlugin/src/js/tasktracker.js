@@ -256,9 +256,11 @@
         self.tasksPanel.viewTask($nextActive);
       });
 
-
       if (params.id && params.tid == self.opts.id) {
-        var $task = findTask(params.id);
+        var $task = self.opts.container.find('.task').filter(function() {
+          return $(this).data('id') === params.id;
+        });
+
         if ($task.length) {
           self.tasksPanel.viewTask($task);
         } else {
