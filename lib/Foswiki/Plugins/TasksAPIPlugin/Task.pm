@@ -321,7 +321,7 @@ sub create {
         my $default = $f->{value};
         $default = $f->getDefaultValue if $f->can('getDefaultValue');
         $meta->putKeyed('FIELD', {
-            name => $name, title => $f->{tooltip}, value => defined($data{$name}) ? $data{$name} : $f->{value}
+            name => $name, title => $f->{tooltip}, value => defined($data{$name}) ? $data{$name} : $default
         });
     }
 
@@ -349,7 +349,6 @@ sub create {
             unless (defined $clsd && $clsd->{value}) {
                 $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
             }
-            $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => time });
         }
 
         my $mstatus = $meta->get('FIELD', $statusmap);
