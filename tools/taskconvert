@@ -31,6 +31,7 @@ my %cfg = (
   map        => {},
   nodry      => 0,
   reindex    => 0,
+  remove     => 0,
   source     => [],
   verbose    => 0,
 );
@@ -49,6 +50,7 @@ Getopt::Long::GetOptions(
   'map|m=s%'         => \$cfg{map},
   'nodry'            => \$cfg{nodry},
   'reindex'          => \$cfg{reindex},
+  'remove-actions'   => \$cfg{remove},
   'source|s=s@'      => \$cfg{source},
   'user-field|u=s@'  => \$cfg{logins},
   'verbose|v'        => \$cfg{verbose},
@@ -67,6 +69,18 @@ $cfg{logins} = [split(/,/, join(',', @{$cfg{logins}}))];
 collectHashValues('dateformats', 'defaults', 'filter', 'map');
 
 quit(1,1) unless scalar @{$cfg{source}};
+if ($cfg{remove}) {
+  if ($cfg{host}) {
+    require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
+    print "Processing host '$cfg{host}'...\n";
+    Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($cfg{host}, \&remove);
+  } else {
+    remove();
+  }
+
+  exit 0;
+}
+
 unless ($cfg{list}) {
   quit(1,1) unless $cfg{context};
   quit(1,1) unless $cfg{form};
@@ -132,6 +146,11 @@ sub printHelp {
 
         --reindex                     Forces TasksAPI to recreate its internal tasks index.
 
+        --remove-actions              Tries to remove all occurances of AT ACTION macros from the supplied source topic.
+                                      Usage:
+                                        --source 'MyWeb.MyTopic' --remove-actions
+                                        --source 'MyWeb.MyAutoINC00*' --remove-actions
+
   -s    --source                      List of webtopics to read ActionTracker actions from.
                                       You may also use an asterisk as wildcard character.
                                       Usage:
@@ -166,6 +185,52 @@ sub collectHashValues {
           $cfg{$field}{$map[0]} = $map[1];
         }
       }
+    }
+  }
+}
+
+sub remove {
+  if ($cfg{form} !~ /^$/ || $cfg{context} !~ /^$/) {
+    print "Parameter '--remove-actions' cannot be given along with '--form' or '--context' \n";
+    return;
+  }
+
+  new Foswiki('admin');
+  foreach my $source (@{$cfg{source}}) {
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
+    if ($topic =~ /\*/) {
+      $topic =~ s/\*/\.\*/g;
+      my @topics = Foswiki::Func::getTopicList($web);
+      foreach my $t (@topics) {
+        if ($t =~ /$topic/) {
+          print "Processing source topic '$web.$t'...\n" if $cfg{verbose};
+          removeActions($web, $t);
+        }
+      }
+    } else {
+      print "Processing source topic '$web.$topic'...\n" if $cfg{verbose};
+      removeActions($web, $topic);
+    }
+  }
+
+  print "\n\nYou have to pass parameter '--nodry' to remove those actions from their source topics!\n" unless $cfg{nodry};
+}
+
+sub removeActions {
+  my ($web, $topic) = @_;
+  return unless Foswiki::Func::topicExists($web, $topic);
+  my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
+
+  if ($cfg{nodry}) {
+    $text =~ s/\n*%ACTION\{(?:(?!%ACTION\{).)*%ENDACTION%\n*//gx;
+    Foswiki::Func::saveTopic(
+      $web, $topic, $meta, $text,
+      {dontlog => 1, minor => 1, forcenewrevision => 1}
+    );
+  } else {
+    print "Found actions in webtopic '$web.$topic':\n";
+    while ($text =~ s/\n*(%ACTION\{(?:(?!%ACTION\{).)*%ENDACTION%)\n*//x) {
+      print "---\n$1\n---\n\n";
     }
   }
 }

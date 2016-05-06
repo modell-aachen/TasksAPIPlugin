@@ -577,6 +577,11 @@ converting actions created by [[http://foswiki.org/Extensions/ActionTrackerPlugi
 
         --reindex                     Forces TasksAPI to recreate its internal tasks index.
 
+        --remove-actions              Tries to remove all occurances of AT ACTION macros from the supplied source topic.
+                                      Usage:
+                                        --source 'MyWeb.MyTopic' --remove-actions
+                                        --source 'MyWeb.MyAutoINC00*' --remove-actions
+
   -s    --source                      List of webtopics to read ActionTracker actions from.
                                       You may also use an asterisk as wildcard character.
                                       Usage:
