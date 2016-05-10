@@ -115,6 +115,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
     Foswiki::Func::registerTagHandler( 'TASKCONTEXTSELECTOR', \&tagContextSelector );
+    Foswiki::Func::registerTagHandler( 'MAKEDATE', \&makeDate );
 
     my %restopts = (authenticate => 1, validate => 0, http_allow => 'POST');
     Foswiki::Func::registerRESTHandler( 'attach', \&restAttach, %restopts );
@@ -1959,7 +1960,7 @@ FORMAT
     $out =~ s#\$id#$cset->{name}#g;
     $out =~ s#\$user#$cset->{actor}#g;
     $out =~ s#\$displayuser#_getDisplayName($cset->{actor})#eg;
-    $out =~ s#\$date#Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})#eg;
+    $out =~ s#\$date#makeDate(Foswiki::Time::formatTime($cset->{at}, $params->{timeformat}))#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
     my $cmt = $cset->{comment} || '';
     if ($plain) {
@@ -2038,6 +2039,17 @@ OPTION
     return <<SELECT;
 <select class="foswikiSelect" name="Context">$inner</select>
 SELECT
+}
+
+sub makeDate {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+    my $date = $params->{_DEFAULT};
+    $date = Foswiki::Time::formatTime(time()) unless $date;
+
+    if($date =~ /(\d{2}) (\w{3}) (\d{4})/) {
+         $date = "$1 %MAKETEXT{\"$2\"}% $3"
+    }
+    return $date;
 }
 
 sub tagInfo {
