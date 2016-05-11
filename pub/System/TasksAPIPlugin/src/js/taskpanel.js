@@ -1358,6 +1358,13 @@ TasksPanel = function(tasktracker) {
     });
   };
 
+  var checkCanChange = function(canChange) {
+    var func = canChange ? 'show' : 'hide';
+    ['comment', 'edit', 'upload'].forEach(function(btn) {
+      self.buttons[btn][func](0);
+    });
+  };
+
   var isAnimating = false;
   var animateTaskChange = function(direction) {
     var deferred = $.Deferred();
@@ -1375,6 +1382,8 @@ TasksPanel = function(tasktracker) {
         deferred.resolve(self.currentTask);
         return deferred.promise();
       }
+
+      checkCanChange(nextTask.data('task_data')._canChange);
 
       // scroll highlighted task into view...
       self.currentTask.removeClass('highlight');
@@ -1694,6 +1703,7 @@ TasksPanel = function(tasktracker) {
 
     self.isView = true;
     self.currentTask = $task;
+    checkCanChange($task.data('task_data')._canChange);
     self.currentTask.addClass('highlight');
     togglePermalinkButton($task);
     self.panel.empty();
