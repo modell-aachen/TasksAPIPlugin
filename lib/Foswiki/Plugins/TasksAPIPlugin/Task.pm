@@ -207,7 +207,8 @@ sub _checkACL {
     my $cache = Foswiki::Plugins::TasksAPIPlugin::_cachedACL($aclstring);
     return $cache if defined $cache;
 
-    foreach my $item (@$acl) {
+    my $_checkItem = sub {
+        my $item = shift;
         if ($user ne 'BaseUserMapping_666' && $item eq '*') {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
@@ -228,7 +229,12 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
         }
+    };
+
+    foreach my $item (@$acl) {
+        return 1 if $_checkItem->($item);
     }
+
     Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 0);
     0;
 }

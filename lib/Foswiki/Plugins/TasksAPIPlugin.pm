@@ -447,7 +447,9 @@ sub query {
     return {} unless @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
-        Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1])
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
+        $task->{_canChange} = $task->checkACL('change');
+        $task
     } @$ids;
 
     my $ret = {tasks => \@tasks, total => $total};
@@ -872,6 +874,7 @@ sub _enrich_data {
     }
 
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
+    $result->{_canChange} = $task->{_canChange} || 0;
 
     $result;
 }
@@ -1797,12 +1800,14 @@ sub _renderAttachment {
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
-    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$displayauthor</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td><td class="delete-attachment" title="%MAKETEXT{"Delete attachment"}%"><i class="fa fa-times"></i></td></tr>';
+    my $deleteBtn = $task->checkACL('change') ? '<td class="delete-attachment" title="%MAKETEXT{"Delete attachment"}%"><i class="fa fa-times"></i></td>' : '<td></td>';
+    my $format = $params->{format} || '<tr><td>%MIMEICON{"$name" size="24" theme="oxygen"}%</td><td class="by"><span>$displayauthor</span><span>$date</span></td><td>$name<a href="$name" target="_blank" class="hidden"></a></td><td>$size</td>$deleteBtn</tr>';
     $format =~ s#\$name#$attachment->{name}#g;
     $format =~ s#\$size#$attachment->{size}->{human}#g;
     $format =~ s#\$author#$author#g;
     $format =~ s#\$displayauthor#$displayauthor#g;
     $format =~ s#\$date#$date#g;
+    $format =~ s#\$deleteBtn#$deleteBtn#g;
     $format =~ s#\$taskstopic#$taskstopic#g;
     $format;
 }
