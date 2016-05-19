@@ -874,7 +874,8 @@ sub _enrich_data {
     }
 
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
-    $result->{_canChange} = $task->{_canChange} || 0;
+    $result->{_canChange} = $task->{_canChange};
+    $result->{_canChange} = 1 unless defined $result->{_canChange};
 
     $result;
 }
