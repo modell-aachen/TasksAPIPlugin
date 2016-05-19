@@ -1251,10 +1251,18 @@ sub restLink {
         } elsif (grep(/^$login$/, @informees)) {
             $params = "tid=taskgrid_inform;tab=tasks_inform";
         } else {
-            $params = "type=invalid";
+            # User is neither author, assignee, nor any informee.
+            # Check whether the user can access the context...
+            if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+                $params = "tab=all;tid=all";
+                $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+            } else {
+                # ... if not, decline view.
+                $params = "type=invalid";
+            }
         }
 
-        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params" unless $url;
     }
 
     Foswiki::Func::redirectCgiQuery(undef, $url) if $url;
