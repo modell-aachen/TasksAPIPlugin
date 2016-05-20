@@ -1047,7 +1047,10 @@ sub tagFilter {
             push(@html, @options);
             push(@html, "</select>");
         } elsif ($f->{type} =~ /^user/) {
-            # ToDo
+            my $macro = <<MACRO;
+%RENDERFOREDIT{form="$currentOptions->{form}" fields="$f->{name}" format="\$edit" header="" footer=""}%
+MACRO
+            push(@html, $macro);
         }
     }
 
@@ -1645,6 +1648,7 @@ SCRIPT
     if ($override) {
         my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
         foreach my $l (@list) {
+            next if $l =~ /^_/; # Skip select2 preset inputs
             my $val = $req->param("f_$l");
             if ($l !~ /_(l|r)$/) {
                 $query->{$l} = $val;

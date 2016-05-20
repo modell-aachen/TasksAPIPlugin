@@ -759,7 +759,7 @@
 
     $tracker.children('.filter').find('input, select').each(function() {
       var $filter = $(this);
-      $filter.val('')
+      $filter.val('');
       if ($filter.is('input')) {
         if ($filter.data('default')) {
           $filter.val($filter.data('default'));
@@ -776,6 +776,11 @@
           }
         });
       }
+    });
+
+    // Reset select2 user fields
+    $tracker.children('.filterr').find('.foswikiSelect2FieldInited').each(function() {
+      $(this).select2('data', null).select2('val', null);
     });
 
     $tracker.find('.btn-filter.btn-apply').trigger('click');
