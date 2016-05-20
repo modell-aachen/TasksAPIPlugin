@@ -272,6 +272,14 @@
         hintNoAccess();
       }
 
+      // allign filter/normalize width
+      var hints = $(self).children('.filter').find('.hint');
+      var maxHint = _.max(hints, function(h) {return $(h).width();});
+      var maxWidth = $(maxHint).width() || 100;
+      hints.each(function() {
+        $(this).css('min-width', (10+maxWidth) + 'px');
+      });
+
       return this;
     });
   };
