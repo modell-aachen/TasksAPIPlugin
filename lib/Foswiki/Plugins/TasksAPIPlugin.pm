@@ -557,22 +557,24 @@ sub restDownload {
 
     unless ($id && $file) {
         $response->header(-status => 400);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             'code' => 'client_error',
             msg => "Request error: Missing filename or task id parameter."
-        });
+        }));
+        return '';
     }
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('view')) {
         $response->header(-status => 403);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             code => 'acl_view',
             msg => 'No permission to download files from this task'
-        });
+        }));
+        return '';
     }
 
     $response->header(
@@ -590,12 +592,14 @@ sub restDownload {
     if($@) {
         Foswiki::Func::writeWarning( $@ );
         $response->header(-status => 500);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             'code' => 'server_error',
             msg => "Server error: $@"
-        });
+        }));
     }
+
+    return '';
 }
 
 sub restDelete {
@@ -607,22 +611,24 @@ sub restDelete {
 
     unless ($id && $file) {
         $response->header(-status => 400);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             'code' => 'client_error',
             msg => "Request error: Missing filename or task id parameter."
-        });
+        }));
+        return '';
     }
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             code => 'acl_change',
             msg => 'No permission to remove attachments of this task'
-        });
+        }));
+        return '';
     }
 
     my $trash = $Foswiki::cfg{TrashWebName} || 'Trash';
@@ -665,11 +671,12 @@ sub restAttach {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             code => 'acl_change',
             msg => 'No permission to attach files to this task'
-        });
+        }));
+        return '';
     }
 
     eval {
@@ -677,11 +684,12 @@ sub restAttach {
         my $stream = $q->upload('filepath');
         unless ($stream) {
             $response->header(-status => 405);
-            return to_json({
+            $response->body(to_json({
                 status => 'error',
                 code => 'server_error',
                 msg => 'Attachment has zero size'
-            });
+            }));
+            return '';
         }
 
         my @stats = stat $stream;
@@ -718,19 +726,22 @@ sub restAttach {
     if ($@) {
         Foswiki::Func::writeWarning( $@ );
         $response->header(-status => 500);
-        return to_json({
+        $response->body(to_json({
             status => 'error',
             'code' => 'server_error',
             msg => "Server error: $@"
-        });
+        }));
+        return '';
     }
 
     my ($date, $user, $rev, $comment) = Foswiki::Func::getRevisionInfo($web, $topic, 0, $name);
-    return to_json({
+    $response->header(-status => 200);
+    $response->body(to_json({
         status => 'ok',
         filedate => $date,
         filerev => $rev
-    });
+    }));
+    return '';
 }
 
 sub restCreate {
@@ -750,11 +761,13 @@ sub restCreate {
         Foswiki::Func::loadTemplate( $templatefile );
     }
 
-    return to_json({
+    $response->header(-status => 200);
+    $response->body(to_json({
         status => 'ok',
         id => $res->{id},
         data => _enrich_data($res, $q->param('tasktemplate')),
-    });
+    }));
+    return '';
 }
 
 sub restUpdate {
@@ -768,7 +781,9 @@ sub restUpdate {
     }
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, delete $data{id});
     unless ($task->checkACL('change')) {
-        return '{"status":"error","code":"acl_change","msg":"No permission to update task"}';
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        return '';
     }
 
     $task->update(%data);
@@ -783,10 +798,12 @@ sub restUpdate {
     }
 
     _deepen([$task], $depth, $order);
-    return to_json({
+    $response->header(-status => 200);
+    $response->body(to_json({
         status => 'ok',
         data => _enrich_data($task, $q->param('tasktemplate')),
-    });
+    }));
+    return '';
 }
 
 sub restMultiUpdate {
@@ -803,7 +820,8 @@ sub restMultiUpdate {
         $task->update(%$data);
         $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
     }
-    return to_json(\%res);
+    $response->body(to_json(\%res));
+    return '';
 }
 
 # Translate stuff without having to worry about escaping
@@ -1066,13 +1084,17 @@ sub restSearch {
         $res = _query(%$req);
     };
     if ($@) {
-        return to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"});
+        $response->header(-status => 500);
+        $response->body(to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"}));
+        return '';
     }
 
     my $depth = $req->{depth} || 0;
     _deepen($res->{tasks}, $depth, $req->{order});
     my @tasks = map { _enrich_data($_, $req->{tasktemplate}) } @{$res->{tasks}};
-    return to_json({status => 'ok', data => \@tasks});
+    $response->header(-status => 200);
+    $response->body(to_json({status => 'ok', data => \@tasks}));
+    return '';
 }
 
 sub restLease {
@@ -1098,7 +1120,9 @@ sub restLease {
             } else {
                 my $cuid = $lease->{user};
                 my $ccuid = $session->{user};
-                return to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}) unless $cuid eq $ccuid;
+                $response->header(-status => 403);
+                $response->body(to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"})) unless $cuid eq $ccuid;
+                return '';
             }
         }
 
@@ -1140,7 +1164,9 @@ sub restLease {
     my @scripts = _getZone($session, $web, $topic, $meta, 'script');
     my @styles = _getZone($session, $web, $topic, $meta, 'head');
 
-    return to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles});
+    $response->header(-status => 200);
+    $response->body(to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles}));
+    return '';
 }
 
 # Fetch info about zones, used for dynamically loading scripts for the task
@@ -1170,7 +1196,12 @@ sub restRelease {
     my $q = $session->{request};
     my $r = from_json($q->param('request') || '{}');
 
-    return to_json({status => 'ok'}) unless $r->{id};
+    unless ($r->{id}) {
+        $response->header(-status => 200);
+        $response->body(to_json({status => 'ok'}));;
+        return '';
+    }
+
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $r->{id}));
 
     my $lease = $task->{meta}->getLease();
@@ -1180,11 +1211,15 @@ sub restRelease {
         
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
-            return to_json({status => 'ok'});
+            $response->header(-status => 200);
+            $response->body(to_json({status => 'ok'}));
+            return '';
         }
     }
 
-    return to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"});
+    $response->header(-status => 500);
+    $response->body(to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"}));
+    return '';
 }
 
 sub restLink {
