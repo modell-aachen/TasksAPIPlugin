@@ -557,7 +557,7 @@ sub restDownload {
 
     unless ($id && $file) {
         $response->header(-status => 400);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             'code' => 'client_error',
             msg => "Request error: Missing filename or task id parameter."
@@ -569,7 +569,7 @@ sub restDownload {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('view')) {
         $response->header(-status => 403);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             code => 'acl_view',
             msg => 'No permission to download files from this task'
@@ -592,7 +592,7 @@ sub restDownload {
     if($@) {
         Foswiki::Func::writeWarning( $@ );
         $response->header(-status => 500);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             'code' => 'server_error',
             msg => "Server error: $@"
@@ -611,7 +611,7 @@ sub restDelete {
 
     unless ($id && $file) {
         $response->header(-status => 400);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             'code' => 'client_error',
             msg => "Request error: Missing filename or task id parameter."
@@ -623,7 +623,7 @@ sub restDelete {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             code => 'acl_change',
             msg => 'No permission to remove attachments of this task'
@@ -648,7 +648,7 @@ sub restDelete {
         name => $newid,
         actor => Foswiki::Func::getWikiName(),
         at => scalar(time),
-        changes => to_json(\@changes)
+        changes => encode_json(\@changes)
     });
 
     $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -671,7 +671,7 @@ sub restAttach {
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             code => 'acl_change',
             msg => 'No permission to attach files to this task'
@@ -684,7 +684,7 @@ sub restAttach {
         my $stream = $q->upload('filepath');
         unless ($stream) {
             $response->header(-status => 405);
-            $response->body(to_json({
+            $response->body(encode_json({
                 status => 'error',
                 code => 'server_error',
                 msg => 'Attachment has zero size'
@@ -715,7 +715,7 @@ sub restAttach {
             name => $newid,
             actor => Foswiki::Func::getWikiName(),
             at => scalar(time),
-            changes => to_json(\@changes)
+            changes => encode_json(\@changes)
         });
 
         $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -726,7 +726,7 @@ sub restAttach {
     if ($@) {
         Foswiki::Func::writeWarning( $@ );
         $response->header(-status => 500);
-        $response->body(to_json({
+        $response->body(encode_json({
             status => 'error',
             'code' => 'server_error',
             msg => "Server error: $@"
@@ -736,7 +736,7 @@ sub restAttach {
 
     my ($date, $user, $rev, $comment) = Foswiki::Func::getRevisionInfo($web, $topic, 0, $name);
     $response->header(-status => 200);
-    $response->body(to_json({
+    $response->body(encode_json({
         status => 'ok',
         filedate => $date,
         filerev => $rev
@@ -762,7 +762,7 @@ sub restCreate {
     }
 
     $response->header(-status => 200);
-    $response->body(to_json({
+    $response->body(encode_json({
         status => 'ok',
         id => $res->{id},
         data => _enrich_data($res, $q->param('tasktemplate')),
@@ -799,7 +799,7 @@ sub restUpdate {
 
     _deepen([$task], $depth, $order);
     $response->header(-status => 200);
-    $response->body(to_json({
+    $response->body(encode_json({
         status => 'ok',
         data => _enrich_data($task, $q->param('tasktemplate')),
     }));
@@ -820,7 +820,7 @@ sub restMultiUpdate {
         $task->update(%$data);
         $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
     }
-    $response->body(to_json(\%res));
+    $response->body(encode_json(\%res));
     return '';
 }
 
@@ -1085,7 +1085,7 @@ sub restSearch {
     };
     if ($@) {
         $response->header(-status => 500);
-        $response->body(to_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"}));
+        $response->body(encode_json({status => 'error', 'code' => 'server_error', msg => "Server error: $@"}));
         return '';
     }
 
@@ -1093,7 +1093,7 @@ sub restSearch {
     _deepen($res->{tasks}, $depth, $req->{order});
     my @tasks = map { _enrich_data($_, $req->{tasktemplate}) } @{$res->{tasks}};
     $response->header(-status => 200);
-    $response->body(to_json({status => 'ok', data => \@tasks}));
+    $response->body(encode_json({status => 'ok', data => \@tasks}));
     return '';
 }
 
@@ -1121,7 +1121,7 @@ sub restLease {
                 my $cuid = $lease->{user};
                 my $ccuid = $session->{user};
                 $response->header(-status => 403);
-                $response->body(to_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"})) unless $cuid eq $ccuid;
+                $response->body(encode_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"})) unless $cuid eq $ccuid;
                 return '';
             }
         }
@@ -1165,7 +1165,7 @@ sub restLease {
     my @styles = _getZone($session, $web, $topic, $meta, 'head');
 
     $response->header(-status => 200);
-    $response->body(to_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles}));
+    $response->body(encode_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles}));
     return '';
 }
 
@@ -1198,7 +1198,7 @@ sub restRelease {
 
     unless ($r->{id}) {
         $response->header(-status => 200);
-        $response->body(to_json({status => 'ok'}));;
+        $response->body(encode_json({status => 'ok'}));;
         return '';
     }
 
@@ -1212,13 +1212,12 @@ sub restRelease {
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
             $response->header(-status => 200);
-            $response->body(to_json({status => 'ok'}));
+            $response->body(encode_json({status => 'ok'}));
             return '';
         }
     }
 
-    $response->header(-status => 500);
-    $response->body(to_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"}));
+    $response->body(encode_json({status => 'error', 'code' => 'clear_lease_failed', msg => "Could not clear lease"}));
     return '';
 }
 
