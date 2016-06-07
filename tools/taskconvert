@@ -264,8 +264,8 @@ sub processSource {
   my ($web, $topic) = @_;
 
   unless (Foswiki::Func::topicExists($web, $topic)) {
-    print STDERR "Skipping given source '$web.$topic'. The specified webtopic doesn't exist!\n";
-    return;
+    print STDERR "Aborting! Given source '$web.$topic'. The specified webtopic doesn't exist!\n";
+    exit 1;
   }
 
   my ($fweb, $ftopic, $ctx);
@@ -287,13 +287,14 @@ sub processSource {
 
   my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
   my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
-  unless (scalar @{$set->{ACTIONS}}) {
+  my @sets = grep {/defined/} map {$_->isa('Foswiki::Plugins::ActionTrackerPlugin::Action')} @{$set->{ACTIONS}};
+
+  unless (scalar @sets) {
     print "No actions found in source topic '$web.$topic'!\n" if $cfg{verbose};
     return;
   }
 
-  foreach my $a (@{$set->{ACTIONS}}) {
-    next unless $a && ref($a) && $a->isa('Foswiki::Plugins::ActionTrackerPlugin::Action');
+  foreach my $a (@sets) {
     my $action = {%$a, %{$a->{unloaded_fields}}};
 
     my $skip = 0;
@@ -342,7 +343,7 @@ sub processSource {
       @missing = map {"$_ ($cfg{map}{$_})"} @missing;
       my $m = join(', ', @missing);
       print "Missing keys: $m for action $action->{uid}\n" if $cfg{verbose};
-      next unless $cfg{force};
+      exit 1 unless $cfg{force};
     }
 
     $task{Context} = $ctx;
