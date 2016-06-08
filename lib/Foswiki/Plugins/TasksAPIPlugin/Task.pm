@@ -476,7 +476,7 @@ sub update {
         $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
-    my $changed = 0;
+    my $changed = $data{cid} || @changes || @comment;
 
     unless (Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')) {
         # just update the comment if a changeset id is given
@@ -485,7 +485,6 @@ sub update {
             my $set = $meta->get('TASKCHANGESET', $cid);
             my $cmt = pop(@comment);
             $set->{comment} = $cmt;
-
             if ( $set->{changes} eq '[]' && $cmt =~ /^\s*$/ ) {
                 $meta->remove('TASKCHANGESET', $cid);
             } else {
