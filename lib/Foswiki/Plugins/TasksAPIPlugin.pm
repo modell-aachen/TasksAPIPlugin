@@ -1120,9 +1120,11 @@ sub restLease {
             } else {
                 my $cuid = $lease->{user};
                 my $ccuid = $session->{user};
-                $response->header(-status => 403);
-                $response->body(encode_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"})) unless $cuid eq $ccuid;
-                return '';
+                unless ($cuid eq $ccuid) {
+                    $response->header(-status => 403) ;
+                    $response->body(encode_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}));
+                    return '';
+                }
             }
         }
 
