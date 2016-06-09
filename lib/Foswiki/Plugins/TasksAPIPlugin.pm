@@ -1166,9 +1166,23 @@ sub restLease {
     my @scripts = _getZone($session, $web, $topic, $meta, 'script');
     my @styles = _getZone($session, $web, $topic, $meta, 'head');
 
+    $editor = _removeBlocks($editor);
     $response->header(-status => 200);
     $response->body(encode_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles}));
     return '';
+}
+
+sub _removeBlocks {
+    my $text = shift;
+
+    my $removed = {};
+    my @blocks = ('literal', 'noautolink');
+    foreach my $block (@blocks) {
+        $text = Foswiki::takeOutBlocks($text, $block, $removed);
+        Foswiki::putBackBlocks(\$text, $removed, $block, '');
+    }
+
+    $text;
 }
 
 # Fetch info about zones, used for dynamically loading scripts for the task
