@@ -1121,9 +1121,11 @@ sub restLease {
             } else {
                 my $cuid = $lease->{user};
                 my $ccuid = $session->{user};
-                $response->header(-status => 403);
-                $response->body(encode_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"})) unless $cuid eq $ccuid;
-                return '';
+                unless ($cuid eq $ccuid) {
+                    $response->header(-status => 403) ;
+                    $response->body(encode_json({status => 'error', code=> 'lease_taken', msg => "Lease taken by another user"}));
+                    return '';
+                }
             }
         }
 
@@ -1165,9 +1167,23 @@ sub restLease {
     my @scripts = _getZone($session, $web, $topic, $meta, 'script');
     my @styles = _getZone($session, $web, $topic, $meta, 'head');
 
+    $editor = _removeBlocks($editor);
     $response->header(-status => 200);
     $response->body(encode_json({status => 'ok', editor => $editor, scripts => \@scripts, styles => \@styles}));
     return '';
+}
+
+sub _removeBlocks {
+    my $text = shift;
+
+    my $removed = {};
+    my @blocks = ('literal', 'noautolink');
+    foreach my $block (@blocks) {
+        $text = Foswiki::takeOutBlocks($text, $block, $removed);
+        Foswiki::putBackBlocks(\$text, $removed, $block, '');
+    }
+
+    $text;
 }
 
 # Fetch info about zones, used for dynamically loading scripts for the task

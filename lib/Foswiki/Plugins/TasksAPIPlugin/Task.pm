@@ -59,7 +59,9 @@ sub load {
     $data{form} = $form;
     $data{text} = $meta->text;
     $data{meta} = $meta;
-    __PACKAGE__->new(%data);
+    my $task = __PACKAGE__->new(%data);
+    $task->{_canChange} = $task->checkACL('change');
+    $task;
 }
 
 sub data {
@@ -368,6 +370,7 @@ sub create {
     $task->_postCreate();
     $task->_postUpdate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
+    $task->{_canChange} = $task->checkACL('change');
     $task;
 }
 

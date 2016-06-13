@@ -10,7 +10,7 @@
         '/TasksAPIPlugin/assets/ajax-loader.gif'
       ];
 
-      var txt = jsi18n.get('tasksapi', 'Please wait...')
+      var txt = jsi18n.get('tasksapi', 'Please wait...');
       $.blockUI({
         css: {
           backgroundColor: '#fff',
@@ -532,7 +532,7 @@
       });
     } else {
       var state = isOpen ? 'closed' : 'open';
-      payload.Status = state
+      payload.Status = state;
       var mappedState = getMappedState(opts, state);
       if ( !_.isUndefined(mappedState) ) {
         payload[mappedState.field] = mappedState.value;
@@ -677,6 +677,19 @@
       }
 
       var $tracker = $(this).closest('.tasktracker');
+      $(this).children('.task').each(function(idx, e) {
+        var $task = $(e);
+        var data = unescapeHTML( $.parseJSON($task.children('.task-data-container').children('.task-data').text()) );
+        initTaskElement($task, data);
+        $task.find('.task-children .tasks').each(function() {
+          $(this).children('.task').each(function() {
+            var $task = $(this);
+            var data = unescapeHTML( $.parseJSON($task.children('.task-data-container').children('.task-data').text()) );
+            initTaskElement($task, data);
+          });
+        });
+      });
+
       var loaded = $.Event('tasksLoaded');
       $tracker.trigger(loaded);
     });
@@ -759,7 +772,7 @@
 
     $tracker.children('.filter').find('input, select').each(function() {
       var $filter = $(this);
-      $filter.val('')
+      $filter.val('');
       if ($filter.is('input')) {
         if ($filter.data('default')) {
           $filter.val($filter.data('default'));
@@ -814,7 +827,7 @@
           q[aname].substring = val;
         }
       } else {
-        q[name] = val
+        q[name] = val;
       }
     });
 
@@ -846,7 +859,7 @@
         // Otherwise, if the user left that field empty, we gonna
         // select today's date
         if (!q[p].hasTo) {
-          to.setTime(q[p].from * 1e3)
+          to.setTime(q[p].from * 1e3);
         }
       }
 
@@ -991,7 +1004,7 @@
         var val = arr[1];
 
         $form.find('input[name="' + name + '"]').remove();
-        var $in = $('<input type="hidden" name="' + name + '" value="' + val + '" />')
+        var $in = $('<input type="hidden" name="' + name + '" value="' + val + '" />');
         $in.appendTo($form);
       });
     });
@@ -1005,7 +1018,7 @@
     $(document).on('click', '.tasktracker .btn-filter.btn-apply', applyFilter);
     $(document).on('click', '.tasktracker .btn-filter.btn-reset', resetFilter);
 
-    $('.tasktracker').livequery(function() { $(this).tasksGrid(); });
+    $('.tasktracker:visible').livequery(function() { $(this).tasksGrid(); });
     window.tasksapi = new TasksAPI();
 
     // Listen for PDF exports
