@@ -895,7 +895,8 @@ sub _enrich_data {
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
     $result->{_canChange} = $task->{_canChange} || 0;
 
-    $result;
+    $result->{html} = _removeBlocks($result->{html});
+    return $result;
 }
 
 sub tagAmpel {
