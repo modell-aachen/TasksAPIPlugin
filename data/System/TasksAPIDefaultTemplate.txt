@@ -2,7 +2,7 @@
 %{<verbatim class="tml">}%
 
 %{the entire grid}%
-%TMPL:DEF{"tasksapi::grid"}%<literal><noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
+%TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
 }%%TMPL:P{"tasksapi::grid::filter"}%%{
 }%<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
     <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
@@ -10,7 +10,7 @@
   </table>
   <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
   <div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
-</div></noautolink></literal>%TMPL:END%
+</div></noautolink>%TMPL:END%
 
 
 %{defines the surrounding markup for task filters}%
