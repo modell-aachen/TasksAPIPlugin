@@ -33,6 +33,8 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "prj_package": "Projekt-Arbeitspaket",
     "prj_task": "Projekt-Aufgabe",
     "auditmeasure": "Audit-Maßname",
+    "internal_project_task": "Interne Projekt-Aufgabe",
+    "risk": "Risiko-Aufgabe",
     "open": "offen",
     "closed": "geschlossen",
     "deleted": "gelöscht",
