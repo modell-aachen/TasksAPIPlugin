@@ -262,7 +262,7 @@ sub getPref {
     return unless defined $pref;
 
     $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
-    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg if $1;
+    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
     $pref =~ s/\$formweb/$prefmeta->web/eg;
 
     if (!defined $subkey) {
