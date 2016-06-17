@@ -2004,7 +2004,7 @@ sub _shorten {
 sub _decodeChanges {
     my $changes = shift;
     return {} unless $changes;
-    $changes = decode_json($changes);
+    $changes = from_json($changes);
     if (ref $changes eq 'ARRAY') {
         $changes = { map { ($_->{name}, $_) } @$changes };
     }
