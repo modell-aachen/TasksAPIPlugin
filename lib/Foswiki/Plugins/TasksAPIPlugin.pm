@@ -1068,7 +1068,7 @@ sub tagFilter {
             push(@html, "</select>");
         } elsif ($f->{type} =~ /^user$/) {
             my $macro = <<MACRO;
-%RENDERFOREDIT{form="$currentOptions->{form}" fields="$f->{name}" format="<span class='hint' style='margin-right: -2px; margin-bottom: 3px;'>\$xlatedescription</span> \$edit" header="" footer=""}%
+%RENDERFOREDIT{form="$ftopic" fields="$f->{name}" format="<span class='hint' style='margin-right: -2px; margin-bottom: 3px;'>\$xlatedescription</span> \$edit" header="" footer=""}%
 MACRO
             push(@html, $macro);
         } elsif ($f->{type} =~ /^user\+multi$/) {
