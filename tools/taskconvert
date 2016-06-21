@@ -287,7 +287,7 @@ sub processSource {
 
   my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
   my $set = Foswiki::Plugins::ActionTrackerPlugin::ActionSet::load($web, $topic, $text, 1);
-  my @sets = grep {/defined/} map {$_->isa('Foswiki::Plugins::ActionTrackerPlugin::Action')} @{$set->{ACTIONS}};
+  my @sets = grep {$_->isa('Foswiki::Plugins::ActionTrackerPlugin::Action')} @{$set->{ACTIONS}};
 
   unless (scalar @sets) {
     print "No actions found in source topic '$web.$topic'!\n" if $cfg{verbose};
