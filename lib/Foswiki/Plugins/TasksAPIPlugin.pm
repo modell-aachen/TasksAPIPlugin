@@ -1705,7 +1705,11 @@ SCRIPT
             next if $l =~ /^_/; # Skip select2 preset inputs
             my $val = $req->param("f_$l");
             if ($l !~ /_(l|r)$/) {
-                $query->{$l} = $val;
+                if ($l eq 'Status' && $val eq 'all') {
+                    $query->{$l} = ['open', 'closed'];
+                } else {
+                    $query->{$l} = $val;
+                }
             } else {
                 my %range;
 
