@@ -800,8 +800,10 @@
     });
 
     // Reset select2 user fields
-    $tracker.children('.filterr').find('.foswikiSelect2FieldInited').each(function() {
-      $(this).select2('data', null).select2('val', null);
+    $tracker.children('.filter').find('.foswikiSelect2FieldInited').each(function() {
+      var $select = $(this);
+      $select.select2('data', null);
+      $select.select2('val', null);
     });
 
     $tracker.find('.btn-filter.btn-apply').trigger('click');

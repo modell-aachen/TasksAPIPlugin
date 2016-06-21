@@ -995,7 +995,7 @@ sub tagFilter {
     foreach my $f (@$fields) {
         next unless $f->{name} eq $filter;
         $title = $f->{title} || $f->{name} unless $title;
-        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>");
+        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>") unless $f->{type} =~ /^user/;
 
         if ($f->{type} =~ /^date2?$/) {
             my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
@@ -1066,11 +1066,13 @@ sub tagFilter {
             push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
             push(@html, @options);
             push(@html, "</select>");
-        } elsif ($f->{type} =~ /^user/) {
+        } elsif ($f->{type} =~ /^user$/) {
             my $macro = <<MACRO;
-%RENDERFOREDIT{form="$currentOptions->{form}" fields="$f->{name}" format="\$edit" header="" footer=""}%
+%RENDERFOREDIT{form="$currentOptions->{form}" fields="$f->{name}" format="<span class='hint' style='margin-right: -2px; margin-bottom: 3px;'>\$xlatedescription</span> \$edit" header="" footer=""}%
 MACRO
             push(@html, $macro);
+        } elsif ($f->{type} =~ /^user\+multi$/) {
+            # ToDo
         }
     }
 
