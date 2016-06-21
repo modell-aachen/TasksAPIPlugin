@@ -893,7 +893,8 @@ sub _enrich_data {
     }
 
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
-    $result->{_canChange} = $task->{_canChange} || 0;
+    $result->{_canChange} = $task->{_canChange};
+    $result->{_canChange} = 1 unless defined $result->{_canChange};
 
     $result->{html} = _removeBlocks($result->{html});
     return $result;
@@ -1066,7 +1067,10 @@ sub tagFilter {
             push(@html, @options);
             push(@html, "</select>");
         } elsif ($f->{type} =~ /^user/) {
-            # ToDo
+            my $macro = <<MACRO;
+%RENDERFOREDIT{form="$currentOptions->{form}" fields="$f->{name}" format="\$edit" header="" footer=""}%
+MACRO
+            push(@html, $macro);
         }
     }
 
@@ -1302,10 +1306,18 @@ sub restLink {
         } elsif (grep(/^$login$/, @informees)) {
             $params = "tid=taskgrid_inform;tab=tasks_inform";
         } else {
-            $params = "type=invalid";
+            # User is neither author, assignee, nor any informee.
+            # Check whether the user can access the context...
+            if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+                $params = "tab=all;tid=all";
+                $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+            } else {
+                # ... if not, decline view.
+                $params = "type=invalid";
+            }
         }
 
-        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params" unless $url;
     }
 
     Foswiki::Func::redirectCgiQuery(undef, $url) if $url;
@@ -1688,6 +1700,7 @@ SCRIPT
     if ($override) {
         my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
         foreach my $l (@list) {
+            next if $l =~ /^_/; # Skip select2 preset inputs
             my $val = $req->param("f_$l");
             if ($l !~ /_(l|r)$/) {
                 $query->{$l} = $val;
