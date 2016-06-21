@@ -2,7 +2,6 @@
 
 %TMPL:DEF{"ModacMailTo"}%%TASKSAPI_MAIL_TO%%TMPL:END%
 %TMPL:DEF{"ModacMailTitle"}%%MAKETEXT{"Task summary"}%%TMPL:END%
-%TMPL:DEF{"ModacMailFrom"}%%WIKIWEBMASTERNAME% <%WIKIWEBMASTER%>%TMPL:END%
 
 %TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 %TMPL:DEF{"ModacMailType"}%text/html%TMPL:END%
