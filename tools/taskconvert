@@ -182,7 +182,7 @@ sub collectHashValues {
         $cfg{$field}{$k} = shift @pairs;
         foreach my $pair (@pairs) {
           my @map = split(/=/, $pair);
-          $cfg{$field}{$map[0]} = $map[1];
+          $cfg{$field}{$map[0]} = $map[1] // '';
         }
       }
     }
@@ -326,7 +326,7 @@ sub processSource {
         } else {
           $task{$v} = $action->{$k};
         }
-      } elsif ($cfg{defaults}{$v}) {
+      } elsif (defined $cfg{defaults}{$v}) {
         print "Using default value for mapping of field '$k': $v -> $cfg{defaults}{$v}.\n" if $cfg{verbose};
         $task{$v} = $cfg{defaults}{$v};
       } else {
