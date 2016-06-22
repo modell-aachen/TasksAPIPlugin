@@ -508,7 +508,7 @@ sub update {
                 name => $newid,
                 actor => $Foswiki::Plugins::SESSION->{user},
                 at => scalar(time),
-                changes => to_json(\@changes),
+                changes => encode_json(\@changes),
                 @comment
             });
             $self->{changeset} = $newid;

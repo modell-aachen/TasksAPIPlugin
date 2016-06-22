@@ -53,3 +53,4 @@ tools/virtualhosts-taskindex 0755
 tools/taskconvert 0755
 tools/tasksummary 0755
 tools/taskupdate 0755
+tools/taskfixencoding 0755

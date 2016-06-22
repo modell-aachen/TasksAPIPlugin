@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+do '../bin/setlib.cfg';
+require Foswiki;
+my $session = new Foswiki('admin');
+
+require Foswiki::Func;
+require Foswiki::Plugins::TasksAPIPlugin;
+
+use JSON;
+use v5.12;
+
+my %cfg = (
+  host    => '',
+  nodry      => 0,
+);
+
+Getopt::Long::GetOptions(
+  'host=s'           => \$cfg{host},
+  'nodry'            => \$cfg{nodry},
+);
+
+sub process {
+	use Data::Dumper;
+	my $query = Foswiki::Plugins::TasksAPIPlugin::query();
+	my @tasks = @{$query->{tasks}};
+
+	foreach(@tasks){
+		my ($web, $topic) = (split /\./, $_->{id});
+		my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+		my $changesets = $task->{meta}->find('TASKCHANGESET');
+		foreach($changesets){
+			my $changeset = $task->{meta}->get('TASKCHANGESET', $_);
+			eval {
+				decode_json($changeset->{changes});
+			};
+			if($@){
+				print "Bad encoding on:\n";
+				print(Dumper($changeset->{changes}));
+				print "Fixing it...\n";
+				eval {
+					my $old_changes = from_json($changeset->{changes});
+					$changeset->{changes} = encode_json($old_changes);
+					print "Converted to:\n";
+					print(Dumper($changeset->{changes}));
+					$task->{meta}->putKeyed('TASKCHANGESET', $changeset);
+				};
+				if($@){
+					print "ERROR: Could not fix the encoding. Aborting...\n";
+					return 0;
+				}
+			}
+		}
+		if($cfg{nodry}){
+			$task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
+			Foswiki::Plugins::TasksAPIPlugin::_index($task);
+		}
+	}
+	unless($cfg{nodry}){
+		print "This was a dry-run. Nothing has been saved.\n";
+	}
+	return 1;
+}
+
+if ($cfg{host}) {
+  require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
+  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($cfg{host}, \&process);
+} else {
+  process();
+}
+
+1;
