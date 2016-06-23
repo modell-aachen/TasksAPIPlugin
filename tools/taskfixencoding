@@ -36,6 +36,7 @@ sub process {
 		my $changesets = $task->{meta}->find('TASKCHANGESET');
 		foreach($changesets){
 			my $changeset = $task->{meta}->get('TASKCHANGESET', $_);
+			next unless defined $changeset;
 			eval {
 				decode_json($changeset->{changes});
 			};
