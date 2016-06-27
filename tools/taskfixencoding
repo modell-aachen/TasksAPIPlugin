@@ -37,7 +37,13 @@ sub process {
 
 	foreach(@tasks){
 		my ($web, $topic) = (split /\./, $_->{id});
-		my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+		my $task;
+		eval {
+			$task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+		};
+		if($@){
+			next;
+		}
 		my $changesets = $task->{meta}->find('TASKCHANGESET');
 		foreach($changesets){
 			my $changeset = $task->{meta}->get('TASKCHANGESET', $_);
