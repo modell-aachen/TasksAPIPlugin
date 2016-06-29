@@ -1,14 +1,4 @@
 my $this = shift;
 my $fixencodingscript = Foswiki::Configure::Package::_mapTarget($this->{_root}, 'tools/taskfixencoding');
-my $hostname = "";
-eval {
-	require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
-	Foswiki::Contrib::VirtualHostingContrib::VirtualHost->import();
-	$hostname = Foswiki::Contrib::VirtualHostingContrib::VirtualHost->hostname();
-};
-my $hostFlag = "";
-if($hostname){
-	$hostFlag = "--host=$hostname";
-}
-my $ret = `$fixencodingscript --nodry $hostFlag`;
+my $ret = `$fixencodingscript --nodry`;
 return "TasksAPIPlugin postinstall:\n$ret";
