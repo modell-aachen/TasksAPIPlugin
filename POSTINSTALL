@@ -10,4 +10,5 @@ my $hostFlag = "";
 if($hostname){
 	$hostFlag = "--host=$hostname";
 }
-return `$fixencodingscript --nodry $hostFlag`;
+my $ret = `$fixencodingscript --nodry $hostFlag`;
+return "TasksAPIPlugin postinstall:\n$ret";
