@@ -10,4 +10,4 @@ my $hostFlag = "";
 if($hostname){
 	$hostFlag = "--host=$hostname";
 }
-system "$fixencodingscript --nodry $hostFlag";
+return `$fixencodingscript --nodry $hostFlag`;
