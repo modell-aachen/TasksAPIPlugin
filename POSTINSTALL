@@ -1,14 +1,17 @@
+use Cwd;
 my $this = shift;
+my $toolsDir = Foswiki::Configure::Package::_mapTarget($this->{_root}, 'tools/');
 my $fixencodingscript = Foswiki::Configure::Package::_mapTarget($this->{_root}, 'tools/taskfixencoding');
-my $hostname = "";
-eval {
-	require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
-	Foswiki::Contrib::VirtualHostingContrib::VirtualHost->import();
-	$hostname = $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT;
-};
-my $hostFlag = "";
-if($hostname){
-	$hostFlag = "--host=$hostname";
-}
-my $ret = `$fixencodingscript --nodry $hostFlag`;
-return "TasksAPIPlugin postinstall:\n$ret";
+
+my @returnMessages = ();
+
+my $originalCwd = cwd;
+chdir $toolsDir;
+push(@returnMessages, "Running on standard host...\n");
+push(@returnMessages, `$fixencodingscript --nodry`);
+
+push(@returnMessages, "Running on virtual hosts...\n");
+push(@returnMessages, `$fixencodingscript --host=all --nodry`);
+
+chdir $originalCwd;
+return "TasksAPIPlugin postinstall:\n" . join("", @returnMessages);

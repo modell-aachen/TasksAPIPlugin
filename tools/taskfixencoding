@@ -85,7 +85,12 @@ sub process {
 
 if ($cfg{host}) {
   require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
-  Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($cfg{host}, \&process);
+  if ($cfg{host} eq 'all'){
+  	Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on_each(\&process);
+  }
+  else {
+  	Foswiki::Contrib::VirtualHostingContrib::VirtualHost->run_on($cfg{host}, \&process);
+  }
 } else {
   process();
 }
