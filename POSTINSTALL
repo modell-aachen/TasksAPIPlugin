@@ -4,7 +4,7 @@ my $hostname = "";
 eval {
 	require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
 	Foswiki::Contrib::VirtualHostingContrib::VirtualHost->import();
-	$hostname = Foswiki::Contrib::VirtualHostingContrib::VirtualHost->hostname();
+	$hostname = $Foswiki::Contrib::VirtualHostingContrib::VirtualHost::CURRENT;
 };
 my $hostFlag = "";
 if($hostname){
