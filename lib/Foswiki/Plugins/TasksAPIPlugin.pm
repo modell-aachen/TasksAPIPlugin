@@ -1977,7 +1977,7 @@ FORMAT
     $out =~ s#\$id#$cset->{name}#g;
     $out =~ s#\$user#$cset->{actor}#g;
     $out =~ s#\$displayuser#_getDisplayName($cset->{actor})#eg;
-    $out =~ s#\$date#makeDate(Foswiki::Time::formatTime($cset->{at}, $params->{timeformat}))#eg;
+    $out =~ s#\$date#makeDate($Foswiki::Plugins::SESSION, {_DEFAULT => Foswiki::Time::formatTime($cset->{at}, $params->{timeformat})})#eg;
     $out =~ s#\$fields#join($fsep, @fout)#eg;
     my $cmt = $cset->{comment} || '';
     if ($plain) {
