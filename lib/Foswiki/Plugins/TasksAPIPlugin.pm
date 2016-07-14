@@ -2250,6 +2250,9 @@ sub afterUploadHandler {
 sub beforeCommonTagsHandler {
     my ($text, $topic, $web, $meta) = @_;
 
+    $web |= '';
+    $topic |= '';
+
     unless ($indexerCalled) {
         $indexerCalled = 1;
         my $session = $Foswiki::Plugins::SESSION;
