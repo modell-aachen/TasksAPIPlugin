@@ -390,7 +390,7 @@ sub notify {
     Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context}));
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl) });
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
     Foswiki::Func::popTopicContext();
 }
 
