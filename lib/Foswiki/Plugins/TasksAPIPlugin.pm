@@ -17,6 +17,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 use DBI;
 use Encode;
 use File::MimeInfo;
+use HTML::Entities;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 use POSIX;
@@ -2159,6 +2160,7 @@ sub tagInfo {
         }
         if (Foswiki::isTrue($params->{nohtml}, 0)) {
             $val =~ s|<.+?>||g;
+            $val = HTML::Entities::decode_entities($val);
         }
         return $val;
     }

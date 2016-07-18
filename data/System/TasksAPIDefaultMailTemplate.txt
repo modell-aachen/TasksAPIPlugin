@@ -1,7 +1,7 @@
 %TMPL:INCLUDE{"mailtemplatescontrib"}%
 
 %TMPL:DEF{"ModacMailTo"}%%TASKSAPI_MAIL_TO%%TMPL:END%
-%TMPL:DEF{"ModacMailTitle"}%%TASKINFO{field="Title" default="%MAKETEXT{(no title)}%"}%%TMPL:END%
+%TMPL:DEF{"ModacMailTitle"}%%TASKINFO{field="Title" default="%MAKETEXT{(no title)}%" nohtml="1"}%%TMPL:END%
 %TMPL:DEF{"ModacMailFrom"}%%TMPL:P{"ModacNoReply"}%%TMPL:END%
 
 %TMPL:DEF{"tasksapi_maillink"}%%{
