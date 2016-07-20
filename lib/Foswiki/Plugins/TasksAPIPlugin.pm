@@ -1458,6 +1458,7 @@ sub _addToZone {
 # Given an array of tasks, fetch children up to a specified depth
 sub _deepen {
     my ($tasks, $depth, $order) = @_;
+    $depth |= 0;
 
     for my $t (@$tasks) {
         $t->{_depth} = $depth;
