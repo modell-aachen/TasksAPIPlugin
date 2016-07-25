@@ -828,8 +828,11 @@ sub indexAttachment {
     my $file = Foswiki::urlEncode($name);
     my $url = "$Foswiki::cfg{ScriptUrlPath}/rest$Foswiki::cfg{ScriptSuffix}/TasksAPIPlugin/download?id=$self->{id}&file=$file";
     my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
+
     $doc->add_fields(
         id => "$web.$topic.$name\@$self->{fields}{Context}",
+        language => $language,
         url => $url,
         web => $ctxWeb,
         topic => $ctxTopic,
