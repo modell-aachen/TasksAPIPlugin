@@ -74,12 +74,17 @@ my @schema_updates = (
         "CREATE INDEX jobs_task ON jobs (task_id)",
         "CREATE INDEX jobs_done_time ON jobs (job_done, job_time)",
     ],
+    [
+        # Distinguish task types for exotic features like template tasks
+        "ALTER TABLE tasks ADD COLUMN topictype TEXT NOT NULL DEFAULT 'task'",
+    ],
 );
 my %singles = (
     id => 1,
     form => 1,
     Context => 1,
     Parent => 1,
+    TopicType => 1,
     Status => 1,
     Author => 1,
     Created => 1,
@@ -233,6 +238,25 @@ sub beforeSaveHandler {
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    # If we're dealing with a save from a template topic that contains template
+    # tasks, copy them
+    my $templatetopic = $Foswiki::Plugins::SESSION->{request}->param('templatetopic');
+    if ($templatetopic) {
+        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($web, $templatetopic);
+        my $res = _query(query => {Context => "$tweb.$ttopic", TopicType => 'task-prototype'});
+        return unless defined $res && @{$res->{tasks}};
+
+        foreach my $t (@{$res->{tasks}}) {
+            $t->copy(
+                context => "$web.$topic",
+                form => $t->getPref('INSTANTIATED_FORM'),
+                type => 'task',
+            );
+        }
+    }
+
+    # Index
     return unless $tmpWikiACLs{solrStatus} == 200;
 
     my $skipIndex = 0;
@@ -367,6 +391,8 @@ sub query {
     $useACL = 1 unless defined $useACL;
 
     my $query = $opts{query} || {};
+    $query->{TopicType} ||= 'task';
+
     my $join = '';
     my $filter = '';
     my $order = $opts{order} || '';
@@ -522,6 +548,7 @@ sub _fullindex {
     foreach my $t (Foswiki::Plugins::TasksAPIPlugin::Task::loadMany()) {
         print $t->{id} ."\n" unless $noprint;
         _index($t, 0);
+        next if $t->{fields}{TopicType} ne 'task';
         $t->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
 
@@ -1738,9 +1765,13 @@ SCRIPT
     }
 
     if ($form) {
+        my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
+        my $topicType = $f->getField('TopicType');
+        if ($topicType && !defined $query->{TopicType}) {
+            $query->{TopicType} = $topicType->getDefaultValue;
+        }
         while (my ($k, $v) = each %$query) {
             if ($v eq 'all') {
-                my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
                 my $field = $f->getField($k);
                 next unless $field->{type} =~ /^select/;
                 my @vals = split(/\s*,\s*/, $field->{value});

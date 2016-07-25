@@ -55,7 +55,9 @@ required:
 
    * =TopicType=: value must be set to =task=. This is a sanity check to make
      sure the wrong form is not used by accident. We recommend using a hidden
-     field for this.
+     field for this. (For some advanced features a different value may be set,
+     but in normal operation only tasks that have this set to 'task' are
+     considered.)
    * =Context=: a reference to the topic which "owns" the task (e.g.
      !Foo.BazProjectMeetingMinutes or !Main.JohnDoe)
    * =Status=: one of =open=, =closed=, =deleted=. Other values should not be
@@ -208,6 +210,17 @@ When defining custom statuses, remember to keep an "open" and "closed" status so
 that "quick close" widgets in the user interface still know which of your custom
 statuses to switch to.
 
+---++++ =TASKCFG_INSTANTIATED_FORM=
+
+In a form used for prototype tasks, this determines which form will be used
+for tasks created from the prototypes. Task prototypes are used for creating
+topics with a set of pre-created tasks, and do not show up in any searches. A
+topic template with prototype tasks is created as follows:
+
+   * Create a separate form for the prototype tasks. Set its =TopicType= field to =task-prototype= and make any other changes as desired (for example, you may want to make the =AssignedTo= field non-mandatory).
+   * In this form, set the preference to the name of the original form.
+   * In the tasks grid shown in the template topic, include ="TopicType":"task-prototype"= in the query.
+
 ---+++ Task Flavors
 
 In some circumstances you might want to include tasks, which are created in different contexts,
@@ -335,6 +348,15 @@ In addition, Foswiki's =VIEW permissions= are inherited.
    # ... is the same as ...
    * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
 </verbatim>
+
+---++ Prototype tasks ("templates")
+
+In some cases you might want to have template topics complete with a few
+tasks, and those tasks should be copied to a topic created from the template,
+but the tasks in the template topic should not show up in any searches.
+
+The procedure used for this is documented above, in the section documenting
+the =TASKCFG_INSTANTIATED_FORM= preference.
 
 ---++ Macros
 
