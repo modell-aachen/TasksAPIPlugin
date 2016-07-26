@@ -446,7 +446,7 @@ sub query {
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
     my $total = db()->selectrow_array("SELECT count(*) FROM tasks t$join$filter", {}, @args);
 
-    return {} unless @$ids;
+    return {tasks => [], total => 0} unless @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
