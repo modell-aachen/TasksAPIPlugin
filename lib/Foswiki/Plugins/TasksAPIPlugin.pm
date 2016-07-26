@@ -648,7 +648,7 @@ sub restDelete {
     my @changes = ({type => 'delete', name => '_attachment', old => $file});
     $task->{meta}->putKeyed('TASKCHANGESET', {
         name => $newid,
-        actor => Foswiki::Func::getWikiName(),
+        actor => $session->{user},
         at => scalar(time),
         changes => encode_json(\@changes)
     });
@@ -715,7 +715,7 @@ sub restAttach {
         my @changes = ({type => 'add', name => '_attachment', new => $name});
         $task->{meta}->putKeyed('TASKCHANGESET', {
             name => $newid,
-            actor => Foswiki::Func::getWikiName(),
+            actor => $session->{user},
             at => scalar(time),
             changes => encode_json(\@changes)
         });
