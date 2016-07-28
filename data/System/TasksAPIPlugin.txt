@@ -221,6 +221,27 @@ topic template with prototype tasks is created as follows:
    * In this form, set the preference to the name of the original form.
    * In the tasks grid shown in the template topic, include ="TopicType":"task-prototype"= in the query.
 
+---++++ =TASKCFG_OVERVIEW_FIELDS=
+
+This allows the user to specify which task fields are displayed in the task grid.
+
+Example:
+<verbatim class="tml">
+   * Set TASKCFG_OVERVIEW_FIELDS = Author,Created,Title
+</verbatim>
+
+The order of the fields determines the order in the grid respectively.
+The display name for the fields shown in the table header of the task grid are taken from
+the desrciption entry of the form fields.
+
+There are two types
+of valid entries in the list.
+
+   * *Task field names*: Every field defined in the task form is a valid entry in the list.
+   * *Special names*: Additionally there are some predefined special entries which can be used
+      * =CreatedAuthor=: This will show the date of creation as well as the author of the task as a single entry.
+      * =TaskLights=: This will show a traffic light, giving a visual representation of the tasks due date.
+
 ---+++ Task Flavors
 
 In some circumstances you might want to include tasks, which are created in different contexts,

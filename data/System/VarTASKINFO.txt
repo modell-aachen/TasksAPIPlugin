@@ -15,6 +15,7 @@ The standard template for this plugin makes extensive use of this macro, so ther
 The following types of requests for information about tasks are supported:
 
    * <code>field=Foo</code>: display the value from the task's =Foo= field
+   * <code>field=Foo type=type</code>: display the type from the task's =Foo= field
    * <code>type=changeset cid=123 checkfield=Foo</code>: render changeset #123 for the task. If cid is omitted, a changeset previously selected by the engine will be rendered. If =checkfield= is given, instead of rendering a changeset, the macro will render =1= or =0= depending on whether a value exists for =Foo=.
    * <code>type=changesets separator=x</code>: render all changesets for the task, separated by =x= (defaults to newline).
    * <code>type=children</code>: render the task's children in this place; this only works from within a task template in a task grid.
