@@ -569,7 +569,7 @@
 
 %{Fields which need special rendering}%
 %TMPL:DEF{"task_special_field"}%
-%IF{"'%NAME%'='Author'" then="%TASKINFO{field="%NAME%" user="1"}%"}%%{
+%IF{"'%NAME%'='Author'" then="$percntTASKINFO{field=\"%NAME%\" user=\"1\"}$percnt"}%%{
 }%%IF{"'%NAME%'='Type'" then="$percntTMPL:P{\"task_type\"}$percnt"}%%{
 }%%IF{"'%NAME%'='MeasureState'" then="$percntTMPL:P{\"task_measurestate\"}$percnt"}%%{
 }%%IF{"'%NAME%'='TaskLights'" then="$percntTMPL:P{\"task_lights\"}$percnt"}%%{
@@ -624,7 +624,7 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"task_user_field"}%%{
-}%%TASKINFO{field="%NAME%"}%%{
+}%%TASKINFO{field="%NAME%" user="1"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"task_select+values_field"}%%{
