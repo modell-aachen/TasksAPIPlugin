@@ -560,7 +560,7 @@
 
 %{One field in a task row.}%
 %TMPL:DEF{"task_field"}%%{
-}%%IF{"'%NAME%'='Author' or '%NAME%'='Type' or '%NAME%'='TaskLights' or '%NAME%'='Title' or '%NAME%'='CreatedAuthor'"
+}%%IF{"'%NAME%'='Author' or '%NAME%'='Type' or '%NAME%'='MeasureState' or '%NAME%'='TaskLights' or '%NAME%'='Title' or '%NAME%'='CreatedAuthor'"
   then="$percntTMPL:P{\"task_special_field\" NAME=\"%NAME%\"}$percnt"
   else="$percntTMPL:P{\"task_$percntTASKINFO{field=\"%NAME%\" type=\"type\"}$percnt_field\" NAME=\"%NAME%\"}$percnt"
   }%%{
@@ -571,6 +571,7 @@
 %TMPL:DEF{"task_special_field"}%
 %IF{"'%NAME%'='Author'" then="%TASKINFO{field="%NAME%" user="1"}%"}%%{
 }%%IF{"'%NAME%'='Type'" then="$percntTMPL:P{\"task_type\"}$percnt"}%%{
+}%%IF{"'%NAME%'='MeasureState'" then="$percntTMPL:P{\"task_measurestate\"}$percnt"}%%{
 }%%IF{"'%NAME%'='TaskLights'" then="$percntTMPL:P{\"task_lights\"}$percnt"}%%{
 }%%IF{"'%NAME%'='Title'" then="$percntTMPL:P{\"task_title\"}$percnt"}%%{
 }%%IF{"'%NAME%'='CreatedAuthor'" then="$percntTMPL:P{\"task_createdauthor\"}$percnt"}%%{
@@ -590,6 +591,9 @@
 
 %TMPL:DEF{"task_type"}%%{
 }%<span class="label %SWITCHTEXT{"%TASKINFO{field="Type"}%" Decision="label-primary" Information="label-default" Task="label-info"}%">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>%{
+}%%TMPL:END%
+%TMPL:DEF{"task_measurestate"}%%{
+}%<span class="label label-measure">%MAKETEXT{"Measure"}%</span>%{
 }%%TMPL:END%
 
 %TMPL:DEF{"task_createdauthor"}%%{
