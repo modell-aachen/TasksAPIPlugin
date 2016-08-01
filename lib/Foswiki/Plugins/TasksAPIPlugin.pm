@@ -2129,7 +2129,6 @@ sub tagInfo {
     my ( $session, $params, $topic, $web, $topicObject ) = @_;
 
     if (my $option = $params->{option}) {
-        Foswiki::Func::writeWarning($option);
         if (!$currentOptions) {
             return '%RED%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR%%BR%';
         }
