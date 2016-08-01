@@ -153,6 +153,7 @@ sub finishPlugin {
     $aclExpands = {};
     $gridCounter = 1;
     $renderRecurse = 0;
+    $storedTemplates = {};
 }
 
 sub indexTopicHandler {
