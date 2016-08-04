@@ -275,7 +275,8 @@
       // allign filter/normalize width
       var hints = $(self).children('.filter').find('.hint');
       var maxHint = _.max(hints, function(h) {return $(h).width();});
-      var maxWidth = $(maxHint).width() || 100;
+      if(isNaN(maxHint) || !isFinite(maxHint)) maxHint = 0;
+      var maxWidth = maxHint || 100;
       hints.each(function() {
         $(this).css('min-width', (10+maxWidth) + 'px');
       });
