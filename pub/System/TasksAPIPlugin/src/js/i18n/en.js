@@ -7,4 +7,6 @@ jsi18n.add('tasksapi', {
   "prj_package": "Project package",
   "prj_task": "Project task",
   "auditmeasure": "Audit measure",
+  "internal_project_task": "Project task",
+  "risk": "Risk measure"
 });

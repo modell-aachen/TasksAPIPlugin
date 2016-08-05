@@ -1011,6 +1011,15 @@ TasksPanel = function(tasktracker) {
         var $clone = $full.clone();
         self.panel.empty();
 
+        //Deactivate the attachment tab in edit mode (if it exists)
+        $editTabs =$clone.find('.jqTabGroup a');
+        if($editTabs.length > 1){
+          $($editTabs[1]).css({
+            'cursor': 'not-allowed',
+            'color': 'lightgrey'
+          });
+        }
+
         var $cnt = $clone.find('.task-details:not(.attachments)').parent();
         $cnt.empty().append($ed);
         $content.append($clone).appendTo(self.panel);

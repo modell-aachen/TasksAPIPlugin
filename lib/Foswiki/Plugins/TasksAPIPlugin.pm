@@ -17,6 +17,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 use DBI;
 use Encode;
 use File::MimeInfo;
+use HTML::Entities;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 use POSIX;
@@ -152,6 +153,7 @@ sub finishPlugin {
     $aclExpands = {};
     $gridCounter = 1;
     $renderRecurse = 0;
+    $storedTemplates = {};
 }
 
 sub indexTopicHandler {
@@ -445,7 +447,7 @@ sub query {
     my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
     my $total = db()->selectrow_array("SELECT count(*) FROM tasks t$join$filter", {}, @args);
 
-    return {} unless @$ids;
+    return {tasks => [], total => 0} unless @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
@@ -647,7 +649,7 @@ sub restDelete {
     my @changes = ({type => 'delete', name => '_attachment', old => $file});
     $task->{meta}->putKeyed('TASKCHANGESET', {
         name => $newid,
-        actor => Foswiki::Func::getWikiName(),
+        actor => $session->{user},
         at => scalar(time),
         changes => encode_json(\@changes)
     });
@@ -714,7 +716,7 @@ sub restAttach {
         my @changes = ({type => 'add', name => '_attachment', new => $name});
         $task->{meta}->putKeyed('TASKCHANGESET', {
             name => $newid,
-            actor => Foswiki::Func::getWikiName(),
+            actor => $session->{user},
             at => scalar(time),
             changes => encode_json(\@changes)
         });
@@ -893,7 +895,8 @@ sub _enrich_data {
     }
 
     $result->{html} = _renderTask($task->{meta}, $tpl, $task);
-    $result->{_canChange} = $task->{_canChange} || 0;
+    $result->{_canChange} = $task->{_canChange};
+    $result->{_canChange} = 1 unless defined $result->{_canChange};
 
     $result->{html} = _removeBlocks($result->{html});
     return $result;
@@ -994,7 +997,7 @@ sub tagFilter {
     foreach my $f (@$fields) {
         next unless $f->{name} eq $filter;
         $title = $f->{title} || $f->{name} unless $title;
-        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>");
+        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>") unless $f->{type} =~ /^user/;
 
         if ($f->{type} =~ /^date2?$/) {
             my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
@@ -1065,7 +1068,12 @@ sub tagFilter {
             push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
             push(@html, @options);
             push(@html, "</select>");
-        } elsif ($f->{type} =~ /^user/) {
+        } elsif ($f->{type} =~ /^user$/) {
+            my $macro = <<MACRO;
+%RENDERFOREDIT{form="$ftopic" fields="$f->{name}" format="<span class='hint' style='margin-right: -2px; margin-bottom: 3px;'>\$xlatedescription</span> \$edit" header="" footer=""}%
+MACRO
+            push(@html, $macro);
+        } elsif ($f->{type} =~ /^user\+multi$/) {
             # ToDo
         }
     }
@@ -1302,10 +1310,18 @@ sub restLink {
         } elsif (grep(/^$login$/, @informees)) {
             $params = "tid=taskgrid_inform;tab=tasks_inform";
         } else {
-            $params = "type=invalid";
+            # User is neither author, assignee, nor any informee.
+            # Check whether the user can access the context...
+            if (Foswiki::Func::checkAccessPermission('VIEW', Foswiki::Func::getWikiName(), undef, $ctopic, $cweb, undef)) {
+                $params = "tab=all;tid=all";
+                $url = Foswiki::Func::getViewUrl($cweb, $ctopic) ."?id=$id;$params";
+            } else {
+                # ... if not, decline view.
+                $params = "type=invalid";
+            }
         }
 
-        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params";
+        $url = Foswiki::Func::getViewUrl('Main', Foswiki::Func::getWikiName()) ."?id=$id;$params" unless $url;
     }
 
     Foswiki::Func::redirectCgiQuery(undef, $url) if $url;
@@ -1443,6 +1459,7 @@ sub _addToZone {
 # Given an array of tasks, fetch children up to a specified depth
 sub _deepen {
     my ($tasks, $depth, $order) = @_;
+    $depth |= 0;
 
     for my $t (@$tasks) {
         $t->{_depth} = $depth;
@@ -1688,9 +1705,14 @@ SCRIPT
     if ($override) {
         my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
         foreach my $l (@list) {
+            next if $l =~ /^_/; # Skip select2 preset inputs
             my $val = $req->param("f_$l");
             if ($l !~ /_(l|r)$/) {
-                $query->{$l} = $val;
+                if ($l eq 'Status' && $val eq 'all') {
+                    $query->{$l} = ['open', 'closed'];
+                } else {
+                    $query->{$l} = $val;
+                }
             } else {
                 my %range;
 
@@ -2140,6 +2162,7 @@ sub tagInfo {
         }
         if (Foswiki::isTrue($params->{nohtml}, 0)) {
             $val =~ s|<.+?>||g;
+            $val = HTML::Entities::decode_entities($val);
         }
         return $val;
     }
@@ -2230,6 +2253,9 @@ sub afterUploadHandler {
 # web, to prevent the server from melting
 sub beforeCommonTagsHandler {
     my ($text, $topic, $web, $meta) = @_;
+
+    $web |= '';
+    $topic |= '';
 
     unless ($indexerCalled) {
         $indexerCalled = 1;

@@ -118,6 +118,11 @@
       margin-right: 10px;
     }
 
+    .select2-selection--single {
+      background-color: $light-blue;
+      border: 1px solid darken($light-blue, 5%);
+    }
+
     input {
       min-width: 118px;
       width: 118px;
