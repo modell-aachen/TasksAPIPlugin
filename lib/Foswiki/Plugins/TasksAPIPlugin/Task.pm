@@ -262,7 +262,7 @@ sub getPref {
     return unless defined $pref;
 
     $pref =~ s/\$taskpref\(([^)]+)(?::([^)])+)?\)/$task->getPref($1, $2)/eg;
-    $pref =~ s/\$curvalue\(([^)]+)\)/$task->{fields}{$1}/eg;
+    $pref =~ s!\$curvalue\(([^)]+)\)!$task->{fields}{$1} // ''!eg;
     $pref =~ s/\$formweb/$prefmeta->web/eg;
 
     if (!defined $subkey) {
@@ -390,7 +390,7 @@ sub notify {
     Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context}));
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl) });
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
     Foswiki::Func::popTopicContext();
 }
 
@@ -828,8 +828,11 @@ sub indexAttachment {
     my $file = Foswiki::urlEncode($name);
     my $url = "$Foswiki::cfg{ScriptUrlPath}/rest$Foswiki::cfg{ScriptSuffix}/TasksAPIPlugin/download?id=$self->{id}&file=$file";
     my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context});
+    my $language = Foswiki::Func::getPreferencesValue('CONTENT_LANGUAGE') || "en";
+
     $doc->add_fields(
         id => "$web.$topic.$name\@$self->{fields}{Context}",
+        language => $language,
         url => $url,
         web => $ctxWeb,
         topic => $ctxTopic,

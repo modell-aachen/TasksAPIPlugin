@@ -1,26 +1,26 @@
 !noci
-data/System/TasksAPIPlugin.txt 0644 Docs
-data/System/TasksAPIPluginExamples.txt 0644 Docs
-data/System/TasksAPIDefaultMailTemplate.txt 0644 Common template for mail notifications
-data/System/TasksAPIChangedMailTemplate.txt 0644 Mail notify for changed task
-data/System/TasksAPICreatedMailTemplate.txt 0644 Mail notify for created task
-data/System/TasksAPIClosedMailTemplate.txt 0644 Mail notify for closed task
-data/System/TasksAPIRemindMailTemplate.txt 0644 Mail reminder for open tasks
-data/System/TasksAPIReopenedMailTemplate.txt 0644 Mail notify for reopened task
-data/System/TasksAPIReassignedMailTemplate.txt 0644 Mail notify for reassigned task
-data/System/TasksAPISummaryMailTemplate.txt 0644
-data/System/TasksAPIDefaultTemplate.txt 0644 Common templates
-data/System/VarTASKINFO.txt 0644 Docs
-data/System/VarTASKSGRID.txt 0644 Docs
-data/System/VarTASKSFILTER.txt 0644 Docs
-lib/Foswiki/Form/Taskeditor.pm 0644 Plugin module
-lib/Foswiki/Plugins/TasksAPIPlugin.pm 0644 Plugin module
-lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0644
-lib/Foswiki/Plugins/TasksAPIPlugin/Job.pm 0644
-lib/Foswiki/Plugins/TasksAPIPlugin/Summary.pm 0644
-lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0644
-lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0644
-locale/TasksAPIPlugin/de.po 0644
+data/System/TasksAPIPlugin.txt 0664 Docs
+data/System/TasksAPIPluginExamples.txt 0664 Docs
+data/System/TasksAPIDefaultMailTemplate.txt 0664 Common template for mail notifications
+data/System/TasksAPIChangedMailTemplate.txt 0664 Mail notify for changed task
+data/System/TasksAPICreatedMailTemplate.txt 0664 Mail notify for created task
+data/System/TasksAPIClosedMailTemplate.txt 0664 Mail notify for closed task
+data/System/TasksAPIRemindMailTemplate.txt 0664 Mail reminder for open tasks
+data/System/TasksAPIReopenedMailTemplate.txt 0664 Mail notify for reopened task
+data/System/TasksAPIReassignedMailTemplate.txt 0664 Mail notify for reassigned task
+data/System/TasksAPISummaryMailTemplate.txt 0664
+data/System/TasksAPIDefaultTemplate.txt 0664 Common templates
+data/System/VarTASKINFO.txt 0664 Docs
+data/System/VarTASKSGRID.txt 0664 Docs
+data/System/VarTASKSFILTER.txt 0664 Docs
+lib/Foswiki/Form/Taskeditor.pm 0444 Plugin module
+lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module
+lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0444
+lib/Foswiki/Plugins/TasksAPIPlugin/Job.pm 0444
+lib/Foswiki/Plugins/TasksAPIPlugin/Summary.pm 0444
+lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0444
+lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0444
+locale/TasksAPIPlugin/de.po 0444
 pub/System/TasksAPIPlugin/assets/ajax-loader.gif 0644
 pub/System/TasksAPIPlugin/assets/ampel.png 0644
 pub/System/TasksAPIPlugin/assets/ampel_g.png 0644
@@ -43,8 +43,8 @@ pub/System/TasksAPIPlugin/css/tasktracker.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.min.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.print.css 0644
 pub/System/TasksAPIPlugin/css/tasktracker.print.min.css 0644
-templates/oopstasknotfound.tmpl 0644
-templates/oopstaskacl.tmpl 0644
+templates/oopstasknotfound.tmpl 0444
+templates/oopstaskacl.tmpl 0444
 test/unit/TasksAPIPlugin/TasksAPIPluginSeleniumTestCase.pm 0444
 test/unit/TasksAPIPlugin/qwikitest 0444
 tools/taskcron 0755
