@@ -40,5 +40,6 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "deleted": "gelöscht",
     "Oops": "Uups",
     "Something went wrong! Try again later.": "Etwas ist schief gelaufen. Versuchen Sie es später erneut.",
+    "This entry is currently being edited by another user! Try again later.": "Dieser Eintrag wird gerade von einem anderen Benutzer bearbeitet. Versuchen Sie es später erneut.",
   });
 }
