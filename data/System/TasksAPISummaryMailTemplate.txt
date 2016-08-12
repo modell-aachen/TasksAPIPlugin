@@ -9,19 +9,19 @@
 %TMPL:DEF{"ModacMailContents"}%%TASKSAPI_SUMMARY_CONTENTS%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::summary::title::created"}%%{
-}%%MAKETEXT{"Created tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%MAKETEXT{"Created tasks within the last [_1] hours:" arg1="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::summary::title::changed"}%%{
-}%%MAKETEXT{"Changed tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%MAKETEXT{"Changed tasks within the last [_1] hours:" arg1="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::summary::title::closed"}%%{
-}%%MAKETEXT{"Closed tasks within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%MAKETEXT{"Closed tasks within the last [_1] hours:" arg1="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::summary::title::duedate"}%%{
-}%%MAKETEXT{"Tasks past due within the last [_1] hours:" args="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
+}%%MAKETEXT{"Tasks past due within the last [_1] hours:" arg1="%TASKSAPI_SUMMARY_TIMESPAN%"}%%{
 }%%TMPL:END%
 
 
