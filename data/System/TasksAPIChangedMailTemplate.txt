@@ -3,7 +3,7 @@
 %TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task updated"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] updated a task" args="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
+%MAKETEXT{"[_1] updated a task" arg1="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
 
 %TASKINFO{type="changeset" nohtml="1"}%
 %TMPL:P{"tasksapi_maillink"}%
