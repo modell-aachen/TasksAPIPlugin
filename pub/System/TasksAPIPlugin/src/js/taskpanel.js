@@ -1491,7 +1491,23 @@ TasksPanel = function(tasktracker) {
       },
       error: function( xhr, sts, err ) {
         deferred.reject( err );
-        error(err);
+        var responseCode;
+        try {
+            responseCode = $.parseJSON(xhr.responseText).code;
+        } catch(e) {
+            if (window.console) console.log(e);
+        }
+        if(responseCode == 'lease_taken') {
+            swal({
+              type: 'error',
+              title: jsi18n.get('tasksapi', 'Oops'),
+              text: jsi18n.get('tasksapi', 'This entry is currently being edited by another user! Try again later.'),
+              showConfirmButton: true,
+              showCancelButton: false
+            });
+        } else {
+            error(err);
+        }
       }
     });
 
