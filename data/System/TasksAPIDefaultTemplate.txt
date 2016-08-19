@@ -556,8 +556,17 @@
       <td class=\"hidden task-fullview-container\"><div class=\"task-fullview\">$percntTMPL:P{\"tasksapi::details\"}$percnt</div></td>
       </tr>"
 }%%{
+}%%IF{"$'URLPARAM{taskDetails}'" then="$percntTMPL:P{\"tasksapi::task::pdetails\"}$percnt"}%%{
 }%%TMPL:END%
 
+%TMPL:DEF{"tasksapi::task::pdetails"}%
+    <tr class="task pdetails %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
+      <td colspan="99" data-value="%ENCODE{"%TASKINFO{field="Description"}%" type="html"}%" class="description">%TMPL:P{"task_field" NAME="Description"}%</td>
+    </tr>
+    <tr class="task pspacer">
+      <td colspan="99"> </td>
+    </tr>
+%TMPL:END%
 %{One field in a task row.}%
 %TMPL:DEF{"task_field"}%%{
 }%%IF{"'%NAME%'='Author' or '%NAME%'='Type' or '%NAME%'='MeasureState' or '%NAME%'='TaskLights' or '%NAME%'='Title' or '%NAME%'='CreatedAuthor'"
