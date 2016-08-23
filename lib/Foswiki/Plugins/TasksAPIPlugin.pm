@@ -101,7 +101,6 @@ our $currentExpands;
 our $storedTemplates;
 our $flavorcss;
 our $flavorjs;
-our $STANDARD_TEMPLATE_FILE = 'System.TasksAPIDefaultTemplate';
 
 my $aclCache = {};
 my $caclCache = {};
@@ -1182,7 +1181,7 @@ sub restLease {
         $task->{meta}->setLease( $ltime );
         $meta = $task->{meta};
         $edtpl = $task->getPref('EDITOR_TEMPLATE');
-        $tplfile = $task->getPref('TASK_TEMPLATE_FILE') || $STANDARD_TEMPLATE_FILE;
+        $tplfile = $task->getPref('TASK_TEMPLATE_FILE');
 
         Foswiki::Func::setPreferencesValue('taskeditor_form', $task->{form}->web .'.'. $task->{form}->topic);
         Foswiki::Func::setPreferencesValue('taskeditor_isnew', '0');
@@ -1274,7 +1273,7 @@ sub restRelease {
     if ( $lease ) {
         my $cuid = $lease->{user};
         my $ccuid = $session->{user};
-
+        
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
             $response->header(-status => 200);
@@ -1380,7 +1379,6 @@ sub _renderTask {
     local $currentTask = $task;
     $taskTemplate = $task->getPref('TASK_TEMPLATE') || 'tasksapi::task' unless $taskTemplate;
     my $canChange = $task->checkACL('CHANGE');
-    Foswiki::Func::setPreferencesValue('task_overview_fields', $task->getPref('OVERVIEW_FIELDS'));
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
     my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
@@ -1393,7 +1391,7 @@ sub _renderTask {
 
     my $flavor = {};
     my $type = $task->getPref('TASK_TYPE');
-    my $file = $task->getPref('TASK_TEMPLATE_FILE') || $STANDARD_TEMPLATE_FILE;
+    my $file = $task->getPref('TASK_TEMPLATE_FILE');
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
 
     my $q = $Foswiki::Plugins::SESSION->{request};
@@ -1551,7 +1549,7 @@ sub tagGrid {
     my $paging = $params->{paging};
     $paging = 1 unless defined $paging;
     my $query = $params->{query} || '{}';
-    my $templateFile = $params->{templatefile} || $STANDARD_TEMPLATE_FILE;
+    my $templateFile = $params->{templatefile};
     my $allowCreate = $params->{allowcreate};
     $allowCreate = 1 unless defined $allowCreate;
     my $allowUpload = $params->{allowupload};
@@ -1780,7 +1778,6 @@ SCRIPT
 
     if ($form) {
         my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
-        Foswiki::Func::setPreferencesValue('task_overview_fields', $f->getPreference('TASKCFG_OVERVIEW_FIELDS'));
         my $topicType = $f->getField('TopicType');
         if ($topicType && !defined $query->{TopicType}) {
             $query->{TopicType} = $topicType->getDefaultValue;
@@ -2171,9 +2168,6 @@ sub tagInfo {
         my $val = $task->{fields}{$field} || $params->{default} || '';
         if ($params->{type} && $params->{type} eq 'title') {
             return $task->form->getField($field)->{tooltip} || $field;
-        }
-        elsif ($params->{type} && $params->{type} eq 'type') {
-            return $task->form->getField($field)->{type} || $field;
         }
         $val = _shorten($val, $params->{shorten});
         if ($params->{format}) {
