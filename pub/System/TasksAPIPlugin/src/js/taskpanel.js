@@ -431,7 +431,7 @@ TasksPanel = function(tasktracker) {
       }
 
       if ( isOpen || isDelete ) {
-        var closeTxt = isDelete 
+        var closeTxt = isDelete
           ? jsi18n.get('tasksapi', 'Do you want to delete this entry?')
           : jsi18n.get('tasksapi', 'Do you want to close this entry?');
         var cmtTxt = jsi18n.get('tasksapi', 'Comment');
@@ -926,6 +926,9 @@ TasksPanel = function(tasktracker) {
         // (missing data or at least reformat it; e.g. epoch to time string conversion)
         writeEditor($ed, task);
       }
+
+      var editorLoad = $.Event('editorLoad');
+      tasktracker.trigger(editorLoad, $ed);
 
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
