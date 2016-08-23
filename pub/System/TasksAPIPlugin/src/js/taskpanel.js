@@ -928,7 +928,9 @@ TasksPanel = function(tasktracker) {
       }
 
       var editorLoad = $.Event('editorLoad');
-      tasktracker.trigger(editorLoad, $ed);
+      opts.editor = $ed;
+      opts.task = task;
+      tasktracker.trigger(editorLoad, opts);
 
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');

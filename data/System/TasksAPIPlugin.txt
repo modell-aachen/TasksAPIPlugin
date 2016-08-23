@@ -682,9 +682,9 @@ $tracker.on('tasksLoaded', function(evt) {...});
 </verbatim>
 
 ---+++ editorLoad
-Fired when the panel for editing a new task or an existing task has been created. The editor dom element is provided.
+Fired when the panel for editing a new task or an existing task has been created. Options are provided.
 <verbatim class="js">
-$tracker.on('editorLoad', function(evt, editor) {...});
+$tracker.on('editorLoad', function(evt, options) {...});
 </verbatim>
 
 ---++ RESTful API
