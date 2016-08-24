@@ -1119,7 +1119,7 @@ sub restSearch {
     eval {
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
-        $res = _query(%$req);
+        $res = _query(query => $req);
     };
     if ($@) {
         $response->header(-status => 500);
