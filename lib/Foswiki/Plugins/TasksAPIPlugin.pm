@@ -257,6 +257,18 @@ sub afterSaveHandler {
         }
     }
 
+    # Allow applications to define some automatic task updates
+    my $query = from_json($Foswiki::Plugins::SESSION->{request}->param('taskquery') || "{}");
+    my $update = from_json($Foswiki::Plugins::SESSION->{request}->param('taskupdate') || "{}");
+    if(%$query and %$update){
+        my $res = _query(query => $query);
+        foreach my $t (@{$res->{tasks}}) {
+            if($t->checkACL('change')){
+                $t->update(%$update);
+            }
+        }
+    }
+
     # Index
     return unless $tmpWikiACLs{solrStatus} == 200;
 
