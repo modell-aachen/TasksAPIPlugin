@@ -427,7 +427,8 @@
 
 %TMPL:DEF{"tasksapi::details::content::customfields"}%%{
 }%%RENDERFORDISPLAY{
-  form="%taskeditor_form%"
+  "%TASKINFO{meta="id"}%"
+  form="%TASKINFO{meta="form"}%"
   includeattr="\s?EXTRA\s?"
   fields=""
   format="
@@ -506,8 +507,8 @@
           <span class="title">%MAKETEXT{"Due date"}%</span>
           <span>%TASKINFO{field="DueDate" format="$day $month $year"}%&nbsp;</span>
         </div>
-        %TMPL:P{"tasksapi::details::content::customfields"}%
       </div>
+      %TMPL:P{"tasksapi::details::content::customfields"}%
     </div>
     <div class="description">
       <article>%TASKINFO{field="Description"}%</article>
