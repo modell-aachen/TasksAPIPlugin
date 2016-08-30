@@ -173,7 +173,7 @@ See section _Task Flavors_ for further details.
 The name of the template used to render a task within its task tracker.
 
 ---++++ =TASKCFG_EDITOR_TEMPLATE=
-The name of the template used to render an editor to create or manipulate the task.s
+The name of the template used to render an editor to create or manipulate the task.
 
 ---++++ =TASKCFG_SOLRHIT_ICON=
 
@@ -220,63 +220,6 @@ topic template with prototype tasks is created as follows:
    * Create a separate form for the prototype tasks. Set its =TopicType= field to =task-prototype= and make any other changes as desired (for example, you may want to make the =AssignedTo= field non-mandatory).
    * In this form, set the preference to the name of the original form.
    * In the tasks grid shown in the template topic, include ="TopicType":"task-prototype"= in the query.
-
----+++ Task Flavors
-
-In some circumstances you might want to include tasks, which are created in different contexts,
-in a single grid. For instance, render all tasks asigned to yourself into your
-personal page by specifying a macro like the following one:
-<verbatim class="tml">
-%TASKSGRID{
-  context="any"
-  query="...""
-}%
-</verbatim>
-That macro will render a grid containing all tasks matching the given query.
-Unfortunately, in most cases tasks created in different contexts differ from each
-other not only by their context but by the given form as well as the used template.
-
-To render a grid which includes tasks from more than context *and* which renders
-each task with its own template within that grid, specify the grid's =flavor=
-parameter:
-<verbatim class="tml">
-%TASKSGRID{
-  context="any"
-  query="...""
-  flavor="perspage"
-}%
-</verbatim>
-Foswiki will detect that parameter and appends it to the task template name.
-Let's say a task's template is called =tasksapi::task= and you specified a
-flavor called =perspage= then Foswiki will try to expand the template called
-=tasksapi::task_perspage=. Obviously this leads to another problem. All templates
-needs to be placed in a single =templatefile=. To work around that limitation
-you may (or let's say should) set =TASKCFG_TASK_TYPE= and =TASKCFG_TASK_TEMPLATE_FILE=
-within your task's form. While =TASKCFG_TASK_TYPE= is used to cache template
-expands, =TASKCFG_TASK_TEMPLATE_FILE= specifies the webtopic of the according
-template definition.
-
-To avoid hard coded web names within your form you may also use the variable
-=$formweb= which expands to the web containing the task form. E.g.:
-<verbatim class="tml">
-   * Set TASKCFG_TASK_TYPE = minute
-   * Set TASKCFG_TASK_TEMPLATE_FILE = $formweb.TaskTemplates
-</verbatim>
-
-Additionaly, you may want to include some extra styles or scripts used by a
-taskgrid in case flavors are active.
-To do so update your task form as shown below
-<verbatim class="tml">
-   * Set TASKCFG_FLAVOR_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css1,%PUBURLPATH%/%SYSTEMWEB%/path/to/css2
-   * Set TASKCFG_FLAVOR_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js1,%PUBURLPATH%/%SYSTEMWEB%/path/to/js2
-</verbatim>
-
-In case those styles and/or scripts should be applied to a 'single' flavor only:
-<verbatim class="tml">
-   * Set TASKCFG_(flavor)_CSS = %PUBURLPATH%/%SYSTEMWEB%/path/to/css
-   * Set TASKCFG_(flavor)_JS = %PUBURLPATH%/%SYSTEMWEB%/path/to/js
-</verbatim>
-
 
 ---+++ Access permissions
 
