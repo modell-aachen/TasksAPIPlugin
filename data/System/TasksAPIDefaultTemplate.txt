@@ -551,7 +551,7 @@
 
 %TMPL:DEF{"tasksapi::task::pdetails"}%
     <tr class="task pdetails %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-      <td colspan="99" data-value="%ENCODE{"%TASKINFO{field="Description"}%" type="html"}%" class="description">%TMPL:P{"task_field" NAME="Description"}%</td>
+      <td colspan="99" class="description">%TASKINFO{field="Description"}%</td>
     </tr>
     <tr class="task pspacer">
       <td colspan="99"> </td>
