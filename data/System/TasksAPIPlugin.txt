@@ -107,7 +107,9 @@ _These preferences can only be set in the form, not in the task topic itself._
 
 Name of a template section used to render the task in a task grid. This can be
 used to render different types of tasks differently, by setting this to
-different template sections in different task forms.
+different template sections in different task forms. However, in most cases it
+is sufficient to alter the list of columns and fields rendered by the grid;
+you do not need a customized template for that.
 
 ---++++ =TASKCFG_NOTIFY_(type)=
 
