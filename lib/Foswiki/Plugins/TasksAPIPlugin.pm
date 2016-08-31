@@ -2206,7 +2206,7 @@ sub tagInfo {
 
     my $type = $params->{type} || '';
     if ($type eq 'headers') {
-        my $format = $params->{format} || '<td class="$id">$fields</td>';
+        my $format = $params->{format} || '<th data-sort="$sortkey">$title</th>';
         my $header = $params->{header} || '';
         my $footer = $params->{footer} || '';
 
@@ -2214,9 +2214,12 @@ sub tagInfo {
         my @out;
         for my $h (@$order) {
             my $info = $columns->{$h};
-            # TODO magic HTML
             my $ttitle = $session->i18n->maketext($info->{title} || '');
-            push @out, qq{<th data-sort="$info->{sortkey}">$ttitle</th>};
+            my $out = $format;
+            $out =~ s/\$sortkey/$info->{sortkey}/g;
+            $out =~ s/\$title/$ttitle/g;
+            $out =~ s/\$origtitle/$info->{title}/g;
+            push @out, $out;
         }
         return join('', @out);
     }
@@ -2331,7 +2334,7 @@ sub tagInfo {
             my $out = $format;
             for my $f (@{$info->{fields}}) {
                 if ($f !~ /^\$/) {
-                    # TODO class for span?
+                    # TODO suitable alternative to hardcoding <span>
                     push @fields, qq[<span>%TASKINFO{field="$f" display="on"}%</span>];
                 } elsif (lc($f) eq '$checkbox') {
                     $out = q[%TMPL:P{"tasksapi::task::field::checkbox"}%];

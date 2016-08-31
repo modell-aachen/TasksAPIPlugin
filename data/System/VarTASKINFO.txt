@@ -1,5 +1,5 @@
 %META:TOPICPARENT{name="TasksAPIPlugin"}%
----+ TASKSGRID macro
+---+ TASKINFO macro
 
 _This is a macro from [[TasksAPIPlugin]], used to query/display various pieces of information related to tasks and task grids._
 
@@ -15,6 +15,7 @@ The standard template for this plugin makes extensive use of this macro, so ther
 The following types of requests for information about tasks are supported:
 
    * <code>field=Foo</code>: display the value from the task's =Foo= field
+   * <code>type=columns format="&lt;td class=\"$id\"&gt;$fields&lt;/td&gt;"</code>: render a grid row for the task, based on the grid's column definitions. The format can be customized from its default shown to the left.
    * <code>type=changeset cid=123 checkfield=Foo</code>: render changeset #123 for the task. If cid is omitted, a changeset previously selected by the engine will be rendered. If =checkfield= is given, instead of rendering a changeset, the macro will render =1= or =0= depending on whether a value exists for =Foo=.
    * <code>type=changesets separator=x</code>: render all changesets for the task, separated by =x= (defaults to newline).
    * <code>type=children</code>: render the task's children in this place; this only works from within a task template in a task grid.
@@ -31,6 +32,7 @@ The following types of requests for information about tasks are supported:
 The following types of requests for information about task grids are available:
 
    * <code>option=foo</code>: Returns grid-level option =foo=. This is used to make grid parameters accessible in templates. The following parameters currently exist: =context=, =parent=, =form=, =id=, =depth=, =pageSize=, =query=, =order=, =allowupload=, =stateless=, =sortable=, =templatefile=, =tasktemplate=, =editortemplate=, =autoassign=, =autoassignTarget=.
+   * <code>type=headers format="&lt;th data-sort=\"$sortkey\"&gt;$title&lt;/th&gt;"</code>: Outputs column headers for the grid. The format can be customized from its default shown to the left. The =$title= token will automatically translate the title definition using [[%SYSTEMWEB%.VarMAKETEXT][MAKETEXT]]; use =$origtitle= to use the definition as-is.
    * <code>expand=foo</code>: Returns a template value. Template values are additional pieces of information used for rendering grids, passed through from the grid macro. The following template values currently exist:
       * =stateoptions=: the =&lt;option&gt;= tags for a =&lt;select&gt;= widget used for filtering tasks by status.
       * =settings=: the complete structure of options (see above) in JSON format, used in templates for passing through options to !JavaScript code.
