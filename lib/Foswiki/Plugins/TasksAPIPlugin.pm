@@ -2214,7 +2214,7 @@ sub tagInfo {
         my @out;
         for my $h (@$order) {
             my $info = $columns->{$h};
-            my $ttitle = $session->i18n->maketext($info->{title} || '');
+            my $ttitle = $info->{title} ? $session->i18n->maketext($info->{title}) : '';
             my $out = $format;
             $out =~ s/\$sortkey/$info->{sortkey}/g;
             $out =~ s/\$title/$ttitle/g;
