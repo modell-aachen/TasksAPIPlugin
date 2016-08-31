@@ -1275,7 +1275,7 @@ sub restRelease {
     if ( $lease ) {
         my $cuid = $lease->{user};
         my $ccuid = $session->{user};
-        
+
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
             $response->header(-status => 200);
@@ -1395,7 +1395,7 @@ sub _renderTask {
     my $type = $taskTemplate;
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
-    Foswiki::Func::pushTopicContext($task->{form}->web, $task->{form}->topic));
+    Foswiki::Func::pushTopicContext($task->{form}->web, $task->{form}->topic);
     unless ($storedTemplates->{$type}) {
         $file =~ s#/#.#g;
         Foswiki::Func::loadTemplate($file) if $file;
