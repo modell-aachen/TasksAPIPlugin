@@ -1395,6 +1395,7 @@ sub _renderTask {
     my $type = $taskTemplate;
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
+    Foswiki::Func::pushTopicContext($task->{form}->web, $task->{form}->topic));
     unless ($storedTemplates->{$type}) {
         $file =~ s#/#.#g;
         Foswiki::Func::loadTemplate($file) if $file;
@@ -1410,6 +1411,7 @@ sub _renderTask {
     }
 
     $task = $meta->expandMacros($storedTemplates->{$type});
+    Foswiki::Func::popTopicContext();
 
     if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
