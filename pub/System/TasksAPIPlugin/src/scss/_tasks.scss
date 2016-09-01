@@ -140,9 +140,11 @@
   }
 
   &.title {
-    font-weight: bold;
+    > span:first-child {
+      font-weight: bold;
+    }
 
-    > div > .attachments {
+    > .attachments {
       background-image: url('../assets/file.png');
       background-position: center left;
       background-repeat: no-repeat;
