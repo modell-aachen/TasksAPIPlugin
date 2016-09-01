@@ -790,6 +790,25 @@ sub restAttach {
     return '';
 }
 
+sub _optionsFromRest {
+    my ($session) = shift;
+    my $q = $session->{request};
+    my %params = %{ $q->Vars };
+    my @fields = (qw(
+        context parent form id depth pagesize paging offset
+        query order desc columns headers allowupload keepclosed
+        sortable templatefile tasktemplate editortemplate
+        autoassign autoassignTarget autouser
+        titlelength updateurl
+        _baseweb _basetopic
+    ));
+    my $res = {};
+    for my $f (@fields) {
+        $res->{$f} = $q->param($f) if defined $q->param($f);
+    }
+    $res;
+}
+
 sub restCreate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
@@ -811,7 +830,7 @@ sub restCreate {
     $response->body(encode_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, $q->param('tasktemplate')),
+        data => _enrich_data($res, _optionsFromRest($session)),
     }));
     return '';
 }
@@ -847,7 +866,7 @@ sub restUpdate {
     $response->header(-status => 200);
     $response->body(encode_json({
         status => 'ok',
-        data => _enrich_data($task, $q->param('tasktemplate')),
+        data => _enrich_data($task, _optionsFromRest($session)),
     }));
     return '';
 }
@@ -864,7 +883,7 @@ sub restMultiUpdate {
             next;
         }
         $task->update(%$data);
-        $res{$id} = {status => 'ok', data => _enrich_data($task, $q->param('tasktemplate'))};
+        $res{$id} = {status => 'ok', data => _enrich_data($task, _optionsFromRest($session))};
     }
     $response->body(encode_json(\%res));
     return '';
@@ -884,7 +903,7 @@ sub _translate {
 # that contains all the information we need
 sub _enrich_data {
     my $task = shift;
-    my $tpl = shift;
+    my $options = shift;
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
@@ -937,7 +956,7 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
-    $result->{html} = _renderTask($task->{meta}, $tpl, $task);
+    $result->{html} = _renderTask($task->{meta}, $options, $task);
     $result->{_canChange} = $task->{_canChange};
     $result->{_canChange} = 1 unless defined $result->{_canChange};
 
@@ -1001,7 +1020,7 @@ sub tagSearch {
         Foswiki::Func::loadTemplate( $templatefile );
     }
 
-    my @res = map { _enrich_data($_, $params->{tasktemplate}) } @{$res->{tasks}};
+    my @res = map { _enrich_data($_, { tasktemplate => $params->{tasktemplate} }) } @{$res->{tasks}};
     return to_json({status => 'ok', data => \@res});
 }
 
@@ -1144,7 +1163,7 @@ sub restSearch {
 
     my $depth = $req->{depth} || 0;
     _deepen($res->{tasks}, $depth, $req->{order});
-    my @tasks = map { _enrich_data($_, $req->{tasktemplate}) } @{$res->{tasks}};
+    my @tasks = map { _enrich_data($_, { tasktemplate => $req->{tasktemplate} }) } @{$res->{tasks}};
     $response->header(-status => 200);
     $response->body(encode_json({status => 'ok', data => \@tasks}));
     return '';
@@ -1374,14 +1393,14 @@ sub restLink {
 
 # Gets a rendered version of a task
 sub _renderTask {
-    my ($meta, $taskTemplate, $task, $addtozone) = @_;
+    my ($meta, $settings, $task, $addtozone) = @_;
     if ($renderRecurse >= 16) {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
 
     $renderRecurse++;
     local $currentTask = $task;
-    $taskTemplate = $task->getPref('TASK_TEMPLATE') || 'tasksapi::task' unless $taskTemplate;
+    my $taskTemplate = $settings->{tasktemplate} || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
     my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
@@ -1393,7 +1412,7 @@ sub _renderTask {
         $Foswiki::Plugins::SESSION->leaveContext('task_showexpander');
     }
 
-    my $file = $task->getPref('TASK_TEMPLATE_FILE');
+    my $file = $settings->{templatefile} || $task->getPref('TASK_TEMPLATE_FILE') || 'TasksAPIDefault';
     my $type = $taskTemplate;
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
@@ -1413,7 +1432,18 @@ sub _renderTask {
         );
     }
 
+    local $currentOptions = $settings;
+    my ($renderweb, $rendertopic);
+    if ($settings->{_baseweb} && $settings->{_basetopic}) {
+        $renderweb = $settings->{_baseweb};
+        $rendertopic = $settings->{_basetopic};
+    } else {
+        ($renderweb, $rendertopic) = ($task->{fields}{Context} =~ /^(.*)\.(.*)$/);
+    }
+    Foswiki::Func::pushTopicContext($renderweb, $rendertopic);
     $task = $meta->expandMacros($storedTemplates->{$type});
+    Foswiki::Func::popTopicContext();
+    $task = $meta->renderTML($task);
 
     if ($canChange && $haveCtx && !$readonly) {
         $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx); # decrement
@@ -1885,8 +1915,7 @@ SCRIPT
     );
     local $currentExpands = \%tmplAttrs;
     for my $task (@{$res->{tasks}}) {
-        my $tmpl = $taskTemplate || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
-        $task = _renderTask($topicObject, $tmpl, $task, 1);
+        $task = _renderTask($topicObject, \%settings, $task, 1);
     }
     $tmplAttrs{tasks} = join('', @{$res->{tasks}});
 
@@ -2321,7 +2350,7 @@ sub tagInfo {
         my @out;
         for my $child (@{$task->cached_children || []}) {
             next if $child->{fields}{Status} eq 'deleted';
-            push @out, _renderTask($topicObject, $currentOptions->{tasktemplate} || $child->getPref('TASK_TEMPLATE') || 'tasksapi::task', $child);
+            push @out, _renderTask($topicObject, $currentOptions, $child);
         }
         return join($params->{separator} || '', @out);
     }
@@ -2360,7 +2389,7 @@ sub tagInfo {
         return $task->id if $meta eq 'id';
         if ($meta eq 'json') {
             local $storedTemplates;
-            my $json = to_json(_enrich_data($task, 'tasksapi::empty'));
+            my $json = to_json(_enrich_data($task, {tasktemplate => 'tasksapi::empty'}));
             $json =~ s/&/&amp;/g;
             $json =~ s/</&lt;/g;
             $json =~ s/>/&gt;/g;
@@ -2375,7 +2404,9 @@ sub tagInfo {
     }
 
     if (my $tpl = $params->{template}) {
-        return _renderTask($topicObject, $tpl, $task);
+        my %opts = %$currentOptions;
+        $opts{tasktemplate} = $tpl;
+        return _renderTask($topicObject, \%opts, $task);
     }
 
     return '';
