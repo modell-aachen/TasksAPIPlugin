@@ -178,6 +178,8 @@ sub afterRenameHandler {
     my ( $oldWeb, $oldTopic, $oldAttachment, $newWeb, $newTopic, $newAttachment ) = @_;
     return if $oldWeb eq $newWeb && $oldTopic eq $newTopic;
 
+    return if $oldAttachment || $newAttachment;
+
     ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
     ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
     my $query = {
