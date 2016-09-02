@@ -793,7 +793,6 @@ sub restAttach {
 sub _optionsFromRest {
     my ($session) = shift;
     my $q = $session->{request};
-    my %params = %{ $q->Vars };
     my @fields = (qw(
         context parent form id depth pagesize paging offset
         query order desc columns headers allowupload keepclosed
