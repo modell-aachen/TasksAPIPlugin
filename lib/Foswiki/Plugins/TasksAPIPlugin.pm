@@ -1412,7 +1412,7 @@ sub _renderTask {
     }
 
     my $file = $settings->{templatefile} || $task->getPref('TASK_TEMPLATE_FILE') || 'TasksAPIDefault';
-    my $type = $taskTemplate;
+    my $type = $task->getPref('TASK_TYPE');
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
     unless ($storedTemplates->{$type}) {
