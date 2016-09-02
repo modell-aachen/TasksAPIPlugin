@@ -38,11 +38,6 @@
 }%%TMPL:END%
 
 
-%TMPL:DEF{"tasksapi::grid::filter::defaults"}%%{
-}%%TASKSFILTER{"Created" range="1" max="true"}%%{
-}%%TASKSFILTER{"Changed" range="1" max="true"}%%{
-}%%TMPL:END%
-
 %{empty template}%
 %TMPL:DEF{"tasksapi::empty"}%%{
 }%%IF{"context DnDUploadPluginEnabled" then="$percntDNDUPLOAD{headonly=\"1\"}$percnt"}%%{
@@ -108,13 +103,9 @@
 <th class="hidden"></th></tr>%{
 }%%TMPL:END%
 
-
 %{available filter}%
 %TMPL:DEF{"tasksapi::grid::filter::defaults"}%%{
-}%%TASKSFILTER{"Status"}%%{
-}%%TASKSFILTER{"Type"}%%{
-}%%TASKSFILTER{"Created" range="1" max="true"}%%{
-}%%TASKSFILTER{"Changed" range="1" max="true"}%%{
+}%%TASKINFO{type="filters"}%%{
 }%%TMPL:END%
 
 
