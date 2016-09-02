@@ -32,7 +32,7 @@ The following parameters are available:
 | depth="..." | Number of levels of child tasks to fetch. This will enable nested rendering of tasks. | 0 |
 | desc="..." | Sorts the grid in descending order. | 1 |
 | editortemplate="..." | Name of the template used to render the task editor | tasksapi::editor |
-| filters="..." | List of filter widgets to show (by field name) | "Created" range="1" max="true", "Changed" range="1" max="true" |
+| filters="..." | List of filter widgets to show (by field name) | "Created" range="1" max="true", "Changed" range="1" max="true", Type |
 | filtertemplate="..." | Name of the template used to render the status filter widget | tasksapi::grid::filter::defaults |
 | flavor="..." | Name of a task's template flavor to render each grid entry with | |
 | form="..." | The form to use for new tasks (in =Web.Topic= format) | %<nop>SYSTEMWEB%.TasksAPIDefaultTaskForm |
