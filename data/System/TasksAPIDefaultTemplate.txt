@@ -136,6 +136,7 @@
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Type"
+  excludeattr="H"
   header=""
   footer=""
 }%
@@ -273,6 +274,7 @@
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Type"
+  excludeattr="H"
   header=""
   footer=""
 }%
