@@ -181,11 +181,7 @@ TasksPanel = function(tasktracker) {
               };
 
               var opts = self.tracker.data('tasktracker_options');
-              for (var prop in opts) {
-                if ( /template|form|depth|flavor/.test(prop) ) {
-                  payload[prop] = opts[prop];
-                }
-              }
+              populateTaskFromOpts(payload, opts);
 
               $.taskapi
                 .update(payload)
@@ -330,11 +326,7 @@ TasksPanel = function(tasktracker) {
       };
 
       var opts = self.tracker.data('tasktracker_options');
-      for (var prop in opts) {
-        if ( /template|form|depth|flavor/.test(prop) ) {
-          payload[prop] = opts[prop];
-        }
-      }
+      populateTaskFromOpts(payload, opts);
 
       window.tasksapi.blockUI();
       $.taskapi
@@ -424,14 +416,10 @@ TasksPanel = function(tasktracker) {
       };
 
       var opts = self.tracker.data('tasktracker_options');
-      for (var prop in opts) {
-        if ( /template|form|depth|flavor/.test(prop) ) {
-          payload[prop] = opts[prop];
-        }
-      }
+      populateTaskFromOpts(payload, opts);
 
       if ( isOpen || isDelete ) {
-        var closeTxt = isDelete 
+        var closeTxt = isDelete
           ? jsi18n.get('tasksapi', 'Do you want to delete this entry?')
           : jsi18n.get('tasksapi', 'Do you want to close this entry?');
         var cmtTxt = jsi18n.get('tasksapi', 'Comment');
@@ -612,6 +600,16 @@ TasksPanel = function(tasktracker) {
     return deferred.promise();
   };
 
+  var populateTaskFromOpts = function(task, opts) {
+    for (var prop in opts) {
+      if ( /template|form|depth|columns|headers/.test(prop) ) {
+        task[prop] = opts[prop];
+      }
+    }
+    task._baseweb = foswiki.getPreference('WEB');
+    task._basetopic = foswiki.getPreference('TOPIC');
+  };
+
   var handleSaveTask = function() {
     var task = readEditor(self.panel);
     task.id = self.isCreate ? null : self.currentTask.data('task_data').id;
@@ -631,11 +629,7 @@ TasksPanel = function(tasktracker) {
     }
 
     var opts = self.tracker.data('tasktracker_options');
-    for (var prop in opts) {
-      if ( /template|form|depth|flavor/.test(prop) ) {
-        task[prop] = opts[prop];
-      }
-    }
+    populateTaskFromOpts(task, opts);
 
     task._depth = opts.depth > 0 ? opts.depth : 0;
     var apiFunc = 'update';
@@ -734,11 +728,7 @@ TasksPanel = function(tasktracker) {
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
-    for (var prop in opts) {
-      if ( /template|form|depth|flavor/.test(prop) ) {
-        payload[prop] = opts[prop];
-      }
-    }
+    populateTaskFromOpts(payload, opts);
 
     var close = $cb.attr('checked');
     $cb.prop('checked', false);
@@ -778,11 +768,7 @@ TasksPanel = function(tasktracker) {
     };
 
     var opts = self.tracker.data('tasktracker_options') || {};
-    for (var prop in opts) {
-      if ( /template|form|depth|flavor/.test(prop) ) {
-        payload[prop] = opts[prop];
-      }
-    }
+    populateTaskFromOpts(payload, opts);
 
     window.tasksapi.blockUI();
     $.taskapi.update(payload).fail(error).always(window.tasksapi.unblockUI).done(function(response) {
@@ -926,6 +912,11 @@ TasksPanel = function(tasktracker) {
         // (missing data or at least reformat it; e.g. epoch to time string conversion)
         writeEditor($ed, task);
       }
+
+      var editorLoad = $.Event('editorLoad');
+      opts.editor = $ed;
+      opts.task = task;
+      tasktracker.trigger(editorLoad, opts);
 
       if ( topts.autoassign && topts.autoassignTarget ) {
         var $type = $ed.find('select[name="Type"]');
@@ -1491,7 +1482,23 @@ TasksPanel = function(tasktracker) {
       },
       error: function( xhr, sts, err ) {
         deferred.reject( err );
-        error(err);
+        var responseCode;
+        try {
+            responseCode = $.parseJSON(xhr.responseText).code;
+        } catch(e) {
+            if (window.console) console.log(e);
+        }
+        if(responseCode == 'lease_taken') {
+            swal({
+              type: 'error',
+              title: jsi18n.get('tasksapi', 'Oops'),
+              text: jsi18n.get('tasksapi', 'This entry is currently being edited by another user! Try again later.'),
+              showConfirmButton: true,
+              showCancelButton: false
+            });
+        } else {
+            error(err);
+        }
       }
     });
 
@@ -1667,12 +1674,7 @@ TasksPanel = function(tasktracker) {
     for (var p in changedFields) {
       task[p] = changedFields[p];
     }
-
-    for (var prop in opts) {
-      if ( /template|form|depth|flavor/.test(prop) ) {
-        task[prop] = opts[prop];
-      }
-    }
+    populateTaskFromOpts(task, opts);
 
     task._depth = opts.depth > 0 ? opts.depth : 0;
     var apiFunc = 'update';

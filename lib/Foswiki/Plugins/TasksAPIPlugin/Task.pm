@@ -51,7 +51,7 @@ sub load {
         my $val = $entry ? $entry->{value} : undef;
         $data{$name} = $val;
     }
-    if (!$data{TopicType} || $data{TopicType} ne 'task') {
+    if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
         die "Alleged task topic '$web.$topic' is not actually a task\n";
     }
     $web =~ s#/#.#g;
@@ -86,7 +86,7 @@ sub loadMany {
     Iter: while ($iter->hasNext) {
         my ($m) = Foswiki::Func::readTopic($web, $iter->next);
         my $f = $m->get('FIELD', 'TopicType');
-        next if !$f || !ref $f || $f->{value} ne 'task';
+        next if !$f || !ref $f;
         my $t = load($m);
         for my $filter (@_) {
             next Iter if !$filter->($t);
@@ -323,7 +323,7 @@ sub create {
     $meta->putKeyed('FORM', {
         name => $formName,
     });
-    $data{TopicType} = 'task';
+    $data{TopicType} = $form->getField('TopicType')->getDefaultValue || 'task';
     foreach my $f (@$fields) {
         my $name = $f->{name};
         my $default = $f->{value};
@@ -372,6 +372,40 @@ sub create {
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
     $task->{_canChange} = $task->checkACL('change');
     $task;
+}
+
+sub copy {
+    my $self = shift;
+    my %opts = @_;
+    my ($formweb, $formtopic) = $self->{meta}->getFormName =~ /
+        # branch reset
+        (?|
+          # $web   $topic
+          ^ (.*?)\.(.*)$ |
+          # '' $topic
+          ^ () (.*)$
+        )
+    /x;
+
+    my %data = (
+        %{$self->{fields}},
+        form => join('.', Foswiki::Func::normalizeWebTopicName($formweb, $opts{form} || $formtopic)),
+        TopicType => $opts{type} || $self->{fields}{TopicType},
+        Context => $opts{context},
+    );
+    my $dest = create(%data);
+
+    # Copy attachments
+    my @att = $self->{meta}->find('FILEATTACHMENT');
+    return unless @att;
+    for my $att (@att) {
+        next unless $self->{meta}->hasAttachment($att->{name});
+        $self->{meta}->copyAttachment($att->{name}, $dest->{meta});
+    }
+    # Index again to pick up the attachment metadata
+    Foswiki::Plugins::TasksAPIPlugin::_index($dest);
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
 }
 
 sub notify {

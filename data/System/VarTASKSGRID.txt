@@ -27,13 +27,16 @@ The following parameters are available:
 | autoassign="..." | Key-Value pair to automatically assign a given user or group to a specified task state. See also =autoassigntarget= | Decision=Team,Information=Team |
 | autoassigntarget="..." | Name of the form field holding the information about the person or group who's responsible for that specific task | !AssignedTo |
 | captiontemplate="..." | Name of the template used to render the caption area | tasksapi::grid::caption |
+| columns="..." | Definition of extra/altered/removed columns, see section below | created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox |
 | createlinktext="..." | Label of the button for creating new tasks | %<nop>MAKETEXT{"Add task"}% |
 | depth="..." | Number of levels of child tasks to fetch. This will enable nested rendering of tasks. | 0 |
 | desc="..." | Sorts the grid in descending order. | 1 |
 | editortemplate="..." | Name of the template used to render the task editor | tasksapi::editor |
+| filters="..." | List of filter widgets to show (by field name) | "Created" range="1" max="true", "Changed" range="1" max="true", Type |
 | filtertemplate="..." | Name of the template used to render the status filter widget | tasksapi::grid::filter::defaults |
 | flavor="..." | Name of a task's template flavor to render each grid entry with | |
 | form="..." | The form to use for new tasks (in =Web.Topic= format) | %<nop>SYSTEMWEB%.TasksAPIDefaultTaskForm |
+| headers="..." | Definition of extra/altered/removed headers, see section below | created=Created:Created,type=Type,assigned=Assigned to,title=Title:Title,due=DueDate:Due date,status=Status,checkbox= |
 | id="..." | Unique id to identify the .tasktracker DOM object | tracker-AUTOINC |
 | keepclosed="..." | Keep closed tasks within the grid until next page load | 1 |
 | offset="..." | When paging is enabled, skips the amount of entries specified. | 0 |
@@ -52,4 +55,87 @@ The following parameters are available:
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
 | titlelength="..." | Number of characters before a task's title gets trancuated. Set to =0= to disable title length restrictions. | 100 |
 | updateurl="..." | An URL used for async grid loading. | |
+
+---++++ Customizing headers and columns
+
+The =columns= and =headers= parameters work a bit differently in that what you
+set them to is *added* to the defaults, unlike all other settings which
+*replace* the defaults. This ensures that it is very easy to make minor
+changes to the list of columns without having to copy many definitions around,
+but major changes are still possible.
+
+Each of them is a comma-separated list of definitions. For the task columns, a
+single definition looks as follows:
+
+<verbatim>title=Title Summary $ContextLink</verbatim>
+
+This will make the column with ID =title= contain the values from the fields
+=Title= and =Summary=, and the special field =$ContextLink= if applicable.
+This is the corresponding header definition:
+
+<verbatim>title=Title:Title/Summary</verbatim>
+
+The first =Title= here is the field used for sorting that column (it can be
+omitted to disable sorting); the text after the colon defines the text to be
+inserted in the header cell for that column.
+
+You can choose arbitrary IDs (as long as they are valid identifiers, i.e. made
+up of letters, numbers and underscores). Columns will be shown in the order
+they are listed in the definition.
+
+---+++++ Re-defining the contents of a column
+
+If you add a definition with an ID that was already used in a default
+definition or any other previous definition for the same grid, your new
+definition will override the previous definition.
+
+You can set the contents to =$remove= (for example, <code>title=$remove</code>)
+to completely remove a column from the output.
+
+---+++++ Re-ordering columns
+
+If you want to add a new column between default columns, or otherwise change
+the ordering, you can use an extended syntax for the ID. For example, the
+definition <code>title&gt;created=$inherit</code> will move the 'title' column
+directly to the right of the 'created' column, and
+<code>title&lt;created=$inherit</code> will move it directly to the left of
+that column. The =$inherit= keyword simply re-uses the field list from the
+previous definition so that you do not have to manually copy a list of
+definitions if you do not want to change it.
+
+Alternatively, inspired by the syntax for regular expressions, you can use the
+special syntax as in <code>^title=Title</code> to move the 'title' column
+to the front, or <code>title$=Title</code> to move it to the end of the
+list of columns.
+
+---+++++ Special fields
+
+Some pre-defined special field names can be used to display special visual
+elements:
+
+| *Special field* | *Function* |
+| $Checkbox | Quick open/close widget. This can not be combined with any other fields in the same column. |
+| $Signal | Displays a traffic light visualizing how far the due date is ahead. |
+| $Title | Displays the title, automatically shortened to at most 160 characters. |
+| $AttachCount | Displays the number of attachments for this task. |
+| $Badge | Displays the type of task (e.g. information, decision) in a colored badge widget, assuming a =Type= field exists. |
+| $ContextTitle | Displays the title of the topic the task is associated with, unless the current grid is being displayed inside that topic. |
+| $ContextLink | Displays a link to the topic the task is associated with, unless the current grid is being displayed inside that topic. |
+| $ContextWeb | Displays the web containing the topic the task is associated with, unless the current grid is being displayed inside that topic. |
+
+All of these special fields are defined by the task template. For example, the
+=$Signal= field uses the template block definition
+=tasksapi::task::field::signal= and the =$Signal= is automatically translated
+to that. If you customize the template, you can add your own special fields by
+defining similarly-named template blocks.
+
+---++++ Customizing filter widgets
+
+You can supply your own list of filters to show, using a comma separated list
+of parameters to the [[VarTASKSFILTER][TASKSFILTER]] macro. For example,
+<code>"Created" range="1"</code> will result in a filter generated by
+<code>%<nop>TASKSFILTER{"Created" range="1"}%</code>. Since commas are
+reserved for separating list entries, if you want to use a comma inside a
+filter's parameters, use <code>$comma</code>.
+
 %STOPINCLUDE%
