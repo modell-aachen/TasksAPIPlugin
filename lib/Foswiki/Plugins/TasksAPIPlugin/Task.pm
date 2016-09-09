@@ -48,7 +48,10 @@ sub load {
     foreach my $f (@$fields) {
         my $name = $f->{name};
         my $entry = $meta->get('FIELD', $name);
+        my $defValue = $f->getDefaultValue if $f->can('getDefaultValue');
+        $defValue = '' unless defined $defValue;
         my $val = $entry ? $entry->{value} : undef;
+        $val = $defValue unless defined $val && $val ne '';
         $data{$name} = $val;
     }
     if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
