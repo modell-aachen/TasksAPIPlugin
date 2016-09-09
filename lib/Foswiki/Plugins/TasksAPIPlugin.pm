@@ -1431,6 +1431,13 @@ sub _renderTask {
         );
     }
 
+    if (my $css = $task->getPref('CUSTOM_CSS')) {
+        _addToZone($meta, 'head', $css, $type);
+    }
+    if (my $js = $task->getPref('CUSTOM_JS')) {
+        _addToZone($meta, 'script', $js, $type);
+    }
+
     local $currentOptions = $settings;
     my ($renderweb, $rendertopic);
     if ($settings->{_baseweb} && $settings->{_basetopic}) {
@@ -1454,7 +1461,7 @@ sub _renderTask {
 }
 
 sub _addToZone {
-    my ($meta, $zone, $path) = @_;
+    my ($meta, $zone, $path, $id) = @_;
 
     my @paths = ();
     if ( $path =~ /,/ ) {
@@ -1465,7 +1472,7 @@ sub _addToZone {
         push(@paths, $meta->expandMacros($path));
     }
 
-    my $section = 'TASKSAPI::FLAVOR::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
+    my $section = "TASKSAPI::TYPE::$id::" . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     my $dep = 'TASKSAPI::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     $dep .= ', jsi18nCore' if $zone eq 'script';
     my @includes = ();
