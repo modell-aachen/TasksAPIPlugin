@@ -1792,7 +1792,9 @@ SCRIPT
         autoassignTarget => $autoassignTarget,
         autouser => \@autouser,
         titlelength => int($titlelength),
-        updateurl => $updateurl
+        updateurl => $updateurl,
+        _baseweb => $web,
+        _basetopic => $topic
     );
 
     my $fctx = Foswiki::Func::getContext();

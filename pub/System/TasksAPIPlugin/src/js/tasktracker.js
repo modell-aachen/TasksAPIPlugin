@@ -498,6 +498,9 @@
       }
     }
 
+    payload._baseweb = foswiki.getPreference('WEB');
+    payload._basetopic = foswiki.getPreference('TOPIC');
+
     if ( !evt.ctrlKey && isOpen ) {
       var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');
       var cmtTxt = jsi18n.get('tasksapi', 'Comment');
