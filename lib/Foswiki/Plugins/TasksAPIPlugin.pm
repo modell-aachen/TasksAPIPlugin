@@ -1411,6 +1411,9 @@ sub _renderTask {
         $Foswiki::Plugins::SESSION->leaveContext('task_showexpander');
     }
 
+    my $taskFullViewTemplate = $task->getPref('TASK_FULLVIEW_TEMPLATE') || 'tasksapi::details';
+    local $currentExpands->{fullviewtemplate} = $taskFullViewTemplate;
+
     my $file = $settings->{templatefile} || $task->getPref('TASK_TEMPLATE_FILE') || 'TasksAPIDefault';
     my $type = $task->getPref('TASK_TYPE');
     my $ftype = $type . '_form';
