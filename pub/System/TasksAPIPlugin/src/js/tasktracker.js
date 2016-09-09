@@ -493,7 +493,7 @@
     };
 
     for (var prop in opts) {
-      if ( /template|form|flavor|depth/.test(prop) ) {
+      if ( /template|form|flavor|depth|columns|headers/.test(prop) ) {
         payload[prop] = opts[prop];
       }
     }
