@@ -493,10 +493,13 @@
     };
 
     for (var prop in opts) {
-      if ( /template|form|flavor|depth/.test(prop) ) {
+      if ( /template|form|flavor|depth|columns|headers/.test(prop) ) {
         payload[prop] = opts[prop];
       }
     }
+
+    payload._baseweb = foswiki.getPreference('WEB');
+    payload._basetopic = foswiki.getPreference('TOPIC');
 
     if ( !evt.ctrlKey && isOpen ) {
       var closeTxt = jsi18n.get('tasksapi', 'Do you want to close this entry?');

@@ -48,10 +48,13 @@ sub load {
     foreach my $f (@$fields) {
         my $name = $f->{name};
         my $entry = $meta->get('FIELD', $name);
+        my $defValue = $f->getDefaultValue if $f->can('getDefaultValue');
+        $defValue = '' unless defined $defValue;
         my $val = $entry ? $entry->{value} : undef;
+        $val = $defValue unless defined $val && $val ne '';
         $data{$name} = $val;
     }
-    if (!$data{TopicType} || $data{TopicType} ne 'task') {
+    if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
         die "Alleged task topic '$web.$topic' is not actually a task\n";
     }
     $web =~ s#/#.#g;
@@ -86,7 +89,7 @@ sub loadMany {
     Iter: while ($iter->hasNext) {
         my ($m) = Foswiki::Func::readTopic($web, $iter->next);
         my $f = $m->get('FIELD', 'TopicType');
-        next if !$f || !ref $f || $f->{value} ne 'task';
+        next if !$f || !ref $f;
         my $t = load($m);
         for my $filter (@_) {
             next Iter if !$filter->($t);
@@ -323,7 +326,7 @@ sub create {
     $meta->putKeyed('FORM', {
         name => $formName,
     });
-    $data{TopicType} = 'task';
+    $data{TopicType} = $form->getField('TopicType')->getDefaultValue || 'task';
     foreach my $f (@$fields) {
         my $name = $f->{name};
         my $default = $f->{value};
@@ -372,6 +375,40 @@ sub create {
     Foswiki::Plugins::TasksAPIPlugin::_index($task);
     $task->{_canChange} = $task->checkACL('change');
     $task;
+}
+
+sub copy {
+    my $self = shift;
+    my %opts = @_;
+    my ($formweb, $formtopic) = $self->{meta}->getFormName =~ /
+        # branch reset
+        (?|
+          # $web   $topic
+          ^ (.*?)\.(.*)$ |
+          # '' $topic
+          ^ () (.*)$
+        )
+    /x;
+
+    my %data = (
+        %{$self->{fields}},
+        form => join('.', Foswiki::Func::normalizeWebTopicName($formweb, $opts{form} || $formtopic)),
+        TopicType => $opts{type} || $self->{fields}{TopicType},
+        Context => $opts{context},
+    );
+    my $dest = create(%data);
+
+    # Copy attachments
+    my @att = $self->{meta}->find('FILEATTACHMENT');
+    return unless @att;
+    for my $att (@att) {
+        next unless $self->{meta}->hasAttachment($att->{name});
+        $self->{meta}->copyAttachment($att->{name}, $dest->{meta});
+    }
+    # Index again to pick up the attachment metadata
+    Foswiki::Plugins::TasksAPIPlugin::_index($dest);
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
 }
 
 sub notify {
@@ -431,12 +468,22 @@ sub update {
     delete $data{TopicType};
     my @comment = delete $data{comment};
     @comment = () if @comment && (!defined $comment[0] || $comment[0] =~ /^\s*$/s);
+    my $defChange;
     my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
-        next if !exists $data{$name};
-        my $val = $data{$name};
         my $old = $self->{fields}{$name};
+        if (!exists $data{$name} && (!defined $old || $old eq '')) {
+            my $defValue = $f->getDefaultValue() if $f->can('getDefaultValue');
+            $defValue = '' unless defined $defValue;
+            $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $defValue });
+            $self->{fields}{$name} = $defValue;
+            $defChange = 1 if $defValue ne '';
+            next;
+        } elsif (!exists $data{$name}) {
+            next;
+        }
+        my $val = $data{$name};
 
         if ($val eq '' && $old ne '') {
             $meta->remove('FIELD', $name);
@@ -479,7 +526,7 @@ sub update {
         $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
-    my $changed = $data{cid} || @changes || @comment;
+    my $changed = $data{cid} || @changes || @comment || $defChange;
 
     unless (Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')) {
         # just update the comment if a changeset id is given

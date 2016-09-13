@@ -318,6 +318,10 @@ sub processSource {
     }
 
     my %task;
+    while (my ($k, $v) = each %{$cfg{defaults}}) {
+      $task{$v} = $cfg{defaults}{$v};
+    }
+
     my @missing;
     while (my ($k, $v) = each %{$cfg{map}}) {
       if ($action->{$k}) {
@@ -328,10 +332,7 @@ sub processSource {
         } else {
           $task{$v} = $action->{$k};
         }
-      } elsif (defined $cfg{defaults}{$v}) {
-        print "Using default value for mapping of field '$k': $v -> $cfg{defaults}{$v}.\n" if $cfg{verbose};
-        $task{$v} = $cfg{defaults}{$v};
-      } else {
+      } elsif (!$cfg{defaults}{$v}) {
         push(@missing, $k);
         next;
       }
