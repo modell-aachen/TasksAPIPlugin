@@ -48,7 +48,10 @@ sub load {
     foreach my $f (@$fields) {
         my $name = $f->{name};
         my $entry = $meta->get('FIELD', $name);
+        my $defValue = $f->getDefaultValue if $f->can('getDefaultValue');
+        $defValue = '' unless defined $defValue;
         my $val = $entry ? $entry->{value} : undef;
+        $val = $defValue unless defined $val && $val ne '';
         $data{$name} = $val;
     }
     if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
@@ -465,12 +468,22 @@ sub update {
     delete $data{TopicType};
     my @comment = delete $data{comment};
     @comment = () if @comment && (!defined $comment[0] || $comment[0] =~ /^\s*$/s);
+    my $defChange;
     my $notify = 'changed';
     foreach my $f (@{ $self->{form}->getFields }) {
         my $name = $f->{name};
-        next if !exists $data{$name};
-        my $val = $data{$name};
         my $old = $self->{fields}{$name};
+        if (!exists $data{$name} && (!defined $old || $old eq '')) {
+            my $defValue = $f->getDefaultValue() if $f->can('getDefaultValue');
+            $defValue = '' unless defined $defValue;
+            $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $defValue });
+            $self->{fields}{$name} = $defValue;
+            $defChange = 1 if $defValue ne '';
+            next;
+        } elsif (!exists $data{$name}) {
+            next;
+        }
+        my $val = $data{$name};
 
         if ($val eq '' && $old ne '') {
             $meta->remove('FIELD', $name);
@@ -513,7 +526,7 @@ sub update {
         $meta->putKeyed('FIELD', { name => 'Closed', title => '', value => $self->{fields}{Closed} });
     }
 
-    my $changed = $data{cid} || @changes || @comment;
+    my $changed = $data{cid} || @changes || @comment || $defChange;
 
     unless (Foswiki::Func::getPreferencesValue('tasksapi_suppress_logging')) {
         # just update the comment if a changeset id is given

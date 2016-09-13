@@ -537,7 +537,7 @@
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
 %TASKINFO{type="columns"}%
 <td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
-<td class="hidden task-fullview-container"><div class="task-fullview">%TMPL:P{"tasksapi::details"}%</div></td>
+<td class="hidden task-fullview-container"><div class="task-fullview">%TASKINFO{expandtemplate="%TASKINFO{expand="fullviewtemplate"}%"}%</div></td>
 </tr>%{
 }%%IF{"$'URLPARAM{taskDetails}'" then="$percntTMPL:P{\"tasksapi::task::pdetails\"}$percnt"}%%{
 }%%TMPL:END%
@@ -553,7 +553,7 @@
 
 %TMPL:DEF{"tasksapi::task::field::title"}%<span class="title">%TASKINFO{field="Title" shorten="160"}%</span>%TMPL:END%
 %TMPL:DEF{"tasksapi::task::field::attachcount"}%<span class="attachments no-print %IF{"'%TASKINFO{meta="AttachCount"}%'='0'" then="hidden"}%">%TASKINFO{meta="AttachCount"}%</span>%TMPL:END%
-%TMPL:DEF{"tasksapi::task::field::badge"}%<span class="label %SWITCHTEXT{"%TASKINFO{field="Type"}%" Decision="label-primary" Information="label-default" Task="label-info" default="label-default"}%">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>%TMPL:END%
+%TMPL:DEF{"tasksapi::task::field::badge"}%<span class="label %SWITCHTEXT{"%TASKINFO{field="Type"}%" Decision="label-primary" Information="label-default" Task="label-info" Measure="label-measure" default="label-default"}%">%MAKETEXT{"%TASKINFO{field="Type"}%"}%</span>%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::field::contexttitle"}%IF{"'%TASKINFO{field="Context"}%'!='%BASEWEB%.%BASETOPIC%'" then="<span class=\"context\">$percntTOPICTITLE{\"%TASKINFO{field="Context"}%\"}$percnt</span>"}%%TMPL:END%
 %TMPL:DEF{"tasksapi::task::field::contextlink"}%%IF{"'%TASKINFO{field="Context"}%'!='%BASEWEB%.%BASETOPIC%'" then="<span class=\"context\">[[%TASKINFO{field="Context"}%]]</span>"}%%TMPL:END%
