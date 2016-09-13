@@ -971,7 +971,7 @@ sub tagAmpel {
     my $status = $params->{status} || 'open';
     my $warn = $params->{warn} || 3;
 
-    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\" />" if ( !$date && $status eq 'open' );
+    return "<img src=\"%PUBURL%/%SYSTEMWEB%/AmpelPlugin/images/ampel.png\" alt=\"\" title=\"$title\" />" if ( !$date && $status eq 'open' );
 
     my $src = '';
     if ( $status eq 'open' ) {
@@ -995,7 +995,7 @@ sub tagAmpel {
         $src = $status eq 'closed' ? 'closed' : 'deleted';
     }
     my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
+<img src="%PUBURL%/%SYSTEMWEB%/AmpelPlugin/images/$src.png" alt="" title="$title" />
 IMG
 
     return $img;
