@@ -395,12 +395,13 @@ sub copy {
         form => join('.', Foswiki::Func::normalizeWebTopicName($formweb, $opts{form} || $formtopic)),
         TopicType => $opts{type} || $self->{fields}{TopicType},
         Context => $opts{context},
+        defined $opts{fields} ? %{$opts{fields}} : ()
     );
     my $dest = create(%data);
 
     # Copy attachments
     my @att = $self->{meta}->find('FILEATTACHMENT');
-    return unless @att;
+    return $dest unless @att;
     for my $att (@att) {
         next unless $self->{meta}->hasAttachment($att->{name});
         $self->{meta}->copyAttachment($att->{name}, $dest->{meta});
@@ -409,6 +410,7 @@ sub copy {
     Foswiki::Plugins::TasksAPIPlugin::_index($dest);
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
     $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    return $dest;
 }
 
 sub notify {

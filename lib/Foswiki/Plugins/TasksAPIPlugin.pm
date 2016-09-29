@@ -247,12 +247,25 @@ sub afterSaveHandler {
         my $res = _query(query => {Context => "$tweb.$ttopic", TopicType => 'task-prototype'});
         return unless defined $res && @{$res->{tasks}};
 
-        foreach my $t (@{$res->{tasks}}) {
-            $t->copy(
-                context => "$web.$topic",
-                form => $t->getPref('INSTANTIATED_FORM'),
-                type => 'task',
-            );
+        my @stasks = sort { $a->{fields}{Parent} cmp $b->{fields}{Parent} } @{$res->{tasks}};
+        my $newTasksMapping = {};
+        foreach my $t (@stasks) {
+            if ($t->{fields}{Parent} && $t->{fields}{Parent} ne '') {
+                $t->copy(
+                    context => "$web.$topic",
+                    form => $t->getPref('INSTANTIATED_FORM'),
+                    type => 'task',
+                    fields => {
+                        Parent => $newTasksMapping->{$t->{fields}{Parent}}->{id},
+                    },
+                );
+            } else {
+                $newTasksMapping->{$t->{id}} = $t->copy(
+                    context => "$web.$topic",
+                    form => $t->getPref('INSTANTIATED_FORM'),
+                    type => 'task',
+                );
+            }
         }
     }
 
