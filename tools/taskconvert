@@ -319,7 +319,7 @@ sub processSource {
 
     my %task;
     while (my ($k, $v) = each %{$cfg{defaults}}) {
-      $task{$v} = $cfg{defaults}{$v};
+      $task{$k} = $v;
     }
 
     my @missing;
