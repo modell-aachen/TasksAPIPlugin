@@ -298,7 +298,7 @@ msgid "Next task"
 msgstr "Nächste Aufgabe"
 
 msgid "Next entry"
-msgstr "Nächste Eintrag"
+msgstr "Nächster Eintrag"
 
 msgid "Press 'Save' to start the upload"
 msgstr "Zum Hochladen 'Speichern' drücken"
