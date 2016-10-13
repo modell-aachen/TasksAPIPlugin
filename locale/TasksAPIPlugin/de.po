@@ -292,7 +292,7 @@ msgid "Previous task"
 msgstr "Vorherige Aufgabe"
 
 msgid "Previous entry"
-msgstr "Vorherige Eintrag"
+msgstr "Vorheriger Eintrag"
 
 msgid "Next task"
 msgstr "Nächste Aufgabe"
