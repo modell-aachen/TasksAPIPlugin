@@ -176,7 +176,7 @@ sub printHelp {
                                         --source 'MyWeb.Topic00*'
                                         --source 'MyWeb.Topic00*Actions'
 
-  -u    --user-field                  List of ActionTracker fields container user information.
+  -u    --user-field                  List of ActionTracker fields containing user information.
                                       Field values specified by this parameter will be converted and
                                       stored as CUID.
                                       Usage:
