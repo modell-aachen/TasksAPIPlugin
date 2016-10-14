@@ -65,6 +65,7 @@ TasksPanel = function(tasktracker) {
     self.buttons.upload.off('click');
     self.overlay.off('click');
     self.overlay.off('queueEmpty');
+    self.overlay.off('paste', '[contenteditable], div[name="comment"]');
 
     self.panel.off('keydown', 'input[name="Title"]');
     self.panel.off('blur', 'input[name="Title"]');
@@ -246,6 +247,36 @@ TasksPanel = function(tasktracker) {
     self.overlay.on('keydown', 'input, textarea, [contenteditable], div[name="comment"]', function(evt) {
       evt.stopPropagation();
       evt.stopImmediatePropagation();
+    });
+
+    self.overlay.on('paste', '[contenteditable], div[name="comment"]', function(evt) {
+      var e = evt.originalEvent;
+      var clipboard = e.clipboardData || window.clipboardData;
+      var prevent = false;
+
+      if ((navigator.userAgent.indexOf("MSIE") != -1 ) || (!!document.documentMode == true )) {
+        if (0 !== clipboard.files.length) {
+          prevent = true;
+        }
+      } else {
+        var htmlData = clipboard.getData('text/html');
+        if (!htmlData || /^<img/.test(htmlData)) {
+          prevent = true;
+        }
+      }
+
+      if (prevent) {
+        swal({
+          title: jsi18n.get('tasksapi', 'Attention!'),
+          text: jsi18n.get('tasksapi', "It is not allowed to paste images or rich text in comments."),
+          type: 'error',
+          confirmButtonColor: '#6CCE86',
+          showCancelButton: false,
+          confirmButtonText: jsi18n.get('tasksapi', 'OK'),
+          closeOnConfirm: true
+        });
+        return false;
+      }
     });
 
     self.panel.on('keydown', '.task-changeset-comment', function(evt) {
