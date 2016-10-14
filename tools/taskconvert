@@ -343,9 +343,16 @@ sub processSource {
     while (my ($k, $v) = each %{$cfg{map}}) {
       if ($action->{$k}) {
         if (grep (/^$k$/, @{$cfg{logins}})) {
-          my $wikiName = Foswiki::Func::getWikiName($action->{$k});
-          $task{$v} = Foswiki::Func::getCanonicalUserID($wikiName);
+          my @names = map {
+            my $wikiName = Foswiki::Func::getWikiName($_);
+            my $cuid = Foswiki::Func::getCanonicalUserID($wikiName);
+            $cuid || $wikiName
+          } split(/\s*,\s*/, $action->{$k});
+
+          $task{$v} = join(', ', @names);
           $task{$v} = $action->{$k} unless $task{$v};
+
+
         } else {
           $task{$v} = $action->{$k};
         }
