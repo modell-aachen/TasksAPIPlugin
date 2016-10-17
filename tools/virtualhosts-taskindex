@@ -37,6 +37,7 @@ sub index {
   new Foswiki('admin');
   require Foswiki::Plugins::TasksAPIPlugin;
   Foswiki::Plugins::TasksAPIPlugin::_fullindex();
+  Foswiki::Plugins::TasksAPIPlugin::finishPlugin();
 }
 
 1;
