@@ -254,14 +254,28 @@ TasksPanel = function(tasktracker) {
       var clipboard = e.clipboardData || window.clipboardData;
       var prevent = false;
 
-      if ((navigator.userAgent.indexOf("MSIE") != -1 ) || (!!document.documentMode == true )) {
-        if (0 !== clipboard.files.length) {
+      if ((navigator.userAgent.indexOf("MSIE") != -1 ) || (!!document.documentMode == true )) { //IE11
+        if (window.clipboardData.getData('URL')) {
+          window.clipboardData.clearData();
+          prevent = true;
+        } else if (0 !== clipboard.files.length) {
           prevent = true;
         }
       } else {
         var htmlData = clipboard.getData('text/html');
-        if (!htmlData || /^<img/.test(htmlData)) {
+        if (htmlData && /<img/.test(htmlData)) {
           prevent = true;
+        }
+        if (Object.prototype.toString.apply(clipboard.types) !== '[object Array]') {
+          if (clipboard.types.contains('text/rtf')) { //Firefox
+            prevent = true;
+          } else if (clipboard.types.contains('application/x-moz-file')) {
+            prevent = true;
+          }
+        } else {
+          if (clipboard.types.indexOf('text/rtf') > -1) { //Chrome
+            prevent = true;
+          }
         }
       }
 

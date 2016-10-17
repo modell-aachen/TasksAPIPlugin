@@ -40,6 +40,7 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "deleted": "gelöscht",
     "Oops": "Uups",
     "Something went wrong! Try again later.": "Etwas ist schief gelaufen. Versuchen Sie es später erneut.",
+    "It is not allowed to paste images or rich text in comments.": "Es ist nicht erlaubt Bilder oder Rich Text in einem Kommentar einzufügen.",
     "This entry is currently being edited by another user! Try again later.": "Dieser Eintrag wird gerade von einem anderen Benutzer bearbeitet. Versuchen Sie es später erneut.",
   });
 }
