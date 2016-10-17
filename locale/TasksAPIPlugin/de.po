@@ -165,8 +165,8 @@ msgstr "Aufgabe neu zugewiesen"
 msgid "A task is still open"
 msgstr "Eine Aufgabe ist weiterhin offen"
 
-msgid "%1 created a task: %2"
-msgstr "%1 hat eine Aufgabe erstellt: %2"
+msgid "%1 created a task"
+msgstr "%1 hat eine Aufgabe erstellt"
 
 msgid "%1 created a task in %2:"
 msgstr "%1 hat eine Aufgabe in %2 erstellt:"
