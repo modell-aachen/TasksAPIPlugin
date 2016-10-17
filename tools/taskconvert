@@ -378,7 +378,14 @@ sub processSource {
 
     if ($cfg{nodry}) {
       unless ($cfg{dedup}) {
-        my $ret = Foswiki::Plugins::TasksAPIPlugin::Task::search(query => \%task, acl => 0);
+        my %query = (
+          form => $task{form},
+          Author => $task{Author},
+          Created => $task{Created},
+          Context => $task{Context},
+        );
+
+        my $ret = Foswiki::Plugins::TasksAPIPlugin::Task::search(query => \%query, acl => 0);
         if ($ret->{total}) {
           print "Skipping already existing task for action '$action->{uid}'.\n" if $cfg{verbose};
           next;
