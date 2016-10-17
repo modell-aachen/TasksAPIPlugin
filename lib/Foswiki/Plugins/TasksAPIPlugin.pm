@@ -1210,7 +1210,7 @@ sub restLease {
 
     Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
-    my $templatefile = $r->{templatefile} || $tplfile || 'TasksAPI';
+    my $templatefile = $r->{templatefile} || $tplfile || 'TasksAPIDefault';
     $templatefile =~ s#/#.#g;
     Foswiki::Func::loadTemplate( $templatefile );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || $edtpl || 'tasksapi::editor' );
