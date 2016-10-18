@@ -356,7 +356,7 @@ sub processSource {
         } else {
           $task{$v} = $action->{$k};
         }
-      } elsif (!$cfg{defaults}{$v}) {
+      } elsif (not defined $cfg{defaults}{$v}) {
         push(@missing, $k);
         next;
       }
