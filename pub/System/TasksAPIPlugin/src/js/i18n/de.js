@@ -40,7 +40,8 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "deleted": "gelöscht",
     "Oops": "Uups",
     "Something went wrong! Try again later.": "Etwas ist schief gelaufen. Versuchen Sie es später erneut.",
-    "It is not allowed to paste images or rich text in comments.": "Es ist nicht erlaubt Bilder oder Rich Text in einem Kommentar einzufügen.",
+    "Pasting images, Office documents or other files into the comments field is not possible. Please use the regular upload function.": "Das Einfügen von Bildern, Office-Dokumenten oder anderen Dateien ist nicht möglich. Bitte benutzen Sie die reguläre Upload-Funktion.",
+    "Attaching files to comments is not possible. Please use the regular upload function.": "Das Anhängen von Dateien an Kommentare ist nicht möglich. Bitte benutzen Sie die reguläre Upload-Funktion.",
     "This entry is currently being edited by another user! Try again later.": "Dieser Eintrag wird gerade von einem anderen Benutzer bearbeitet. Versuchen Sie es später erneut.",
   });
 }
