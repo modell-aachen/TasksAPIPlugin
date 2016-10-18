@@ -194,7 +194,9 @@ sub afterRenameHandler {
     my $res = _query(query => $query, count => -1);
     my $tasks = $res->{tasks};
     foreach my $task (@$tasks) {
-        $task->update(Context => "$newWeb.$newTopic");
+        my %data = (Context => "$newWeb.$newTopic");
+        $data{Status} = 'deleted' if $newWeb eq $Foswiki::cfg{TrashWebName};
+        $task->update(%data);
     }
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
