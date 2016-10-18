@@ -184,19 +184,58 @@ sub afterRenameHandler {
 
     return if $oldAttachment || $newAttachment;
 
-    ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
-    ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
-    my $query = {
-        Context => "$oldWeb.$oldTopic"
-    };
+    # Context topic moved
+    if ($oldTopic && $newTopic) {
+        ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+        ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+        my $query = {
+            Context => "$oldWeb.$oldTopic"
+        };
+
+        Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+        my $res = _query(query => $query, count => -1);
+        my $tasks = $res->{tasks};
+        foreach my $task (@$tasks) {
+            my %data = (Context => "$newWeb.$newTopic");
+            $data{Status} = 'deleted' if $newWeb eq $Foswiki::cfg{TrashWebName};
+            $task->update(%data);
+        }
+
+        Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+        return;
+    }
+
+    # Context web moved
+    ($oldWeb) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+    ($newWeb) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+
+    # It might happen that the form is not updated by Foswiki yet.
+    # Using TasksAPI's query method will fail in that case.
+    my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
+    my $search = $solr->entityDecode("type:task container_id:${oldWeb}*", 1);
+    my $raw = $solr->solrSearch($search)->{raw_response};
+    my $content = from_json($raw->{_content});
+    my $r = $content->{response};
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
-    my $res = _query(query => $query, count => -1);
-    my $tasks = $res->{tasks};
-    foreach my $task (@$tasks) {
-        my %data = (Context => "$newWeb.$newTopic");
-        $data{Status} = 'deleted' if $newWeb eq $Foswiki::cfg{TrashWebName};
+    foreach my $doc (@{$r->{docs}}) {
+        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $doc->{task_id_s});
+        my ($meta) = Foswiki::Func::readTopic($tweb, $ttopic);
+        my $fname = $meta->getFormName();
+        my ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $fname);
+        my $form = new Foswiki::Form($Foswiki::Plugins::SESSION, $newWeb, $ftopic);
+
+        $meta->merge($meta, $form);
+        $meta->saveAs($tweb, $ttopic, {dontlog => 1, ignorepermissions => 1});
+        $meta->finish();
+
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+        my $ctx = $task->{fields}{Context};
+        my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
+        my %data = (Context => "$newWeb.$ctopic");
+        $data{Status} = 'deleted' if $newWeb =~ /^$Foswiki::cfg{TrashWebName}/;
         $task->update(%data);
+        _index($task);
     }
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
