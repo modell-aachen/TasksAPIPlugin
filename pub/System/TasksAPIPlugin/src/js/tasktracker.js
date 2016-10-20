@@ -643,6 +643,9 @@
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class');
       query.tab = cls.replace(/\s|jq(Ajax)?Tab|current|\{[^\}]*\}/g, '');
+      if (/^\w+,/.test(query.tab)) {
+        query.tab = query.tab.replace(/,.*/, '');
+      }
     }
 
     var search = [];
@@ -950,7 +953,7 @@
     var $tab = $this.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class').replace(/(\s|jq(Ajax)?Tab|current|\{[^\}]*\})/g, '');
-      if (/\w+,/.test(cls)) {
+      if (/^\w+,/.test(cls)) {
         cls = cls.replace(/,.*/, '');
       }
 
