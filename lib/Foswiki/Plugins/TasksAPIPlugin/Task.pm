@@ -8,6 +8,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
+use Foswiki::Plugins::KVPPlugin;
 
 use Date::Manip;
 use Digest::SHA;
@@ -163,6 +164,8 @@ sub _reduce {
 
 sub _getACL {
     my ($this, $form, $type) = @_;
+
+    $type = "\U$type";
     my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
     my $ctx = $this->get('FIELD', 'Context') || {};
     my $ignoreContextACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
@@ -197,7 +200,6 @@ sub _getACL {
     $aclPref =~ s/\$contextACL\b//g if $ignoreContextACL;
     $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/g;
     $aclPref =~ s/Team\b//g;
-
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -225,7 +227,18 @@ sub _checkACL {
             return $ccache if defined $ccache;
 
             my ($meta) = Foswiki::Func::readTopic(undef, $aclwt);
-            $ccache = $meta->haveAccess("$type");
+            $ccache = $meta->haveAccess("$type", $user);
+
+            if ($type eq 'CHANGE') {
+                my ($aclw, $aclt) = Foswiki::Func::normalizeWebTopicName(undef, $aclwt);
+                $ccache = Foswiki::Plugins::KVPPlugin::_WORKFLOWALLOWS(
+                    $session,
+                    {uncontrolled => $ccache},
+                    $aclt,
+                    $aclw
+                );
+            }
+
             Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
