@@ -942,7 +942,7 @@
       });
     }
 
-    var order = url.match(/order\b=(\w+)[&;]?$?/);
+    var order = url.match(/order\b=(\w+)[&;]?/);
     order = (order && order.length > 1 && order[1] !== undefined) ? order[1] : false;
     var desc = url.match(/desc\b=(\d)/)
     desc = (desc && desc.length > 1 && desc[1] !== undefined) ? desc[1] : false;
