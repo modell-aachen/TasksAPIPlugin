@@ -8,6 +8,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
+use Foswiki::Plugins::KVPPlugin;
 
 use Date::Manip;
 use Digest::SHA;
@@ -163,6 +164,8 @@ sub _reduce {
 
 sub _getACL {
     my ($this, $form, $type) = @_;
+
+    $type = "\U$type";
     my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
     my $ctx = $this->get('FIELD', 'Context') || {};
     my $ignoreContextACL = Foswiki::isTrue($form->getPreference('TASKCFG_IGNORE_CONTEXT_ACL'), 0);
@@ -197,7 +200,6 @@ sub _getACL {
     $aclPref =~ s/\$contextACL\b//g if $ignoreContextACL;
     $aclPref =~ s/\$contextACL\b/\$wikiACL($ctx->{value} $type)/g;
     $aclPref =~ s/Team\b//g;
-
     push @acl, grep { $_ } split(/\s*,\s*/, $aclPref);
     my %acl; @acl{@acl} = @acl;
     keys %acl;
@@ -225,7 +227,18 @@ sub _checkACL {
             return $ccache if defined $ccache;
 
             my ($meta) = Foswiki::Func::readTopic(undef, $aclwt);
-            $ccache = $meta->haveAccess("$type");
+            $ccache = $meta->haveAccess("$type", $user);
+
+            if ($type eq 'CHANGE') {
+                my ($aclw, $aclt) = Foswiki::Func::normalizeWebTopicName(undef, $aclwt);
+                $ccache = Foswiki::Plugins::KVPPlugin::_WORKFLOWALLOWS(
+                    $session,
+                    {uncontrolled => $ccache},
+                    $aclt,
+                    $aclw
+                );
+            }
+
             Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
@@ -395,12 +408,13 @@ sub copy {
         form => join('.', Foswiki::Func::normalizeWebTopicName($formweb, $opts{form} || $formtopic)),
         TopicType => $opts{type} || $self->{fields}{TopicType},
         Context => $opts{context},
+        defined $opts{fields} ? %{$opts{fields}} : ()
     );
     my $dest = create(%data);
 
     # Copy attachments
     my @att = $self->{meta}->find('FILEATTACHMENT');
-    return unless @att;
+    return $dest unless @att;
     for my $att (@att) {
         next unless $self->{meta}->hasAttachment($att->{name});
         $self->{meta}->copyAttachment($att->{name}, $dest->{meta});
@@ -409,6 +423,7 @@ sub copy {
     Foswiki::Plugins::TasksAPIPlugin::_index($dest);
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
     $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    return $dest;
 }
 
 sub notify {
@@ -426,7 +441,16 @@ sub notify {
     require Foswiki::Contrib::MailTemplatesContrib;
     Foswiki::Func::pushTopicContext(Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context}));
     Foswiki::Func::setPreferencesValue('TASKSAPI_MAIL_TO', $notify);
-    Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', Foswiki::Func::getWikiName());
+
+    my $actor = Foswiki::Func::getWikiName();
+    if ($Foswiki::Plugins::SESSION->{users}->{mapping}->can('getDisplayName')) {
+        my $cuid = Foswiki::Func::getCanonicalUserID($actor);
+        unless ($cuid =~ /^BaseUserMapping/) {
+            my $displayName = $Foswiki::Plugins::SESSION->{users}->{mapping}->getDisplayName($cuid);
+            $actor = $displayName unless $displayName eq ($Foswiki::cfg{Ldap}{DisplayNameFormat} || '');
+        }
+    }
+    Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', $actor);
     Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
     Foswiki::Func::popTopicContext();
 }

@@ -65,6 +65,8 @@ TasksPanel = function(tasktracker) {
     self.buttons.upload.off('click');
     self.overlay.off('click');
     self.overlay.off('queueEmpty');
+    self.overlay.off('drop', '[contenteditable], div[name="comment"]');
+    self.overlay.off('paste', '[contenteditable], div[name="comment"]');
 
     self.panel.off('keydown', 'input[name="Title"]');
     self.panel.off('blur', 'input[name="Title"]');
@@ -246,6 +248,86 @@ TasksPanel = function(tasktracker) {
     self.overlay.on('keydown', 'input, textarea, [contenteditable], div[name="comment"]', function(evt) {
       evt.stopPropagation();
       evt.stopImmediatePropagation();
+    });
+
+    self.overlay.on('drop', '[contenteditable], div[name="comment"]', function(evt) {
+      var e = evt.originalEvent;
+      var dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        swal({
+          title: jsi18n.get('tasksapi', 'Attention!'),
+          text: jsi18n.get('tasksapi', "Attaching files to comments is not possible. Please use the regular upload function."),
+          type: 'error',
+          confirmButtonColor: '#6CCE86',
+          showCancelButton: false,
+          confirmButtonText: jsi18n.get('tasksapi', 'OK'),
+          closeOnConfirm: true
+        });
+
+        return false;
+      }
+    });
+
+    self.overlay.on('paste', '[contenteditable], div[name="comment"]', function(evt) {
+      var e = evt.originalEvent;
+      var clipboard = e.clipboardData || window.clipboardData;
+      var prevent = false;
+
+      if ((navigator.userAgent.indexOf("MSIE") != -1 ) || (!!document.documentMode == true )) { //IE11
+        if (window.clipboardData.getData('URL')) {
+          window.clipboardData.clearData();
+          prevent = true;
+        } else if (0 !== clipboard.files.length) {
+          prevent = true;
+        }
+      }
+
+      if (!prevent) {
+        // IE11 doesn't support .getData('text/html')
+        var htmlData = '';
+        if ((navigator.userAgent.indexOf("MSIE") === -1 ) && (!!document.documentMode === false )) {
+          htmlData = clipboard.getData('text/html');
+        }
+
+        var text = clipboard.getData('Text');
+        if (htmlData && /<img/.test(htmlData)) {
+          prevent = true;
+        }
+
+        if (/^$/.test(htmlData || ' ') && /^$/.test(text || ' ')) {
+          prevent = true;
+        }
+
+        if (clipboard.types) {
+          if (Object.prototype.toString.apply(clipboard.types) !== '[object Array]') {
+            if (clipboard.types.contains('text/rtf')) { //Firefox
+              prevent = true;
+            } else if (clipboard.types.contains('application/x-moz-file')) {
+              prevent = true;
+            } else if (clipboard.types.contains('Files')) { // Edge
+              prevent = true;
+            }
+          } else if (clipboard.types.indexOf('text/rtf') > -1) { //Chrome
+            prevent = true;
+          }
+        }
+      }
+
+      if (prevent) {
+        swal({
+          title: jsi18n.get('tasksapi', 'Attention!'),
+          text: jsi18n.get('tasksapi', "Pasting images, Office documents or other files into the comments field is not possible. Please use the regular upload function."),
+          type: 'error',
+          confirmButtonColor: '#6CCE86',
+          showCancelButton: false,
+          confirmButtonText: jsi18n.get('tasksapi', 'OK'),
+          closeOnConfirm: true
+        });
+        return false;
+      }
     });
 
     self.panel.on('keydown', '.task-changeset-comment', function(evt) {

@@ -375,6 +375,7 @@ div[name="comment"] {
         background-color: lighten(#e9eff5, 5%);
         border-radius: 5px;
         padding: 5px;
+        word-break: initial;
       }
 
       &[contenteditable="true"] {

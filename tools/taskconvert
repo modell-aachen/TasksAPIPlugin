@@ -19,6 +19,7 @@ require Foswiki::Plugins::TasksAPIPlugin;
 # Configuration default values
 my %cfg = (
   context    => '',
+  dedup      => 0,
   defaults   => {},
   dateformat => {},
   filter     => {},
@@ -38,22 +39,23 @@ my %cfg = (
 
 # Parse command line parameters
 Getopt::Long::GetOptions(
-  'context|c=s'      => \$cfg{context},
-  'defaults=s%'      => \$cfg{defaults},
-  'dateformats|d=s%' => \$cfg{dateformat},
-  'filter=s%'        => \$cfg{filter},
-  'force'            => \$cfg{force},
-  'form|f=s'         => \$cfg{form},
-  'help|h'           => \$cfg{help},
-  'host=s'           => \$cfg{host},
-  'list-fields|l'    => \$cfg{list},
-  'map|m=s%'         => \$cfg{map},
-  'nodry'            => \$cfg{nodry},
-  'reindex'          => \$cfg{reindex},
-  'remove-actions'   => \$cfg{remove},
-  'source|s=s@'      => \$cfg{source},
-  'user-field|u=s@'  => \$cfg{logins},
-  'verbose|v'        => \$cfg{verbose},
+  'context|c=s'       => \$cfg{context},
+  'ignore-duplicates' => \$cfg{dedup},
+  'defaults=s%'       => \$cfg{defaults},
+  'dateformat|d=s%'   => \$cfg{dateformat},
+  'filter=s%'         => \$cfg{filter},
+  'force'             => \$cfg{force},
+  'form|f=s'          => \$cfg{form},
+  'help|h'            => \$cfg{help},
+  'host=s'            => \$cfg{host},
+  'list-fields|l'     => \$cfg{list},
+  'map|m=s%'          => \$cfg{map},
+  'nodry'             => \$cfg{nodry},
+  'reindex'           => \$cfg{reindex},
+  'remove-actions'    => \$cfg{remove},
+  'source|s=s@'       => \$cfg{source},
+  'user-field|u=s@'   => \$cfg{logins},
+  'verbose|v'         => \$cfg{verbose},
 ) or quit(1,1);
 
 # Check whether to print the help page
@@ -66,9 +68,13 @@ $cfg{source} = [split(/,/, join(',', @{$cfg{source}}))];
 $cfg{logins} = [split(/,/, join(',', @{$cfg{logins}}))];
 
 # collect form and date field mappings
-collectHashValues('dateformats', 'defaults', 'filter', 'map');
+collectHashValues('dateformat', 'defaults', 'filter', 'map');
 
-quit(1,1) unless scalar @{$cfg{source}};
+unless (scalar @{$cfg{source}}) {
+  print "\nMissing parameter 'source'.\n";
+  quit(1,1);
+}
+
 if ($cfg{remove}) {
   if ($cfg{host}) {
     require Foswiki::Contrib::VirtualHostingContrib::VirtualHost;
@@ -82,8 +88,15 @@ if ($cfg{remove}) {
 }
 
 unless ($cfg{list}) {
-  quit(1,1) unless $cfg{context};
-  quit(1,1) unless $cfg{form};
+  unless ($cfg{context}) {
+    print "\nMissing parameter 'context'\n";
+    quit(1,1);
+  }
+
+  unless ($cfg{form}) {
+    print "\nMissing parameter 'form'\n";
+    quit(1,1);
+  }
 }
 
 if ($cfg{host}) {
@@ -110,11 +123,11 @@ sub printHelp {
                                         --defaults 'AssignedTo=Team,Type=Information'
                                         --defaults 'AssignedTo=Team' --defaults 'Type=Information'
 
-  -d    --dateformats                 List of key/value pairs defining a parsable date format to use for converting old
+  -d    --dateformat                 List of key/value pairs defining a parsable date format to use for converting old
                                       date strings to new epoch strings.
                                       Usage:
-                                        --dateformats 'created=\$epoch,due=\$epoch'
-                                        --dateformats 'created=\$epoch' --dateformats 'due=\$epoch'
+                                        --dateformat 'created=\$epoch,due=\$epoch'
+                                        --dateformat 'created=\$epoch' --dateformat 'due=\$epoch'
 
         --filter                      List of key/value pairs used to filter ActionTrackerPlugin actions by field values.
                                       Usage:
@@ -126,6 +139,10 @@ sub printHelp {
   -f    --form                        The form to use for converted TasksAPI tasks.
                                       Usage:
                                         --form 'MyWeb.MyTaskForm'
+
+        --ignore-duplicates           Do NOT check for already existing tasks.
+                                      Turning on this flag may lead to duplicated tasks.
+                                      You have been warned!
 
   -h    --help                        Shows this help.
 
@@ -159,7 +176,7 @@ sub printHelp {
                                         --source 'MyWeb.Topic00*'
                                         --source 'MyWeb.Topic00*Actions'
 
-  -u    --user-field                  List of ActionTracker fields container user information.
+  -u    --user-field                  List of ActionTracker fields containing user information.
                                       Field values specified by this parameter will be converted and
                                       stored as CUID.
                                       Usage:
@@ -319,20 +336,27 @@ sub processSource {
 
     my %task;
     while (my ($k, $v) = each %{$cfg{defaults}}) {
-      $task{$v} = $cfg{defaults}{$v};
+      $task{$k} = $v;
     }
 
     my @missing;
     while (my ($k, $v) = each %{$cfg{map}}) {
       if ($action->{$k}) {
         if (grep (/^$k$/, @{$cfg{logins}})) {
-          my $wikiName = Foswiki::Func::getWikiName($action->{$k});
-          $task{$v} = Foswiki::Func::getCanonicalUserID($wikiName);
+          my @names = map {
+            my $wikiName = Foswiki::Func::getWikiName($_);
+            my $cuid = Foswiki::Func::getCanonicalUserID($wikiName);
+            $cuid || $wikiName
+          } split(/\s*,\s*/, $action->{$k});
+
+          $task{$v} = join(', ', @names);
           $task{$v} = $action->{$k} unless $task{$v};
+
+
         } else {
           $task{$v} = $action->{$k};
         }
-      } elsif (!$cfg{defaults}{$v}) {
+      } elsif (not defined $cfg{defaults}{$v}) {
         push(@missing, $k);
         next;
       }
@@ -353,6 +377,21 @@ sub processSource {
     $task{form} = "$fweb.$ftopic";
 
     if ($cfg{nodry}) {
+      unless ($cfg{dedup}) {
+        my %query = (
+          form => $task{form},
+          Author => $task{Author},
+          Created => $task{Created},
+          Context => $task{Context},
+        );
+
+        my $ret = Foswiki::Plugins::TasksAPIPlugin::Task::search(query => \%query, acl => 0);
+        if ($ret->{total}) {
+          print "Skipping already existing task for action '$action->{uid}'.\n" if $cfg{verbose};
+          next;
+        }
+      }
+
       my $t = Foswiki::Plugins::TasksAPIPlugin::Task::create(%task);
       print "Created task '$t->{id}'\n" if $cfg{verbose};
     } elsif ($cfg{verbose}) {

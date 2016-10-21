@@ -22,10 +22,6 @@ lib/Foswiki/Plugins/TasksAPIPlugin/Task.pm 0444
 lib/Foswiki/Plugins/TasksAPIPlugin/JQueryPlugin.pm 0444
 locale/TasksAPIPlugin/de.po 0444
 pub/System/TasksAPIPlugin/assets/ajax-loader.gif 0644
-pub/System/TasksAPIPlugin/assets/ampel.png 0644
-pub/System/TasksAPIPlugin/assets/ampel_g.png 0644
-pub/System/TasksAPIPlugin/assets/ampel_o.png 0644
-pub/System/TasksAPIPlugin/assets/ampel_r.png 0644
 pub/System/TasksAPIPlugin/assets/file.png 0644
 pub/System/TasksAPIPlugin/assets/sort_asc.gif 0644
 pub/System/TasksAPIPlugin/assets/sort_bg.gif 0644

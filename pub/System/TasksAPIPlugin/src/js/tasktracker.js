@@ -643,6 +643,9 @@
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class');
       query.tab = cls.replace(/\s|jq(Ajax)?Tab|current|\{[^\}]*\}/g, '');
+      if (/^\w+,/.test(query.tab)) {
+        query.tab = query.tab.replace(/,.*/, '');
+      }
     }
 
     var search = [];
@@ -942,9 +945,18 @@
       });
     }
 
+    var order = url.match(/order\b=(\w+)[&;]?/);
+    order = (order && order.length > 1 && order[1] !== undefined) ? order[1] : false;
+    var desc = url.match(/desc\b=(\d)/)
+    desc = (desc && desc.length > 1 && desc[1] !== undefined) ? desc[1] : false;
+
     var $tab = $this.closest('.jqTab.current');
     if ( $tab.length > 0 ) {
       var cls = $tab.attr('class').replace(/(\s|jq(Ajax)?Tab|current|\{[^\}]*\})/g, '');
+      if (/^\w+,/.test(cls)) {
+        cls = cls.replace(/,.*/, '');
+      }
+
       tab = '&tab=' + cls;
     }
 
@@ -961,6 +973,14 @@
       if (tab) {
         url += '&tab=' + tab;
       }
+    }
+
+    if (order !== false) {
+      url += '&order=' + order;
+    }
+
+    if (desc !== false) {
+      url += '&desc=' + desc;
     }
 
     var target = url + ' #' + tid + '> .tasks-table > .tasks > .task';

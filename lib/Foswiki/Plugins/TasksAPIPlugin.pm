@@ -9,6 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Time ();
 
+use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::SolrPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
@@ -113,7 +114,10 @@ sub initPlugin {
         return 0;
     }
 
-    Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&tagAmpel );
+    # Implementation moved to AmpelPlugin.
+    # Still here for compatibility reasons.
+    Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&Foswiki::Plugins::AmpelPlugin::_SIGNALTAG );
+
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
@@ -180,17 +184,58 @@ sub afterRenameHandler {
 
     return if $oldAttachment || $newAttachment;
 
-    ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
-    ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
-    my $query = {
-        Context => "$oldWeb.$oldTopic"
-    };
+    # Context topic moved
+    if ($oldTopic && $newTopic) {
+        ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+        ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+        my $query = {
+            Context => "$oldWeb.$oldTopic"
+        };
+
+        Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+        my $res = _query(query => $query, count => -1);
+        my $tasks = $res->{tasks};
+        foreach my $task (@$tasks) {
+            my %data = (Context => "$newWeb.$newTopic");
+            $data{Status} = 'deleted' if $newWeb eq $Foswiki::cfg{TrashWebName};
+            $task->update(%data);
+        }
+
+        Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+        return;
+    }
+
+    # Context web moved
+    ($oldWeb) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
+    ($newWeb) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+
+    # It might happen that the form is not updated by Foswiki yet.
+    # Using TasksAPI's query method will fail in that case.
+    my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
+    my $search = $solr->entityDecode("type:task container_id:${oldWeb}*", 1);
+    my $raw = $solr->solrSearch($search)->{raw_response};
+    my $content = from_json($raw->{_content});
+    my $r = $content->{response};
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
-    my $res = _query(query => $query, count => -1);
-    my $tasks = $res->{tasks};
-    foreach my $task (@$tasks) {
-        $task->update(Context => "$newWeb.$newTopic");
+    foreach my $doc (@{$r->{docs}}) {
+        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $doc->{task_id_s});
+        my ($meta) = Foswiki::Func::readTopic($tweb, $ttopic);
+        my $fname = $meta->getFormName();
+        my ($fweb, $ftopic) = Foswiki::Func::normalizeWebTopicName(undef, $fname);
+        my $form = new Foswiki::Form($Foswiki::Plugins::SESSION, $newWeb, $ftopic);
+
+        $meta->merge($meta, $form);
+        $meta->saveAs($tweb, $ttopic, {dontlog => 1, ignorepermissions => 1});
+        $meta->finish();
+
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($tweb, $ttopic);
+        my $ctx = $task->{fields}{Context};
+        my ($cweb, $ctopic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
+        my %data = (Context => "$newWeb.$ctopic");
+        $data{Status} = 'deleted' if $newWeb =~ /^$Foswiki::cfg{TrashWebName}/;
+        $task->update(%data);
+        _index($task);
     }
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
@@ -247,12 +292,28 @@ sub afterSaveHandler {
         my $res = _query(query => {Context => "$tweb.$ttopic", TopicType => 'task-prototype'});
         return unless defined $res && @{$res->{tasks}};
 
-        foreach my $t (@{$res->{tasks}}) {
-            $t->copy(
-                context => "$web.$topic",
-                form => $t->getPref('INSTANTIATED_FORM'),
-                type => 'task',
-            );
+        # Tasks are sorted such that tasks without parents are copied first.
+        # This ensures that their new id can be set as the parent on copied
+        # child tasks.
+        my @stasks = sort { $a->{fields}{Parent} cmp $b->{fields}{Parent} } @{$res->{tasks}};
+        my $newTasksMapping = {};
+        foreach my $t (@stasks) {
+            if ($t->{fields}{Parent} && $t->{fields}{Parent} ne '') {
+                $t->copy(
+                    context => "$web.$topic",
+                    form => $t->getPref('INSTANTIATED_FORM'),
+                    type => 'task',
+                    fields => {
+                        Parent => $newTasksMapping->{$t->{fields}{Parent}}->{id},
+                    },
+                );
+            } else {
+                $newTasksMapping->{$t->{id}} = $t->copy(
+                    context => "$web.$topic",
+                    form => $t->getPref('INSTANTIATED_FORM'),
+                    type => 'task',
+                );
+            }
         }
     }
 
@@ -963,44 +1024,6 @@ sub _enrich_data {
     return $result;
 }
 
-sub tagAmpel {
-    my( $session, $params, $topic, $web, $topicObject ) = @_;
-
-    my $title = '%MAKETEXT{"Missing due date"}%';
-    my $date = $params->{_DEFAULT} || $params->{date};
-    my $status = $params->{status} || 'open';
-    my $warn = $params->{warn} || 3;
-
-    return "<img src=\"%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/ampel.png\" alt=\"\" title=\"$title\" />" if ( !$date && $status eq 'open' );
-
-    my $src = '';
-    if ( $status eq 'open' ) {
-        my $now = scalar time();
-        my $secs = $date;
-        $secs = Foswiki::Time::parseTime($date) unless $secs =~ /^\d+$/;
-        my $offset = $warn * 24 * 60 * 60;
-        my $state = 'g';
-        $state = 'o' if $now  + $offset > $secs;
-        $state = 'r' if $now >= $secs;
-        $src = "ampel_$state";
-
-        my $delta = ($secs - $now)/86400;
-        my $abs = ceil(abs($delta));
-        $title = '%MAKETEXT{"In one day"}%' if $delta > 0 && $delta <= 1;
-        $title = "%MAKETEXT{\"In [_1] days\" args=\"$abs\"}%" if $delta > 1;
-        $title = '%MAKETEXT{"One day over due"}%' if $delta >= -2 && $delta < -1;
-        $title = '%MAKETEXT{"This very day"}%' if $delta >= -1 && $delta < 0;
-        $title = "%MAKETEXT{\"[_1] days over due\" args=\"$abs\"}%" if $delta < -2;
-    } else {
-        $src = $status eq 'closed' ? 'closed' : 'deleted';
-    }
-    my $img = <<IMG;
-<img src="%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/assets/$src.png" alt="" title="$title" />
-IMG
-
-    return $img;
-}
-
 sub tagSearch {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -1228,7 +1251,7 @@ sub restLease {
 
     Foswiki::Func::setPreferencesValue('TASKCTX', $r->{Context});
     Foswiki::Func::setPreferencesValue('taskeditor_allowupload', $r->{allowupload} || 0);
-    my $templatefile = $r->{templatefile} || $tplfile || 'TasksAPI';
+    my $templatefile = $r->{templatefile} || $tplfile || 'TasksAPIDefault';
     $templatefile =~ s#/#.#g;
     Foswiki::Func::loadTemplate( $templatefile );
     my $editor = Foswiki::Func::expandTemplate( $r->{editortemplate} || $edtpl || 'tasksapi::editor' );
