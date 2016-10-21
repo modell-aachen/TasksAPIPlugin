@@ -444,9 +444,11 @@ sub notify {
 
     my $actor = Foswiki::Func::getWikiName();
     if ($Foswiki::Plugins::SESSION->{users}->{mapping}->can('getDisplayName')) {
-        $actor = $Foswiki::Plugins::SESSION->{users}->{mapping}->getDisplayName(
-            Foswiki::Func::getCanonicalUserID($actor)
-        );
+        my $cuid = Foswiki::Func::getCanonicalUserID($actor);
+        unless ($cuid =~ /^BaseUserMapping/) {
+            my $displayName = $Foswiki::Plugins::SESSION->{users}->{mapping}->getDisplayName($cuid);
+            $actor = $displayName unless $displayName eq ($Foswiki::cfg{Ldap}{DisplayNameFormat} || '');
+        }
     }
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', $actor);
     Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
