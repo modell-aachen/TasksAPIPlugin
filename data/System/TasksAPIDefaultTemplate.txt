@@ -384,6 +384,13 @@
           </span>
         </div>
       </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-share"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Move entry to"}%</span>
+          <span>%TASKCONTEXTSELECTOR{task="%taskeditor_task%"}%</span>
+        </div>
+      </div>
       %TMPL:P{"tasksapi::editor::customfields"}%
     </div>
   </div>
