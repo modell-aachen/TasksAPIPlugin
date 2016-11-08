@@ -250,7 +250,7 @@ TasksPanel = function(tasktracker) {
       evt.stopImmediatePropagation();
     });
 
-    self.overlay.on('drop', '[contenteditable], div[name="comment"]', function(evt) {
+    self.overlay.on('drop', '[contenteditable]:not(.cke_editable)', function(evt) {
       var e = evt.originalEvent;
       var dt = e.dataTransfer;
       if (dt && dt.files && dt.files.length > 0) {
@@ -271,7 +271,7 @@ TasksPanel = function(tasktracker) {
       }
     });
 
-    self.overlay.on('paste', '[contenteditable], div[name="comment"]', function(evt) {
+    self.overlay.on('paste', '[contenteditable]:not(.cke_editable)', function(evt) {
       var e = evt.originalEvent;
       var clipboard = e.clipboardData || window.clipboardData;
       var prevent = false;
