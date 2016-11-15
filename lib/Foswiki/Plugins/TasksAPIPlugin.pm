@@ -335,7 +335,7 @@ sub afterSaveHandler {
     }
 
     # Index
-    return unless $tmpWikiACLs{solrStatus} == 200;
+    return unless $tmpWikiACLs{solrStatus} && $tmpWikiACLs{solrStatus} == 200;
 
     my $skipIndex = 0;
     foreach my $key (keys %{$tmpWikiACLs{acls}}) {
