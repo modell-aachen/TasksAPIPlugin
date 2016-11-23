@@ -635,8 +635,12 @@
     query.desc = isDesc ? 1 : 0;
     query.tid = tid;
 
-    if ( $tracker.children('.pagination-container').length > 0 ) {
-      query.page = $tracker.find('ul.pagination li.current').text().replace(/\s/g, '');
+    if ( $tracker.find('.pagination-container.no-print').css('display') !== 'none'  ) {
+      query.page = $tracker.find('ul.pagination li.active a').text().replace(/\s/g, '');
+    }
+    else {
+      query.page = 1;
+      query.pagesize = -1;
     }
 
     var $tab = $th.closest('.jqTab.current');
