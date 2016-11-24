@@ -2250,6 +2250,9 @@ OPTION
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
         );
         if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            unless($t->checkACL('change')){
+                next;
+            }
             $title = _getTopicTitle($a->[0]);
             my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
             push(@options, $option);
