@@ -64,16 +64,19 @@ set them to is *added* to the defaults, unlike all other settings which
 changes to the list of columns without having to copy many definitions around,
 but major changes are still possible.
 
-Each of them is a comma-separated list of definitions. For the task columns, a
+Each of them is a comma-separated list of definitions. For the task *columns*, a
 single definition looks as follows:
 
 <verbatim>title=Title Summary $ContextLink</verbatim>
+<verbatim><key>=<field> <field></verbatim>
 
 This will make the column with ID =title= contain the values from the fields
 =Title= and =Summary=, and the special field =$ContextLink= if applicable.
-This is the corresponding header definition:
+
+This is the corresponding *header* definition:
 
 <verbatim>title=Title:Title/Summary</verbatim>
+<verbatim><key>=<sort>:<header-title></verbatim>
 
 The first =Title= here is the field used for sorting that column (it can be
 omitted to disable sorting); the text after the colon defines the text to be
@@ -82,6 +85,21 @@ inserted in the header cell for that column.
 You can choose arbitrary IDs (as long as they are valid identifiers, i.e. made
 up of letters, numbers and underscores). Columns will be shown in the order
 they are listed in the definition.
+
+---+++++ A bigger Picture
+For getting a better understanding how customising for the TaskGrid works, we show here a more complete example. Pleas see above for more informations.
+This two WebPreferences are from an Internal Projects Web and will be explained.
+<verbatim>
+* Set PROJECT_TASKSGRID_COLUMNS = extraField1>due=TaskNr
+* Set PROJECT_TASKSGRID_HEADERS = extraField1=TaskNr:Task number
+</verbatim>
+
+Every Contrib which use an TaskGrid should provide his own preferences. Otherwise this should be set directly in the TaskGird.
+In this example we have a new Field created in the TaskForm called 'TaskNr'. We use this two preferences to show this field in the Task Grid after the DueDate field. The field is also sortable and uses as Heading the 'Task number' string.
+For the COLUMNS field _extraField1_ is the key which is the identifier we use in the HEADERS. Than there is the definition where to put the new field. After the due date, this also can be omitted, then it would be placed at the end. _TaskNr_ is the field which should be displayed.
+The HEADERS definition use the same Key to identify the field. Then after the = and before the : there is the field, which defines after which field it should sort. And at the end, there is the heading string. The string will be maktexted automatically.
+
+<img alt="test" height="212" src="%ATTACHURLPATH%/docu_custom_fields.png" width="1627" />
 
 ---+++++ Re-defining the contents of a column
 
