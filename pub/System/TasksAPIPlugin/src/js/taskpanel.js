@@ -1174,10 +1174,13 @@ TasksPanel = function(tasktracker) {
       if (!prop || /^\s*$/.test(prop)) {
         return;
       }
+      // Check if this is an hidden input field for a checkbox
+      if ($input.is(':hidden') && editor.find('input[name="' + prop + '"]').length > 1) {
+        return;
+      }
       var val = $input.val();
       if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
         var $selected = $input.children('option:selected');
-
         if ($selected.length > 1) {
           val = [];
           $selected.each(function() {
@@ -1186,12 +1189,17 @@ TasksPanel = function(tasktracker) {
         } else {
           val = $selected.val();
         }
+      } else if ($input.hasClass('foswikiCheckbox')) {
+            if ($input[0].checked) {
+                val = $input[0].title;
+            } else {
+                val = '';
+            }
       }
 
       if ( _.isArray(val) ) {
         val = val.join(', ');
       }
-
 
       if ( $input.hasClass('foswikiEditFormDateField') ) {
         try {
@@ -1202,10 +1210,6 @@ TasksPanel = function(tasktracker) {
         } catch(e) {
           error(e);
         }
-      }
-
-      if ( /^$/.test(val) ) {
-        val = $input.attr('value');
       }
 
       if ( $input.hasClass('foswikiMandatory') && (/^\s*$/.test( val ) || val === null || val === undefined ) ) {
