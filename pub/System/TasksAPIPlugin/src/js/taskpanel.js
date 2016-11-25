@@ -122,7 +122,7 @@ TasksPanel = function(tasktracker) {
           self.close();
         }
       });
-    }, 200);
+    }, 600);
 
     // handle attachments: open/delete
     self.panel.on('click', '.task-attachments tbody tr', function(evt) {
