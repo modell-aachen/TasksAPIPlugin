@@ -2056,8 +2056,7 @@ sub _renderAttachment {
     my ($meta, $task, $attachment, $params) = @_;
 
     my $author = $attachment->{author};
-    my $displayauthor = $author;
-    $displayauthor = _getDisplayName($author) if $author;
+    my $displayauthor = (defined $author ? _getDisplayName($author) : '');
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
