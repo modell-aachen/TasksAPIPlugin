@@ -2102,7 +2102,7 @@ FORMAT
         my $curUser = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($Foswiki::Plugins::SESSION->{user}));
         if ( $actor eq $curUser )  {
             $addComment  = '%IF{"\'%TASKINFO{field="Status"}%\'!=\'closed\' AND \'$encComment\'=\'\'" then="<a href=\"#\" class=\"task-changeset-add\" title=\"$percntMAKETEXT{\"Add comment\"}$percnt\"><i class=\"fa fa-plus\"></i></a>"}%';
-            my $encComment = Foswiki::urlEncode($cset->{comment});
+            my $encComment = Foswiki::urlEncode(defined $cset->{comment} ? $cset->{comment} : '');
             $addComment =~ s#\$encComment#$encComment#g;
             $editComment = '<div class="icons"><a href="#" class="task-changeset-edit" title="%MAKETEXT{"Edit comment"}%"><i class="fa fa-pencil"></i></a><a href="#" class="task-changeset-remove" title="%MAKETEXT{"Remove comment"}%"><i class="fa fa-times"></i></a></div>' if $cset->{comment};
         }
