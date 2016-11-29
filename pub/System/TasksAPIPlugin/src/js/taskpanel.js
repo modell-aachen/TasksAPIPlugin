@@ -1213,7 +1213,7 @@ TasksPanel = function(tasktracker) {
       }
 
       if ( $input.hasClass('foswikiMandatory') && (/^\s*$/.test( val ) || val === null || val === undefined ) ) {
-        var fname = $input.parent().find('span').text().replace(/\*/g, '');
+        var fname = $input.parent().find('>span.title').text().replace(/\*/g, '').trim();
         if ( !fname ) {
           fname = jsi18n.get('tasksapi', prop) || prop;
         }
