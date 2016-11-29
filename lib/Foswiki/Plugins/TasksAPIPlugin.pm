@@ -814,9 +814,14 @@ sub restAttach {
 
         close($stream);
 
+        my $newid;
         my @changesets = $task->{meta}->find('TASKCHANGESET');
-        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
-        my $newid = 1 + pop(@ids);
+        if(@changesets) {
+            my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+            $newid = 1 + pop(@ids);
+        } else {
+            $newid = 1;
+        }
 
         my @changes = ({type => 'add', name => '_attachment', new => $name});
         $task->{meta}->putKeyed('TASKCHANGESET', {
