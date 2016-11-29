@@ -416,6 +416,7 @@ $edit"
   fields=""
   format="
         <div class=\"task-meta-entry\">
+        <i class=\"fa\"></i>
         <div>
           <span class=\"title\">$xlatedescription</span>
           <span>
