@@ -120,6 +120,7 @@ sub initPlugin {
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
+    Foswiki::Func::registerTagHandler( 'TASKSTYPEFILTER', \&tagTaskTypeFilter );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
     Foswiki::Func::registerTagHandler( 'TASKINFO', \&tagInfo );
     Foswiki::Func::registerTagHandler( 'TASKCONTEXTSELECTOR', \&tagContextSelector );
@@ -334,7 +335,7 @@ sub afterSaveHandler {
     }
 
     # Index
-    return unless $tmpWikiACLs{solrStatus} == 200;
+    return unless $tmpWikiACLs{solrStatus} && $tmpWikiACLs{solrStatus} == 200;
 
     my $skipIndex = 0;
     foreach my $key (keys %{$tmpWikiACLs{acls}}) {
@@ -813,9 +814,14 @@ sub restAttach {
 
         close($stream);
 
+        my $newid;
         my @changesets = $task->{meta}->find('TASKCHANGESET');
-        my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
-        my $newid = 1 + pop(@ids);
+        if(@changesets) {
+            my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
+            $newid = 1 + pop(@ids);
+        } else {
+            $newid = 1;
+        }
 
         my @changes = ({type => 'add', name => '_attachment', new => $name});
         $task->{meta}->putKeyed('TASKCHANGESET', {
@@ -1046,6 +1052,27 @@ sub tagSearch {
     return to_json({status => 'ok', data => \@res});
 }
 
+sub tagTaskTypeFilter {
+    my($session, $params, $topic, $web, $topicObject) = @_;
+
+    my $query = $currentOptions->{query} || '{}';
+    if ($query) {
+        $query = from_json($query);
+    }
+
+    my $res = _query($query, 0);
+    my @types = map {
+        $_->{fields}{Type}
+    } @{$res->{tasks}};
+
+    my @unique;
+    foreach my $type (@types) {
+        push @unique, $type unless grep(/$type/, @unique);
+    }
+
+    return join(',', @unique);
+}
+
 sub tagFilter {
     my( $session, $params, $topic, $web, $meta ) = @_;
     my $filter = $params->{_DEFAULT} || $params->{field} || '';
@@ -1080,28 +1107,30 @@ sub tagFilter {
 
     foreach my $f (@$fields) {
         next unless $f->{name} eq $filter;
+        my @out = ();
         $title = $f->{title} || $f->{name} unless $title;
-        push(@html, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>") unless $f->{type} =~ /^user/;
+        push(@out, "<span class=\"hint\">%MAKETEXT{\"$title\"}%:</span>") unless $f->{type} =~ /^user/;
 
         if ($f->{type} =~ /^date2?$/) {
             my $dmin = ($minfrom || $min) ? "data-min=\"" . ($minfrom || $min) . "\"" : '';
             my $dmax = ($maxfrom || $max) ? "data-max=\"" . ($maxfrom || $max) . "\"" : '';
-            push(@html, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\" />");
+            push(@out, "<input type=\"text\" name=\"${filter}-from\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             if ($isrange) {
                 $dmin = ($minto || $min) ? "data-min=\"" . ($minto || $min) . "\"" : '';
                 $dmax = ($maxto || $max) ? "data-max=\"" . ($maxto || $max) . "\"" : '';
-                push(@html, "<span>-</span>");
-                push(@html, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\" />");
+                push(@out, "<span>-</span>");
+                push(@out, "<input type=\"text\" name=\"${filter}-to\" $dmin $dmax class=\"filter foswikiPickADate\" />");
             }
         } elsif ($f->{type} =~ /^text$/) {
             my $value = $query->{$filter} ? "value=\"$query->{$filter}\"" : '';
             my $default = $value ? 'data-default="' . $query->{$filter} . '"' : '';
-            push(@html, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
+            push(@out, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
         } elsif ($f->{type} =~ /^select/) {
-            push(@html, "<select name=\"$filter\" class=\"filter\">");
+            push(@out, "<select name=\"$filter\" class=\"filter\">");
             my @opts = ();
             my @labels = ();
             my @arr = split(',', $f->{value});
+            next if(scalar @arr < 2 );
             foreach my $a (@arr) {
                 next if ($f->{name} eq 'Status' && $a =~ /deleted/ && !Foswiki::Func::isAnAdmin());
                 $a =~ s/(^\s*)|(\s*$)//g;
@@ -1150,16 +1179,17 @@ sub tagFilter {
             # Would also result in type 'all'
 
             push(@options, "<option value=\"all\" $selected>%MAKETEXT{\"all\"}%</option>");
-            push(@html, @options);
-            push(@html, "</select>");
+            push(@out, @options);
+            push(@out, "</select>");
         } elsif ($f->{type} =~ /^user$/) {
             my $macro = <<MACRO;
 %RENDERFOREDIT{form="$ftopic" fields="$f->{name}" format="<span class='hint' style='margin-right: -2px; margin-bottom: 3px;'>\$xlatedescription</span> \$edit" header="" footer=""}%
 MACRO
-            push(@html, $macro);
+            push(@out, $macro);
         } elsif ($f->{type} =~ /^user\+multi$/) {
             # ToDo
         }
+        push(@html, @out);
     }
 
     push(@html, '</div>');
@@ -1865,12 +1895,11 @@ SCRIPT
             if ($l !~ /_(l|r)$/) {
                 if ($l eq 'Status' && $val eq 'all') {
                     $query->{$l} = ['open', 'closed'];
-                } else {
+                }elsif($val ne 'all'){
                     $query->{$l} = $val;
                 }
             } else {
                 my %range;
-
                 if ($l =~ /_r$/) {
                     my @arr = split(/_/, $val);
                     $l =~ s/_r$//;
@@ -2027,8 +2056,7 @@ sub _renderAttachment {
     my ($meta, $task, $attachment, $params) = @_;
 
     my $author = $attachment->{author};
-    my $displayauthor = $author;
-    $displayauthor = _getDisplayName($author) if $author;
+    my $displayauthor = (defined $author ? _getDisplayName($author) : '');
     my $taskstopic = $task->{id};
     my $date = Foswiki::Func::formatTime($attachment->{date}->{epoch}, '$day $month $year');
     $taskstopic =~ s/\./\//;
@@ -2078,7 +2106,7 @@ FORMAT
         my $curUser = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($Foswiki::Plugins::SESSION->{user}));
         if ( $actor eq $curUser )  {
             $addComment  = '%IF{"\'%TASKINFO{field="Status"}%\'!=\'closed\' AND \'$encComment\'=\'\'" then="<a href=\"#\" class=\"task-changeset-add\" title=\"$percntMAKETEXT{\"Add comment\"}$percnt\"><i class=\"fa fa-plus\"></i></a>"}%';
-            my $encComment = Foswiki::urlEncode($cset->{comment});
+            my $encComment = Foswiki::urlEncode(defined $cset->{comment} ? $cset->{comment} : '');
             $addComment =~ s#\$encComment#$encComment#g;
             $editComment = '<div class="icons"><a href="#" class="task-changeset-edit" title="%MAKETEXT{"Edit comment"}%"><i class="fa fa-pencil"></i></a><a href="#" class="task-changeset-remove" title="%MAKETEXT{"Remove comment"}%"><i class="fa fa-times"></i></a></div>' if $cset->{comment};
         }
@@ -2226,6 +2254,9 @@ OPTION
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
         );
         if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            unless($t->checkACL('change')){
+                next;
+            }
             $title = _getTopicTitle($a->[0]);
             my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
             push(@options, $option);

@@ -140,14 +140,13 @@
   header=""
   footer=""
 }%
-    <span class="title">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Title"
+  format="<table><tr><td><span class=\"title\">$edit</span></td><td>$mandatory</td></tr></table>"
   header=""
   footer=""
 }%
-    </span>
   </div>
   </div>
   <div class="content">
@@ -169,37 +168,33 @@
       <div class="task-meta-entry">
         <i class="fa fa-angle-double-right"></i>
         <div>
-          <span class="title">%MAKETEXT{"Assigned to"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="AssignedTo"
+  format="<span class=\"title\">%MAKETEXT{"Assigned to"}%$mandatory</span>
+$edit"
   header=""
   footer=""
 }%
-          </span>
         </div>
       </div>
       <div class="task-meta-entry">
         <i class="fa fa-calendar"></i>
         <div>
-          <span class="title">%MAKETEXT{"Due date"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="DueDate"
-  format="$edit"
-  header=""
+  format="<span class=\"title\">%MAKETEXT{"Due date"}%$mandatory</span>
+$edit"
   footer=""
 }%
-          </span>
         </div>
       </div>
 </div>%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Description"
-  format="<div class=\"description $name\"><span class=\"title\">$xlatedescription$mandatory</span><div>$edit</div></div>"
+  format="<div class=\"description $name\"><span class=\"title\">$xlatedescription$mandatory</span>$edit</div>"
 }%
     <div class="clear"></div>
   </div>
@@ -208,12 +203,12 @@
       <div class="task-meta-entry">
         <i class="fa fa-group"></i>
         <div>
-          <span class="title">%MAKETEXT{"Informees"}%</span>
           <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Informees"
-  format="$edit"
+  format="<span class=\"title\">%MAKETEXT{"Informees"}%$mandatory</span>
+$edit"
   header=""
   footer=""
 }%
@@ -235,16 +230,14 @@
       <div class="task-meta-entry">
         <i class="fa fa-exclamation"></i>
         <div>
-          <span class="title">%MAKETEXT{"Prioritize"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Prioritize"
-  format="$edit"
+  format="<span class=\"title\">%MAKETEXT{"Prioritize"}%</span>
+$edit"
   header=""
   footer=""
 }%
-          </span>
         </div>
       </div>
       %TMPL:P{"tasksapi::editor::customfields"}%
@@ -277,14 +270,13 @@
   header=""
   footer=""
 }%
-    <span class="title" title="%TASKINFO{field="Title" task="%taskeditor_task%"}%">
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Title"
+  format="<table><tr><td><span class=\"title\" title=\"%TASKINFO{field="Title" task="%taskeditor_task%"}%\">$edit</span></td><td>$mandatory</td></tr></table>"
   header=""
   footer=""
 }%
-    </span>
   </div>
   </div>
   <div class="content">
@@ -306,11 +298,12 @@
       <div class="task-meta-entry">
         <i class="fa fa-angle-double-right"></i>
         <div>
-          <span class="title">%MAKETEXT{"Assigned to"}%</span>
           <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="AssignedTo"
+  format="<span class=\"title\">%MAKETEXT{"Assigned to"}%$mandatory</span>
+$edit"
   header=""
   footer=""
 }%
@@ -320,23 +313,20 @@
       <div class="task-meta-entry">
         <i class="fa fa-calendar"></i>
         <div>
-          <span class="title">%MAKETEXT{"Due date"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="DueDate"
-  format="$edit"
-  header=""
+  format="<span class=\"title\">%MAKETEXT{"Due date"}%$mandatory</span>
+$edit"
   footer=""
 }%
-          </span>
         </div>
       </div>
 </div>%{
 }%%RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Description"
-  format="<div class=\"description $name\"><span class=\"title\">$xlatedescription$mandatory</span><div>$edit</div></div>"
+  format="<div class=\"description $name\"><span class=\"title\">$xlatedescription$mandatory</span>$edit</div>"
 }%
     <div class="clear"></div>
   </div>
@@ -345,16 +335,14 @@
       <div class="task-meta-entry">
         <i class="fa fa-group"></i>
         <div>
-          <span class="title">%MAKETEXT{"Informees"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Informees"
-  format="$edit"
+  format="<span class=\"title\">%MAKETEXT{"Informees"}%</span>
+$edit"
   header=""
   footer=""
 }%
-          </span>
         </div>
       </div>
       <!-- Reminder -->%RENDERFOREDIT{
@@ -372,16 +360,21 @@
       <div class="task-meta-entry">
         <i class="fa fa-exclamation"></i>
         <div>
-          <span class="title">%MAKETEXT{"Prioritize"}%</span>
-          <span>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Prioritize"
-  format="$edit"
+  format="<span class=\"title\">%MAKETEXT{"Prioritize"}%</span>
+$edit"
   header=""
   footer=""
 }%
-          </span>
+        </div>
+      </div>
+      <div class="task-meta-entry">
+        <i class="fa fa-share"></i>
+        <div>
+          <span class="title">%MAKETEXT{"Move entry to"}%</span>
+          <span>%TASKCONTEXTSELECTOR{task="%taskeditor_task%"}%</span>
         </div>
       </div>
       %TMPL:P{"tasksapi::editor::customfields"}%
@@ -404,11 +397,10 @@
   fields=""
   format="
         <div class=\"task-meta-entry\">
+        <i class=\"fa\"></i>
         <div>
-          <span class=\"title\">$xlatedescription</span>
-          <span>
+          <span class=\"title\">$xlatedescription$mandatory</span>
           $edit
-          </span>
         </div>
       </div>"
   header=""
@@ -424,6 +416,7 @@
   fields=""
   format="
         <div class=\"task-meta-entry\">
+        <i class=\"fa\"></i>
         <div>
           <span class=\"title\">$xlatedescription</span>
           <span>
@@ -562,7 +555,7 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi::task::field::checkbox"}%%{
-}%<td class="close no-print" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percntMAKETEXT{$quotClose task$quot}$percnt" else="$percntMAKETEXT{$quotReopen task$quot}$percnt"}%">%TMPL:P{"tasksapi::controls::right"}%</td>%{
+}%<td class="%IF{"context task_canedit and not context task_readonly" then="close"}% no-print" title="%IF{"'%TASKINFO{field="Status"}%'='open'" then="$percntMAKETEXT{$quotClose task$quot}$percnt" else="$percntMAKETEXT{$quotReopen task$quot}$percnt"}%">%TMPL:P{"tasksapi::controls::right"}%</td>%{
 }%
 %TMPL:END%
 

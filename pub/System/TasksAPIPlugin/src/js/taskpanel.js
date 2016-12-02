@@ -122,7 +122,7 @@ TasksPanel = function(tasktracker) {
           self.close();
         }
       });
-    }, 200);
+    }, 600);
 
     // handle attachments: open/delete
     self.panel.on('click', '.task-attachments tbody tr', function(evt) {
@@ -250,7 +250,7 @@ TasksPanel = function(tasktracker) {
       evt.stopImmediatePropagation();
     });
 
-    self.overlay.on('drop', '[contenteditable], div[name="comment"]', function(evt) {
+    self.overlay.on('drop', '[contenteditable]:not(.cke_editable)', function(evt) {
       var e = evt.originalEvent;
       var dt = e.dataTransfer;
       if (dt && dt.files && dt.files.length > 0) {
@@ -271,7 +271,7 @@ TasksPanel = function(tasktracker) {
       }
     });
 
-    self.overlay.on('paste', '[contenteditable], div[name="comment"]', function(evt) {
+    self.overlay.on('paste', '[contenteditable]:not(.cke_editable)', function(evt) {
       var e = evt.originalEvent;
       var clipboard = e.clipboardData || window.clipboardData;
       var prevent = false;
@@ -1174,10 +1174,13 @@ TasksPanel = function(tasktracker) {
       if (!prop || /^\s*$/.test(prop)) {
         return;
       }
+      // Check if this is an hidden input field for a checkbox
+      if ($input.is(':hidden') && editor.find('input[name="' + prop + '"]').length > 1) {
+        return;
+      }
       var val = $input.val();
       if (!val && $input.hasClass('foswikiSelect2Field') && $input.is('select')) {
         var $selected = $input.children('option:selected');
-
         if ($selected.length > 1) {
           val = [];
           $selected.each(function() {
@@ -1186,12 +1189,17 @@ TasksPanel = function(tasktracker) {
         } else {
           val = $selected.val();
         }
+      } else if ($input.hasClass('foswikiCheckbox')) {
+            if ($input[0].checked) {
+                val = $input[0].title;
+            } else {
+                val = '';
+            }
       }
 
       if ( _.isArray(val) ) {
         val = val.join(', ');
       }
-
 
       if ( $input.hasClass('foswikiEditFormDateField') ) {
         try {
@@ -1204,12 +1212,8 @@ TasksPanel = function(tasktracker) {
         }
       }
 
-      if ( /^$/.test(val) ) {
-        val = $input.attr('value');
-      }
-
       if ( $input.hasClass('foswikiMandatory') && (/^\s*$/.test( val ) || val === null || val === undefined ) ) {
-        var fname = $input.parent().find('span').text().replace(/\*/g, '');
+        var fname = $input.parent().find('>span.title').text().replace(/\*/g, '').trim();
         if ( !fname ) {
           fname = jsi18n.get('tasksapi', prop) || prop;
         }

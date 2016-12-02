@@ -95,6 +95,12 @@ div[name="comment"] {
     bottom: 0;
     right: 0;
 
+    .foswikiAlert {
+      font-size: 1.4em;
+      top: 0.2em;
+      position: relative;
+    }
+
     background-color: transparent;
     min-width: 748px;
     width: calc(40% + 48px);
@@ -450,6 +456,19 @@ div[name="comment"] {
     > .title {
       @include flex($align: center);
       padding: 10px;
+
+      &,
+      table {
+        &,
+        input {
+          width: 100%;
+        }
+      }
+
+      .foswikiAlert {
+        margin-left: 10px; // do not collide with border from input field
+        color: white;
+      }
 
       span.label {
         display: block;
