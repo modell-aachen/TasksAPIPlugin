@@ -22,6 +22,7 @@ use HTML::Entities;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 use POSIX;
+use Digest::MD5 qw(md5_hex);
 
 our $VERSION = '0.2';
 our $RELEASE = '0.2';
@@ -119,6 +120,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&Foswiki::Plugins::AmpelPlugin::_SIGNALTAG );
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
+    Foswiki::Func::registerTagHandler( 'TASKGRID', \&tagTaskGrid);
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKSTYPEFILTER', \&tagTaskTypeFilter );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
@@ -1022,11 +1024,13 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
-    $result->{html} = _renderTask($task->{meta}, $options, $task);
+    if($options){
+        $result->{html} = _renderTask($task->{meta}, $options, $task);
+        $result->{html} = _removeBlocks($result->{html});
+    }
     $result->{_canChange} = $task->{_canChange};
     $result->{_canChange} = 1 unless defined $result->{_canChange};
 
-    $result->{html} = _removeBlocks($result->{html});
     return $result;
 }
 
@@ -1201,11 +1205,16 @@ sub restSearch {
     my $res;
     my $req;
     my $q = $session->{request};
+    my $noHtml = $session->{request}->param('noHtml') || "";
+    my $limit = $session->{request}->param('limit') || 9999;
+    my $offset = $session->{request}->param('offset') || 0;
+    my $order = $session->{request}->param('order') || '';
+    my $desc = $session->{request}->param('desc') || '';
 
     eval {
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
-        $res = _query(query => $req);
+        $res = _query(query => $req, count => $limit, offset => $offset, order => $order, desc => $desc);
     };
     if ($@) {
         $response->header(-status => 500);
@@ -1215,10 +1224,26 @@ sub restSearch {
 
     my $depth = $req->{depth} || 0;
     _deepen($res->{tasks}, $depth, $req->{order});
-    my @tasks = map { _enrich_data($_, { tasktemplate => $req->{tasktemplate} }) } @{$res->{tasks}};
+    my $enrichOptions;
+    unless ($noHtml) {
+        $enrichOptions = { tasktemplate => $req->{tasktemplate} };
+    }
+    my @tasks = map { _enrich_data($_, $enrichOptions) } @{$res->{tasks}};
+    foreach my $task (@tasks){
+        amendDisplayValues($task);
+    }
     $response->header(-status => 200);
-    $response->body(encode_json({status => 'ok', data => \@tasks}));
+    $response->body(encode_json({status => 'ok', data => \@tasks, total => $res->{total}}));
     return '';
+}
+
+sub amendDisplayValues {
+    my $task = shift;
+    foreach my $key (keys %{$task->{fields}}){
+        if($task->{fields}->{$key}->{type} eq 'user'){
+            $task->{fields}->{$key}->{displayValue} = _getDisplayName($task->{fields}->{$key}->{value});
+        }
+    }
 }
 
 sub restLease {
@@ -1666,6 +1691,33 @@ sub _parseGridColumns {
     }
 
     return (\%colInfo, \@colOrder);
+}
+
+sub tagTaskGrid {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $context = $params->{context} || 'any';
+
+    my $prefs = {
+        component => "standard-task-grid",
+        context => $context
+    };
+
+    my $prefId = md5_hex(rand);
+    my $prefSelector = "TASKGRIDPREF_$prefId";
+    my $jsonPrefs = to_json($prefs);
+
+    Foswiki::Func::addToZone( 'head', 'FONTAWESOME',
+        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome.min.css" />');
+    Foswiki::Func::addToZone( 'head', 'FLATSKIN_WRAPPED',
+        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FlatSkin/css/flatskin_wrapped.min.css" />');
+    Foswiki::Func::addToZone( 'script', $prefSelector,
+        "<script type='text/json'>$jsonPrefs</script>");
+    Foswiki::Func::addToZone( 'script', 'TASKGRID',
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>","jsi18nCore"
+    );
+    Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
+    return "<task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
 }
 
 sub tagGrid {
