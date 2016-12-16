@@ -1,5 +1,5 @@
 <template>
-<component v-bind:is="prefs.component" :context="prefs.context"></component>
+<component v-bind:is="prefs.component" :config="prefs.config"></component>
 </template>
 
 
@@ -22,6 +22,7 @@ export default {
     },
     created() {
     	this.prefs = JSON.parse($("." + this.preferencesSelector).html());
+        console.log(this.prefs);
     }
 };
 </script>

@@ -1696,11 +1696,15 @@ sub _parseGridColumns {
 sub tagTaskGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
+    my $component = $params->{component} || 'standard-task-grid';
     my $context = $params->{context} || 'any';
+    my $config = $params->{config} || '{}';
+
+    $config =~ s/\'/\"/g;
 
     my $prefs = {
-        component => "standard-task-grid",
-        context => $context
+        component => $component,
+        config => from_json($config)
     };
 
     my $prefId = md5_hex(rand);

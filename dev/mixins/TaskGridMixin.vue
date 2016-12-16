@@ -14,8 +14,8 @@ export default {
     		type: Object,
     		default: null
     	},
-    	context: {
-    		type: String
+    	config: {
+    		type: Object
     	}
     },
     computed: {
@@ -54,7 +54,7 @@ export default {
     methods: {
       fetchData() {
         let request = {
-          request: JSON.stringify({Context: this.context}),
+          request: JSON.stringify({Context: this.config.context}),
           limit: this.resultsPerPage,
           offset: (this.currentPage -1 ) * this.resultsPerPage,
           order: this.sortState.field,
