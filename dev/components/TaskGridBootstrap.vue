@@ -1,5 +1,5 @@
 <template>
-<component v-bind:is="prefs.component" :preferences="prefs.gridPreferences"></component>
+<component v-bind:is="prefs.component" :context="prefs.context"></component>
 </template>
 
 
