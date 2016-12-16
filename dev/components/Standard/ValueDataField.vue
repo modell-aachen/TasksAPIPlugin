@@ -10,8 +10,10 @@
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
 export default {
     mixins: [DataFieldMixin],
-    props: ["field"],
     computed: {
+        field(){
+            return this.params[0];
+        },
         renderValue(){
             let field = this.task.fields[this.field];
             switch(field.type){

@@ -1,17 +1,17 @@
 <template>
 <div v-if="task" class="task-row">
-    <div class="row-item"><value-data-field :task="task" field="Prioritize"></value-data-field></div>
+    <div class="row-item"><value-data-field :task="task" :params="['Prioritize']"></value-data-field></div>
     <div class="row-item">
         <composed-data-field :task="task">
-            <value-data-field :task="task" field="Author"></value-data-field>
-            <value-data-field :task="task" field="Created"></value-data-field>
+            <value-data-field :task="task" :params="['Author']"></value-data-field>
+            <value-data-field :task="task" :params="['Created']"></value-data-field>
         </composed-data-field>
     </div>
     <div class="row-item"><type-data-field :task="task"></type-data-field></div>
-    <div class="row-item"><value-data-field :task="task" field="AssignedTo"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" field="Title"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" field="DueDate"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" field="Status"></value-data-field></div>
+    <div class="row-item"><value-data-field :task="task" :params="['AssignedTo']"></value-data-field></div>
+    <div class="row-item"><value-data-field :task="task" :params="['Title']"></value-data-field></div>
+    <div class="row-item"><value-data-field :task="task" :params="['DueDate']"></value-data-field></div>
+    <div class="row-item"><value-data-field :task="task" :params="['Status']"></value-data-field></div>
 </div>
 </template>
 
