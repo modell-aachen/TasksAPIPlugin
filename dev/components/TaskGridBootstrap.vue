@@ -22,7 +22,6 @@ export default {
     },
     created() {
     	this.prefs = JSON.parse($("." + this.preferencesSelector).html());
-        console.log(this.prefs);
     }
 };
 </script>

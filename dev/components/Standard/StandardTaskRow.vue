@@ -10,19 +10,9 @@
 
 <script>
 import TaskRowMixin from "../../mixins/TaskRowMixin.vue";
-import ValueDataField from "./ValueDataField.vue";
-import BadgeDataField from "./BadgeDataField.vue";
-import TypeDataField from "./TypeDataField.vue";
-import ComposedDataField from "./ComposedDataField.vue";
 export default {
     mixins: [TaskRowMixin],
-    props: ['config'],
-    components : {
-        ValueDataField,
-        BadgeDataField,
-        TypeDataField,
-        ComposedDataField
-    }
+    props: ['config']
 };
 </script>
 

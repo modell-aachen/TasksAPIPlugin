@@ -1,8 +1,6 @@
 <template>
 <div>
-    <span v-for="field in config.fields">
-        {{getDisplayValue(field)}}
-    </span>
+    <a :href="getDisplayValue(config.target)">{{getDisplayValue(config.display)}}</a>
 </div>
 </template>
 
