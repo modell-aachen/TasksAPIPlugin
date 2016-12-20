@@ -1,17 +1,9 @@
 <template>
 <div v-if="task" class="task-row">
-    <div class="row-item"><value-data-field :task="task" :params="['Prioritize']"></value-data-field></div>
-    <div class="row-item">
-        <composed-data-field :task="task">
-            <value-data-field :task="task" :params="['Author']"></value-data-field>
-            <value-data-field :task="task" :params="['Created']"></value-data-field>
-        </composed-data-field>
+    <div class="row-item" v-for="field in config.fields">
+        <component v-bind:is="field.component.type+'-data-field'" :task="task" :config="field.component">
+        </component>
     </div>
-    <div class="row-item"><type-data-field :task="task"></type-data-field></div>
-    <div class="row-item"><value-data-field :task="task" :params="['AssignedTo']"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" :params="['Title']"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" :params="['DueDate']"></value-data-field></div>
-    <div class="row-item"><value-data-field :task="task" :params="['Status']"></value-data-field></div>
 </div>
 </template>
 
@@ -19,12 +11,15 @@
 <script>
 import TaskRowMixin from "../../mixins/TaskRowMixin.vue";
 import ValueDataField from "./ValueDataField.vue";
+import BadgeDataField from "./BadgeDataField.vue";
 import TypeDataField from "./TypeDataField.vue";
 import ComposedDataField from "./ComposedDataField.vue";
 export default {
     mixins: [TaskRowMixin],
+    props: ['config'],
     components : {
         ValueDataField,
+        BadgeDataField,
         TypeDataField,
         ComposedDataField
     }

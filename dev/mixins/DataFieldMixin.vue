@@ -1,5 +1,5 @@
 <script>
 export default {
-    props: ["task", "params"]
+    props: ["task", "config"]
 }
 </script>

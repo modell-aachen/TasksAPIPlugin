@@ -12,7 +12,7 @@ export default {
     mixins: [DataFieldMixin],
     computed: {
         field(){
-            return this.params[0];
+            return this.config.fields[0];
         },
         renderValue(){
             let field = this.task.fields[this.field];
