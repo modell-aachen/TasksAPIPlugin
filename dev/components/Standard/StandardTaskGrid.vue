@@ -28,9 +28,6 @@ export default {
       StandardTaskRow,
       StandardHeaderField,
       Paginator
-    },
-    created() {
-        console.log(this.config.fields[0].title);
     }
 };
 </script>

@@ -1698,9 +1698,6 @@ sub tagTaskGrid {
 
     my $component = $params->{component} || 'standard-task-grid';
     my $context = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
-    my $columns = 'created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $AttachCount $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox,'. ($params->{columns} || '');
-    my $filters = $params->{filters} || '"Created" range="1" max="true", "Changed" range="1" max="true", Type';
-    my $headers = 'created=Created:Created,type=Type,assigned=Assigned to,title=Title:Title,due=DueDate:Due date,status=Status,checkbox=,'. ($params->{headers} || '');
     my $config = $params->{config} || '{}';
 
     $config =~ s/\'/\"/g;
@@ -1718,13 +1715,15 @@ sub tagTaskGrid {
         '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome.min.css" />');
     Foswiki::Func::addToZone( 'head', 'FLATSKIN_WRAPPED',
         '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FlatSkin/css/flatskin_wrapped.min.css" />');
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/css/tasktracker.css' />
+STYLE
     Foswiki::Func::addToZone( 'script', $prefSelector,
         "<script type='text/json'>$jsonPrefs</script>");
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
         "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>","jsi18nCore"
     );
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
-    Foswiki::Func::writeWarning("PREF: $prefSelector");
     return "<task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
 }
 

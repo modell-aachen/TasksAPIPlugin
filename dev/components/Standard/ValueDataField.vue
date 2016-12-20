@@ -1,28 +1,27 @@
 <template>
 <div>
-{{renderValue}}
+    <span v-for="field in config.fields">
+        {{getDisplayValue(field)}}
+    </span>
 </div>
 </template>
-
 
 <script>
 /* global moment */
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
 export default {
     mixins: [DataFieldMixin],
-    computed: {
-        field(){
-            return this.config.fields[0];
-        },
-        renderValue(){
-            let field = this.task.fields[this.field];
-            switch(field.type){
+    methods: {
+        getDisplayValue(field){
+            let taskField = this.task.fields[field];
+            console.log(taskField);
+            switch(taskField.type){
                 case 'date2':
-                    if(!field.value)
+                    if(!taskField.value)
                         return "";
-                    return moment.unix(parseInt(field.value)).toDate().toLocaleDateString();
+                    return moment.unix(parseInt(taskField.value)).toDate().toLocaleDateString();
                 default:
-                    return field.displayValue ? field.displayValue : field.value;
+                    return taskField.displayValue ? taskField.displayValue : taskField.value;
             }
         }
     }
