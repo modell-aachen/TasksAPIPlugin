@@ -1230,7 +1230,7 @@ sub restSearch {
     }
     my @tasks = map { _enrich_data($_, $enrichOptions) } @{$res->{tasks}};
     foreach my $task (@tasks){
-        amendDisplayValues($task);
+        amendDisplayValues($session, $task);
     }
     $response->header(-status => 200);
     $response->body(encode_json({status => 'ok', data => \@tasks, total => $res->{total}}));
@@ -1238,10 +1238,15 @@ sub restSearch {
 }
 
 sub amendDisplayValues {
-    my $task = shift;
+    my ( $session, $task) = @_;
     foreach my $key (keys %{$task->{fields}}){
         if($task->{fields}->{$key}->{type} eq 'user'){
             $task->{fields}->{$key}->{displayValue} = _getDisplayName($task->{fields}->{$key}->{value});
+        } else {
+            my $displayValue = _getDisplayValue( $session, $task->{form}, $key, $task->{fields}->{$key}->{value});
+            if($displayValue) {
+                $task->{fields}->{$key}->{displayValue} = $displayValue;
+            }
         }
     }
 }
@@ -1713,6 +1718,14 @@ sub tagTaskGrid {
         config => from_json($config)
     };
 
+    # Translate Title Fields
+    foreach my $field ( @{ $prefs->{config}->{fields} }) {
+        my %field = %{$field};
+       if($field{title}) {
+            $field->{title} = $session->i18n->maketext($field{title});
+       }
+    }
+
     my $prefId = md5_hex(rand);
     my $prefSelector = "TASKGRIDPREF_$prefId";
     my $jsonPrefs = to_json($prefs);
@@ -2112,6 +2125,16 @@ PAGER
     }
 
     return $grid;
+}
+
+sub _getDisplayValue {
+    my ($session, $form, $key, $value) = @_;
+    my ($fweb, $ftopic) = split(/\./, $form);
+    my $formObject = Foswiki::Form->new($session, $fweb, $ftopic);
+    my $formField = $formObject->getField($key);
+    return unless $formField;
+    return unless $formField->can('getDisplayValue');
+    return $formField->getDisplayValue($value);
 }
 
 sub _getDisplayName {
