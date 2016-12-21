@@ -2,7 +2,7 @@
 <div class="flatskin-wrapped tasks-table">
   <!-- Content -->
   <div class="task-row">
-      <div class="row-item" v-for="field in config.fields">
+      <div class="row-item" v-for="field in config.fields" :class="field.class || field.id">
           <standard-header-field :grid-state="state" :title="field.title" :field="field.sort_field">
           </standard-header-field>
       </div>
@@ -35,4 +35,31 @@ export default {
 </script>
 
 <style lang="sass">
+.row-item {
+    -webkit-flex-grow: 1;
+    flex-grow: 1;
+    -webkit-flex-basis: 0;
+    flex-basis: 0;
+    padding: 5px 10px;
+    &.title {
+        -webkit-flex-grow: 4;
+        flex-grow: 4;
+        span:first-child {
+            font-weight: bold;
+        }
+    }
+    &.close {
+        -webkit-flex-grow: 0.3;
+        flex-grow: 0.3;
+    }
+}
+.tasks .row-item {
+    &.created {
+        color: #777;
+        font-size: 11px;
+        span {
+            display: block;
+        }
+    }
+}
 </style>

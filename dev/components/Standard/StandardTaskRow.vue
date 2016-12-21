@@ -1,6 +1,6 @@
 <template>
 <div v-if="task" class="task task-row" :class="hasPriority">
-    <div class="row-item" v-for="field in config.fields">
+    <div class="row-item" v-for="field in config.fields" :class="field.class || field.id">
         <component v-bind:is="field.component.type+'-data-field'" :task="task" :config="field.component">
         </component>
     </div>
@@ -25,8 +25,4 @@ export default {
 </script>
 
 <style lang="sass">
-.row-item {
-    flex-grow: 1;
-    flex-basis: 0;
-}
 </style>

@@ -1,7 +1,7 @@
 <template>
-<div v-if="attachments > 0">
+<span v-if="attachments > 0" class="attachments">
     <i :class="'fa fa-'+icon" aria-hidden="true"></i> {{attachments}}
-</div>
+</span>
 </template>
 
 <script>
@@ -25,4 +25,10 @@ export default {
 </script>
 
 <style lang="sass">
+.tasks>.task .title .attachments {
+    color: #999;
+    float: right;
+    padding-left: 18px;
+    padding-right: 12px;
+}
 </style>
