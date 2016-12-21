@@ -1,9 +1,9 @@
 <template>
-<div>
-    <span v-for="field in config.fields">
-        {{getDisplayValue(field)}}
-    </span>
-</div>
+    <div :class="config.class">
+        <span v-for="field in config.fields">
+            {{getDisplayValue(field)}}
+        </span>
+    </div>
 </template>
 
 <script>

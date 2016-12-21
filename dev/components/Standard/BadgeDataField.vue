@@ -1,7 +1,7 @@
 <template>
-<div :class="[config.class,'label','label-'+label]">
+<span :class="[config.class,'label','label-'+label]">
 {{renderValue}}
-</div>
+</span>
 </template>
 
 

@@ -1,5 +1,5 @@
 <template>
-<div class="flatskin-wrapped">
+<div class="flatskin-wrapped tasks-table">
   <!-- Content -->
   <div class="task-row">
       <div class="row-item" v-for="field in config.fields">
@@ -7,7 +7,9 @@
           </standard-header-field>
       </div>
   </div>
-  <standard-task-row v-for="task in currentTasks" :task="task" :config="config"></standard-task-row>
+  <div class="tasks">
+      <standard-task-row v-for="task in currentTasks" :task="task" :config="config"></standard-task-row>
+  </div>
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>
 </div>
 </template>

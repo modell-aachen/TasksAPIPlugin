@@ -19,6 +19,7 @@ export default {
         this.$options.components.ComposedDataField = require ("./ComposedDataField.vue");
         this.$options.components.AttachmentsDataField = require ("./AttachmentsDataField.vue");
         this.$options.components.LinkDataField = require ("./LinkDataField.vue");
+        this.$options.components.CheckBoxDataField = require ("./CheckBoxDataField.vue");
     }
 };
 </script>

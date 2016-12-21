@@ -1,5 +1,5 @@
 <template>
-<div>
+<div v-if="attachments > 0">
     <i :class="'fa fa-'+icon" aria-hidden="true"></i> {{attachments}}
 </div>
 </template>

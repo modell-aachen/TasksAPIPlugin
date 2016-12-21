@@ -5,13 +5,17 @@ import TypeDataField from "../components/Standard/TypeDataField.vue";
 import ComposedDataField from "../components/Standard/ComposedDataField.vue";
 import AttachmentsDataField from "../components/Standard/AttachmentsDataField.vue";
 import LinkDataField from "../components/Standard/LinkDataField.vue";
+import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
 export default {
     props: ['task'],
     components : {
         ValueDataField,
         BadgeDataField,
         TypeDataField,
-        ComposedDataField
+        ComposedDataField,
+        AttachmentsDataField,
+        LinkDataField,
+        CheckBoxDataField
     }
 };
 </script>
