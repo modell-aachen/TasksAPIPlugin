@@ -139,6 +139,7 @@ TasksPanel = function(tasktracker) {
 
       var id = self.currentTask.data('id');
       var file = $(this).find('a.hidden').attr('href');
+      file = file.replace(/^#/, '');
       var p = foswiki.preferences;
       var endpoint = isDelete ? 'delete' : 'download';
       var url = [
