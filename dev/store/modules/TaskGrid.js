@@ -25,9 +25,16 @@ const actions = {
 	fetchTasks ({commit, state}, {gridState, request}){
 		commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: true});
 		$.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/search", request, (data) => {
-        commit(types.SET_TASKS_TO_SHOW, {gridState, data});
-        commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
-    }, "json");
+            commit(types.SET_TASKS_TO_SHOW, {gridState, data});
+            commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
+        }, "json");
+	},
+	updateTask ({commit, state}, {gridState, request}){
+		commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: true});
+		$.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/update", request, (data) => {
+            commit(types.UPDATE_TASK, {gridState, data});
+            commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
+        }, "json");
 	},
 	addGridState ({commit, state}, {parentGridState, callback}){
 		let newGridState = Object.assign({}, gridState);
@@ -41,6 +48,13 @@ const mutations = {
 	[types.SET_TASKS_TO_SHOW] (state, {gridState, data}) {
 		gridState.tasksToShow = data.data;
 		gridState.resultCount = data.total;
+	},
+	[types.UPDATE_TASK] (state, {gridState, data}) {
+        $.each(gridState.tasksToShow, function(key,value) {
+            if(value.id === data.data.id){
+                value.fields = data.data.fields;
+            }
+        });
 	},
 	[types.SET_CURRENT_PAGE] (state, {gridState, newPage}) {
 		gridState.currentPage = newPage;

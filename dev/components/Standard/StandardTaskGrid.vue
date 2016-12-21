@@ -8,7 +8,7 @@
       </div>
   </div>
   <div class="tasks">
-      <standard-task-row v-for="task in currentTasks" :task="task" :config="config"></standard-task-row>
+      <standard-task-row v-for="task in currentTasks" :grid-state="state" :task="task" :config="config"></standard-task-row>
   </div>
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>
 </div>
@@ -49,8 +49,12 @@ export default {
         }
     }
     &.close {
-        -webkit-flex-grow: 0.3;
-        flex-grow: 0.3;
+        -webkit-flex-grow: 0.2;
+        flex-grow: 0.2;
+    }
+    &.status {
+        -webkit-flex-grow: 0.4;
+        flex-grow: 0.4;
     }
 }
 .tasks .row-item {
@@ -59,6 +63,13 @@ export default {
         font-size: 11px;
         span {
             display: block;
+        }
+    }
+    &.close {
+        span {
+            font-size: 1.6em;
+            color: #6CCE86;
+            cursor: default;
         }
     }
 }

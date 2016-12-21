@@ -1,5 +1,5 @@
 <template>
-    <span :class="config.class">
+    <span :class="config.class" v-on:click="updateStatus">
         <template v-if="!isClosed">
             <i class="fa fa-fw fa-square-o"></i>
         </template>
@@ -20,6 +20,19 @@ export default {
             let taskStatus = this.task.fields[field].value;
             return taskStatus === 'closed';
         }
+    },
+    methods: {
+      updateStatus() {
+        let newStatus = 'closed';
+        if (this.isClosed) {
+            newStatus = 'open';
+        }
+        let request = {
+            id: this.task.id,
+            Status: newStatus,
+        };
+        this.$store.dispatch('updateTask', {gridState: this.gridState, request});
+      },
     }
 };
 </script>

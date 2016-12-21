@@ -8,7 +8,7 @@ import AttachmentsDataField from "../components/Standard/AttachmentsDataField.vu
 import LinkDataField from "../components/Standard/LinkDataField.vue";
 import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
 export default {
-    props: ['task'],
+    props: ['task', 'gridState'],
     components : {
         ValueDataField,
         SignalDataField,
