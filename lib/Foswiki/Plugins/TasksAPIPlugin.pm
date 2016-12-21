@@ -1700,6 +1700,12 @@ sub tagTaskGrid {
     my $context = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
     my $config = $params->{config} || '{}';
 
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
+    my $lang = $session->i18n->language();
+    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
     $config =~ s/\'/\"/g;
 
     my $prefs = {
@@ -1720,9 +1726,14 @@ sub tagTaskGrid {
 STYLE
     Foswiki::Func::addToZone( 'script', $prefSelector,
         "<script type='text/json'>$jsonPrefs</script>");
+
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
-        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>","jsi18nCore"
-    );
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>");
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
+SCRIPT
+
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
     return "<task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
 }

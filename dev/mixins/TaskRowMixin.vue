@@ -1,5 +1,6 @@
 <script>
 import ValueDataField from "../components/Standard/ValueDataField.vue";
+import SignalDataField from "../components/Standard/SignalDataField.vue";
 import BadgeDataField from "../components/Standard/BadgeDataField.vue";
 import TypeDataField from "../components/Standard/TypeDataField.vue";
 import ComposedDataField from "../components/Standard/ComposedDataField.vue";
@@ -10,6 +11,7 @@ export default {
     props: ['task'],
     components : {
         ValueDataField,
+        SignalDataField,
         BadgeDataField,
         TypeDataField,
         ComposedDataField,
