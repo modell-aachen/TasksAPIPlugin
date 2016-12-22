@@ -975,8 +975,8 @@ sub _enrich_data {
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
-    my @childtasks = {};
-    if($task->{children_acl}){
+    my @childtasks = [];
+    if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
     my $result = {
@@ -1231,7 +1231,9 @@ sub restSearch {
     #my $depth = $req->{depth} || 0;
     $res->{tasks} = _deepen($res->{tasks}, $depth, $req->{order});
     my $enrichOptions;
-    unless ($noHtml) {
+    if ($noHtml) {
+        $enrichOptions = { childtasks => 1 };
+    } else {
         $enrichOptions = { tasktemplate => $req->{tasktemplate} };
     }
     my @tasks = map { _enrich_data($_, $enrichOptions) } @{$res->{tasks}};
