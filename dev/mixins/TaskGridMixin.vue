@@ -54,7 +54,8 @@ export default {
     methods: {
       fetchData() {
         let request = {
-          request: JSON.stringify({Context: this.config.context}),
+          request: JSON.stringify({Context: this.config.context, Parent: ''}),
+          depth: 2,
           limit: this.resultsPerPage,
           offset: (this.currentPage -1 ) * this.resultsPerPage,
           order: this.sortState.field,

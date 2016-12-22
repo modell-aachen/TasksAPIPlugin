@@ -975,9 +975,14 @@ sub _enrich_data {
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
+    my @childtasks = {};
+    if($task->{children_acl}){
+        @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
+    }
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
+        children => \@childtasks,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
@@ -1210,6 +1215,7 @@ sub restSearch {
     my $offset = $session->{request}->param('offset') || 0;
     my $order = $session->{request}->param('order') || '';
     my $desc = $session->{request}->param('desc') || '';
+    my $depth = $session->{request}->param('depth') || 0;
 
     eval {
         $req = from_json($q->param('request') || '{}');
@@ -1222,8 +1228,8 @@ sub restSearch {
         return '';
     }
 
-    my $depth = $req->{depth} || 0;
-    _deepen($res->{tasks}, $depth, $req->{order});
+    #my $depth = $req->{depth} || 0;
+    $res->{tasks} = _deepen($res->{tasks}, $depth, $req->{order});
     my $enrichOptions;
     unless ($noHtml) {
         $enrichOptions = { tasktemplate => $req->{tasktemplate} };
