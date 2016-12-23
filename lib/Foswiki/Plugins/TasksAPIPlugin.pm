@@ -1707,6 +1707,21 @@ sub _parseGridColumns {
     return (\%colInfo, \@colOrder);
 }
 
+sub _getComponent {
+    my ($value) = @_;
+    my %newComponent = (
+        id => $value->{id},
+        title => $value->{title},
+        sort_field => $value->{sortkey},
+        component => {
+            type => 'value',
+            class => $value->{id},
+            fields => $value->{fields}
+        }
+    );
+    return \%newComponent;
+}
+
 sub tagTaskGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -1726,6 +1741,23 @@ sub tagTaskGrid {
         component => $component,
         config => from_json($config)
     };
+
+    # Add custom fields
+    ## Get Order from parseGridColumns
+    my @defaultColumns;
+    foreach my $field ( @{ $prefs->{config}->{fields} }) {
+        push @defaultColumns, $field->{id} .'='.$field->{id};
+    }
+    my $orderColumns = join(',', @defaultColumns,$params->{columns});
+    my $order = (_parseGridColumns($orderColumns , $params->{headers}))[1];
+
+    ## Get Field infos from parseGridColumns
+    my $columns = (_parseGridColumns($params->{columns} , $params->{headers}))[0];
+	while ( my ($field, $value) = each $columns ) {
+        my %newComponent = %{ _getComponent($value)};
+        my( $index )= grep { $order->[$_] eq $value->{id} } 0..scalar @{$order};
+        splice @{ $prefs->{config}->{fields} }, $index, 0, \%newComponent;
+	}
 
     # Translate Title Fields
     foreach my $field ( @{ $prefs->{config}->{fields} }) {
