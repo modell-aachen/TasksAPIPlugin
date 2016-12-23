@@ -986,6 +986,7 @@ sub _enrich_data {
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
+        tasktype => $task->getPref('TASK_TYPE'),
     };
     foreach my $f (@$fields) {
         next if $f->{name} eq 'TopicType';
