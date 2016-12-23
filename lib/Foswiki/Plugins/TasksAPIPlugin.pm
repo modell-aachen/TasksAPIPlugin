@@ -1745,7 +1745,7 @@ sub tagTaskGrid {
     # Add custom fields
     ## Get Order from parseGridColumns
     my @defaultColumns;
-    foreach my $field ( @{ $prefs->{config}->{fields} }) {
+    foreach my $field ( @{ $prefs->{config}->{tasktypes}->{default}->{fields} }) {
         push @defaultColumns, $field->{id} .'='.$field->{id};
     }
     my $orderColumns = join(',', @defaultColumns,$params->{columns});
@@ -1756,15 +1756,17 @@ sub tagTaskGrid {
 	while ( my ($field, $value) = each $columns ) {
         my %newComponent = %{ _getComponent($value)};
         my( $index )= grep { $order->[$_] eq $value->{id} } 0..scalar @{$order};
-        splice @{ $prefs->{config}->{fields} }, $index, 0, \%newComponent;
+        splice @{ $prefs->{config}->{tasktypes}->{default}->{fields} }, $index, 0, \%newComponent;
 	}
 
     # Translate Title Fields
-    foreach my $field ( @{ $prefs->{config}->{fields} }) {
-        my %field = %{$field};
-       if($field{title}) {
-            $field->{title} = $session->i18n->maketext($field{title});
-       }
+    while ( my ($types, $values) = each $prefs->{config}->{tasktypes}) {
+        foreach my $field ( @{ $values->{fields} }) {
+            my %field = %{$field};
+           if($field{title}) {
+                $field->{title} = $session->i18n->maketext($field{title});
+           }
+        }
     }
 
     my $prefId = md5_hex(rand);
