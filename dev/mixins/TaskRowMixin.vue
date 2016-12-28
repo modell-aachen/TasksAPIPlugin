@@ -8,6 +8,7 @@ import AttachmentsDataField from "../components/Standard/AttachmentsDataField.vu
 import LinkDataField from "../components/Standard/LinkDataField.vue";
 import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
 export default {
+    name: 'task-row-mixin',
     props: ['task', 'gridState'],
     components : {
         ValueDataField,
@@ -18,6 +19,26 @@ export default {
         AttachmentsDataField,
         LinkDataField,
         CheckBoxDataField
+    },
+    methods: {
+      getTaskRow(task) {
+        if(this.config.tasktypes[task.tasktype]){
+          return this.config.tasktypes[task.tasktype].taskrow;
+        }
+        return this.config.tasktypes.default.taskrow;
+      },
+      getConfig(task){
+        if(this.config.tasktypes[task.tasktype]){
+          return this.config.tasktypes[task.tasktype];
+        }
+        return this.config.tasktypes.default;
+      },
+      hasChildren(task){
+          return (task.children.length > 0) && (task.children[0] != "");
+      },
+      getChildTasks(task){
+          return task.children;
+      }
     }
 };
 </script>

@@ -1,8 +1,13 @@
 <template>
-<div v-if="task" class="task task-row" :class="hasPriority">
-    <div class="row-item" v-for="field in config.fields" :class="field.class || field.id">
-        <component v-bind:is="field.component.type+'-data-field'" :task="task" :config="field.component" :grid-state="gridState">
-        </component>
+<div>
+    <div v-if="task" class="task task-row" :class="hasPriority">
+        <div class="row-item" v-for="field in this.getConfig(task).fields" :class="field.class || field.id">
+            <component v-bind:is="field.component.type+'-data-field'" :task="task" :config="field.component" :grid-state="gridState">
+            </component>
+        </div>
+    </div>
+    <div v-if="this.hasChildren(task)" class="child-tasks">
+        <component v-bind:is="this.getConfig(task).child_taskrow+'-task-grid'" :config="config"></component>
     </div>
 </div>
 </template>
@@ -10,6 +15,7 @@
 
 <script>
 import TaskRowMixin from "../../mixins/TaskRowMixin.vue";
+
 export default {
     name: "standard-task-row",
     mixins: [TaskRowMixin],
@@ -21,6 +27,10 @@ export default {
             }
             return '';
         }
+    },
+    methods: {
+    },
+    components : {
     }
 };
 </script>

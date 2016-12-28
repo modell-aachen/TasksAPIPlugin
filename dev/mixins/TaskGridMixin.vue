@@ -3,7 +3,12 @@ import * as mutations from '../store/mutation-types';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 
+import StandardTaskRow from "../components/Standard/StandardTaskRow.vue";
+import StandardHeaderField from "../components/Standard/StandardHeaderField.vue";
+import Paginator from 'vue-simple-pagination/VueSimplePagination.vue';
+
 export default {
+    name: 'task-grid-mixin',
     data() {
       return {
         state: {}
@@ -36,6 +41,9 @@ export default {
       },
       sortState() {
         return this.state.sortState;
+      },
+      header() {
+        return this.config.tasktypes[this.config.header].fields;
       }
     },
     watch: {
@@ -54,7 +62,7 @@ export default {
     methods: {
       fetchData() {
         let request = {
-          request: JSON.stringify({Context: this.config.context, Parent: ''}),
+          request: JSON.stringify({Parent: ""}),
           depth: 2,
           limit: this.resultsPerPage,
           offset: (this.currentPage -1 ) * this.resultsPerPage,
@@ -67,7 +75,18 @@ export default {
       changeCurrentPage(newPage) {
         this.$store.commit(mutations.SET_CURRENT_PAGE, {gridState: this.state, newPage});
         this.fetchData();
-      }
+      },
+      getTaskRow(task) {
+        if(this.config.tasktypes[task.tasktype]){
+          return this.config.tasktypes[task.tasktype].taskrow;
+        }
+        return this.config.tasktypes.default.taskrow;
+      },
+    },
+    components: {
+      StandardTaskRow,
+      StandardHeaderField,
+      Paginator
     },
     created() {
       let self = this;

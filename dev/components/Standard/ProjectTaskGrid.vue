@@ -9,7 +9,7 @@
   </div>
   <div class="tasks">
     <template v-for="task in currentTasks" :grid-state="state" >
-      <component v-bind:is="getTaskRow(task)+'-task-row'" :grid-state="state" :task="task.children" :config="config"></component>
+      <component v-bind:is="getTaskRow(task)+'-task-row'" :grid-state="state" :task="task" :config="config"></component>
     </template>
   </div>
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>
@@ -19,19 +19,38 @@
 
 <script>
 import TaskGridMixin from "../../mixins/TaskGridMixin.vue";
+import MilestoneTaskRow from "./MilestoneTaskRow.vue";
 
 /* global $ foswiki*/
 export default {
-    name: "standard-task-grid",
+    name: "project-task-grid",
     mixins: [TaskGridMixin],
     props: ['config'],
     computed: {
-
+      header() {
+        return this.config.tasktypes[this.config.header].fields;
+      },
     },
     methods: {
+      getTaskRow(task) {
+        if(this.config.tasktypes[task.tasktype]){
+          return this.config.tasktypes[task.tasktype].taskrow;
+        }
+        return this.config.tasktypes.default.taskrow;
+      },
+      getConfig(task){
+        if(this.config.tasktypes[task.tasktype]){
+          return this.config.tasktypes[task.tasktype];
+        }
+        return this.config.tasktypes.default;
+      }
+    },
+    components : {
+      MilestoneTaskRow,
     }
 };
 </script>
+
 <style lang="sass">
 .row-item {
     -webkit-flex-grow: 1;
