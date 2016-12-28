@@ -7,6 +7,8 @@ import ComposedDataField from "../components/Standard/ComposedDataField.vue";
 import AttachmentsDataField from "../components/Standard/AttachmentsDataField.vue";
 import LinkDataField from "../components/Standard/LinkDataField.vue";
 import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
+import ExpandDataField from "../components/Standard/ExpandDataField.vue";
+import QuantityDataField from "../components/Standard/QuantityDataField.vue";
 export default {
     name: 'task-row-mixin',
     props: ['task', 'gridState'],
@@ -18,6 +20,8 @@ export default {
         ComposedDataField,
         AttachmentsDataField,
         LinkDataField,
+        ExpandDataField,
+        QuantityDataField,
         CheckBoxDataField
     },
     methods: {
@@ -34,7 +38,7 @@ export default {
         return this.config.tasktypes.default;
       },
       hasChildren(task){
-          return (task.children.length > 0) && (task.children[0] != "");
+          return task.children && (task.children.length > 0) && (task.children[0] != "");
       },
       getChildTasks(task){
           return task.children;

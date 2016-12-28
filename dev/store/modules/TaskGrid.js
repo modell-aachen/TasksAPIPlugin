@@ -36,6 +36,9 @@ const actions = {
             commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
         }, "json");
 	},
+	setTasks ({commit, state}, {gridState, tasks}){
+        commit(types.SET_TASKS_TO_SHOW, {gridState, data: {data: tasks, total: tasks.length}});
+	},
 	addGridState ({commit, state}, {parentGridState, callback}){
 		let newGridState = Object.assign({}, gridState);
 		commit(types.ADD_GRID_STATE, {parentGridState, newGridState});

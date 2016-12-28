@@ -9,7 +9,7 @@
   </div>
   <div class="tasks">
     <template v-for="task in currentTasks" :grid-state="state" >
-      <component v-bind:is="getTaskRow(task)+'-task-row'" :grid-state="state" :task="task.children" :config="config"></component>
+      <component v-bind:is="getTaskRow(task)+'-task-row'" :grid-state="state" :task="task" :config="config"></component>
     </template>
   </div>
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>

@@ -1726,7 +1726,7 @@ sub _getComponent {
 sub tagTaskGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
-    my $component = $params->{component} || 'standard-task-grid';
+    my $component = $params->{component} || 'standard';
     my $context = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
     my $config = $params->{config} || '{}';
 

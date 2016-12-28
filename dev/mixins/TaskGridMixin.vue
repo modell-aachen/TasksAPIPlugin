@@ -19,6 +19,10 @@ export default {
     		type: Object,
     		default: null
     	},
+    	tasks: {
+    		type: Array,
+    		default: null
+    	},
     	config: {
     		type: Object
     	}
@@ -62,7 +66,7 @@ export default {
     methods: {
       fetchData() {
         let request = {
-          request: JSON.stringify({Parent: ""}),
+          request: JSON.stringify({Context: "InternalProjects.InternalProject0001", Parent: ""}),
           depth: 2,
           limit: this.resultsPerPage,
           offset: (this.currentPage -1 ) * this.resultsPerPage,
@@ -92,7 +96,11 @@ export default {
       let self = this;
       this.$store.dispatch('addGridState', {parentGridState: this.parentState, callback: function(state){
         self.state = state;
-        self.fetchData();
+        if(self.tasks){
+            self.$store.dispatch('setTasks', {gridState: state, tasks: self.tasks});
+        } else {
+            self.fetchData();
+        }
       }});
     }
 }
