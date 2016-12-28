@@ -7,7 +7,7 @@
         </div>
     </div>
     <div v-if="hasChildren(task)" class="child-tasks">
-        <component v-bind:is="getConfig(task).child_taskrow+'-task-grid'" :parent-grid-state="gridState" :tasks="task.children" :config="config"></component>
+        <component v-bind:is="getConfig(task).child_taskrow+'-task-grid'" :parent-state="gridState" :tasks="task.children" :config="config"></component>
     </div>
 </div>
 </template>

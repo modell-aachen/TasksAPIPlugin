@@ -41,7 +41,7 @@ export default {
     		if(this.sortState.field === this.field){
     			newSortState.descending = !this.sortState.descending;
     		}
-    		this.$store.commit(mutations.CHANGE_SORT, {gridState: this.gridState, newSortState});
+            this.$store.dispatch('changeSortState', {gridState: this.gridState, newSortState});
     	}
     }
 };

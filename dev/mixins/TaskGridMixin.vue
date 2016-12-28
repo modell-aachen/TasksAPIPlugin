@@ -58,23 +58,11 @@ export default {
         else {
           NProgress.done();
         }
-      },
-      sortState() {
-        this.fetchData();
       }
     },
     methods: {
       fetchData() {
-        let request = {
-          request: JSON.stringify({Context: "InternalProjects.InternalProject0001", Parent: ""}),
-          depth: 2,
-          limit: this.resultsPerPage,
-          offset: (this.currentPage -1 ) * this.resultsPerPage,
-          order: this.sortState.field,
-          desc: this.sortState.descending ? "1" : "",
-          noHtml: 1
-        };
-        this.$store.dispatch('fetchTasks', {gridState: this.state, request});
+        this.$store.dispatch('fetchTasks', {gridState: this.state});
       },
       changeCurrentPage(newPage) {
         this.$store.commit(mutations.SET_CURRENT_PAGE, {gridState: this.state, newPage});
@@ -97,7 +85,7 @@ export default {
       this.$store.dispatch('addGridState', {parentGridState: this.parentState, callback: function(state){
         self.state = state;
         if(self.tasks){
-            self.$store.dispatch('setTasks', {gridState: state, tasks: self.tasks});
+            self.$store.commit(mutations.SET_TASKS_TO_SHOW, {gridState: self.state, data: {data: self.tasks, total: self.tasks.length}});
         } else {
             self.fetchData();
         }
