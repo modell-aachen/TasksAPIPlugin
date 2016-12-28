@@ -16,13 +16,12 @@ export default {
     mixins: [DataFieldMixin],
     computed: {
         isExpanded() {
-            let childRowStaus = 'closed';
-            return childRowStaus === 'closed';
+            return this.$parent.showChildren;
         }
     },
     methods: {
       updateStatus() {
-          console.log("EXPAND");
+          this.$parent.showChildren = !this.isExpanded;
       },
     }
 };

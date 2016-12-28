@@ -2,12 +2,12 @@
 <div>
     <div v-if="task" class="task task-row" :class="hasPriority">
         <div class="row-item" v-for="field in this.getConfig(task).fields" :class="field.class || field.id">
-            <component v-bind:is="field.component.type+'-data-field'" :task="task" :config="field.component" :grid-state="gridState">
+            <component :is="field.component.type+'-data-field'" :task="task" :config="field.component" :grid-state="gridState">
             </component>
         </div>
     </div>
-    <div v-if="hasChildren(task)" class="child-tasks">
-        <component v-bind:is="getConfig(task).child_taskrow+'-task-grid'" :parent-state="gridState" :tasks="task.children" :config="config"></component>
+    <div v-if="hasChildren(task) && showChildren" class="child-tasks">
+        <component :is="getConfig(task).child_taskrow+'-task-grid'" :parent-state="gridState" :tasks="task.children" :config="config" keep-alive></component>
     </div>
 </div>
 </template>

@@ -12,6 +12,11 @@ import QuantityDataField from "../components/Standard/QuantityDataField.vue";
 export default {
     name: 'task-row-mixin',
     props: ['task', 'gridState'],
+    data() {
+        return {
+            showChildren: true
+        }
+    },
     components : {
         ValueDataField,
         SignalDataField,
