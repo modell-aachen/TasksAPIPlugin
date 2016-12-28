@@ -17,12 +17,15 @@ export default {
     },
     computed: {
         count(){
+            //TBD
             return '0';
-            //return this.task.fields[this.field] || '0';
         },
         total(){
-            return '0';
-            //return this.task.fields[childTask] || '0';
+            if(this.task.children && this.task.children[0] != "") {
+                return this.task.children.length;
+            } else {
+                return '0';
+            }
         }
     }
 };
