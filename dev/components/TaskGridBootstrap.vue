@@ -1,5 +1,5 @@
 <template>
-<component v-bind:is="prefs.component" :config="prefs.config"></component>
+<component v-bind:is="prefs.component+'-task-grid'" :config="prefs.config"></component>
 </template>
 
 
@@ -14,14 +14,14 @@ export default {
 	},
 	props: ["preferencesSelector"],
     components : {
-    	StandardTaskGrid
+    	StandardTaskGrid,
     },
     computed: {
     },
     methods: {
     },
     created() {
-    	this.prefs = JSON.parse($("." + this.preferencesSelector).html());
+        this.prefs = JSON.parse($("." + this.preferencesSelector).html());
     }
 };
 </script>

@@ -987,6 +987,7 @@ sub _enrich_data {
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
         tasktype => $task->getPref('TASK_TYPE'),
+        childform => $task->getPref('CHILD_FORM')
     };
     foreach my $f (@$fields) {
         next if $f->{name} eq 'TopicType';
