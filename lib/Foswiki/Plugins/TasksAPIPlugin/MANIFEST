@@ -12,7 +12,9 @@ data/System/TasksAPISummaryMailTemplate.txt 0664
 data/System/TasksAPIDefaultTemplate.txt 0664 Common templates
 data/System/VarTASKINFO.txt 0664 Docs
 data/System/VarTASKSGRID.txt 0664 Docs
+data/System/VarTASKGRID.txt 0664 Docs
 data/System/VarTASKSFILTER.txt 0664 Docs
+data/System/TaskGridConfig.txt 0664 Docs
 lib/Foswiki/Form/Taskeditor.pm 0444 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin.pm 0444 Plugin module
 lib/Foswiki/Plugins/TasksAPIPlugin/Config.spec 0444
