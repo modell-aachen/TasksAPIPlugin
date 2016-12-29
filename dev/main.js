@@ -12,7 +12,6 @@ import StandardTaskGrid from './components/Standard/StandardTaskGrid.vue'
 window.Vue = Vue;
 var TasksAPIPlugin = {
     registerComponent: function(name, component){
-        component.components = {StandardTaskGrid};
         Vue.component(name, component);
     },
     getTaskRowMixin: function(){
@@ -20,6 +19,9 @@ var TasksAPIPlugin = {
     },
     getTaskGridMixin: function(){
         return TaskGridMixin;
+    },
+    getStandardTaskGrid: function(){
+        return StandardTaskGrid;
     }
 };
 window.TasksAPIPlugin = TasksAPIPlugin;

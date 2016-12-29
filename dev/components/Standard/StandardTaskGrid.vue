@@ -1,8 +1,8 @@
 <template>
 <div class="flatskin-wrapped tasks-table">
   <!-- Content -->
-  <div class="task-row">
-      <div v-if="config.subtaskHeader || false" class="row-item" v-for="field in header" :class="field.class || field.id">
+  <div v-if="parentTask == null || (config.subtaskHeader || false)" class="task-row">
+      <div class="row-item" v-for="field in header" :class="field.class || field.id">
           <standard-header-field :grid-state="state" :title="field.title" :field="field.sort_field" :parent-task="parentTask">
           </standard-header-field>
       </div>
@@ -15,7 +15,6 @@
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>
 </div>
 </template>
-
 
 <script>
 import TaskGridMixin from "../../mixins/TaskGridMixin.vue";

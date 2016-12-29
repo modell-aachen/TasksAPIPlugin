@@ -1,4 +1,5 @@
 <script>
+import StandardTaskGrid from "../components/Standard/StandardTaskGrid.vue";
 import ValueDataField from "../components/Standard/ValueDataField.vue";
 import SignalDataField from "../components/Standard/SignalDataField.vue";
 import BadgeDataField from "../components/Standard/BadgeDataField.vue";
@@ -10,7 +11,6 @@ import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
 import ExpandDataField from "../components/Standard/ExpandDataField.vue";
 import QuantityDataField from "../components/Standard/QuantityDataField.vue";
 export default {
-    name: 'task-row-mixin',
     props: ['task', 'gridState'],
     data() {
         return {
@@ -18,6 +18,7 @@ export default {
         }
     },
     components : {
+        StandardTaskGrid,
         ValueDataField,
         SignalDataField,
         BadgeDataField,
