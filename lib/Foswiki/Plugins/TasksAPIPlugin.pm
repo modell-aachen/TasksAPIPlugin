@@ -1249,6 +1249,11 @@ sub restSearch {
 
 sub amendDisplayValues {
     my ( $session, $task) = @_;
+    if($task && $task->{children} && ref($task->{children}[0]) ne 'ARRAY') {
+        foreach my $childTask (@{ $task->{children} }) {
+            amendDisplayValues($session, $childTask);
+        }
+    }
     foreach my $key (keys %{$task->{fields}}){
         if($task->{fields}->{$key}->{type} eq 'user'){
             $task->{fields}->{$key}->{displayValue} = _getDisplayName($task->{fields}->{$key}->{value});
