@@ -2,7 +2,7 @@
 <div class="flatskin-wrapped tasks-table">
   <!-- Content -->
   <div class="task-row">
-      <div class="row-item" v-for="field in header" :class="field.class || field.id">
+      <div v-if="config.subtaskHeader || false" class="row-item" v-for="field in header" :class="field.class || field.id">
           <standard-header-field :grid-state="state" :title="field.title" :field="field.sort_field" :parent-task="parentTask">
           </standard-header-field>
       </div>
@@ -70,5 +70,8 @@ export default {
             cursor: default;
         }
     }
+}
+.task-row {
+    margin: 2px;
 }
 </style>
