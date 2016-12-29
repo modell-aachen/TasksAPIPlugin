@@ -7,7 +7,7 @@
         </div>
     </div>
     <div v-if="hasChildren(task) && showChildren" class="child-tasks">
-        <component :is="getConfig(task).child_taskrow+'-task-grid'" :parent-state="gridState" :tasks="task.children" :parent-task="task.id" :config="config"></component>
+        <component :is="childTaskGrid" :parent-state="gridState" :tasks="task.children" :parent-task="task.id" :config="config"></component>
     </div>
 </div>
 </template>

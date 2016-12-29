@@ -30,6 +30,12 @@ export default {
         QuantityDataField,
         CheckBoxDataField
     },
+    computed: {
+        childTaskGrid() {
+            let configGrid = this.getConfig(this.task).child_taskgrid || 'standard';
+            return configGrid + '-task-grid';
+        }
+    },
     methods: {
       getTaskRow(task) {
         if(this.config.tasktypes[task.tasktype]){
