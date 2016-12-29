@@ -22,11 +22,14 @@ const state = {
 };
 
 const actions = {
-    fetchTasks ({commit, state}, {gridState}){
+    fetchTasks ({commit, state}, {gridState, parentTask, depth}){
         commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: true});
         let request = {
-            request: JSON.stringify({Context: "InternalProjects.InternalProject0001", Parent: ""}),
-            depth: 2,
+            request: JSON.stringify({
+                Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC,
+                Parent: parentTask || ''
+            }),
+            depth: depth || 2,
             limit: gridState.resultsPerPage,
             offset: (gridState.currentPage -1 ) * gridState.resultsPerPage,
             order: gridState.sortState.field,
@@ -45,9 +48,9 @@ const actions = {
             commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
         }, "json");
     },
-    changeSortState ({dispatch, commit, state}, {gridState, newSortState}){
+    changeSortState ({dispatch, commit, state}, {gridState, newSortState, parentTask}){
         commit(types.CHANGE_SORT, {gridState, newSortState});
-        dispatch('fetchTasks', {gridState});
+        dispatch('fetchTasks', {gridState, parentTask});
     },
     addGridState ({commit, state}, {parentGridState, callback}){
         let newGridState = Object.assign({}, gridState);

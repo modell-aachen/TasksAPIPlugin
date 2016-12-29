@@ -3,7 +3,7 @@
   <!-- Content -->
   <div class="task-row">
       <div class="row-item" v-for="field in header" :class="field.class || field.id">
-          <standard-header-field :grid-state="state" :title="field.title" :field="field.sort_field">
+          <standard-header-field :grid-state="state" :title="field.title" :field="field.sort_field" :parent-task="parentTask">
           </standard-header-field>
       </div>
   </div>

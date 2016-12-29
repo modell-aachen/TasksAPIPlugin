@@ -15,7 +15,7 @@
 import * as mutations from '../../store/mutation-types.js';
 export default {
     mixins: [],
-    props: ["gridState", "title", "field"],
+    props: ["gridState", "title", "field", "parentTask"],
     computed: {
     	sortState() {
     		return this.gridState.sortState;
@@ -41,7 +41,11 @@ export default {
     		if(this.sortState.field === this.field){
     			newSortState.descending = !this.sortState.descending;
     		}
-            this.$store.dispatch('changeSortState', {gridState: this.gridState, newSortState});
+            this.$store.dispatch('changeSortState', {
+                gridState: this.gridState,
+                newSortState,
+                parentTask: this.parentTask
+            });
     	}
     }
 };
