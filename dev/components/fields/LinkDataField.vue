@@ -5,7 +5,7 @@
 </template>
 
 <script>
-/* global moment */
+/* global moment foswiki */
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
 export default {
     mixins: [DataFieldMixin],

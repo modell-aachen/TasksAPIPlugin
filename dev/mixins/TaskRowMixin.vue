@@ -15,7 +15,7 @@ export default {
     data() {
         return {
             showChildren: true
-        }
+        };
     },
     components : {
         StandardTaskGrid,

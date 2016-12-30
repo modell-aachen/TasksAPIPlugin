@@ -12,7 +12,7 @@ export default {
     data() {
         return {
             state: {}
-        }
+        };
     },
     props: {
         parentState: {
@@ -95,5 +95,5 @@ export default {
                 }
         }});
     }
-}
+};
 </script>

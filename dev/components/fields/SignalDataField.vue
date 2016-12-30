@@ -16,7 +16,7 @@
 
 
 <script>
-/* global moment */
+/* global moment jsi18n */
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
 export default {
     mixins: [DataFieldMixin],
@@ -33,7 +33,7 @@ export default {
             return this.task.fields["Status"].value;
         },
         closedDate(){
-            return moment.unix(parseInt(this.task.fields["Closed"].value)).toDate().toLocaleDateString()
+            return moment.unix(parseInt(this.task.fields["Closed"].value)).toDate().toLocaleDateString();
         },
         title(){
             var $dueDate = this.task.fields["DueDate"].value;

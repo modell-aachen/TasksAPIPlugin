@@ -19,7 +19,6 @@
 <script>
 import TaskGridMixin from "../../mixins/TaskGridMixin.vue";
 
-/* global $ foswiki*/
 export default {
     name: "standard-task-grid",
     mixins: [TaskGridMixin],

@@ -11,14 +11,12 @@
 </template>
 
 <script>
-/* global moment */
-import * as mutations from '../../store/mutation-types.js';
 export default {
     mixins: [],
     props: ["gridState", "title", "field", "parentTask"],
     computed: {
-    	sortState() {
-    		return this.gridState.sortState;
+        sortState() {
+            return this.gridState.sortState;
         },
         sortingIconClass() {
             if(this.gridState.sortState.field === this.field) {
@@ -33,20 +31,20 @@ export default {
         }
     },
     methods: {
-    	sort() {
-    		let newSortState = {
-    			field: this.field,
-    			descending: false
-    		};
-    		if(this.sortState.field === this.field){
-    			newSortState.descending = !this.sortState.descending;
-    		}
+        sort() {
+            let newSortState = {
+                field: this.field,
+                descending: false
+            };
+            if(this.sortState.field === this.field){
+                newSortState.descending = !this.sortState.descending;
+            }
             this.$store.dispatch('changeSortState', {
                 gridState: this.gridState,
                 newSortState,
                 parentTask: this.parentTask
             });
-    	}
+        }
     }
 };
 </script>

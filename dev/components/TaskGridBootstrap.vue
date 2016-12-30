@@ -1,24 +1,19 @@
 <template>
-<component v-bind:is="prefs.component+'-task-grid'" :config="prefs.config"></component>
+    <component v-bind:is="prefs.component+'-task-grid'" :config="prefs.config"></component>
 </template>
 
-
 <script>
-import StandardTaskGrid from './grids/StandardTaskGrid.vue'
+import StandardTaskGrid from './grids/StandardTaskGrid.vue';
 /* global $ */
 export default {
-	data(){
-		return {
-			prefs: {}
-		};
-	},
-	props: ["preferencesSelector"],
+    data(){
+        return {
+            prefs: {}
+        };
+    },
+    props: ["preferencesSelector"],
     components : {
-    	StandardTaskGrid,
-    },
-    computed: {
-    },
-    methods: {
+        StandardTaskGrid,
     },
     created() {
         this.prefs = JSON.parse($("." + this.preferencesSelector).html());

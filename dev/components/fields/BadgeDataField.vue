@@ -6,7 +6,7 @@
 
 
 <script>
-/* global moment */
+/* global $ */
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
 export default {
     mixins: [DataFieldMixin],
