@@ -14,14 +14,13 @@ var TasksAPIPlugin = {
     registerComponent: function(name, component){
         Vue.component(name, component);
     },
-    getTaskRowMixin: function(){
-        return TaskRowMixin;
-    },
-    getTaskGridMixin: function(){
-        return TaskGridMixin;
-    },
-    getStandardTaskGrid: function(){
-        return StandardTaskGrid;
+    components: {
+        StandardTaskGrid,
+        StandardTaskRow
+    }
+    mixins: {
+        TaskGridMixin,
+        TaskRowMixin
     }
 };
 window.TasksAPIPlugin = TasksAPIPlugin;
