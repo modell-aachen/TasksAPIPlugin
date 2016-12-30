@@ -36,26 +36,26 @@ export default {
             return moment.unix(parseInt(this.task.fields["Closed"].value)).toDate().toLocaleDateString();
         },
         title(){
-            var $dueDate = this.task.fields["DueDate"].value;
+            let $dueDate = this.task.fields["DueDate"].value;
             if(!$dueDate) return jsi18n.get('tasksapi','Missing due date');
-            var $now = Math.round((new Date).getTime()/1000);
-            var $in = Math.round(($dueDate - $now)/60/60/24);
-            return ($in == 0)? jsi18n.get('tasksapi', "This very day") : 
-                   ($in == 1)? jsi18n.get('tasksapi', "In one day") : 
+            let $now = Math.round((new Date).getTime()/1000);
+            let $in = Math.round(($dueDate - $now)/60/60/24);
+            return ($in == 0)? jsi18n.get('tasksapi', "This very day") :
+                   ($in == 1)? jsi18n.get('tasksapi', "In one day") :
                    ($in == -1)? jsi18n.get('tasksapi', "One day over due") :
                    ($in > 0)? jsi18n.get('tasksapi', "In [_1] days", $in) : jsi18n.get('tasksapi', "[_1] days over due", ($in*(-1)));
         },
         src(){
-            var $dueDate = Math.round(parseInt(this.task.fields["DueDate"].value)/60/60/24);
-            var $now = Math.round((new Date).getTime()/1000/60/60/24);
-            var $ampel_path = "/pub/System/AmpelPlugin/images/";
-            var $warn = parseInt((this.config.warn)?this.config.warn:'0');
+            let $dueDate = Math.round(parseInt(this.task.fields["DueDate"].value)/60/60/24);
+            let $now = Math.round((new Date).getTime()/1000/60/60/24);
+            let $ampelPath = "/pub/System/AmpelPlugin/images/";
+            let $warn = parseInt((this.config.warn)?this.config.warn:'0');
             if($dueDate && $dueDate >= $now + ($warn*60*24)){
-                return $ampel_path+'ampel_g.png';
+                return $ampelPath+'ampel_g.png';
             }else if($dueDate && $dueDate >= $now) {
-                return $ampel_path+'ampel_o.png';
+                return $ampelPath+'ampel_o.png';
             }
-            return $ampel_path+'ampel_r.png';
+            return $ampelPath+'ampel_r.png';
         }
     }
 };
