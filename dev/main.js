@@ -17,7 +17,7 @@ var TasksAPIPlugin = {
     components: {
         StandardTaskGrid,
         StandardTaskRow
-    }
+    },
     mixins: {
         TaskGridMixin,
         TaskRowMixin
