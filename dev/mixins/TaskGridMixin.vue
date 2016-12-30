@@ -3,8 +3,8 @@ import * as mutations from '../store/mutation-types';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 
-import StandardTaskRow from "../components/Standard/StandardTaskRow.vue";
-import StandardHeaderField from "../components/Standard/StandardHeaderField.vue";
+import StandardTaskRow from "../components/rows/StandardTaskRow.vue";
+import StandardHeaderField from "../components/headers/StandardHeaderField.vue";
 import Paginator from 'vue-simple-pagination/VueSimplePagination.vue';
 
 export default {

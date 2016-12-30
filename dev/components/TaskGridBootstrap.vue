@@ -4,7 +4,7 @@
 
 
 <script>
-import StandardTaskGrid from './Standard/StandardTaskGrid.vue'
+import StandardTaskGrid from './grids/StandardTaskGrid.vue'
 /* global $ */
 export default {
 	data(){

@@ -29,7 +29,7 @@ export default {
         }
     },
     beforeCreate: function () {
-       this.$options.components.StandardTaskGrid = require ("./StandardTaskGrid.vue");
+       this.$options.components.StandardTaskGrid = require ("../grids/StandardTaskGrid.vue");
     }
 };
 </script>

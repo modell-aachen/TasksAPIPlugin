@@ -1,15 +1,15 @@
 <script>
-import StandardTaskGrid from "../components/Standard/StandardTaskGrid.vue";
-import ValueDataField from "../components/Standard/ValueDataField.vue";
-import SignalDataField from "../components/Standard/SignalDataField.vue";
-import BadgeDataField from "../components/Standard/BadgeDataField.vue";
-import TypeDataField from "../components/Standard/TypeDataField.vue";
-import ComposedDataField from "../components/Standard/ComposedDataField.vue";
-import AttachmentsDataField from "../components/Standard/AttachmentsDataField.vue";
-import LinkDataField from "../components/Standard/LinkDataField.vue";
-import CheckBoxDataField from "../components/Standard/CheckBoxDataField.vue";
-import ExpandDataField from "../components/Standard/ExpandDataField.vue";
-import QuantityDataField from "../components/Standard/QuantityDataField.vue";
+import StandardTaskGrid from "../components/grids/StandardTaskGrid.vue";
+import ValueDataField from "../components/fields/ValueDataField.vue";
+import SignalDataField from "../components/fields/SignalDataField.vue";
+import BadgeDataField from "../components/fields/BadgeDataField.vue";
+import TypeDataField from "../components/fields/TypeDataField.vue";
+import ComposedDataField from "../components/fields/ComposedDataField.vue";
+import AttachmentsDataField from "../components/fields/AttachmentsDataField.vue";
+import LinkDataField from "../components/fields/LinkDataField.vue";
+import CheckBoxDataField from "../components/fields/CheckBoxDataField.vue";
+import ExpandDataField from "../components/fields/ExpandDataField.vue";
+import QuantityDataField from "../components/fields/QuantityDataField.vue";
 export default {
     props: ['task', 'gridState'],
     data() {

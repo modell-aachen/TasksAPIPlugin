@@ -6,8 +6,8 @@ import store from './store'
 import TaskGridBootstrap from './components/TaskGridBootstrap.vue'
 import TaskGridMixin from './mixins/TaskGridMixin.vue'
 import TaskRowMixin from './mixins/TaskRowMixin.vue'
-import StandardTaskRow from './components/Standard/StandardTaskRow.vue'
-import StandardTaskGrid from './components/Standard/StandardTaskGrid.vue'
+import StandardTaskRow from './components/rows/StandardTaskRow.vue'
+import StandardTaskGrid from './components/grids/StandardTaskGrid.vue'
 
 window.Vue = Vue;
 var TasksAPIPlugin = {
