@@ -1,5 +1,5 @@
 <template>
-    <span :class="config.class" v-on:click="updateStatus">
+    <span :class="config.class" v-on:click.stop="updateStatus">
         <template v-if="!isExpanded">
             <i class="fa fa-fw fa-chevron-right"></i>
         </template>
