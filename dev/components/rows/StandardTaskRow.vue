@@ -6,9 +6,12 @@
             </component>
         </div>
     </div>
-    <div v-if="hasChildren(task) && showChildren" class="child-tasks">
+    <div v-if="hasChildren(task)" v-show="showChildren" class="child-tasks">
         <component :is="childTaskGrid" :parent-state="gridState" :tasks="task.children" :parent-task="task.id" :config="config"></component>
     </div>
+    <!--<div v-show="showChildren" class="task-new">
+        <button>Add sub task!</button>
+    </div>-->
 </div>
 </template>
 
