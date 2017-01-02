@@ -4,6 +4,7 @@ import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 
 import StandardTaskRow from "../components/rows/StandardTaskRow.vue";
+import StandardTaskPanel from "../components/panels/StandardTaskPanel.vue";
 import StandardHeaderField from "../components/headers/StandardHeaderField.vue";
 import Paginator from 'vue-simple-pagination/VueSimplePagination.vue';
 
@@ -81,6 +82,7 @@ export default {
     },
     components: {
         StandardTaskRow,
+        StandardTaskPanel,
         StandardHeaderField,
         Paginator
     },

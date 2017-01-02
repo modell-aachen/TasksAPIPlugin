@@ -1,6 +1,6 @@
 <template>
 <div>
-    <div v-if="task" class="task task-row" :class="hasPriority">
+    <div v-if="task" class="test task task-row" :class="hasPriority" v-on:click="togglePanelStatus">
         <div class="row-item" v-for="field in this.getConfig(task).fields" :class="field.class || field.id">
             <component :is="field.component.type+'-data-field'" :task="task" :config="field.component" :grid-state="gridState">
             </component>
@@ -27,6 +27,11 @@ export default {
             }
             return '';
         }
+    },
+    methods: {
+        togglePanelStatus() {
+            this.$store.dispatch('showTaskDetails', {task: this.task});
+       }
     },
     beforeCreate: function () {
        this.$options.components.StandardTaskGrid = require ("../grids/StandardTaskGrid.vue");
