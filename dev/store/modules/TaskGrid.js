@@ -22,8 +22,13 @@ const state = {
     panelState: {
         active: false,
         view: 'detail',
+<<<<<<< HEAD
+        taskToShow: {},
+        correspondingGrid: {}
+=======
         taskToShow: null,
         isEditMode: false
+>>>>>>> d81ffceb3ef94ea94463889833c273ec35868919
     }
 };
 
@@ -63,8 +68,8 @@ const actions = {
         commit(types.ADD_GRID_STATE, {parentGridState, newGridState});
         callback(newGridState);
     },
-    showTaskDetails({commit, state}, {task}) {
-        commit(types.SET_PANEL_TASK, {task});
+    showTaskDetails({commit, state}, {task, gridState}) {
+        commit(types.SET_PANEL_TASK, {task, gridState});
         commit(types.SET_PANEL_VIEW, {view: "detail"});
         commit(types.TOGGLE_PANEL_STATE);
     },
@@ -77,7 +82,7 @@ const actions = {
     },
     createNewTask({commit, state}, request){
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
-            
+
         }, "json");
     }
 }
@@ -115,8 +120,11 @@ const mutations = {
     [types.TOGGLE_PANEL_STATE] (state) {
         state.panelState.active = !state.panelState.active;
     },
-    [types.SET_PANEL_TASK] (state, {task}) {
+    [types.SET_PANEL_TASK] (state, {task, gridState}) {
+        state.panelState.correspondingGrid = gridState;
         state.panelState.taskToShow = task;
+    },
+    [types.SET_PANEL_NEXT_TASK] (state) {
     },
     [types.SET_PANEL_VIEW] (state, {view}) {
         state.panelState.view = view;

@@ -8,6 +8,7 @@ export const ADD_GRID_STATE = 'ADD_GRID_STATE';
 
 //Panel
 export const SET_PANEL_TASK = 'SET_PANEL_TASK';
+export const SET_PANEL_NEXT_TASK = 'SET_PANEL_NEXT_TASK';
 export const SET_PANEL_VIEW = 'SET_PANEL_VIEW';
 export const TOGGLE_PANEL_STATE = 'TOGGLE_PANEL_STATE';
 export const SET_PANEL_EDIT_MODE = 'SET_PANEL_EDIT_MODE';
