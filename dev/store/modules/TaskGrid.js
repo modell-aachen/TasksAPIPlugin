@@ -22,13 +22,9 @@ const state = {
     panelState: {
         active: false,
         view: 'detail',
-<<<<<<< HEAD
-        taskToShow: {},
-        correspondingGrid: {}
-=======
+        correspondingGrid: {},
         taskToShow: null,
         isEditMode: false
->>>>>>> d81ffceb3ef94ea94463889833c273ec35868919
     }
 };
 

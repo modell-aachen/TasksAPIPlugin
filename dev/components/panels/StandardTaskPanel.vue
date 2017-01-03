@@ -1,6 +1,6 @@
 <template>
     <div v-show="isActive" class="overlay">
-        <div class="panel-overlay active">
+        <div class="panel-overlay active" v-if="task">
                 <div class="panel-wrapper active">
                     <div class="tab-bar">
                         <span class="primary" v-on:click="togglePanelStatus">
