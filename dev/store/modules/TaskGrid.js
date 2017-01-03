@@ -22,7 +22,8 @@ const state = {
     panelState: {
         active: false,
         view: 'detail',
-        taskToShow: {}
+        taskToShow: {},
+        correspondingGrid: {}
     }
 };
 
@@ -62,8 +63,8 @@ const actions = {
         commit(types.ADD_GRID_STATE, {parentGridState, newGridState});
         callback(newGridState);
     },
-    showTaskDetails({commit, state}, {task}) {
-        commit(types.SET_PANEL_TASK, {task});
+    showTaskDetails({commit, state}, {task, gridState}) {
+        commit(types.SET_PANEL_TASK, {task, gridState});
         commit(types.TOGGLE_PANEL_STATE);
     }
 }
@@ -101,8 +102,11 @@ const mutations = {
     [types.TOGGLE_PANEL_STATE] (state) {
         state.panelState.active = !state.panelState.active;
     },
-    [types.SET_PANEL_TASK] (state, {task}) {
+    [types.SET_PANEL_TASK] (state, {task, gridState}) {
+        state.panelState.correspondingGrid = gridState;
         state.panelState.taskToShow = task;
+    },
+    [types.SET_PANEL_NEXT_TASK] (state) {
     },
     [types.SET_PANEL_VIEW] (state, {view}) {
         state.panelState.view = view;

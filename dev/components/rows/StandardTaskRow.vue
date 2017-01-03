@@ -33,7 +33,7 @@ export default {
     },
     methods: {
         togglePanelStatus() {
-            this.$store.dispatch('showTaskDetails', {task: this.task});
+            this.$store.dispatch('showTaskDetails', {task: this.task, gridState: this.gridState});
        }
     },
     beforeCreate: function () {
