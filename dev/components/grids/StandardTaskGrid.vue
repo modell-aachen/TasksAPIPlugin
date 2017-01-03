@@ -1,5 +1,6 @@
 <template>
 <div class="flatskin-wrapped tasks-table">
+  <button v-on:click="newTask">New task</button>
   <!-- Content -->
   <div v-if="parentTask == null || (config.subtaskHeader || false)" class="task-row">
       <div class="row-item" v-for="field in header" :class="field.class || field.id">
@@ -26,6 +27,11 @@ export default {
     props: ['config'],
     computed: {
 
+    },
+    methods: {
+      newTask(){
+        this.$store.dispatch("openNewTaskEditor", "InternalProjects.InternalProjectTaskForm");
+      }
     }
 };
 </script>

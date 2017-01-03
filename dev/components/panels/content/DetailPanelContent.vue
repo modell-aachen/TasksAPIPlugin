@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="task">
         <h2>{{displayValue("Title")}}</h2>
         <p>{{displayValue("Description")}}</p>
     </div>

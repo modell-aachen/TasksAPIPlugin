@@ -22,7 +22,8 @@ const state = {
     panelState: {
         active: false,
         view: 'detail',
-        taskToShow: {}
+        taskToShow: null,
+        isEditMode: false
     }
 };
 
@@ -64,7 +65,20 @@ const actions = {
     },
     showTaskDetails({commit, state}, {task}) {
         commit(types.SET_PANEL_TASK, {task});
+        commit(types.SET_PANEL_VIEW, {view: "detail"});
         commit(types.TOGGLE_PANEL_STATE);
+    },
+    openNewTaskEditor({commit, state}, formName){
+        $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
+            commit(types.SET_PANEL_TASK, {task: data.data});
+            commit(types.SET_PANEL_VIEW, {view: "edit"});
+            commit(types.TOGGLE_PANEL_STATE);
+        }, "json");
+    },
+    createNewTask({commit, state}, request){
+        $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
+            
+        }, "json");
     }
 }
 
@@ -106,6 +120,9 @@ const mutations = {
     },
     [types.SET_PANEL_VIEW] (state, {view}) {
         state.panelState.view = view;
+    },
+    [types.SET_PANEL_EDIT_MODE] (state, isEditMode) {
+        state.panelState.isEditMode = isEditMode;
     }
 }
 

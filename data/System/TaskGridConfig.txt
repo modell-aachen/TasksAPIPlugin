@@ -18,6 +18,7 @@ The default config can be used, by adding the TASKGRID Macro with an include of 
 	'header': 'default',
 	'tasktypes': {
 		'default': {
+			'form': 'InternalProjects.InternalProjectTaskForm',
 			'taskrow': 'standard',
                         'child_taskgrid': 'standard',
 			'fields': [{

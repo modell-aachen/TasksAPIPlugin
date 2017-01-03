@@ -1,9 +1,13 @@
+//Grid
 export const SET_TASKS_TO_SHOW = 'SET_TASKS_TO_SHOW';
 export const UPDATE_TASK = 'UPDATE_TASK';
 export const SET_CURRENT_PAGE = 'SET_CURRENT_PAGE';
 export const CHANGE_LOADING_STATE = 'CHANGE_LOADING_STATE';
 export const CHANGE_SORT = 'CHANGE_SORT';
 export const ADD_GRID_STATE = 'ADD_GRID_STATE';
+
+//Panel
 export const SET_PANEL_TASK = 'SET_PANEL_TASK';
 export const SET_PANEL_VIEW = 'SET_PANEL_VIEW';
 export const TOGGLE_PANEL_STATE = 'TOGGLE_PANEL_STATE';
+export const SET_PANEL_EDIT_MODE = 'SET_PANEL_EDIT_MODE';

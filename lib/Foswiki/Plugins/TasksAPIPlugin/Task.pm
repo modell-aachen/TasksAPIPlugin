@@ -315,6 +315,7 @@ sub create {
     my %data = @_;
     my $form = delete $data{form};
     my $fields;
+    my $dontSave = delete $data{dontsave};
 
     my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
     my ($formWeb, $formTopic) = Foswiki::Func::normalizeWebTopicName($web, $form);
@@ -356,7 +357,7 @@ sub create {
         }
     }
 
-    $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    $meta->saveAs($web, $topic, dontlog => 1, minor => 1) unless $dontSave;
     my $task = load($meta);
 
     if (my $statusmap = $task->getPref("MAP_STATUS_FIELD")) {
@@ -378,14 +379,14 @@ sub create {
         my $mstatus = $meta->get('FIELD', $statusmap);
         $meta->putKeyed('FIELD', {name => 'Status', title => '', value => $data{Status}});
         $meta->putKeyed('FIELD', {name => $statusmap, title => '', value => $mstatus->{value}});
-        $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+        $meta->saveAs($web, $topic, dontlog => 1, minor => 1) unless $dontSave;
         $task = load($meta);
     }
 
     $task->notify('created');
     $task->_postCreate();
     $task->_postUpdate();
-    Foswiki::Plugins::TasksAPIPlugin::_index($task);
+    Foswiki::Plugins::TasksAPIPlugin::_index($task) unless $dontSave;
     $task->{_canChange} = $task->checkACL('change');
     $task;
 }
