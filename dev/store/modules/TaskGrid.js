@@ -69,16 +69,18 @@ const actions = {
         commit(types.SET_PANEL_VIEW, {view: "detail"});
         commit(types.TOGGLE_PANEL_STATE);
     },
-    openNewTaskEditor({commit, state}, formName){
+    openNewTaskEditor({commit, state}, {formName,gridState}){
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
-            commit(types.SET_PANEL_TASK, {task: data.data});
+            commit(types.SET_PANEL_TASK, {task: data.data, gridState});
             commit(types.SET_PANEL_VIEW, {view: "edit"});
             commit(types.TOGGLE_PANEL_STATE);
         }, "json");
     },
     createNewTask({commit, state}, request){
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
-
+            let newTasksToShow = [data.data, ...state.panelState.correspondingGrid.tasksToShow];
+            commit(types.SET_TASKS_TO_SHOW, {gridState: state.panelState.correspondingGrid, data: {data: newTasksToShow, total: state.panelState.correspondingGrid.resultCount}});
+            commit(types.TOGGLE_PANEL_STATE);
         }, "json");
     }
 }

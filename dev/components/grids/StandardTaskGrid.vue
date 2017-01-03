@@ -30,7 +30,7 @@ export default {
     },
     methods: {
       newTask(){
-        this.$store.dispatch("openNewTaskEditor", "InternalProjects.InternalProjectTaskForm");
+        this.$store.dispatch("openNewTaskEditor", {formName: "InternalProjects.InternalProjectTaskForm", gridState: this.state});
       }
     }
 };
