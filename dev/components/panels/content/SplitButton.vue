@@ -5,10 +5,12 @@
                 <i class="fa fa-chevron-down"></i>
             </span>
         </button><br>
-        <ul id="drop" class="f-dropdown" :style="position">
-            <li><a href="#">This is a link</a></li>
-            <li><a href="#">This is another</a></li>
-            <li><a href="#">Yet another</a></li>
+        <ul class="f-dropdown" v-bind:style="position">
+        <slot>
+            <li><h5>This is a link</h5></li>
+            <li><h5>This is another</h5></li>
+            <li><h5>Yet another</h5></li>
+        </slot>
         </ul>
     </div>
 </template>
@@ -18,27 +20,38 @@ export default {
     props: ['title'],
     data() {
         return {
-            splitOpen: false
-        };
-    },
-    computed: {
-        position() {
-            if(this.splitOpen) {
-                return "position: absolute; left: 100px; top: 70px;";
+            splitOpen: false,
+            position: {
+                position: 'fixed',
+                left: '-9999px'
             }
-            return "position: absolute; left: -9999px; top: 70px;";
-        }
+        };
     },
     methods: {
         toggleSplitOpen() {
             this.splitOpen = !this.splitOpen;
+            if(this.splitOpen){
+                this.position.left = 'initial';
+            } else {
+                this.position.left = '-9999px';
+            }
         }
     }
 };
 </script>
 
 <style lang="sass">
-.f-dropdown {
+#modacWrapper ul,
+.foswikiTopic ul{
+    list-style-image: none;
+}
+.split.button{
+    margin-bottom: 1px;
+}
+ul.f-dropdown {
+    box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding-left: 5px;
     list-style: none;
     margin-left: 0;
     background: white;

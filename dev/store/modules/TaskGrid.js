@@ -24,6 +24,7 @@ const state = {
         view: 'detail',
         correspondingGrid: {},
         taskToShow: null,
+        taskIndex: null,
         isEditMode: false
     }
 };
@@ -119,10 +120,31 @@ const mutations = {
         state.panelState.active = !state.panelState.active;
     },
     [types.SET_PANEL_TASK] (state, {task, gridState}) {
+        state.panelState.taskIndex = gridState.tasksToShow.indexOf(task);
         state.panelState.correspondingGrid = gridState;
         state.panelState.taskToShow = task;
     },
     [types.SET_PANEL_NEXT_TASK] (state) {
+        let taskIndex = state.panelState.taskIndex;
+        let tasksToShow = state.panelState.correspondingGrid.tasksToShow;
+        if(tasksToShow.length-1 !== taskIndex){
+            state.panelState.taskToShow = tasksToShow[taskIndex+1];
+            state.panelState.taskIndex = taskIndex + 1;
+        } else {
+            state.panelState.taskToShow = tasksToShow[0];
+            state.panelState.taskIndex = 0;
+        }
+    },
+    [types.SET_PANEL_PREV_TASK] (state) {
+        let taskIndex = state.panelState.taskIndex;
+        let tasksToShow = state.panelState.correspondingGrid.tasksToShow;
+        if(0 !== taskIndex){
+            state.panelState.taskToShow = tasksToShow[taskIndex - 1];
+            state.panelState.taskIndex = taskIndex - 1;
+        } else {
+            state.panelState.taskToShow = tasksToShow[tasksToShow.length - 1];
+            state.panelState.taskIndex = tasksToShow.length - 1;
+        }
     },
     [types.SET_PANEL_VIEW] (state, {view}) {
         state.panelState.view = view;

@@ -1,7 +1,7 @@
 <template>
-    <div v-show="isActive" class="overlay">
+    <div v-show="isActive" class="overlay" v-on:click="togglePanelStatus">
         <div class="panel-overlay active" v-if="task">
-                <div class="panel-wrapper active">
+                <div class="panel-wrapper active" v-on:click.stop>
                     <div class="tab-bar">
                         <span class="primary" v-on:click="togglePanelStatus">
                             <i class="fa fa-times"></i>

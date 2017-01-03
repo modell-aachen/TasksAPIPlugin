@@ -3,7 +3,12 @@
         <div class="top-bar">
             <span class="label label-default">{{displayValue("Type")}}</span>
 			<span class="label label-info">{{displayValue("Status")}}</span>
-            <split-button title="Close Entry"></split-button>
+            <split-button title="Close Entry">
+                <li v-on:click="action('edit')"><h5>Edit Entry</h5></li>
+                <li v-on:click="action('delete')"><h5>Delete Entry</h5></li>
+                <li v-on:click="action('move')"><h5>Move Entry</h5></li>
+                <li v-on:click="action('premalink')"><h5>Get Permalink</h5></li>
+            </split-button>
         </div>
         <hr/>
             <h3 class="top-title">{{displayValue("Title")}}</h3>
@@ -12,8 +17,8 @@
             <p>{{displayValue("Description")}}</p>
         </div>
         <div class="bottom-bar">
-            <button class="button default" v-on:click="next"><i class="fa fa-chevron-left"></i></button>
-            <button class="button default" v-on:click="prev"><i class="fa fa-chevron-right"></i></button>
+            <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
+            <button class="button default" v-on:click="next"><i class="fa fa-chevron-right"></i></button>
         </div>
     </div>
 </template>
@@ -33,7 +38,10 @@ export default {
             this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
         },
         prev() {
-            //this.$store.commit(mutations.SET_PANEL_PREV_TASK);
+            this.$store.commit(mutations.SET_PANEL_PREV_TASK);
+        },
+        action(type) {
+            console.log("Click on " + type);
         }
     }
 };
