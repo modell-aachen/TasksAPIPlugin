@@ -8,6 +8,9 @@ export default {
         },
         isActive() {
             return this.$store.state.taskGrid.panelState.active;
+        },
+        isEditMode() {
+          return this.$store.state.taskGrid.panelState.isEditMode;
         }
     },
     methods: {
@@ -28,6 +31,7 @@ export default {
         this.$options.components.DetailPanelContent = require("../components/panels/content/DetailPanelContent.vue");
         this.$options.components.AttachmentPanelContent = require("../components/panels/content/AttachmentPanelContent.vue");
         this.$options.components.ChangesetPanelContent = require("../components/panels/content/ChangesetPanelContent.vue");
+        this.$options.components.EditPanelContent = require("../components/panels/content/EditPanelContent.vue");
     }
 };
 </script>

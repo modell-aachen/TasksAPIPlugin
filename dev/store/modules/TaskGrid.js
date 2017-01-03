@@ -22,8 +22,13 @@ const state = {
     panelState: {
         active: false,
         view: 'detail',
+<<<<<<< HEAD
         taskToShow: {},
         correspondingGrid: {}
+=======
+        taskToShow: null,
+        isEditMode: false
+>>>>>>> d81ffceb3ef94ea94463889833c273ec35868919
     }
 };
 
@@ -65,7 +70,20 @@ const actions = {
     },
     showTaskDetails({commit, state}, {task, gridState}) {
         commit(types.SET_PANEL_TASK, {task, gridState});
+        commit(types.SET_PANEL_VIEW, {view: "detail"});
         commit(types.TOGGLE_PANEL_STATE);
+    },
+    openNewTaskEditor({commit, state}, formName){
+        $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
+            commit(types.SET_PANEL_TASK, {task: data.data});
+            commit(types.SET_PANEL_VIEW, {view: "edit"});
+            commit(types.TOGGLE_PANEL_STATE);
+        }, "json");
+    },
+    createNewTask({commit, state}, request){
+        $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
+
+        }, "json");
     }
 }
 
@@ -110,6 +128,9 @@ const mutations = {
     },
     [types.SET_PANEL_VIEW] (state, {view}) {
         state.panelState.view = view;
+    },
+    [types.SET_PANEL_EDIT_MODE] (state, isEditMode) {
+        state.panelState.isEditMode = isEditMode;
     }
 }
 
