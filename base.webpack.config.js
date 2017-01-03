@@ -10,6 +10,11 @@ var includeDirs = [
 ];
 
 module.exports = {
+  resolve: {
+    alias: {
+      vue$: 'vue/dist/vue.common.js'
+    }
+  },
   babel: {
     presets: ['es2015', 'stage-2']
   },
