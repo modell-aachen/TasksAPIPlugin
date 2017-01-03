@@ -51,6 +51,7 @@
     "karma-webpack": "^1.8.0",
     "less": "^2.7.1",
     "less-loader": "^2.2.3",
+    "lodash": "^4.17.4",
     "node-sass": "^3.10.0",
     "nprogress": "^0.2.0",
     "phantomjs-prebuilt": "^2.1.13",
