@@ -2,7 +2,6 @@
 import * as mutations from '../store/mutation-types';
 
 export default {
-    props: ['task'],
     computed: {
         task() {
             return this.$store.state.taskGrid.panelState.taskToShow;
@@ -25,5 +24,10 @@ export default {
            }
        }
     },
+    beforeCreate() {
+        this.$options.components.DetailPanelContent = require("../components/panels/content/DetailPanelContent.vue");
+        this.$options.components.AttachmentPanelContent = require("../components/panels/content/AttachmentPanelContent.vue");
+        this.$options.components.ChangesetPanelContent = require("../components/panels/content/ChangesetPanelContent.vue");
+    }
 };
 </script>

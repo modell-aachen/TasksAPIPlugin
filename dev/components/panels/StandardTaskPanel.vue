@@ -1,15 +1,23 @@
 <template>
     <div v-show="isActive" class="overlay">
-        <div class="task-overlay active">
+        <div class="panel-overlay active">
                 <div class="panel-wrapper active">
                     <div class="tab-bar">
-                        <span v-on:click="togglePanelStatus">
+                        <span class="primary" v-on:click="togglePanelStatus">
                             <i class="fa fa-times"></i>
+                        </span>
+                        <span v-on:click="panelView('detail')" :class="activeTab('detail')">
+                            <i class="fa fa-info-circle"></i>
+                        </span>
+                        <span v-on:click="panelView('attachment')" :class="activeTab('attachment')">
+                            <i class="fa fa-files-o"></i>
+                        </span>
+                        <span v-on:click="panelView('changeset')" :class="activeTab('changeset')">
+                            <i class="fa fa-clock-o"></i>
                         </span>
                     </div>
                     <div class="panel">
-                        <h2>{{displayValue("Title")}}</h2>
-                        <p>{{displayValue("Description")}}</p>
+                        <component :is="view + '-panel-content'"></component>
                     </div>
                 </div>
         </div>
@@ -19,16 +27,59 @@
 
 <script>
 import TaskPanelMixin from "../../mixins/TaskPanelMixin.vue";
+import * as mutations from '../../store/mutation-types';
+
 export default {
-    mixins: [TaskPanelMixin]
+    mixins: [TaskPanelMixin],
+    computed: {
+        view() {
+            return this.$store.state.taskGrid.panelState.view;
+        }
+    },
+    methods: {
+        panelView(view) {
+            this.$store.commit(mutations.SET_PANEL_VIEW, {view});
+        },
+        activeTab(tab) {
+            if(this.view === tab) {
+                return 'active';
+            }
+            return '';
+        }
+    }
 };
 </script>
 
 <style lang="sass">
-.task-overlay {
+.panel-overlay {
     display: block;
-    >.panel-wrapper>.panel {
-        bottom: 0px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: rgba(0,0,0,0.3);
+    >.panel-wrapper {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        background-color: transparent;
+        min-width: 33%;
+        >.panel {
+            bottom: 0px;
+            position: absolute;
+            top: 0;
+            left: 48px;
+            background-color: #fff;
+            width: calc(100% - 48px);
+            overflow-x: hidden;
+            padding: 5px 20px;
+        }
+        >.active {
+            transform: translate3d(0,0,0);
+        }
     }
 }
 .tab-bar {
@@ -40,11 +91,30 @@ export default {
     flex: 1;
     height: 100%;
     background: lightgray;
+    .fa {
+        font-size: 25px;
+        padding: 4px;
+    }
     span {
         color: darkgray;
         text-align: center;
         width: 50px;
         height: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        .primary {
+            width: 55px;
+            bottom-border: 1px
+        }
+        &.active {
+            background-color: darkgray;
+            color: white;
+        }
+        &:hover {
+            color: black;
+            background-color: darkgray;
+        }
     }
 }
 </style>

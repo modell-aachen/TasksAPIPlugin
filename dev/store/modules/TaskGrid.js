@@ -21,6 +21,7 @@ const state = {
     gridStates: [],
     panelState: {
         active: false,
+        view: 'detail',
         taskToShow: {}
     }
 };
@@ -102,6 +103,9 @@ const mutations = {
     },
     [types.SET_PANEL_TASK] (state, {task}) {
         state.panelState.taskToShow = task;
+    },
+    [types.SET_PANEL_VIEW] (state, {view}) {
+        state.panelState.view = view;
     }
 }
 
