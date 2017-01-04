@@ -1001,6 +1001,8 @@ sub _enrich_data {
             type => $f->{type},
             size => $f->{size},
             attributes => $f->{attributes},
+            options => $f->can('getOptions') ? $f->getOptions() : "",
+            map => $f->{valueMap} ? $f->{valueMap} : "",
             value => $d->{fields}{$f->{name}} || '',
         };
         $result->{fields}{$f->{name}} = $ff;
@@ -1797,6 +1799,10 @@ STYLE
 SCRIPT
 
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
+
+    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
+    require Foswiki::Plugins::CKEditorPlugin;
+    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
     return "<task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
 }
 
