@@ -1,11 +1,11 @@
 <template>
     <div class="split-wrapper">
-        <button v-on:click="callAction" class="button primary split">{{title}}
+        <span v-on:click.self="callAction" class="button primary split">{{title}}
             <span data-dropdown="drop" v-on:click.stop="toggleSplitOpen">
                 <i class="fa fa-chevron-down"></i>
             </span>
-        </button><br>
-        <ul class="f-dropdown" v-bind:style="position">
+        </span><br>
+        <ul v-show="splitOpen" class="f-dropdown">
         <slot>
             <li>This is a link</li>
             <li>This is another</li>
@@ -20,21 +20,12 @@ export default {
     props: ['title'],
     data() {
         return {
-            splitOpen: false,
-            position: {
-                position: 'fixed',
-                left: '-9999px'
-            }
+            splitOpen: false
         };
     },
     methods: {
         toggleSplitOpen() {
             this.splitOpen = !this.splitOpen;
-            if(this.splitOpen){
-                this.position.left = 'initial';
-            } else {
-                this.position.left = '-9999px';
-            }
         },
         callAction () {
             this.$emit('action');
@@ -52,6 +43,7 @@ export default {
     display: inline-block;
 }
 ul.f-dropdown {
+    position: fixed;
     text-align: left;
     box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
@@ -65,9 +57,6 @@ ul.f-dropdown {
     margin: 5px 0px;
     padding: 0;
     width: auto;
-	&.open {
-		display: block;
-	}
     li {
         padding: 3px 14px;
         font-weight: bold;

@@ -19,7 +19,7 @@ module.exports = {
     presets: ['es2015', 'stage-2']
   },
   entry: {
-    app: './dev/main.js'
+    app: ['babel-polyfill', './dev/main.js']
   },
   output: {
     path: path.join(__dirname, 'pub/System/TasksAPIPlugin/js'),
