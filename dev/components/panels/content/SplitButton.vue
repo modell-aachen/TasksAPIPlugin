@@ -1,15 +1,15 @@
 <template>
     <div class="split-wrapper">
-        <button class="button primary split">{{title}}
-            <span data-dropdown="drop" v-on:click="toggleSplitOpen">
+        <button v-on:click="callAction" class="button primary split">{{title}}
+            <span data-dropdown="drop" v-on:click.stop="toggleSplitOpen">
                 <i class="fa fa-chevron-down"></i>
             </span>
         </button><br>
         <ul class="f-dropdown" v-bind:style="position">
         <slot>
-            <li><h5>This is a link</h5></li>
-            <li><h5>This is another</h5></li>
-            <li><h5>Yet another</h5></li>
+            <li>This is a link</li>
+            <li>This is another</li>
+            <li>Yet another</li>
         </slot>
         </ul>
     </div>
@@ -35,6 +35,9 @@ export default {
             } else {
                 this.position.left = '-9999px';
             }
+        },
+        callAction () {
+            this.$emit('action');
         }
     }
 };

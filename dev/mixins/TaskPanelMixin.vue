@@ -6,6 +6,9 @@ export default {
         task() {
             return this.$store.state.taskGrid.panelState.taskToShow;
         },
+        grid() {
+            return this.$store.state.taskGrid.panelState.correspondingGrid;
+        },
         isActive() {
             return this.$store.state.taskGrid.panelState.active;
         },

@@ -3,10 +3,10 @@
         <div class="top-bar">
             <div class="cel">
             <span class="label label-default">{{displayValue("Type")}}</span>
-			<span class="label label-info">{{displayValue("Status")}}</span>
+			<span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
             </div>
             <div class="cel actions">
-                <split-button title="Close Entry">
+                <split-button v-on:action="action('updateStatus')" :title="stateAction">
                     <li v-on:click="action('edit')">Edit Entry</li>
                     <li v-on:click="action('delete')">Delete Entry</li>
                     <li v-on:click="action('move')">Move Entry</li>
@@ -37,6 +37,18 @@ export default {
     components: {
         SplitButton
     },
+    computed: {
+        stateAction() {
+            if(this.isClosed){
+                return 'Reopen Entry';
+            }
+            return 'Close Entry';
+        },
+        isClosed() {
+            let taskStatus = this.task.fields['Status'].value;
+            return taskStatus === 'closed';
+        }
+    },
     methods: {
         next() {
             this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
@@ -44,11 +56,32 @@ export default {
         prev() {
             this.$store.commit(mutations.SET_PANEL_PREV_TASK);
         },
+        getStateColour() {
+            let taskStatus = this.task.fields['Status'].value;
+            if(taskStatus === 'closed') {
+                return 'primary';
+            } else {
+                return 'info';
+            }
+        },
         action(type) {
             switch (type) {
                 case 'edit':
                     this.$store.commit(mutations.SET_PANEL_VIEW, {view: 'edit'});
                     break;
+                case 'updateStatus': {
+                    console.warn("update");
+                    let newStatus = 'closed';
+                    if (this.isClosed) {
+                        newStatus = 'open';
+                    }
+                    let request = {
+                        id: this.task.id,
+                        Status: newStatus,
+                    };
+                    this.$store.dispatch('updateTask', {gridState: this.grid, request});
+                    break;
+                }
                 default:
                     console.warn("Unknown action: " + type);
             }
