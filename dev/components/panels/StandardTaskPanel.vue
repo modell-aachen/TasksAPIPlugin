@@ -17,7 +17,7 @@
                         </span>
                     </div>
                     <div class="panel">
-                        <component :is="view + '-panel-content'"></component>
+                        <component :is="view + '-panel-content'" :config="config"></component>
                     </div>
                 </div>
         </div>

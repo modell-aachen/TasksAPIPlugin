@@ -17,8 +17,26 @@
         <hr/>
             <h3 class="top-title">{{displayValue("Title")}}</h3>
         <hr/>
-        <div>
+        <div ref="description" class="description" v-bind:class="{all: expandText}">
             <p>{{displayValue("Description")}}</p>
+            <div v-if="showReadMore" class="show-more">
+                <span class="button hollow secondary" v-on:click="toggleExpandText">Show more</span>
+            </div>
+        </div>
+        <h3 class="top-title">Details</h3>
+        <hr/>
+        <div>
+            <p v-for="field in typeConfig.panel.fields.order">
+                <span>{{field}}:</span><span>{{displayValue(field)}}</span>
+            </p>
+            <p v-for="field in fieldsToShow">
+                <span>{{field}}:</span><span>{{displayValue(field)}}</span>
+            </p>
+        </div>
+        <h3 class="top-title">Comments</h3><span><i class="fa fa-plus"></i>
+</span>
+        <hr/>
+        <div>
         </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
@@ -32,8 +50,15 @@ import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
 import * as mutations from '../../../store/mutation-types';
 
+/* global $ */
 export default {
     mixins: [TaskPanelMixin],
+    data() {
+        return {
+            expandText: false,
+            showReadMore: false
+        };
+    },
     components: {
         SplitButton
     },
@@ -47,9 +72,26 @@ export default {
         isClosed() {
             let taskStatus = this.task.fields['Status'].value;
             return taskStatus === 'closed';
+        },
+        fieldsToShow() {
+            let fields = $.map(this.task.fields, function(value, key) {
+                return key;
+            });
+            let self = this;
+            return fields.filter(function (field) {
+                let fields = self.typeConfig.panel.fields;
+                let fielterList = fields.exclude.concat(fields.order);
+                return fielterList.indexOf(field) === -1;
+            }).sort();
         }
     },
+    watch: {
+        task: 'descriptionHeightExeeded'
+    },
     methods: {
+        toggleExpandText() {
+            this.expandText = !this.expandText;
+        },
         next() {
             this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
         },
@@ -85,7 +127,21 @@ export default {
                 default:
                     console.warn("Unknown action: " + type);
             }
+        },
+        descriptionHeightExeeded() {
+            this.$nextTick(function() {
+                let maxHeight = $(this.$refs.description).css('max-height').split('px')[0];
+                let height = $(this.$refs.description).height();
+                if(height == maxHeight){
+                    this.showReadMore = true;
+                } else {
+                    this.showReadMore = false;
+                }
+            });
         }
+    },
+    mounted() {
+        this.descriptionHeightExeeded();
     }
 };
 </script>
@@ -107,6 +163,28 @@ export default {
     }
     .actions {
         text-align: right;
+    }
+}
+.description {
+    max-height: 250px;
+    position: relative;
+    overflow: hidden;
+    .show-more {
+        padding: 6px;
+        height: 53px;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        margin: 0;
+		background-color: white;
+    }
+    &.all {
+        .show-more {
+            position: relative;
+        }
+        max-height: none;
+        overflow: overlay;
     }
 }
 h3.top-title {

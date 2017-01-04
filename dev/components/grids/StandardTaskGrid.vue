@@ -13,7 +13,7 @@
       <component v-bind:is="getTaskRow(task)+'-task-row'" :grid-state="state" :task="task" :config="config"></component>
     </template>
   </div>
-  <standard-task-panel></standard-task-panel>
+  <standard-task-panel :config="config"></standard-task-panel>
   <paginator class="ma-pager-new" :current-page="currentPage" :page-count="pageCount" v-on:page-changed="changeCurrentPage"></paginator>
 </div>
 </template>
