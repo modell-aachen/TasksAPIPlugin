@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="split-wrapper">
         <button class="button primary split">{{title}}
             <span data-dropdown="drop" v-on:click="toggleSplitOpen">
                 <i class="fa fa-chevron-down"></i>
@@ -45,29 +45,38 @@ export default {
 .foswikiTopic ul{
     list-style-image: none;
 }
-.split.button{
-    margin-bottom: 1px;
+.split-wrapper {
+    display: inline-block;
 }
 ul.f-dropdown {
+    text-align: left;
     box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
-    padding-left: 5px;
     list-style: none;
-    margin-left: 0;
     background: white;
     border: #ccc;
     height: auto;
     width: 100%;
-    z-index:100;
-    margin-top: 2px;
     max-width: 200px;
+    z-index:100;
+    margin: 5px 0px;
+    padding: 0;
+    width: auto;
 	&.open {
 		display: block;
 	}
+    li {
+        padding: 3px 14px;
+        font-weight: bold;
+        &:hover {
+            background-color: lightgray;
+        }
+    }
 }
 .split.button{
+    margin-bottom: 1px;
+    padding: 7px 42px 9px 10px;
     position: relative;
-    padding-right: 4.5rem;
     span {
         border-left-color: rgba(255,255,255,0.5);
         border-left: solid 1px;
@@ -82,8 +91,8 @@ ul.f-dropdown {
             content: "";
             width: 0;
             height: 0;
-            top: 33%;
-            left: 33%;
+            top: 23%;
+            left: 27%;
         }
     }
 }

@@ -1,14 +1,18 @@
 <template>
     <div>
         <div class="top-bar">
+            <div class="cel">
             <span class="label label-default">{{displayValue("Type")}}</span>
 			<span class="label label-info">{{displayValue("Status")}}</span>
-            <split-button title="Close Entry">
-                <li v-on:click="action('edit')"><h5>Edit Entry</h5></li>
-                <li v-on:click="action('delete')"><h5>Delete Entry</h5></li>
-                <li v-on:click="action('move')"><h5>Move Entry</h5></li>
-                <li v-on:click="action('premalink')"><h5>Get Permalink</h5></li>
-            </split-button>
+            </div>
+            <div class="cel actions">
+                <split-button title="Close Entry">
+                    <li v-on:click="action('edit')">Edit Entry</li>
+                    <li v-on:click="action('delete')">Delete Entry</li>
+                    <li v-on:click="action('move')">Move Entry</li>
+                    <li v-on:click="action('premalink')">Get Permalink</li>
+                </split-button>
+            </diV>
         </div>
         <hr/>
             <h3 class="top-title">{{displayValue("Title")}}</h3>
@@ -41,19 +45,40 @@ export default {
             this.$store.commit(mutations.SET_PANEL_PREV_TASK);
         },
         action(type) {
-            console.log("Click on " + type);
+            switch (type) {
+                case 'edit':
+                    this.$store.commit(mutations.SET_PANEL_VIEW, {view: 'edit'});
+                    break;
+                default:
+                    console.warn("Unknown action: " + type);
+            }
         }
     }
 };
 </script>
 
 <style lang="sass">
-.flatskin-wrapped hr {
-    height: 2px;
+.flatskin-wrapped {
+    .panel hr {
+        height: 1px;
+        width: 200%;
+        margin-left: -20px;
+    }
+}
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    .cel {
+        flex: 1;
+    }
+    .actions {
+        text-align: right;
+    }
 }
 h3.top-title {
     color: #52cae4;
-    margin: 0 .875rem;
+    margin: 0;
 }
 .bottom-bar {
     position: absolute;
@@ -67,9 +92,10 @@ h3.top-title {
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: flex-start;
-    algin-items: center;
+    padding: 0 20px;
     .button {
-        margin: 0.5rem 0.7rem;
+        padding: 9px 9px 8px 7px;
+        margin: 0.5rem 0.2rem;
     }
 }
 </style>
