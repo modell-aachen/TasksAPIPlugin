@@ -6,6 +6,7 @@ var includeDirs = [
   projectRoot + '/dev',
   projectRoot + '/tests',
   projectRoot + '/node_modules/nprogress/',
+  projectRoot + '/node_modules/vue-select/',
   projectRoot + '/node_modules/vue-simple-pagination/'
 ];
 

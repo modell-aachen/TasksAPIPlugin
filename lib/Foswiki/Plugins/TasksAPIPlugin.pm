@@ -895,10 +895,12 @@ sub restCreate {
     }
 
     $response->header(-status => 200);
+    my $task = _enrich_data($res, _optionsFromRest($session));
+    amendDisplayValues($session, $task);
     $response->body(encode_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, _optionsFromRest($session)),
+        data => $task,
     }));
     return '';
 }

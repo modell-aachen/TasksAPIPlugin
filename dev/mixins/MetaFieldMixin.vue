@@ -1,10 +1,5 @@
 <script>
 export default {
-    props: ['fieldName', 'fields'],
-    computed: {
-
-    },
-    methods: {
-    },
+    props: ['fieldName', 'fields']
 };
 </script>

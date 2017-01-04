@@ -1,6 +1,7 @@
 <template>
 <div v-if="taskToEdit">
     <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
+    <user-component :fields="taskToEdit.fields" field-name="AssignedTo"></user-component>
     <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
     <button v-on:click="createTask">Save</button>
@@ -11,6 +12,7 @@
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import TextComponent from "../edit_components/TextComponent.vue";
 import SelectComponent from "../edit_components/SelectComponent.vue";
+import UserComponent from "../edit_components/UserComponent.vue";
 import TaskEditorComponent from "../edit_components/TaskEditorComponent.vue";
 import _ from 'lodash';
 export default {
@@ -22,6 +24,7 @@ export default {
     components: {
         TextComponent,
         SelectComponent,
+        UserComponent,
         TaskEditorComponent
     },
     mixins: [TaskPanelMixin],
@@ -34,7 +37,6 @@ export default {
                 let currentField = this.taskToEdit.fields[key];
                 request[key] = currentField.value;
             }
-            request.AssignedTo = "AUTOGEN";
             this.$store.dispatch("createNewTask", request);
         }
     },
