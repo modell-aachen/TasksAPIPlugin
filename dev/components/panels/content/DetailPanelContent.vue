@@ -1,43 +1,43 @@
 <template>
     <div>
-        <div class="top-bar">
-            <div class="cel">
-            <span class="label label-default">{{displayValue("Type")}}</span>
-			<span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
+        <div class="top">
+            <div class="top-bar">
+                <div class="cel">
+                    <span class="label label-default">{{displayValue("Type")}}</span>
+                    <span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
+                </div>
+                <div class="cel actions">
+                    <split-button v-on:action="action('updateStatus')" :title="stateAction">
+                        <li v-on:click="action('edit')">Edit Entry</li>
+                        <li v-on:click="action('delete')">Delete Entry</li>
+                        <li v-on:click="action('move')">Move Entry</li>
+                        <li v-on:click="action('premalink')">Get Permalink</li>
+                    </split-button>
+                </div>
             </div>
-            <div class="cel actions">
-                <split-button v-on:action="action('updateStatus')" :title="stateAction">
-                    <li v-on:click="action('edit')">Edit Entry</li>
-                    <li v-on:click="action('delete')">Delete Entry</li>
-                    <li v-on:click="action('move')">Move Entry</li>
-                    <li v-on:click="action('premalink')">Get Permalink</li>
-                </split-button>
-            </diV>
+            <hr/>
+                <h3 class="top-title">{{displayValue("Title")}}</h3>
+            <hr/>
         </div>
-        <hr/>
-            <h3 class="top-title">{{displayValue("Title")}}</h3>
-        <hr/>
-        <div ref="description" class="description" v-bind:class="{all: expandText}">
-            <p>{{displayValue("Description")}}</p>
-            <div v-if="showReadMore" class="show-more">
-                <span class="button hollow secondary" v-on:click="toggleExpandText">Show more</span>
+            <div ref="description" class="description" v-bind:class="{all: expandText}">
+                <p>{{displayValue("Description")}}</p>
+                <div v-if="showReadMore" class="show-more">
+                    <span class="button hollow secondary" v-on:click="toggleExpandText">Show more</span>
+                </div>
             </div>
-        </div>
-        <h3 class="top-title">Details</h3>
-        <hr/>
-        <div>
-            <p v-for="field in typeConfig.panel.fields.order">
-                <span>{{field}}:</span><span>{{displayValue(field)}}</span>
-            </p>
-            <p v-for="field in fieldsToShow">
-                <span>{{field}}:</span><span>{{displayValue(field)}}</span>
-            </p>
-        </div>
-        <h3 class="top-title">Comments</h3><span><i class="fa fa-plus"></i>
-</span>
-        <hr/>
-        <div>
-        </div>
+            <h3 class="top-title">Details</h3>
+            <hr/>
+            <div>
+                <p v-for="field in fieldsToShow">
+                    <span>{{field}}:</span><span>{{displayValue(field)}}</span>
+                </p>
+            </div>
+            <h3 class="top-title">Comments</h3>
+            <span><i class="fa fa-plus"></i></span>
+            <hr/>
+            <div>
+                HIer ein Commentar...
+            </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
             <button class="button default" v-on:click="next"><i class="fa fa-chevron-right"></i></button>
@@ -73,17 +73,6 @@ export default {
             let taskStatus = this.task.fields['Status'].value;
             return taskStatus === 'closed';
         },
-        fieldsToShow() {
-            let fields = $.map(this.task.fields, function(value, key) {
-                return key;
-            });
-            let self = this;
-            return fields.filter(function (field) {
-                let fields = self.typeConfig.panel.fields;
-                let fielterList = fields.exclude.concat(fields.order);
-                return fielterList.indexOf(field) === -1;
-            }).sort();
-        }
     },
     watch: {
         task: 'descriptionHeightExeeded'
@@ -153,6 +142,10 @@ export default {
         width: 200%;
         margin-left: -20px;
     }
+}
+.scroll-container {
+    overflow-y: auto;
+    height: calc( 100vh - 9rem);
 }
 .top-bar {
     display: flex;
