@@ -1,5 +1,5 @@
 <template>
-<vue-select :multiple="isMulti" label="text" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-selection-change="onSelectionChange" :on-open="onOpen"></vue-select>
+<vue-select :multiple="isMulti" label="id" :value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
 </template>
 
 <script>
@@ -10,7 +10,8 @@ export default {
     mixins: [MetaFieldMixin],
     data() {
         return {
-            options: [{text:"DUMMY"}],
+            options: [],
+            initialOptions: null
         };
     },
     components: {
@@ -29,8 +30,14 @@ export default {
             this.options = [];
             this.fetchOptions(search, loading);
         },
+        getOptionLabel: function(option){
+            return option.text;
+        },
         onSelectionChange(selections){
             let result = "";
+            if(!Array.isArray(selections)){
+                selections = [selections];
+            }
             for(let i = 0; i < selections.length; i++){
                 result += selections[i].id;
                 if(i != selections.length -1)
@@ -54,6 +61,23 @@ export default {
                 self.options = data.results;
             }, "json");
         }
+    },
+    created(){
+        if(!this.fields[this.fieldName].value){
+                return null;
+            }
+            let initialOptions = [];
+            let ids = this.fields[this.fieldName].value.split(/\s*,\s*/);
+            let displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
+            for(let i = 0; i < ids.length; i++){
+                initialOptions.push({
+                    id: ids[i],
+                    text: displayValues[i]
+                });
+            }
+            if(!this.isMulti)
+                initialOptions = initialOptions[0];
+            this.initialOptions = initialOptions;
     }
 };
 </script>
