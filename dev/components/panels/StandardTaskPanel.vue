@@ -75,7 +75,6 @@ export default {
             background-color: #fff;
             width: calc(100% - 48px);
             overflow-x: hidden;
-            padding: 5px 20px;
         }
         >.active {
             transform: translate3d(0,0,0);

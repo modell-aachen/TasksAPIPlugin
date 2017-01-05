@@ -19,8 +19,9 @@
                 <h3 class="top-title">{{displayValue("Title")}}</h3>
             <hr/>
         </div>
+        <div class="scroll-container">
             <div ref="description" class="description" v-bind:class="{all: expandText}">
-                <p>{{displayValue("Description")}}</p>
+                <p v-html="displayValue('Description')"></p>
                 <div v-if="showReadMore" class="show-more">
                     <span class="button hollow secondary" v-on:click="toggleExpandText">Show more</span>
                 </div>
@@ -38,6 +39,7 @@
             <div>
                 HIer ein Commentar...
             </div>
+        </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
             <button class="button default" v-on:click="next"><i class="fa fa-chevron-right"></i></button>
@@ -139,13 +141,17 @@ export default {
 .flatskin-wrapped {
     .panel hr {
         height: 1px;
-        width: 200%;
+        width: calc(100% +40px);
         margin-left: -20px;
     }
 }
 .scroll-container {
     overflow-y: auto;
-    height: calc( 100vh - 9rem);
+    height: calc( 100vh - 9.4rem);
+    padding: 0px 20px;
+}
+.top{
+    padding: 5px 20px;
 }
 .top-bar {
     display: flex;
