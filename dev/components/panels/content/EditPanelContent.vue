@@ -1,7 +1,6 @@
 <template>
 <div v-if="taskToEdit">
     <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
-    <user-component :fields="taskToEdit.fields" field-name="AssignedTo"></user-component>
     <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
     <component v-for="fieldName in fieldsToShow" :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :fieldName="fieldName"></component>
@@ -66,10 +65,13 @@ export default {
             }
         }
     },
+    watch: {
+        task(){
+            this.taskToEdit = _.cloneDeep(this.task);
+        }
+    },
     created(){
         this.taskToEdit = _.cloneDeep(this.task);
-    },
-    mounted(){
     }
 };
 </script>

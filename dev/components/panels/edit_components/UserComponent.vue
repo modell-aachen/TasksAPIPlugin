@@ -1,5 +1,5 @@
 <template>
-<vue-select :multiple="isMulti" label="id" :value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<vue-select :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
 </template>
 
 <script>

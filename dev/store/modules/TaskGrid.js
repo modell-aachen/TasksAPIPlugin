@@ -119,6 +119,8 @@ const mutations = {
     },
     [types.TOGGLE_PANEL_STATE] (state) {
         state.panelState.active = !state.panelState.active;
+        if(!state.panelState.active)
+            state.panelState.view = 'detail';
     },
     [types.SET_PANEL_TASK] (state, {task, gridState}) {
         state.panelState.taskIndex = gridState.tasksToShow.indexOf(task);
