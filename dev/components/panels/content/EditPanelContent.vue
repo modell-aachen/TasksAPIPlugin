@@ -51,7 +51,7 @@ export default {
         getComponentForField(fieldName){
             let fieldObject = this.taskToEdit.fields[fieldName];
             if(typeof fieldObject === 'undefined')
-                return "missing-component"
+                return "missing-component";
             switch(fieldObject.type){
                 case "text":
                     return "text-component";

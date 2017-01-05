@@ -1,5 +1,5 @@
 <template>
-<vue-select label="text" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-selection-change="onSelectionChange" :on-open="onOpen"></vue-select>
+<vue-select :multiple="isMulti" label="text" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-selection-change="onSelectionChange" :on-open="onOpen"></vue-select>
 </template>
 
 <script>
@@ -16,13 +16,18 @@ export default {
     components: {
         VueSelect
     },
+    computed: {
+        isMulti() {
+            return this.fields[this.fieldName].multi;
+        }
+    },
     methods: {
         onSearch(search, loading){
             this.fetchOptions(search, loading);
         },
         onOpen(search, loading){
             this.options = [];
-            this.fetchOptions(search, loading)
+            this.fetchOptions(search, loading);
         },
         onSelectionChange(selections){
             let result = "";
@@ -33,7 +38,7 @@ export default {
             }
             this.fields[this.fieldName].value = result;
         },
-        fetchOptions(search, loading) {
+        fetchOptions(search) {
             let start = this.options.length;
             let request = {
                 skin: "text",
