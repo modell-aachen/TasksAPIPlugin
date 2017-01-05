@@ -4,7 +4,7 @@
     <user-component :fields="taskToEdit.fields" field-name="AssignedTo"></user-component>
     <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
-    <button v-on:click="createTask">Save</button>
+    <a class="button" v-on:click="saveTask">Save</a>
 </div>
 </template>
 
@@ -29,7 +29,7 @@ export default {
     },
     mixins: [TaskPanelMixin],
     methods: {
-        createTask(){
+        saveTask(){
             let request = {
                 form: this.taskToEdit.form
             };
@@ -37,7 +37,13 @@ export default {
                 let currentField = this.taskToEdit.fields[key];
                 request[key] = currentField.value;
             }
-            this.$store.dispatch("createNewTask", request);
+            if(this.taskToEdit.isNew){
+                this.$store.dispatch("createNewTask", request);
+            }
+            else {
+                request["id"] = this.taskToEdit.id;
+                this.$store.dispatch("updateTask", {gridState: this.grid, request});
+            }
         }
     },
     created(){

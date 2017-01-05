@@ -15,6 +15,10 @@ export default {
         let editorConfig = foswiki.getPreference( 'ckeditor4' ).config.taskeditor;
         $textarea.ckeditor(editorConfig)
         .on('instanceReady.ckeditor', function(evt,ed){
+            ed.setData(self.fields[self.fieldName].value, {callback: function() {
+              this.resetUndo();
+              this.resetDirty();
+            }});
             ed.on("change", function(){
                 self.fields[self.fieldName].value = ed.getData();
             });

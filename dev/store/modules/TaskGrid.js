@@ -72,6 +72,7 @@ const actions = {
     },
     openNewTaskEditor({commit, state}, {formName,gridState}){
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
+            data.data["isNew"] = true;
             commit(types.SET_PANEL_TASK, {task: data.data, gridState});
             commit(types.SET_PANEL_VIEW, {view: "edit"});
             commit(types.TOGGLE_PANEL_STATE);
