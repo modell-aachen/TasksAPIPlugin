@@ -11,7 +11,7 @@
                         <li v-on:click="action('edit')">Edit Entry</li>
                         <li v-on:click="action('delete')">Delete Entry</li>
                         <li v-on:click="action('move')">Move Entry</li>
-                        <li v-on:click="action('premalink')">Get Permalink</li>
+                        <li v-on:click="action('permalink')">Get Permalink</li>
                     </split-button>
                 </div>
             </div>
@@ -39,16 +39,25 @@
                     <h3 class="top-title">Comments</h3>
                 </div>
                 <div class="columns action" v-on:click="toggleAddComment">
-                    <span><i class="fa fa-plus"></i></span>
+                    <span>
+                        <template v-if="!addComment">
+                            <i class="fa fa-plus"></i>
+                        </template>
+                        <template v-else>
+                            <i class="fa fa-minus"></i>
+                        </template>
+                    </span>
                 </div>
             </div>
             <hr/>
             <div>
                 <template v-if="addComment">
                     <textarea v-model="newComment" placeholder="new comment"></textarea>
-                    <split-button v-on:action="action('saveComment')" title="Save comment">
-                        <li v-on:click="action('saveCommentClose')">Save and close entry</li>
-                    </split-button>
+                    <div class="right">
+                        <split-button v-on:action="action('saveComment')" title="Save comment">
+                            <li v-on:click="action('saveCommentClose')">Save and close entry</li>
+                        </split-button>
+                    </div>
                 </template>
                 <template v-for="comment in comments">
                     <div class="comment-header row">
@@ -57,11 +66,15 @@
                     </div>
                     <div class="comment comment-body row" v-html="comment.comment"></div>
                 </template>
+                <p/>
             </div>
         </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
             <button class="button default" v-on:click="next"><i class="fa fa-chevron-right"></i></button>
+        </div>
+        <div class="pseudo-hidden">
+            <input type="text" ref="permalink" v-model="permalink">
         </div>
     </div>
 </template>
@@ -71,7 +84,7 @@ import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
 import * as mutations from '../../../store/mutation-types';
 
-/* global $ moment */
+/* global $ moment document foswiki */
 export default {
     mixins: [TaskPanelMixin],
     data() {
@@ -79,7 +92,8 @@ export default {
             expandText: false,
             showReadMore: false,
             addComment: false,
-            newComment: ''
+            newComment: '',
+            permalink: ''
         };
     },
     components: {
@@ -147,8 +161,30 @@ export default {
                     this.newComment = '';
                     break;
                 }
+                case 'saveCommentClose': {
+                    this.action('saveComment');
+                    this.action('updateStatus');
+                    break;
+                }
+                case 'permalink': {
+                    let p = foswiki.preferences;
+                    let url = [
+                        p.SCRIPTURL,
+                        '/restauth',
+                        p.SCRIPTSUFFIX,
+                        '/TasksAPIPlugin/permalink?id=',
+                        this.task.id
+                    ].join('');
+                    console.log(url);
+                    this.permalink = url;
+                    this.$nextTick(function() {
+                        this.$refs.permalink.focus();
+                        this.$refs.permalink.setSelectionRange(0, url.length);
+                        document.execCommand('copy');
+                    });
+                    break;
+                }
                 case 'updateStatus': {
-                    console.warn("update");
                     let newStatus = 'closed';
                     if (this.isClosed) {
                         newStatus = 'open';
@@ -207,9 +243,17 @@ export default {
             font-size: 0.9rem;
         }
     }
+    .right {
+        text-align: right;
+    }
 }
 .top{
     padding: 5px 20px;
+}
+.pseudo-hidden {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
 }
 .top-bar {
     display: flex;
