@@ -29,15 +29,34 @@
             <h3 class="top-title">Details</h3>
             <hr/>
             <div>
-                <p v-for="field in fieldsToShow">
-                    <span>{{field}}:</span><span>{{displayValue(field)}}</span>
-                </p>
+                <div class="row" v-for="field in fieldsToShow">
+                    <div class="title columns">{{description(field)}}:</div>
+                    <div class="columns small-4">{{displayValue(field)}}</div>
+                </div>
             </div>
-            <h3 class="top-title">Comments</h3>
-            <span><i class="fa fa-plus"></i></span>
+            <div class="row">
+                <div class="columns">
+                    <h3 class="top-title">Comments</h3>
+                </div>
+                <div class="columns action" v-on:click="toggleAddComment">
+                    <span><i class="fa fa-plus"></i></span>
+                </div>
+            </div>
             <hr/>
             <div>
-                HIer ein Commentar...
+                <template v-if="addComment">
+                    <textarea v-model="newComment" placeholder="new comment"></textarea>
+                    <split-button v-on:action="action('saveComment')" title="Save comment">
+                        <li v-on:click="action('saveCommentClose')">Save and close entry</li>
+                    </split-button>
+                </template>
+                <template v-for="comment in comments">
+                    <div class="comment-header row">
+                        <div class="title columns shrink">{{comment.user.wikiname}}</div>
+                        <div class="title date columns">{{displayAt(comment.at)}}</div>
+                    </div>
+                    <div class="comment comment-body row" v-html="comment.comment"></div>
+                </template>
             </div>
         </div>
         <div class="bottom-bar">
@@ -52,13 +71,15 @@ import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
 import * as mutations from '../../../store/mutation-types';
 
-/* global $ */
+/* global $ moment */
 export default {
     mixins: [TaskPanelMixin],
     data() {
         return {
             expandText: false,
-            showReadMore: false
+            showReadMore: false,
+            addComment: false,
+            newComment: ''
         };
     },
     components: {
@@ -75,6 +96,14 @@ export default {
             let taskStatus = this.task.fields['Status'].value;
             return taskStatus === 'closed';
         },
+        comments() {
+            if(this.task.changesets){
+                return this.task.changesets.filter(function (change) {
+                    return change.comment ? true : false;
+                }).reverse();
+            }
+            return {};
+        }
     },
     watch: {
         task: 'descriptionHeightExeeded'
@@ -83,11 +112,17 @@ export default {
         toggleExpandText() {
             this.expandText = !this.expandText;
         },
+        toggleAddComment() {
+            this.addComment = !this.addComment;
+        },
         next() {
             this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
         },
         prev() {
             this.$store.commit(mutations.SET_PANEL_PREV_TASK);
+        },
+        displayAt(at) {
+            return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
         },
         getStateColour() {
             let taskStatus = this.task.fields['Status'].value;
@@ -102,6 +137,16 @@ export default {
                 case 'edit':
                     this.$store.commit(mutations.SET_PANEL_VIEW, {view: 'edit'});
                     break;
+                case 'saveComment': {
+                    let request = {
+                        id: this.task.id,
+                        comment: this.newComment,
+                    };
+                    this.$store.dispatch('updateTask', {gridState: this.grid, request});
+                    this.addComment = !this.addComment;
+                    this.newComment = '';
+                    break;
+                }
                 case 'updateStatus': {
                     console.warn("update");
                     let newStatus = 'closed';
@@ -149,6 +194,19 @@ export default {
     overflow-y: auto;
     height: calc( 100vh - 9.4rem);
     padding: 0px 20px;
+    .row .columns {
+        padding: 0;
+        &.title {
+            padding: 5px 0;
+            color: darkgray;
+            font-size: 0.9rem;
+        }
+        &.action {
+            color: #52cae4;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+    }
 }
 .top{
     padding: 5px 20px;
@@ -163,6 +221,33 @@ export default {
     .actions {
         text-align: right;
     }
+}
+.comment-header {
+    margin-top: 15px;
+    padding: 5px 20px;
+    border-radius: 5px 5px 0px 0px;
+    -moz-border-radius: 5px 5px 0px 0px;
+    -webkit-border-radius: 5px 5px 0px 0px;
+    border: 0px solid #000000;
+    background-color: lightgray;
+    color: black;
+    &.row  > .columns.title {
+        margin-right: 5px;
+        color: black;
+        &.date {
+            font-size: small;
+            color: darkgray;
+        }
+    }
+}
+.comment-body {
+    padding: 10px 20px;
+    border-radius: 0px 0px 5px 5px;
+    -moz-border-radius: 0px 0px 5px 5px;
+    -webkit-border-radius: 0px 0px 5px 5px;
+    border: 0px solid #000000;
+    background-color: #ebebeb;
+    color: black;
 }
 .description {
     max-height: 250px;

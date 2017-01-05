@@ -980,6 +980,7 @@ sub _enrich_data {
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
     my @childtasks = [];
+    my @changesets = $task->{meta}->find('TASKCHANGESET');
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
@@ -990,9 +991,28 @@ sub _enrich_data {
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
+        changesets => [],
         tasktype => $task->getPref('TASK_TYPE'),
         childform => $task->getPref('CHILD_FORM')
     };
+    foreach my $c (@changesets) {
+        my $cc = {
+            name => $c->{name},
+            user => {
+                cuid => $c->{actor},
+                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}),
+                wikiname => Foswiki::Func::getWikiName($c->{actor}),
+                loginname => Foswiki::Func::wikiToUserName($c->{actor})
+            },
+            actor => $c->{actor},
+            at => $c->{at},
+            changes => $c->{changes}
+        };
+        if($c->{comment}) {
+            $cc->{comment} = $c->{comment};
+        }
+        push ($result->{changesets}, $cc);
+    }
     foreach my $f (@$fields) {
         next if $f->{name} eq 'TopicType';
         my $ff = {

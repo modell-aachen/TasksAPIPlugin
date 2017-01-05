@@ -97,6 +97,7 @@ const mutations = {
         $.each(gridState.tasksToShow, function(key,value) {
             if(value.id === data.data.id){
                 value.fields = data.data.fields;
+                value.changesets = data.data.changesets;
             }
         });
     },

@@ -52,7 +52,16 @@ export default {
                }
                 return '';
            }
-       }
+        },
+        description(field) {
+            if(this.task.fields) {
+                let taskField = this.task.fields[field];
+                if(taskField) {
+                    return taskField.description ? taskField.description : taskField.name;
+                }
+            }
+            return '';
+        }
     },
     beforeCreate() {
         this.$options.components.DetailPanelContent = require("../components/panels/content/DetailPanelContent.vue");
