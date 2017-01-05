@@ -934,9 +934,11 @@ sub restUpdate {
 
     _deepen([$task], $depth, $order);
     $response->header(-status => 200);
+    $task = _enrich_data($task, _optionsFromRest($session));
+    amendDisplayValues($session, $task);
     $response->body(encode_json({
         status => 'ok',
-        data => _enrich_data($task, _optionsFromRest($session)),
+        data => $task,
     }));
     return '';
 }
@@ -998,6 +1000,7 @@ sub _enrich_data {
             multi => $f->isMultiValued ? JSON::true : JSON::false,
             mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
             tooltip => _translate($task->{meta}, $f->{tooltip} || ''),
+            description => _translate($task->{meta}, $f->{description} || ''),
             mandatory => $f->isMandatory ? JSON::true : JSON::false,
             hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
             type => $f->{type},
