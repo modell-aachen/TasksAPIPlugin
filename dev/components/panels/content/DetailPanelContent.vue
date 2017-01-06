@@ -149,7 +149,7 @@ export default {
         action(type) {
             switch (type) {
                 case 'edit':
-                    this.$store.commit(mutations.SET_PANEL_VIEW, {view: 'edit'});
+                    this.$store.dispatch("switchEditMode", true);
                     break;
                 case 'saveComment': {
                     let request = {

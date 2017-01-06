@@ -21,6 +21,8 @@ const state = {
     gridStates: [],
     panelState: {
         active: false,
+        isLoading: false,
+        hasLease: false,
         view: 'detail',
         correspondingGrid: {},
         taskToShow: null,
@@ -78,12 +80,47 @@ const actions = {
             commit(types.TOGGLE_PANEL_STATE);
         }, "json");
     },
+    closeTaskEditor({commit, state}, {task}){
+        $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/release", {request: JSON.stringify({id: task.id})}, null, "json")
+        .done((data) => {
+            commit(types.SET_PANEL_EDIT_MODE, false)
+            commit(types.SET_PANEL_VIEW, {view: "edit"})
+        });
+    },
+    release({commit, state}, {gridState, task, callback}){
+        $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/release", {request: JSON.stringify({id: task.id})}, null, "json")
+        .done((data) => {
+            callback();
+        });
+    },
     createNewTask({commit, state}, request){
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
             let newTasksToShow = [data.data, ...state.panelState.correspondingGrid.tasksToShow];
             commit(types.SET_TASKS_TO_SHOW, {gridState: state.panelState.correspondingGrid, data: {data: newTasksToShow, total: state.panelState.correspondingGrid.resultCount}});
             commit(types.TOGGLE_PANEL_STATE);
         }, "json");
+    },
+    switchEditMode({commit, state}, enable){
+        //Just return if there is no state switch
+        if(enable == state.panelState.isEditMode)
+            return;
+        //Enable means: Request lease -> set edit view if lease succeeds
+        if(enable){
+            $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/lease", {request: JSON.stringify({id: state.panelState.taskToShow.id})}, null, "json")
+            .done((data) => {
+                commit(types.SET_PANEL_EDIT_MODE, true);
+                commit(types.SET_PANEL_VIEW, {view: "edit"});
+            })
+            .fail(() => {
+                alert("It is leased! Do not touch it!");
+            });
+        }
+        //!enable means: Release -> set detail view
+        else{
+            $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/release", {request: JSON.stringify({id: state.panelState.taskToShow.id})}, null, "json");
+            commit(types.SET_PANEL_EDIT_MODE, false);
+            commit(types.SET_PANEL_VIEW, {view: "detail"});
+        }
     }
 }
 

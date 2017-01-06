@@ -1,9 +1,9 @@
 <template>
-    <div v-show="isActive" class="overlay" v-on:click="togglePanelStatus">
+    <div v-show="isActive" class="overlay" v-on:click="requestClose">
         <div class="panel-overlay active" v-if="task">
                 <div class="panel-wrapper active" v-on:click.stop>
                     <div class="tab-bar">
-                        <span class="primary" v-on:click="togglePanelStatus">
+                        <span class="primary" v-on:click="requestClose">
                             <i class="fa fa-times"></i>
                         </span>
                         <span v-on:click="panelView('detail')" :class="activeTab('detail')">
@@ -45,6 +45,14 @@ export default {
                 return 'active';
             }
             return '';
+        },
+        requestClose() {
+            if(this.isEditMode){
+                this.$store.dispatch("switchEditMode", false);
+            }
+            else{
+                this.togglePanelStatus();
+            }
         }
     }
 };
