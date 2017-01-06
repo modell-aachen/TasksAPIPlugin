@@ -32,6 +32,7 @@
 import TaskPanelMixin from "../../mixins/TaskPanelMixin.vue";
 import * as mutations from '../../store/mutation-types';
 
+/* global window */
 export default {
     mixins: [TaskPanelMixin],
     computed: {
@@ -56,7 +57,26 @@ export default {
             else{
                 this.togglePanelStatus();
             }
+        },
+        doKeyAction(event) {
+            switch(event.keyCode) {
+                case 27:
+                    this.isActive ? this.togglePanelStatus() : null;
+                    break;
+                case 39:
+                    this.isActive ? this.next() : null;
+                    break;
+                case 37:
+                    this.isActive ? this.prev() : null;
+                    break;
+            }
         }
+    },
+    created () {
+        window.addEventListener('keyup', this.doKeyAction);
+    },
+    beforeDestroy() {
+        window.removeEventListerner('keyup', this.doKeyAction);
     }
 };
 </script>

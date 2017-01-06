@@ -49,10 +49,16 @@ export default {
         }
     },
     methods: {
-        togglePanelStatus() {
+       togglePanelStatus() {
             this.$store.commit(mutations.TOGGLE_PANEL_STATE);
-       },
-       displayValue(field) {
+        },
+        next() {
+            this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
+        },
+        prev() {
+            this.$store.commit(mutations.SET_PANEL_PREV_TASK);
+        },
+        displayValue(field) {
            if(this.task.fields) {
                let taskField = this.task.fields[field];
                if(taskField) {

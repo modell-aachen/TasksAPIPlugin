@@ -82,7 +82,6 @@
 <script>
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
-import * as mutations from '../../../store/mutation-types';
 
 /* global $ moment document foswiki */
 export default {
@@ -128,12 +127,6 @@ export default {
         },
         toggleAddComment() {
             this.addComment = !this.addComment;
-        },
-        next() {
-            this.$store.commit(mutations.SET_PANEL_NEXT_TASK);
-        },
-        prev() {
-            this.$store.commit(mutations.SET_PANEL_PREV_TASK);
         },
         displayAt(at) {
             return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
