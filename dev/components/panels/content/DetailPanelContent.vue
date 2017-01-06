@@ -175,7 +175,6 @@ export default {
                         '/TasksAPIPlugin/permalink?id=',
                         this.task.id
                     ].join('');
-                    console.log(url);
                     this.permalink = url;
                     this.$nextTick(function() {
                         this.$refs.permalink.focus();

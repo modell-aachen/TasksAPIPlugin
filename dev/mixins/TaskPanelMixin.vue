@@ -25,8 +25,20 @@ export default {
         },
         fieldsToShow() {
             let fields = Object.keys(this.task.fields);
-            let configFields = this.typeConfig.panel.fields;
-            let filterList = [...configFields.exclude, ...configFields.order];
+            let configFields = this.typeConfig.panel.fields || {};
+            let hiddenFields = [];
+            if(!configFields.exclude) {
+                configFields.exclude = [];
+            }
+            if(!configFields.order) {
+                configFields.order = [];
+            }
+            for (let field of fields) {
+                if(this.task.fields[field].hidden) {
+                   hiddenFields.push(field);
+                }
+            }
+            let filterList = [...configFields.exclude, ...configFields.order, ...hiddenFields];
             let extraFields = fields.filter(function (field) {
                 return filterList.indexOf(field) === -1;
             }).sort();
