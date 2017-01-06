@@ -18,7 +18,7 @@
     <div class="row" v-for="fieldName in fieldsToShow">
         <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
-            <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :fieldName="fieldName">
+            <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName">
             </component>
         </div>
     </div>
