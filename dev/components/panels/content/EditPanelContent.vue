@@ -1,6 +1,14 @@
 <template>
+<div class="edit-task-container">
 <form v-if="taskToEdit">
-    <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
+    <div class="row">
+        <div class="columns">
+            <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
+        </div>
+        <div class="columns">
+            <a class="button" v-on:click="saveTask">Save</a>
+        </div>
+    </div>
     <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
     <div class="row" v-for="fieldName in fieldsToShow">
@@ -10,8 +18,8 @@
             </component>
         </div>
     </div>
-    <a class="button" v-on:click="saveTask">Save</a>
 </form>
+</div>
 </template>
 
 <script>
@@ -87,4 +95,7 @@ export default {
 </script>
 
 <style lang="sass">
+.edit-task-container {
+    margin: 5px;
+}
 </style>
