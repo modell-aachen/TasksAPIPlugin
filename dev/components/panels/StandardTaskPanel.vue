@@ -6,13 +6,13 @@
                         <span class="primary" v-on:click="requestClose">
                             <i class="fa fa-times"></i>
                         </span>
-                        <span v-on:click="panelView('detail')" :class="activeTab('detail')">
+                        <span v-show="!isEditMode" v-on:click="panelView('detail')" :class="activeTab('detail')">
                             <i class="fa fa-info-circle"></i>
                         </span>
-                        <span v-on:click="panelView('attachment')" :class="activeTab('attachment')">
+                        <span v-show="!isEditMode" v-on:click="panelView('attachment')" :class="activeTab('attachment')">
                             <i class="fa fa-files-o"></i>
                         </span>
-                        <span v-on:click="panelView('changeset')" :class="activeTab('changeset')">
+                        <span v-show="!isEditMode" v-on:click="panelView('changeset')" :class="activeTab('changeset')">
                             <i class="fa fa-clock-o"></i>
                         </span>
                     </div>

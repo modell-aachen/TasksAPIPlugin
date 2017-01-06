@@ -1,11 +1,17 @@
 <template>
-<div v-if="taskToEdit">
+<form v-if="taskToEdit">
     <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
     <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
-    <component v-for="fieldName in fieldsToShow" :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :fieldName="fieldName"></component>
+    <div class="row" v-for="fieldName in fieldsToShow">
+        <div class="small-4 columns">{{getFieldDescription(fieldName)}}:</div>
+        <div class="columns">
+            <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :fieldName="fieldName">
+            </component>
+        </div>
+    </div>
     <a class="button" v-on:click="saveTask">Save</a>
-</div>
+</form>
 </template>
 
 <script>
@@ -46,6 +52,7 @@ export default {
                 request["id"] = this.taskToEdit.id;
                 this.$store.dispatch("updateTask", {gridState: this.grid, request});
             }
+            this.$store.dispatch("switchEditMode", false);
         },
         getComponentForField(fieldName){
             let fieldObject = this.taskToEdit.fields[fieldName];
@@ -63,6 +70,9 @@ export default {
                 case "date2":
                     return "date-component";
             }
+        },
+        getFieldDescription(fieldName){
+            return this.taskToEdit.fields[fieldName].description;
         }
     },
     watch: {
