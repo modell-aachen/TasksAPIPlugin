@@ -1,9 +1,11 @@
 <script>
 import * as mutations from '../store/mutation-types';
+import MaketextMixin from './MaketextMixin.vue';
 
 /* global moment */
 export default {
     props: ['config'],
+    mixins: [MaketextMixin],
     computed: {
         task() {
             return this.$store.state.taskGrid.panelState.taskToShow;

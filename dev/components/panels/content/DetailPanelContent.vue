@@ -7,11 +7,11 @@
                     <span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
                 </div>
                 <div class="cel actions">
-                    <split-button v-on:action="action('updateStatus')" :title="stateAction">
-                        <li v-on:click="action('edit')">Edit Entry</li>
-                        <li v-on:click="action('delete')">Delete Entry</li>
-                        <li v-on:click="action('move')">Move Entry</li>
-                        <li v-on:click="action('permalink')">Get Permalink</li>
+                    <split-button v-on:action="action('updateStatus')" :title="maketext(stateAction)">
+                        <li v-on:click="action('edit')">{{maketext('Edit Entry')}}</li>
+                        <li v-on:click="action('delete')">{{maketext('Delete Entry')}}</li>
+                        <li v-on:click="action('move')">{{maketext('Move Entry')}}</li>
+                        <li v-on:click="action('permalink')">{{maketext('Get Permalink')}}</li>
                     </split-button>
                 </div>
             </div>
@@ -36,7 +36,7 @@
             </div>
             <div class="row">
                 <div class="columns">
-                    <h3 class="top-title">Comments</h3>
+                    <h3 class="top-title">{{maketext(Comments)}}</h3>
                 </div>
                 <div class="columns action" v-on:click="toggleAddComment">
                     <span>
@@ -54,8 +54,8 @@
                 <template v-if="addComment">
                     <textarea v-model="newComment" placeholder="new comment"></textarea>
                     <div class="right">
-                        <split-button v-on:action="action('saveComment')" title="Save comment">
-                            <li v-on:click="action('saveCommentClose')">Save and close entry</li>
+                        <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
+                            <li v-on:click="action('saveCommentClose')">{{maketext('Save and close entry')}}</li>
                         </split-button>
                     </div>
                 </template>

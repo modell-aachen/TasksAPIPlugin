@@ -1819,16 +1819,15 @@ STYLE
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
         "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>");
 
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N', <<SCRIPT, 'jsi18nCore' );
-<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.$lang$suffix.js?version=$RELEASE"></script>
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>
 SCRIPT
-
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
 
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
     require Foswiki::Plugins::CKEditorPlugin;
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
-    return "<task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
+    return "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
 }
 
 sub tagGrid {
