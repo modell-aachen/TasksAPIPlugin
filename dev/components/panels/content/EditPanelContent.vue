@@ -16,7 +16,7 @@
         <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
     </div>
     <div class="row" v-for="fieldName in fieldsToShow">
-        <div class="small-4 columns">{{getFieldDescription(fieldName)}}:</div>
+        <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
             <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :fieldName="fieldName">
             </component>
@@ -82,6 +82,9 @@ export default {
                 case "date2":
                     return "date-component";
             }
+        },
+        isMandatoryField(fieldName){
+            return this.taskToEdit.fields[fieldName].mandatory;
         },
         getFieldDescription(fieldName){
             return this.taskToEdit.fields[fieldName].description;
