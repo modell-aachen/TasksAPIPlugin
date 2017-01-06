@@ -9,8 +9,12 @@
             <a class="button" v-on:click="saveTask">Save</a>
         </div>
     </div>
-    <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
-    <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
+    <div class="columns">
+        <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
+    </div>
+    <div class="columns">
+        <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
+    </div>
     <div class="row" v-for="fieldName in fieldsToShow">
         <div class="small-4 columns">{{getFieldDescription(fieldName)}}:</div>
         <div class="columns">

@@ -17,6 +17,9 @@ export default {
         isEditMode() {
           return this.$store.state.taskGrid.panelState.isEditMode;
         },
+        isLoading() {
+          return this.$store.state.taskGrid.panelState.isLoading;
+        },
         typeConfig(){
             if(this.config.tasktypes[this.task.tasktype]){
               return this.config.tasktypes[this.task.tasktype];

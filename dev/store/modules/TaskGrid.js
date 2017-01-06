@@ -52,10 +52,20 @@ const actions = {
         }, "json");
     },
     updateTask ({commit, state}, {gridState, request}){
-        commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: true});
+        if(state.panelState.active){
+            commit(types.CHANGE_PANEL_LOADING_STATE, true);
+        }
+        else{
+            commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: true});
+        }
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/update", request, (data) => {
             commit(types.UPDATE_TASK, {gridState, data});
-            commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
+            if(state.panelState.active){
+                commit(types.CHANGE_PANEL_LOADING_STATE, false);
+            }
+            else{
+                commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
+            }
         }, "json");
     },
     changeSortState ({dispatch, commit, state}, {gridState, newSortState, parentTask}){
@@ -94,9 +104,11 @@ const actions = {
         });
     },
     createNewTask({commit, state}, request){
+        commit(types.CHANGE_PANEL_LOADING_STATE, true);
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {...request, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC}, (data) => {
             let newTasksToShow = [data.data, ...state.panelState.correspondingGrid.tasksToShow];
             commit(types.SET_TASKS_TO_SHOW, {gridState: state.panelState.correspondingGrid, data: {data: newTasksToShow, total: state.panelState.correspondingGrid.resultCount}});
+            commit(types.CHANGE_PANEL_LOADING_STATE, false);
             commit(types.TOGGLE_PANEL_STATE);
         }, "json");
     },
@@ -106,12 +118,15 @@ const actions = {
             return;
         //Enable means: Request lease -> set edit view if lease succeeds
         if(enable){
+            commit(types.CHANGE_PANEL_LOADING_STATE, true);
             $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/lease", {request: JSON.stringify({id: state.panelState.taskToShow.id})}, null, "json")
             .done((data) => {
                 commit(types.SET_PANEL_EDIT_MODE, true);
                 commit(types.SET_PANEL_VIEW, {view: "edit"});
+                commit(types.CHANGE_PANEL_LOADING_STATE, false);
             })
             .fail(() => {
+                commit(types.CHANGE_PANEL_LOADING_STATE, true);
                 alert("It is leased! Do not touch it!");
             });
         }
@@ -192,6 +207,9 @@ const mutations = {
     },
     [types.SET_PANEL_EDIT_MODE] (state, isEditMode) {
         state.panelState.isEditMode = isEditMode;
+    },
+    [types.CHANGE_PANEL_LOADING_STATE] (state, isLoading) {
+        state.panelState.isLoading = isLoading;
     }
 }
 
