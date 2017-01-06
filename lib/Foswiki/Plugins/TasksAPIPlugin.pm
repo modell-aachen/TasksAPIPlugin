@@ -2131,6 +2131,10 @@ SCRIPT
     my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
     my $json = to_json( \%settings );
+    # Inside of quotes, angle brackets are valid json, however, when put into
+    # a div element, they will be interpreted as html-tags and break the
+    # settings. They often originate from "columns" params.
+    $json =~ s#([<>])#sprintf('&\#x%02x;',ord($1))#ge;
     local $currentOptions = \%settings;
 
     my %tmplAttrs = (
