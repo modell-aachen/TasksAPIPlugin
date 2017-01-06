@@ -1,4 +1,5 @@
 <template>
+    <transition name="toggle-panel">
     <div v-show="isActive" class="overlay" v-on:click="requestClose">
         <div class="panel-overlay active" v-if="task">
                 <div class="panel-wrapper active" v-on:click.stop>
@@ -25,6 +26,7 @@
                 </div>
         </div>
     </div>
+    </transition>
 </template>
 
 
@@ -146,5 +148,18 @@ export default {
             background-color: darkgray;
         }
     }
+}
+
+.toggle-panel-enter-active, .toggle-panel-leave-active {
+  transition: opacity .3s ease;
+  .panel-wrapper {
+    transition: transform .3s ease;
+  }
+}
+.toggle-panel-enter, .toggle-panel-leave-active {
+  opacity: 0;
+  .panel-wrapper {
+    transform: translateX(700px);
+  }
 }
 </style>
