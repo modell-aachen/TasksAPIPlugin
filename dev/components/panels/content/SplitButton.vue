@@ -40,10 +40,11 @@ export default {
     list-style-image: none;
 }
 .split-wrapper {
+    position: relative;
     display: inline-block;
 }
 ul.f-dropdown {
-    position: fixed;
+    position: absolute;
     text-align: left;
     box-shadow: 1px 1px 10px 1px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
