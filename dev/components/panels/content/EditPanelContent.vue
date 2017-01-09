@@ -6,15 +6,20 @@
             <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
         </div>
         <div class="columns">
-            <a class="button" v-on:click="saveTask">Save</a>
+            <a class="primary button float-right" v-on:click="saveTask">Save</a>
         </div>
     </div>
+    <hr/>
     <div class="columns">
         <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
     </div>
+    <hr/>
     <div class="columns">
         <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
     </div>
+    <hr/>
+    <h3 class="top-title">Details</h3>
+    <hr/>
     <div class="row" v-for="fieldName in fieldsToShow">
         <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
