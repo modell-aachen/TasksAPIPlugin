@@ -36,7 +36,7 @@
             </div>
             <div class="row">
                 <div class="columns">
-                    <h3 class="top-title">{{maketext(Comments)}}</h3>
+                    <h3 class="top-title">{{maketext('Comments')}}</h3>
                 </div>
                 <div class="columns action" v-on:click="toggleAddComment">
                     <span>
