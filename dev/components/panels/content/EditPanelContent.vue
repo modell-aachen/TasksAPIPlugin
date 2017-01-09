@@ -50,12 +50,21 @@ export default {
     mixins: [TaskPanelMixin],
     methods: {
         saveTask(){
+            //Check if all fields are valid
+            for(let key in this.taskToEdit.fields){
+                let isFieldValid = this.taskToEdit.fields[key].isValid;
+                if(typeof isFieldValid !== 'undefined' && !isFieldValid){
+                    this.taskToEdit.fields.showValidationWarnings = true;
+                    return;
+                }
+            }
             let request = {
                 form: this.taskToEdit.form
             };
             for(let key in this.taskToEdit.fields){
                 let currentField = this.taskToEdit.fields[key];
-                request[key] = currentField.value;
+                if(currentField.hasOwnProperty("value"))
+                    request[key] = currentField.value;
             }
             if(this.taskToEdit.isNew){
                 this.$store.dispatch("createNewTask", request);
@@ -97,6 +106,7 @@ export default {
     },
     created(){
         this.taskToEdit = _.cloneDeep(this.task);
+        this.$set(this.taskToEdit.fields, "showValidationWarnings", false);
     }
 };
 </script>

@@ -1,5 +1,8 @@
 <template>
-<vue-select :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<div>
+<vue-select v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">Mandatory!</p>
+</div>
 </template>
 
 <script>
@@ -82,5 +85,5 @@ export default {
 };
 </script>
 
-<style lang="sass">
+<style scoped lang="sass">
 </style>
