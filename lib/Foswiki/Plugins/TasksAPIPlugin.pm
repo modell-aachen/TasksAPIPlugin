@@ -1824,6 +1824,9 @@ STYLE
 SCRIPT
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
 
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
     require Foswiki::Plugins::CKEditorPlugin;
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
