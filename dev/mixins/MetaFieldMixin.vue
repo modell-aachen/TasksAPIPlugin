@@ -6,7 +6,7 @@ export default {
             showValidationWarnings: false
         };
     },
-    props: ['fieldName', 'fields'],
+    props: ['fieldName', 'fields', 'autoAssigns'],
     computed: {
         //Standard behaviour to check validity
         isValid() {
@@ -15,6 +15,12 @@ export default {
         id() {
             return RandomString.generate();
         },
+        isAutoAssigned(){
+            if(this.autoAssigns)
+                return this.autoAssigns[this.fieldName];
+            else
+                return false;
+        }
     },
     watch: {
         //A watcher to propagate validity information to the state.
@@ -27,6 +33,14 @@ export default {
         //their warnings.
         "fields.showValidationWarnings": function(){
             this.showValidationWarnings = true;
+        },
+        isAutoAssigned(){
+            if(this.isAutoAssigned){
+                this.fields[this.fieldName].value = this.autoAssigns[this.fieldName];
+            }
+            else{
+                this.fields[this.fieldName].value = "";
+            }
         }
     },
     created(){

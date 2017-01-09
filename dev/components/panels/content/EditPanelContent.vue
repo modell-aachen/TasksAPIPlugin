@@ -23,7 +23,7 @@
     <div class="row" v-for="fieldName in fieldsToShow">
         <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
-            <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName">
+            <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName" :auto-assigns="autoAssigns">
             </component>
         </div>
     </div>
@@ -42,7 +42,8 @@ import _ from 'lodash';
 export default {
     data(){
         return {
-            taskToEdit: null
+            taskToEdit: null,
+            autoAssigns: {}
         };
     },
     components: {
@@ -54,6 +55,20 @@ export default {
     },
     mixins: [TaskPanelMixin],
     methods: {
+        recomputeAutoassigns(){
+            let result = {};
+            for(let fieldToChange in this.typeConfig.autoassign){
+                let config = this.typeConfig.autoassign[fieldToChange];
+                for(let fieldToWatch in config){
+                    for(let i = 0; i < config[fieldToWatch].values.length; i++){
+                        if(config[fieldToWatch].values[i] === this.taskToEdit.fields[fieldToWatch].value){
+                            result[fieldToChange] = config[fieldToWatch].assign;
+                        }
+                    }
+                }
+            }
+            this.autoAssigns = result;
+        },
         saveTask(){
             //Check if all fields are valid
             for(let key in this.taskToEdit.fields){
@@ -107,6 +122,12 @@ export default {
     watch: {
         task(){
             this.taskToEdit = _.cloneDeep(this.task);
+        },
+        "taskToEdit.fields": {
+            deep: true,
+            handler: function(){
+                this.recomputeAutoassigns();
+            }
         }
     },
     created(){

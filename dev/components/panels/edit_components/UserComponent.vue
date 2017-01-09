@@ -1,7 +1,10 @@
 <template>
 <div>
-<vue-select v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<vue-select v-show="!isAutoAssigned" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
 <p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">Mandatory!</p>
+<template v-show="isAutoAssigned">
+{{this.autoAssigns[this.fieldName]}}
+</template>
 </div>
 </template>
 
@@ -68,19 +71,19 @@ export default {
     created(){
         if(!this.fields[this.fieldName].value){
                 return null;
-            }
-            let initialOptions = [];
-            let ids = this.fields[this.fieldName].value.split(/\s*,\s*/);
-            let displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
-            for(let i = 0; i < ids.length; i++){
-                initialOptions.push({
-                    id: ids[i],
-                    text: displayValues[i]
-                });
-            }
-            if(!this.isMulti)
-                initialOptions = initialOptions[0];
-            this.initialOptions = initialOptions;
+        }
+        let initialOptions = [];
+        let ids = this.fields[this.fieldName].value.split(/\s*,\s*/);
+        let displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
+        for(let i = 0; i < ids.length; i++){
+            initialOptions.push({
+                id: ids[i],
+                text: displayValues[i]
+            });
+        }
+        if(!this.isMulti)
+            initialOptions = initialOptions[0];
+        this.initialOptions = initialOptions;
     }
 };
 </script>
