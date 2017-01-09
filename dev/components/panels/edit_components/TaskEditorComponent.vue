@@ -1,6 +1,6 @@
 <template>
+<div class="cke-component">
     <textarea ref="textarea"></textarea>
-    }
 </div>
 </template>
 
@@ -27,5 +27,8 @@ export default {
 };
 </script>
 
-<style lang="sass">
+<style scoped lang="sass">
+.cke-component {
+    margin: 0 0 1rem;
+}
 </style>
