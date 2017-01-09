@@ -61,6 +61,7 @@ ul.f-dropdown {
     li {
         padding: 3px 14px;
         font-weight: bold;
+        cursor: pointer;
         &:hover {
             background-color: lightgray;
         }
