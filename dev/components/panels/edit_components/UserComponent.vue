@@ -1,10 +1,10 @@
 <template>
 <div>
-<vue-select v-show="!isAutoAssigned" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :initial-value="initialOptions" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true"  :on-change="onSelectionChange" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<vue-select v-show="!isAutoAssigned" v-model="selectedValues" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
 <p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">Mandatory!</p>
-<template v-show="isAutoAssigned">
-{{this.autoAssigns[this.fieldName]}}
-</template>
+<div v-show="isAutoAssigned" class="autoassigned-value">
+{{this.fields[this.fieldName].value}}
+</div>
 </div>
 </template>
 
@@ -17,7 +17,7 @@ export default {
     data() {
         return {
             options: [],
-            initialOptions: null
+            selectedValues: []
         };
     },
     components: {
@@ -26,6 +26,28 @@ export default {
     computed: {
         isMulti() {
             return this.fields[this.fieldName].multi;
+        }
+    },
+    watch: {
+        selectedValues(){
+            if(!this.selectedValues)
+                return;
+            let result = "";
+            if(!Array.isArray(this.selectedValues)){
+                this.selectedValues = [this.selectedValues];
+            }
+            for(let i = 0; i < this.selectedValues.length; i++){
+                result += this.selectedValues[i].id;
+                if(i != this.selectedValues.length -1)
+                    result += ",";
+            }
+            this.fields[this.fieldName].value = result;
+        },
+        isAutoAssigned(isAssigned, wasAssigned){
+            if(wasAssigned && !isAssigned){
+                this.selectedValues = [];
+                this.showValidationWarnings = false;
+            }
         }
     },
     methods: {
@@ -38,18 +60,6 @@ export default {
         },
         getOptionLabel: function(option){
             return option.text;
-        },
-        onSelectionChange(selections){
-            let result = "";
-            if(!Array.isArray(selections)){
-                selections = [selections];
-            }
-            for(let i = 0; i < selections.length; i++){
-                result += selections[i].id;
-                if(i != selections.length -1)
-                    result += ",";
-            }
-            this.fields[this.fieldName].value = result;
         },
         fetchOptions(search) {
             let start = this.options.length;
@@ -72,21 +82,24 @@ export default {
         if(!this.fields[this.fieldName].value){
                 return null;
         }
-        let initialOptions = [];
+        let selectedValues = [];
         let ids = this.fields[this.fieldName].value.split(/\s*,\s*/);
         let displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
         for(let i = 0; i < ids.length; i++){
-            initialOptions.push({
+            selectedValues.push({
                 id: ids[i],
                 text: displayValues[i]
             });
         }
-        if(!this.isMulti)
-            initialOptions = initialOptions[0];
-        this.initialOptions = initialOptions;
+        // if(!this.isMulti)
+        //     selectedValues = selectedValues[0];
+        this.selectedValues = selectedValues;
     }
 };
 </script>
 
 <style scoped lang="sass">
+.autoassigned-value {
+    margin: 0 0 1rem;
+}
 </style>

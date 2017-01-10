@@ -17,7 +17,7 @@ export default {
         },
         isAutoAssigned(){
             if(this.autoAssigns)
-                return this.autoAssigns[this.fieldName];
+                return (this.autoAssigns[this.fieldName] !== undefined);
             else
                 return false;
         }
