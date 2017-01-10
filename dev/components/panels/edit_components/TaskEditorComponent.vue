@@ -1,7 +1,15 @@
 <template>
 <div class="cke-component">
     <div v-show="isInitializing" class="loading-placeholder">
-        <i class="loading-indicator fa fa-refresh fa-spin fa-3x fa-fw"></i>
+        <div class="cke-placeholder">
+            <div class="cke-menu-placeholder"></div>
+            <div class="cke-menu-placeholder"></div>
+            <div class="cke-menu-placeholder"></div>
+            <div class="cke-menu-placeholder"></div>
+        </div>
+        <div style="width:100%; height:100%">
+            <i class="loading-indicator fa fa-refresh fa-spin fa-3x fa-fw"></i>
+        </div>
     </div>
     <div v-show="!isInitializing">
         <textarea ref="textarea"></textarea>
@@ -42,13 +50,46 @@ export default {
 .cke-component {
     margin: 0 0 1rem;
     .loading-placeholder {
-        background-color: rgba(192,192,192,0.2);
+        animation-name: pulse;
+      animation-duration: 1s; 
+      animation-timing-function: linear; 
+      animation-delay: 0;
+      animation-direction: alternate;
+      animation-iteration-count: infinite;
+      animation-fill-mode: none;
+      animation-play-state: running;
+        background-color: rgba(255,255,255,0.2);
         border-radius: 4px;
         height: 200px;
         text-align: center;
+        padding: 0;
+        border: 1px solid gray;
+        opacity: 0.3;
+        .cke-placeholder {
+            height: 35px;
+            /* background-color: blue; */
+            text-align: left;
+            /* margin: 2px; */
+            border-bottom: 1px solid gray;
+        }
+        .cke-menu-placeholder {
+            width: 50px;
+            height: 20px;
+            margin: 6px;
+            display: inline-block;
+            border: 1px solid gray;
+        }
         .loading-indicator {
             position: relative;
-            top: 45%;
+            top: 30%;
+        }
+        @keyframes pulse {
+            0% {
+                opacity: 0.1;
+              }
+              100% {
+                opacity: 0.7;
+              }
         }
     }
 }
