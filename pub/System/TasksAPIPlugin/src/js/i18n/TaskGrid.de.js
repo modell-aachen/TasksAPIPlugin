@@ -1,6 +1,6 @@
 jsi18n.add('TaskGrid', {
-      "Close Entry": "Eintag schließen",
-      "Reopen Entry": "Eintag schließen",
+      "Close Entry": "Eintrag schließen",
+      "Reopen Entry": "Eintrag öffnen",
       "Show more": "mehr anzeigen",
       "Show less": "weniger anzeigen",
       "Details": "Details",
