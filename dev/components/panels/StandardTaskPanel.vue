@@ -63,7 +63,7 @@ export default {
         doKeyAction(event) {
             switch(event.keyCode) {
                 case 27:
-                    this.isActive ? this.togglePanelStatus() : null;
+                    this.isActive ? this.requestClose() : null;
                     break;
                 case 39:
                     this.isActive ? this.next() : null;
