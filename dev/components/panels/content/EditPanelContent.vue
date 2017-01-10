@@ -11,7 +11,7 @@
     </div>
     <hr/>
     <div class="columns">
-        <text-component :fields="taskToEdit.fields" field-name="Title" placeholder="Aufgabentitel"></text-component>
+        <text-component :fields="taskToEdit.fields" field-name="Title" :placeholder="maketext('Task title')"></text-component>
     </div>
     <hr/>
     <div class="columns">
@@ -21,7 +21,7 @@
     <h3 class="top-title">Details</h3>
     <hr/>
     <div class="row" v-for="fieldName in nonHiddenFieldsToShow">
-        <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
+        <div class="small-4 columns field-description">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
             <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName" :auto-assigns="autoAssigns">
             </component>
@@ -147,5 +147,8 @@ export default {
 <style lang="sass">
 .edit-task-container {
     margin: 5px;
+}
+.field-description {
+    color: #7f7b71;
 }
 </style>
