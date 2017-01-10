@@ -60,8 +60,8 @@ ul.f-dropdown {
     width: auto;
     li {
         padding: 10px 14px;
-        font-family: OpenSans-Semibold;
         font-size: 12px;
+        font-weight: 600;
         color: #282C2E;
         cursor: pointer;
         &:hover {

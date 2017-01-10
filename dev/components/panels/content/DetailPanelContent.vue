@@ -20,8 +20,10 @@
             <hr/>
         </div>
         <div class="scroll-container">
-            <div ref="description" class="description" v-bind:class="{all: expandText}">
-                <p v-html="displayValue('Description')"></p>
+            <div ref="description" class="description">
+                <transition name="more" mode="out-in">
+                    <div v-html="readMore" :key="expandText" style="transform-origin: 50% 0%;"></div>
+                </transition>
                 <div v-if="showReadMore" class="show-more">
                     <span class="button hollow secondary" v-on:click="toggleExpandText">
                         {{maketext(expandText ? "Show less" : "Show more")}}
@@ -93,6 +95,7 @@ export default {
     data() {
         return {
             expandText: false,
+            showChar: 1000,
             showReadMore: false,
             addComment: false,
             newComment: '',
@@ -112,6 +115,25 @@ export default {
         isClosed() {
             let taskStatus = this.task.fields['Status'].value;
             return taskStatus === 'closed';
+        },
+        readMore() {
+            let text = this.displayValue("Description");
+            if(!this.expandText && text.length > this.showChar) {
+                let content = text.substring(0, this.showChar);
+                this.showReadMore = true;
+                return content;
+            } else if (text.length > this.showChar) {
+                this.showReadMore = true;
+                return text;
+            }
+            this.showReadMore = false;
+            return text;
+        },
+        readAll() {
+            let text = this.displayValue("Description");
+            if(this.showReadMore) {
+                return text.substring(this.showChar, text.length - this.showChar);
+            }
         },
         comments() {
             if(this.task.changesets){
@@ -138,7 +160,6 @@ export default {
         },
     },
     watch: {
-        task: 'descriptionHeightExeeded'
     },
     methods: {
         toggleExpandText() {
@@ -322,17 +343,21 @@ export default {
     background-color: #F7F7F7;
     color: #282C2E;
 }
+.more-enter-active, .more-leave-active {
+    transition: all .2s;
+}
+.more-enter, .more-leave-to {
+    transform: scale(1,0.5)
+}
 .description {
-    max-height: 250px;
     position: relative;
-    overflow: hidden;
     margin-bottom: 20px;
-    -webkit-transition: max-height 0.3s ease-in;
-    transition: max-height 0.3s ease-in;
+    p{
+        display: inline;
+    }
     .show-more {
         padding: 6px;
         height: 53px;
-        position: absolute;
         bottom: 0;
         width: 100%;
         text-align: center;
@@ -343,13 +368,6 @@ export default {
             padding: 9px 10px;
             font-size: 14px;
         }
-    }
-    &.all {
-        .show-more {
-            position: relative;
-        }
-        max-height: 9999px;
-        overflow: overlay;
     }
 }
 h3.top-title {
