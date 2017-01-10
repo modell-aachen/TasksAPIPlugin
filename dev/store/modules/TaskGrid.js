@@ -17,17 +17,17 @@ const gridState = {
 };
 
 // Initial state
-const state = {
+const INITIAL_STATE = {
     gridStates: [],
     panelState: {
         active: false,
         isLoading: false,
-        hasLease: false,
         view: 'detail',
         correspondingGrid: {},
         taskToShow: null,
         taskIndex: null,
-        isEditMode: false
+        isEditMode: false,
+        isNewTaskEditMode: false
     }
 };
 
@@ -78,30 +78,17 @@ const actions = {
         callback(newGridState);
     },
     showTaskDetails({commit, state}, {task, gridState}) {
+        commit(types.TOGGLE_PANEL_STATE);
         commit(types.SET_PANEL_TASK, {task, gridState});
         commit(types.SET_PANEL_VIEW, {view: "detail"});
-        commit(types.TOGGLE_PANEL_STATE);
     },
     openNewTaskEditor({commit, state}, {formName,gridState}){
+        commit(types.TOGGLE_PANEL_STATE);
+        commit(types.CHANGE_PANEL_LOADING_STATE, true);
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
-            data.data["isNew"] = true;
-            commit(types.SET_PANEL_TASK, {task: data.data, gridState});
-            commit(types.SET_PANEL_VIEW, {view: "edit"});
-            commit(types.TOGGLE_PANEL_STATE);
+            commit(types.SET_NEW_TASK_EDITOR, {newTask: data.data, correspondingGrid: gridState});
+            commit(types.CHANGE_PANEL_LOADING_STATE, false);
         }, "json");
-    },
-    closeTaskEditor({commit, state}, {task}){
-        $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/release", {request: JSON.stringify({id: task.id})}, null, "json")
-        .done((data) => {
-            commit(types.SET_PANEL_EDIT_MODE, false)
-            commit(types.SET_PANEL_VIEW, {view: "edit"})
-        });
-    },
-    release({commit, state}, {gridState, task, callback}){
-        $.get(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/release", {request: JSON.stringify({id: task.id})}, null, "json")
-        .done((data) => {
-            callback();
-        });
     },
     createNewTask({commit, state}, request){
         commit(types.CHANGE_PANEL_LOADING_STATE, true);
@@ -126,7 +113,7 @@ const actions = {
                 commit(types.CHANGE_PANEL_LOADING_STATE, false);
             })
             .fail(() => {
-                commit(types.CHANGE_PANEL_LOADING_STATE, true);
+                commit(types.CHANGE_PANEL_LOADING_STATE, false);
                 alert("It is leased! Do not touch it!");
             });
         }
@@ -172,8 +159,10 @@ const mutations = {
     },
     [types.TOGGLE_PANEL_STATE] (state) {
         state.panelState.active = !state.panelState.active;
-        if(!state.panelState.active)
-            state.panelState.view = 'detail';
+        //Reset to initial state when the panel is opened.
+        if(state.panelState.active){
+            state.panelState = Object.assign({}, INITIAL_STATE.panelState);
+        }
     },
     [types.SET_PANEL_TASK] (state, {task, gridState}) {
         state.panelState.taskIndex = gridState.tasksToShow.indexOf(task);
@@ -210,11 +199,18 @@ const mutations = {
     },
     [types.CHANGE_PANEL_LOADING_STATE] (state, isLoading) {
         state.panelState.isLoading = isLoading;
+    },
+    [types.SET_NEW_TASK_EDITOR] (state, {newTask, correspondingGrid}) {
+        state.panelState.taskToShow = newTask;
+        state.panelState.isEditMode = true;
+        state.panelState.view = "edit";
+        state.panelState.isNewTaskEditMode = true;
+        state.panelState.correspondingGrid = correspondingGrid;
     }
 }
 
 export default {
-    state,
+    state: Object.assign({}, INITIAL_STATE),
     actions,
     mutations
 };

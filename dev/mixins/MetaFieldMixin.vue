@@ -1,6 +1,8 @@
 <script>
+import MaketextMixin from './MaketextMixin.vue';
 import RandomString from "randomstring";
 export default {
+    mixins: [MaketextMixin],
     data(){
         return{
             showValidationWarnings: false

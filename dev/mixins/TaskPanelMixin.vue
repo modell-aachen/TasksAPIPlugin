@@ -19,6 +19,9 @@ export default {
         isEditMode() {
           return this.$store.state.taskGrid.panelState.isEditMode;
         },
+        isNewTaskEditMode() {
+          return this.$store.state.taskGrid.panelState.isNewTaskEditMode;
+        },
         isLoading() {
           return this.$store.state.taskGrid.panelState.isLoading;
         },

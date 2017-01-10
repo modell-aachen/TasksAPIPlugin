@@ -1,7 +1,7 @@
 <template>
 <div>
     <input v-on:focusout="onFocusLost" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" type="text" v-model="fields[fieldName].value" v-bind:placeholder="placeholder"/>
-    <p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">Mandatory!</p>
+    <p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">{{maketext("This field is mandatory")}}</p>
 </div>
 </template>
 

@@ -6,7 +6,7 @@
             <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
         </div>
         <div class="columns">
-            <a class="primary button float-right" v-on:click="saveTask">Save</a>
+            <a class="primary button float-right" v-on:click="saveTask">{{maketext("Save entry")}}</a>
         </div>
     </div>
     <hr/>
@@ -93,14 +93,14 @@ export default {
                 if(currentField.hasOwnProperty("value"))
                     request[key] = currentField.value;
             }
-            if(this.taskToEdit.isNew){
+            if(this.isNewTaskEditMode){
                 this.$store.dispatch("createNewTask", request);
             }
             else {
                 request["id"] = this.taskToEdit.id;
                 this.$store.dispatch("updateTask", {gridState: this.grid, request});
+                this.$store.dispatch("switchEditMode", false);
             }
-            this.$store.dispatch("switchEditMode", false);
         },
         getComponentForField(fieldName){
             let fieldObject = this.taskToEdit.fields[fieldName];

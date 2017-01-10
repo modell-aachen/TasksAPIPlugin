@@ -1,7 +1,7 @@
 <template>
 <div>
-<vue-select v-show="!isAutoAssigned" v-model="selectedValues" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" placeholder="Placeholder" :options="options" :on-search="onSearch" :prevent-search-filter="true" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
-<p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">Mandatory!</p>
+<vue-select v-show="!isAutoAssigned" v-model="selectedValues" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :placeholder="maketext('Search')" :options="options" :on-search="onSearch" :prevent-search-filter="true" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">{{maketext("This field is mandatory")}}</p>
 <div v-show="isAutoAssigned" class="autoassigned-value">
 {{this.fields[this.fieldName].value}}
 </div>

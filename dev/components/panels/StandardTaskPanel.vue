@@ -1,7 +1,7 @@
 <template>
     <transition name="toggle-panel">
     <div v-show="isActive" class="overlay" v-on:click="requestClose">
-        <div class="panel-overlay active" v-if="task">
+        <div class="panel-overlay active">
                 <div class="panel-wrapper active" v-on:click.stop>
                     <div class="tab-bar">
                         <span class="primary" v-on:click="requestClose">
@@ -18,7 +18,7 @@
                         </span>
                     </div>
                     <div class="panel">
-                        <component :is="view + '-panel-content'" :config="config"></component>
+                        <component v-if="task" :is="view + '-panel-content'" :config="config"></component>
                     </div>
                     <div v-show="isLoading" style="background-color: rgba(255, 255, 255, 0.7); width:100%; height:100%; position:absolute; top:0; text-align:center">
                     <i class="fa fa-refresh fa-spin fa-5x fa-fw" style="position: relative; top:40%"></i>
@@ -53,7 +53,7 @@ export default {
             return '';
         },
         requestClose() {
-            if(this.isEditMode){
+            if(this.isEditMode && !this.isNewTaskEditMode){
                 this.$store.dispatch("switchEditMode", false);
             }
             else{

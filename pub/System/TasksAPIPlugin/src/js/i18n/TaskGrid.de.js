@@ -12,4 +12,7 @@ jsi18n.add('TaskGrid', {
       "Save and close entry": "Kommentar speichern und schließen",
       "new comment": "neuer Kommentar",
       "Comments": "Kommentare"
+      "Save entry": "Eintrag speichern",
+      "This field is mandatory": "Dies is ein Pflichtfeld",
+      "Search": "Suchen"
 });
