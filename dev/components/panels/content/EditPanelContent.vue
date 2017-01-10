@@ -20,7 +20,7 @@
     <hr/>
     <h3 class="top-title">Details</h3>
     <hr/>
-    <div class="row" v-for="fieldName in fieldsToShow">
+    <div class="row" v-for="fieldName in nonHiddenFieldsToShow">
         <div class="small-4 columns">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
             <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName" :auto-assigns="autoAssigns">
@@ -54,6 +54,13 @@ export default {
         DateComponent
     },
     mixins: [TaskPanelMixin],
+    computed: {
+        nonHiddenFieldsToShow(){
+            return this.fieldsToShow.filter((value) => {
+                return !this.taskToEdit.fields[value].hidden;
+            });
+        }
+    },
     methods: {
         recomputeAutoassigns(){
             let result = {};
