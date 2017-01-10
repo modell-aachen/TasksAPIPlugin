@@ -1,9 +1,9 @@
 <template>
     <div>
         <div class="top">
-            <div class="top-bar">
+            <div class="top-bar row align-middle">
                 <div class="cel">
-                    <span class="label label-default">{{displayValue("Type")}}</span>
+                    <span :class="['label','label-'+label]">{{displayValue("Type")}}</span>
                     <span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
                 </div>
                 <div class="cel actions">
@@ -23,7 +23,9 @@
             <div ref="description" class="description" v-bind:class="{all: expandText}">
                 <p v-html="displayValue('Description')"></p>
                 <div v-if="showReadMore" class="show-more">
-                    <span class="button hollow secondary" v-on:click="toggleExpandText">Show more</span>
+                    <span class="button hollow secondary" v-on:click="toggleExpandText">
+                        {{maketext(expandText ? "Show less" : "Show more")}}
+                    </span>
                 </div>
             </div>
             <h3 class="top-title">Details</h3>
@@ -31,10 +33,10 @@
             <div>
                 <div class="row" v-for="field in fieldsToShow">
                     <div class="title columns">{{description(field)}}:</div>
-                    <div class="columns small-4">{{displayValue(field)}}</div>
+                    <div class="columns small-5">{{displayValue(field)}}</div>
                 </div>
             </div>
-            <div class="row">
+            <div class="top-space row align-middle">
                 <div class="columns">
                     <h3 class="top-title">{{maketext('Comments')}}</h3>
                 </div>
@@ -51,16 +53,18 @@
             </div>
             <hr/>
             <div>
-                <template v-if="addComment">
-                    <textarea v-model="newComment" placeholder="new comment"></textarea>
-                    <div class="right">
-                        <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
-                            <li v-on:click="action('saveCommentClose')">{{maketext('Save and close entry')}}</li>
-                        </split-button>
+                <transition name="expand">
+                    <div v-show="addComment" style="transform-origin: 50% 0%;">
+                        <textarea v-model="newComment" :placeholder="maketext('new comment')"></textarea>
+                        <div class="right">
+                            <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
+                                <li v-on:click="action('saveCommentClose')">{{maketext('Save and close entry')}}</li>
+                            </split-button>
+                        </div>
                     </div>
-                </template>
+                </transition>
                 <template v-for="comment in comments">
-                    <div class="comment-header row">
+                    <div class="comment-header row align-middle">
                         <div class="title columns shrink">{{comment.user.wikiname}}</div>
                         <div class="title date columns">{{displayAt(comment.at)}}</div>
                     </div>
@@ -116,7 +120,22 @@ export default {
                 }).reverse();
             }
             return {};
-        }
+        },
+        label(){
+            let value = this.task.fields["Type"].value;
+            let output = 'info';
+            $.each(this.typeConfig.fields, function( key, config) {
+                if(config.id === 'type') {
+                    $.each(config.component.labels, function( key, style) {
+                        if(value === key ) {
+                            output = style;
+                            return false;
+                        }
+                    });
+                }
+            });
+            return output;
+        },
     },
     watch: {
         task: 'descriptionHeightExeeded'
@@ -193,6 +212,7 @@ export default {
             }
         },
         descriptionHeightExeeded() {
+            this.expandText = false;
             this.$nextTick(function() {
                 let maxHeight = $(this.$refs.description).css('max-height').split('px')[0];
                 let height = $(this.$refs.description).height();
@@ -214,20 +234,25 @@ export default {
 .flatskin-wrapped {
     .panel hr {
         height: 1px;
+        color: #F7F6F3;
         width: calc(100% +40px);
         margin-left: -20px;
+        margin-right: -20px;
     }
+}
+.top-space{
+    margin-top: 25px;
 }
 .scroll-container {
     overflow-y: auto;
-    height: calc( 100vh - 9.4rem);
+    height: calc( 100vh - 9.5rem);
     padding: 0px 20px;
     .row .columns {
         padding: 0;
         &.title {
             padding: 5px 0;
-            color: darkgray;
-            font-size: 0.9rem;
+            color: #7F7B71;
+            font-size: 13px;
         }
         &.action {
             color: #52cae4;
@@ -240,7 +265,7 @@ export default {
     }
 }
 .top{
-    padding: 5px 20px;
+    padding: 5px 20px 0px 20px;
 }
 .pseudo-hidden {
     position: absolute;
@@ -251,44 +276,59 @@ export default {
     display: flex;
     justify-content: space-between;
     padding: 3px 0;
+    height: 48px;
     .cel {
         flex: 1;
+    }
+    span.label{
+        width: initial;
+        min-width: 50px;
     }
     .actions {
         text-align: right;
     }
 }
+.expand-enter-active, .expand-leave-active {
+    transition: all .1s ease;
+}
+.expand-enter, .expand-leave-to {
+    opacity: 0;
+    transform: scale(1,0);
+}
 .comment-header {
     margin-top: 15px;
     padding: 5px 20px;
-    border-radius: 5px 5px 0px 0px;
-    -moz-border-radius: 5px 5px 0px 0px;
-    -webkit-border-radius: 5px 5px 0px 0px;
+    border-radius: 4px 4px 0px 0px;
+    -moz-border-radius: 4px 4px 0px 0px;
+    -webkit-border-radius: 4px 4px 0px 0px;
     border: 0px solid #000000;
-    background-color: lightgray;
+    background-color: #E2E2E2;
     color: black;
     &.row  > .columns.title {
         margin-right: 5px;
         color: black;
         &.date {
-            font-size: small;
-            color: darkgray;
+            font-size: 11px;
+            color: #84878A;
         }
     }
 }
 .comment-body {
     padding: 10px 20px;
-    border-radius: 0px 0px 5px 5px;
-    -moz-border-radius: 0px 0px 5px 5px;
-    -webkit-border-radius: 0px 0px 5px 5px;
+    border-radius: 0px 0px 4px 4px;
+    -moz-border-radius: 0px 0px 4px 4px;
+    -webkit-border-radius: 0px 0px 4px 4px;
     border: 0px solid #000000;
-    background-color: #ebebeb;
-    color: black;
+    background-color: #F7F7F7;
+    color: #282C2E;
 }
 .description {
     max-height: 250px;
     position: relative;
     overflow: hidden;
+    margin-bottom: 20px;
+    -webkit-transition: max-height 0.3s ease-in;
+    transition: max-height 0.3s ease-in;
     .show-more {
         padding: 6px;
         height: 53px;
@@ -298,12 +338,17 @@ export default {
         text-align: center;
         margin: 0;
 		background-color: white;
+        .button {
+            margin-top: 12px;
+            padding: 9px 10px;
+            font-size: 14px;
+        }
     }
     &.all {
         .show-more {
             position: relative;
         }
-        max-height: none;
+        max-height: 9999px;
         overflow: overlay;
     }
 }
@@ -325,7 +370,7 @@ h3.top-title {
     justify-content: flex-start;
     padding: 0 20px;
     .button {
-        padding: 9px 9px 8px 7px;
+        padding: 9px 11px 9px 9px;
         margin: 0.5rem 0.2rem;
     }
 }

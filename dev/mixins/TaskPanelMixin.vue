@@ -29,7 +29,13 @@ export default {
             return this.config.tasktypes.default;
         },
         fieldsToShow() {
+            if(!this.task) {
+                return;
+            }
             let fields = Object.keys(this.task.fields);
+            if(!this.typeConfig.panel) {
+                return;
+            }
             let configFields = this.typeConfig.panel.fields || {};
             let hiddenFields = [];
             if(!configFields.exclude) {

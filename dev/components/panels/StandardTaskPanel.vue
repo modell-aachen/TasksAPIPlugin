@@ -92,7 +92,7 @@ export default {
     left: 0;
     right: 0;
     z-index: 999;
-    background-color: rgba(0,0,0,0.3);
+    background-color: rgba(0,0,0,0.13);
     >.panel-wrapper {
         position: absolute;
         top: 0;
@@ -122,30 +122,33 @@ export default {
     justify-content: flex-start;
     flex: 1;
     height: 100%;
-    background: lightgray;
+    background: #E5E8EB;
     .fa {
         font-size: 25px;
         padding: 4px;
     }
     span {
-        color: darkgray;
+        color: #84878A;
         text-align: center;
         width: 50px;
         height: 50px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        transition: all .4s ease;
+        &:first-child{
+            height: 60px;
+        }
         .primary {
             width: 55px;
-            bottom-border: 1px
+            bottom-border: 1px;
         }
-        &.active {
-            background-color: darkgray;
+        &.active, &:hover{
+            background-color: #84878A;
             color: white;
-        }
-        &:hover {
-            color: black;
-            background-color: darkgray;
+            i.fa{
+                transform: scale(1.3,1.3);
+            }
         }
     }
 }

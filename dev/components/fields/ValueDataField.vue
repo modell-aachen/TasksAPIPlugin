@@ -14,14 +14,17 @@ export default {
     methods: {
         getDisplayValue(field){
             let taskField = this.task.fields[field];
-            switch(taskField.type){
-                case 'date2':
-                    if(!taskField.value)
-                        return "";
-                    return moment.unix(parseInt(taskField.value)).toDate().toLocaleDateString();
-                default:
-                    return taskField.displayValue ? taskField.displayValue : taskField.value;
+            if(taskField) {
+                switch(taskField.type){
+                    case 'date2':
+                        if(!taskField.value)
+                            return "";
+                        return moment.unix(parseInt(taskField.value)).toDate().toLocaleDateString();
+                    default:
+                        return taskField.displayValue ? taskField.displayValue : taskField.value;
+                }
             }
+            return '';
         }
     }
 };

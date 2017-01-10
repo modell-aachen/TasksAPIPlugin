@@ -55,12 +55,14 @@ ul.f-dropdown {
     width: 100%;
     max-width: 200px;
     z-index:100;
-    margin: 5px 0px;
+    margin: 1px 0px;
     padding: 0;
     width: auto;
     li {
-        padding: 3px 14px;
-        font-weight: bold;
+        padding: 10px 14px;
+        font-family: OpenSans-Semibold;
+        font-size: 12px;
+        color: #282C2E;
         cursor: pointer;
         &:hover {
             background-color: lightgray;
