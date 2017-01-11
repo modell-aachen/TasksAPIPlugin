@@ -99,7 +99,7 @@ const actions = {
             commit(types.TOGGLE_PANEL_STATE);
         }, "json");
     },
-    switchEditMode({commit, state}, enable){
+    switchEditMode({commit, state}, {enable, onLeaseTaken}){
         //Just return if there is no state switch
         if(enable == state.panelState.isEditMode)
             return;
@@ -114,7 +114,7 @@ const actions = {
             })
             .fail(() => {
                 commit(types.CHANGE_PANEL_LOADING_STATE, false);
-                alert("It is leased! Do not touch it!");
+                onLeaseTaken();
             });
         }
         //!enable means: Release -> set detail view

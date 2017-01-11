@@ -89,7 +89,7 @@
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
 
-/* global $ moment document foswiki */
+/* global $ moment document foswiki swal */
 export default {
     mixins: [TaskPanelMixin],
     data() {
@@ -191,9 +191,21 @@ export default {
             return 'measure';
         },
         action(type) {
+            let self = this;
+            let onLeaseTaken = function(){
+                swal({
+                    title: self.maketext("Editing not possible."),
+                    text: self.maketext("This task is currently edited by another user. Please try again later."),
+                    type: "warning",
+                    confirmButtonColor: "#D83314",
+                    confirmButtonText: self.maketext("Confirm"),
+                    closeOnConfirm: true,
+                    allowEscapeKey: false
+                });
+            };
             switch (type) {
                 case 'edit':
-                    this.$store.dispatch("switchEditMode", true);
+                    this.$store.dispatch("switchEditMode", {enable: true, onLeaseTaken});
                     break;
                 case 'move':
                     this.$store.dispatch("switchEditMode", true);
