@@ -184,6 +184,17 @@ export default {
                 case 'edit':
                     this.$store.dispatch("switchEditMode", true);
                     break;
+                case 'move':
+                    this.$store.dispatch("switchEditMode", true);
+                    break;
+                case 'delete': {
+                    let request = {
+                        id: this.task.id,
+                        Status: 'deleted',
+                    };
+                    this.$store.dispatch('updateTask', {gridState: this.grid, request});
+                    break;
+                }
                 case 'saveComment': {
                     let request = {
                         id: this.task.id,

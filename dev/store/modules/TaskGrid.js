@@ -82,7 +82,7 @@ const actions = {
         commit(types.SET_PANEL_TASK, {task, gridState});
         commit(types.SET_PANEL_VIEW, {view: "detail"});
     },
-    openNewTaskEditor({commit, state}, {formName,gridState}){
+    openNewTaskEditor({commit, state}, {formName, gridState}){
         commit(types.TOGGLE_PANEL_STATE);
         commit(types.CHANGE_PANEL_LOADING_STATE, true);
         $.post(foswiki.preferences.SCRIPTURLPATH + "/rest/TasksAPIPlugin/create", {form:formName, Context: foswiki.preferences.WEB+"."+foswiki.preferences.TOPIC, dontsave: 1}, (data) => {
