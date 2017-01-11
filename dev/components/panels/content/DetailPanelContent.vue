@@ -7,7 +7,7 @@
                     <span class="label" :class="'label-' + getSignalColour()">{{displayValue("Status")}}</span>
                 </div>
                 <div class="cel actions">
-                    <split-button v-on:action="action('updateStatus')" :title="maketext(stateAction)">
+                    <split-button ref="actionMenu" v-on:action="action('updateStatus')" :title="maketext(stateAction)">
                         <li v-on:click="action('edit')">{{maketext('Edit Entry')}}</li>
                         <li v-on:click="action('delete')">{{maketext('Delete Entry')}}</li>
                         <li v-on:click="action('move')">{{maketext('Move Entry')}}</li>
@@ -33,8 +33,8 @@
             <h3 class="top-title">Details</h3>
             <hr/>
             <div>
-                <div class="row" v-for="field in fieldsToShow">
-                    <div class="title columns">{{description(field)}}:</div>
+                <div class="row align-middle details" v-for="(field, index) in fieldsToShow">
+                    <div class="columns title">{{description(field)}}:</div>
                     <div class="columns small-5">{{displayValue(field)}}</div>
                 </div>
             </div>
@@ -65,10 +65,11 @@
                         </div>
                     </div>
                 </transition>
-                <template v-for="comment in comments">
-                    <div class="comment-header row align-middle">
+                <template v-for="(comment, index) in comments">
+                    <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
                         <div class="title columns shrink">{{comment.user.wikiname}}</div>
                         <div class="title date columns">{{displayAt(comment.at)}}</div>
+                        <div v-show="hover === 'comment'+index" class="title columns right"><i class="fa fa-pencil"></i></div>
                     </div>
                     <div class="comment comment-body row" v-html="comment.comment"></div>
                 </template>
@@ -88,6 +89,7 @@
 <script>
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
+import * as mutations from '../../../store/mutation-types';
 
 /* global $ moment document foswiki swal */
 export default {
@@ -99,7 +101,8 @@ export default {
             showReadMore: false,
             addComment: false,
             newComment: '',
-            permalink: ''
+            permalink: '',
+            hover: ''
         };
     },
     components: {
@@ -208,7 +211,8 @@ export default {
                     this.$store.dispatch("switchEditMode", {enable: true, onLeaseTaken});
                     break;
                 case 'move':
-                    this.$store.dispatch("switchEditMode", true);
+                    this.$store.commit(mutations.CHANGE_PANEL_DIALOG_STATE, true);
+                    this.$refs.actionMenu.splitOpen = false;
                     break;
                 case 'delete': {
                     let request = {
@@ -248,6 +252,7 @@ export default {
                         this.$refs.permalink.setSelectionRange(0, url.length);
                         document.execCommand('copy');
                     });
+                    this.$refs.actionMenu.splitOpen = false;
                     break;
                 }
                 case 'updateStatus': {
@@ -265,22 +270,7 @@ export default {
                 default:
                     console.warn("Unknown action: " + type);
             }
-        },
-        descriptionHeightExeeded() {
-            this.expandText = false;
-            this.$nextTick(function() {
-                let maxHeight = $(this.$refs.description).css('max-height').split('px')[0];
-                let height = $(this.$refs.description).height();
-                if(height == maxHeight){
-                    this.showReadMore = true;
-                } else {
-                    this.showReadMore = false;
-                }
-            });
         }
-    },
-    mounted() {
-        this.descriptionHeightExeeded();
     }
 };
 </script>
@@ -302,18 +292,21 @@ export default {
     overflow-y: auto;
     height: calc( 100vh - 9.5rem);
     padding: 0px 20px;
-    .row .columns {
+    .details {
         padding: 0;
-        &.title {
-            padding: 5px 0;
+        min-height: 30px;
+        .columns {
+            padding: 0;
+        }
+        .title {
             color: #7F7B71;
             font-size: 13px;
         }
-        &.action {
-            color: #52cae4;
-            text-align: right;
-            font-size: 0.9rem;
-        }
+    }
+    .action {
+        color: #52cae4;
+        text-align: right;
+        font-size: 0.9rem;
     }
     .right {
         text-align: right;
@@ -359,9 +352,14 @@ export default {
     border: 0px solid #000000;
     background-color: #E2E2E2;
     color: black;
+    min-height: 48px;
     &.row  > .columns.title {
         margin-right: 5px;
+        padding: 0;
         color: black;
+        i {
+            color: #84878A;
+        }
         &.date {
             font-size: 11px;
             color: #84878A;
@@ -386,8 +384,6 @@ export default {
 .description {
     position: relative;
     margin-bottom: 20px;
-    p{
-    }
     .show-more {
         padding: 6px;
         height: 53px;

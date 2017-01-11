@@ -22,7 +22,31 @@
                     </div>
                     <div v-show="isLoading" style="background-color: rgba(255, 255, 255, 0.7); width:100%; height:100%; position:absolute; top:0; text-align:center">
                     <i class="fa fa-refresh fa-spin fa-5x fa-fw" style="position: relative; top:40%"></i>
-        </div>
+                    </div>
+                    <div v-if="$store.state.taskGrid.panelState.isDialog" class="dialog-overlay" style="">
+                        <div class="tab-bar">
+                            <span class="primary" v-on:click.stop="cancelMoveTask">
+                                <i class="fa fa-times"></i>
+                            </span>
+                        </div>
+                        <div class="content align-middle">
+                            <h3 class="top-title">{{maketext("Move Entry")}}</h3>
+                            {{maketext("Choose a new context")}}
+                            <select v-model="newContext">
+                                <option v-for="(context, name) in task.contexts" v-bind:value="context">
+                                {{ name }}
+                                </option>
+                            </select>
+                            <div class="row align-right">
+                                <div class="coloum" style="margin-right: 10px;">
+                                    <span @click="cancelMoveTask" class="button">{{maketext("Cancel")}}</span>
+                                </div>
+                                <div class="coloum">
+                                    <span @click="moveTask" class="button primary">{{maketext("Move entry")}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
         </div>
     </div>
@@ -37,6 +61,11 @@ import * as mutations from '../../store/mutation-types';
 /* global window swal */
 export default {
     mixins: [TaskPanelMixin],
+    data() {
+        return {
+            newContext: ''
+        };
+    },
     computed: {
         view() {
             return this.$store.state.taskGrid.panelState.view;
@@ -51,6 +80,22 @@ export default {
                 return 'active';
             }
             return '';
+        },
+        moveTask(){
+            if(this.newContext == '') {
+                return false;
+            }
+            let request = {
+                id: this.task.id,
+                Context: this.newContext
+            };
+            this.$store.dispatch('updateTask', {gridState: this.grid, request});
+            this.$store.commit(mutations.CHANGE_PANEL_DIALOG_STATE, false);
+            this.selectMove = false;
+        },
+        cancelMoveTask(){
+            this.$store.commit(mutations.CHANGE_PANEL_DIALOG_STATE, false);
+            this.context = '';
         },
         requestClose() {
             let swalConfig = {
@@ -187,5 +232,21 @@ export default {
   .panel-wrapper {
     transform: translateX(700px);
   }
+}
+div.dialog-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    .tab-bar{
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+    .content {
+        top: 50%;
+        transform: translateY(-50%);
+        position: absolute;
+        padding: 40px 20px 40px 20px;
+        left: 48px;
+    }
 }
 </style>

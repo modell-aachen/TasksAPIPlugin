@@ -971,6 +971,27 @@ sub _translate {
     $meta->expandMacros("%MAKETEXT{\"$text\"}%");
 };
 
+sub _available_contexts {
+    my $task = shift;
+    return unless $task;
+    my $type = $task->getPref('TASK_TYPE') || '';
+    my $title = _getTopicTitle($task->{fields}{Context});
+    my %contexts;
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    foreach my $a (@$ctx) {
+        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
+            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
+        );
+        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            unless($t->checkACL('change')){
+                next;
+            }
+            $title = _getTopicTitle($a->[0]);
+            $contexts{$title} = $a->[0];
+        }
+    }
+    return %contexts;
+}
 # Given a task object, returns a structure suitable for serializing to JSON
 # that contains all the information we need
 sub _enrich_data {
@@ -984,10 +1005,12 @@ sub _enrich_data {
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
+    my %contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
         children => \@childtasks,
+        contexts => \%contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},

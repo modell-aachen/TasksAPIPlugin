@@ -22,6 +22,7 @@ const INITIAL_STATE = {
     panelState: {
         active: false,
         isLoading: false,
+        isDialog: false,
         view: 'detail',
         correspondingGrid: {},
         taskToShow: null,
@@ -199,6 +200,9 @@ const mutations = {
     },
     [types.CHANGE_PANEL_LOADING_STATE] (state, isLoading) {
         state.panelState.isLoading = isLoading;
+    },
+    [types.CHANGE_PANEL_DIALOG_STATE] (state, isDialog) {
+        state.panelState.isDialog = isDialog;
     },
     [types.SET_NEW_TASK_EDITOR] (state, {newTask, correspondingGrid}) {
         state.panelState.taskToShow = newTask;
