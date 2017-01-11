@@ -1,8 +1,9 @@
 <template>
     <div class="flatskin-wrapped">
       <div class="input-group">
-        <input type="text" data-format="dd.mm.yyyy" data-epoch="" name="" data-name="DueDate" ref="datepicker" v-bind:placeholder="placeholder">
-        <span class="input-group-label" style="margin: 0 0 1rem;"><i class="fa fa-calendar calendersymbol" aria-hidden="true"></i></span>
+      	<span class="input-group-label"><i class="fa fa-calendar calendersymbol" aria-hidden="true"></i></span>
+        <input type="text" class="input-group-field" data-format="dd.mm.yyyy" data-epoch="" name="" data-name="DueDate" ref="datepicker" v-bind:placeholder="placeholder">
+        
       </div>
     </div>
 </template>
@@ -15,11 +16,15 @@ export default {
     props: ["placeholder"],
     mounted: function () {
 		let self = this;
-		let $datepicker = $(this.$refs.datepicker).pickadate();
-		$datepicker.on("open",function() {
-			self.fields[self.fieldName].value = this.get();
-		});
-    }
+		let $datepicker = $(this.$refs.datepicker).pickadate({
+			format: 'dd.mm.yyyy',
+			onSet: function(thingSet) {
+				self.fields[self.fieldName].value = Math.floor(thingSet.select/1000);
+				console.log('Date: ', thingSet.select);
+			}
+		}).pickadate('picker');
+		$datepicker.set('select', Math.floor(self.fields[self.fieldName].value*1000));
+	}
 };
 </script>
 
