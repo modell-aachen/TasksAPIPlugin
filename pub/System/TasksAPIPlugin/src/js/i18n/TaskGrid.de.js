@@ -15,5 +15,9 @@ jsi18n.add('TaskGrid', {
       "Save entry": "Eintrag speichern",
       "This field is mandatory": "Dies ist ein Pflichtfeld",
       "Search": "Suchen",
-      "Task title": "Aufgabentitel"
+      "Task title": "Aufgabentitel",
+      "Are you sure?": "Sind Sie sicher?",
+      "Your current changes are lost.": "Ihre bisherigen Änderungen gehen verloren.",
+      "Confirm": "Bestätigen",
+      "Cancel": "Abbrechen"
 });

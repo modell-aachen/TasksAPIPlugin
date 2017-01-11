@@ -34,7 +34,7 @@
 import TaskPanelMixin from "../../mixins/TaskPanelMixin.vue";
 import * as mutations from '../../store/mutation-types';
 
-/* global window */
+/* global window swal */
 export default {
     mixins: [TaskPanelMixin],
     computed: {
@@ -53,10 +53,33 @@ export default {
             return '';
         },
         requestClose() {
+            let swalConfig = {
+                title: this.maketext("Are you sure?"),
+                text: this.maketext("Your current changes are lost."),
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#D83314",
+                confirmButtonText: this.maketext("Confirm"),
+                cancelButtonText: this.maketext("Cancel"),
+                closeOnConfirm: true,
+                closeOnCancel: true,
+                allowEscapeKey: false
+            };
+
+            let self = this;
             if(this.isEditMode && !this.isNewTaskEditMode){
-                this.$store.dispatch("switchEditMode", false);
+                swal(swalConfig, function(isConfirm){
+                    if(isConfirm)
+                        self.$store.dispatch("switchEditMode", false);
+                });
             }
-            else{
+            else if(this.isNewTaskEditMode){
+                swal(swalConfig, function(isConfirm){
+                    if(isConfirm)
+                        self.togglePanelStatus();
+                });
+            }
+            else {
                 this.togglePanelStatus();
             }
         },

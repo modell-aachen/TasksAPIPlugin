@@ -1823,6 +1823,7 @@ STYLE
 <script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>
 SCRIPT
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
+    Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::sweetalert2', $session);
 
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
