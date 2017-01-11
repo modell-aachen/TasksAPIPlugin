@@ -67,7 +67,7 @@ export default {
                 skin: "text",
                 contenttype: "text/plain",
                 section: "select2::user",
-                limit: 1,
+                limit: 10,
                 start: start,
                 q: search
             };
