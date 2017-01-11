@@ -1,8 +1,8 @@
 <template>
-    <div class="flatskin-wrapped">
-      <div class="input-group">
+    <div>
+      <div class="input-group date-picker">
         <span class="input-group-label"><i class="fa fa-calendar calendersymbol" aria-hidden="true"></i></span>
-        <input type="text" class="input-group-field" data-format="dd.mm.yyyy" data-epoch="" name="" data-name="DueDate" ref="datepicker" v-bind:placeholder="placeholder">
+        <input type="text" class="input-group-field date-picker" ref="datepicker" v-bind:placeholder="placeholder">
       </div>
     </div>
 </template>
@@ -17,14 +17,33 @@ export default {
         let self = this;
         let $datepicker = $(this.$refs.datepicker).pickadate({
             format: 'dd.mm.yyyy',
+            selectYears: true,
+            selectMonths: true,
             onSet: function(thingSet) {
                 self.fields[self.fieldName].value = Math.floor(thingSet.select/1000);
             }
         }).pickadate('picker');
-        $datepicker.set('select', Math.floor(self.fields[self.fieldName].value*1000));
+        if(self.fields[self.fieldName].value)
+            $datepicker.set('select', Math.floor(self.fields[self.fieldName].value*1000));
     }
 };
 </script>
 
 <style lang="sass">
+    .date-picker {
+        input[readonly]{
+            cursor: pointer;
+        }
+        .picker__header {
+            .picker__select--year,.picker__select--month {
+                width: 40%;
+                margin: 0 5px;
+            }
+        }
+        .picker--opened .picker__holder {
+            height: 30em;
+            max-height: 30em;
+        }
+    }
+
 </style>
