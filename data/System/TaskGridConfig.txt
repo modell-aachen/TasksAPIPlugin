@@ -19,6 +19,14 @@ The default config can be used, by adding the TASKGRID Macro with an include of 
    'tasktypes': {
       'default': {
          'form': 'InternalProjects.InternalProjectTaskForm',
+         'autoassign': {
+			'AssignedTo': {
+				'Type': {
+					'values': ['Information','Decision'],
+					'assign': 'Team'
+				}
+			}
+		 },
          'taskrow': 'standard',
          'child_taskgrid': 'standard',
          'panel': {
