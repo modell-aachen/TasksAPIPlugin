@@ -100,7 +100,7 @@ module.exports = function(grunt) {
           '<%= pkg.pubDir %>/js/i18n/jsi18n.de.min.js': [
             '<%= pkg.pubDir %>/src/js/i18n/de.js'
           ],
-          '<%= pkg.pubDir %>/js/i18n/jsi18n.TaskGrid.de.js': [
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.TaskGrid.de.min.js': [
             '<%= pkg.pubDir %>/src/js/i18n/TaskGrid.de.js'
           ],
           '<%= pkg.pubDir %>/js/i18n/jsi18n.en.min.js': [

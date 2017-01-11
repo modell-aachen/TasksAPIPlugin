@@ -4,7 +4,7 @@
             <div class="top-bar row align-middle">
                 <div class="cel">
                     <span :class="['label','label-'+label]">{{displayValue("Type")}}</span>
-                    <span class="label" :class="'label-' + getStateColour()">{{displayValue("Status")}}</span>
+                    <span class="label" :class="'label-' + getSignalColour()">{{displayValue("Status")}}</span>
                 </div>
                 <div class="cel actions">
                     <split-button v-on:action="action('updateStatus')" :title="maketext(stateAction)">
@@ -171,13 +171,24 @@ export default {
         displayAt(at) {
             return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
         },
-        getStateColour() {
-            let taskStatus = this.task.fields['Status'].value;
-            if(taskStatus === 'closed') {
-                return 'primary';
-            } else {
+        getSignalColour() {
+            let $dueDate = Math.round(parseInt(this.task.fields["DueDate"].value)/60/60/24);
+            let $now = Math.round((new Date).getTime()/1000/60/60/24);
+            let $warn = 5;
+            $.each(this.typeConfig.fields, function( key, config) {
+                if(config.id === 'status') {
+                    if(config.component.warn) {
+                        $warn = parseInt(config.component.warn);
+                    }
+                    return false;
+                }
+            });
+            if($dueDate && $dueDate >= $now + ($warn*60*24)){
                 return 'info';
+            }else if($dueDate && $dueDate >= $now) {
+                return 'primary';
             }
+            return 'measure';
         },
         action(type) {
             switch (type) {
@@ -364,7 +375,6 @@ export default {
     position: relative;
     margin-bottom: 20px;
     p{
-        display: inline;
     }
     .show-more {
         padding: 6px;
