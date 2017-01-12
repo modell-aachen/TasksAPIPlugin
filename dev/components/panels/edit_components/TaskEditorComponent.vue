@@ -48,7 +48,6 @@ export default {
 
 <style scoped lang="sass">
 .cke-component {
-    margin: 0 0 1rem;
     .loading-placeholder {
         animation-name: pulse;
       animation-duration: 1s; 

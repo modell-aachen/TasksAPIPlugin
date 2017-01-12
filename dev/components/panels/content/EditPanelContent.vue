@@ -1,7 +1,7 @@
 <template>
 <div class="edit-task-container">
 <form v-if="taskToEdit">
-    <div class="row">
+    <div class="row edit-top">
         <div class="columns">
             <select-component :fields="taskToEdit.fields" field-name="Type"></select-component>
         </div>
@@ -11,21 +11,27 @@
     </div>
     <hr/>
     <div class="columns">
-        <text-component :fields="taskToEdit.fields" field-name="Title" :placeholder="maketext('Task title')"></text-component>
+        <text-component class="title-edit" :fields="taskToEdit.fields" field-name="Title" :placeholder="maketext('Task title')"></text-component>
     </div>
     <hr/>
     <div class="columns">
-        <task-editor-component :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
+        <task-editor-component class="description-edit" :fields="taskToEdit.fields" field-name="Description"></task-editor-component>
+    </div>
+    <div class="row">
+        <div class="small-4 columns">
+            <h3 class="top-title">Details</h3>
+        </div>
+        <div class="columns"></div>
     </div>
     <hr/>
-    <h3 class="top-title">Details</h3>
-    <hr/>
-    <div class="row" v-for="fieldName in nonHiddenFieldsToShow">
+    <div class="details-edit">
+    <div class="row align-middle" v-for="fieldName in nonHiddenFieldsToShow">
         <div class="small-4 columns field-description">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
             <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName" :auto-assigns="autoAssigns">
             </component>
         </div>
+    </div>
     </div>
 </form>
 </div>
@@ -146,9 +152,18 @@ export default {
 
 <style lang="sass">
 .edit-task-container {
-    margin: 5px;
+    padding: 5px 20px;
 }
 .field-description {
     color: #7f7b71;
+}
+.title-edit, .description-edit {
+    margin: 1rem 0;
+}
+.details-edit {
+    margin-top: 1rem;
+}
+.edit-top {
+    margin-top: 1rem;
 }
 </style>
