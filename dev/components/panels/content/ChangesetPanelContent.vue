@@ -1,19 +1,13 @@
 <template>
-    <div>
-        <h2>{{displayValue("Title")}}</h2>
-        <p>{{displayValue("Description")}}</p>
-    </div>
+<div style="position: fixed;">
+    <img src="https://dl.dropboxusercontent.com/u/2827729/changeset_demo.png" />
+</div>
 </template>
 
 <script>
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 export default {
-    mixins: [TaskPanelMixin],
-    methods: {
-       displayValue() {
-           return "test";
-       }
-    }
+    mixins: [TaskPanelMixin]
 };
 </script>
 

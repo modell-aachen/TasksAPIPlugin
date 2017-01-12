@@ -1,8 +1,7 @@
 <template>
-    <div>
-        <h2>{{displayValue("Title")}}</h2>
-        <p>{{displayValue("Description")}}</p>
-    </div>
+<div style="position: fixed;">
+    <img src="https://dl.dropboxusercontent.com/u/2827729/anhange_demo.png" />
+</div>
 </template>
 
 <script>
