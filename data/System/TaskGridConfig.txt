@@ -39,13 +39,6 @@ The default config can be used, by adding the TASKGRID Macro with an include of 
             'allowComment': true
          },
          'fields': [{
-            'id': 'expand',
-            'component': {
-               'type': 'expand',
-               'class': 'expand'
-            },
-            'title': ''
-            }, {
             'id': 'type',
             'title': 'Type',
             'sort_field': 'Type',

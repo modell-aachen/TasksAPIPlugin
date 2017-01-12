@@ -251,6 +251,14 @@ export default {
                         this.$refs.permalink.focus();
                         this.$refs.permalink.setSelectionRange(0, url.length);
                         document.execCommand('copy');
+                        swal({
+                            title: self.maketext("Copied"),
+                            text: self.maketext("The link was copied to your clipboard."),
+                            type: "success",
+                            confirmButtonText: self.maketext("Confirm"),
+                            closeOnConfirm: true,
+                            allowEscapeKey: true
+                        });
                     });
                     this.$refs.actionMenu.splitOpen = false;
                     break;

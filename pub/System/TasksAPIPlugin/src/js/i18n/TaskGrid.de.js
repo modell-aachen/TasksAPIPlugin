@@ -21,7 +21,9 @@ jsi18n.add('TaskGrid', {
       "Task title": "Aufgabentitel",
       "Are you sure?": "Sind Sie sicher?",
       "Your current changes are lost.": "Ihre bisherigen Änderungen gehen verloren.",
+      "Copied": "Kopiert",
       "Confirm": "Bestätigen",
+      "The link was copied to your clipboard.": "Der Link wurde in Ihre Zwischenablage kopiert.",
       "Cancel": "Abbrechen",
       "Editing not possible.": "Bearbeiten nicht möglich.",
       "This task is currently edited by another user. Please try again later.": "Diese Aufgabe wird gerade von einem anderen Benutzer bearbeitet. Bitte versuchen Sie es später erneut."
