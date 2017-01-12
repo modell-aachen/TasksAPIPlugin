@@ -982,7 +982,7 @@ sub _available_contexts {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
         );
-        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+        if ($a->[0] ne '' && $t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
             unless($t->checkACL('change')){
                 next;
             }
