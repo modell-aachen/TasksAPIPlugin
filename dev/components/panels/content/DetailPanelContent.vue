@@ -8,9 +8,9 @@
                 </div>
                 <div class="cel actions">
                     <split-button ref="actionMenu" v-on:action="action('updateStatus')" :title="maketext(stateAction)">
-                        <li v-on:click="action('edit')">{{maketext('Edit Entry')}}</li>
-                        <li v-on:click="action('delete')">{{maketext('Delete Entry')}}</li>
-                        <li v-on:click="action('move')">{{maketext('Move Entry')}}</li>
+                        <li v-on:click="action('edit')">{{maketext('Edit entry')}}</li>
+                        <li v-on:click="action('delete')">{{maketext('Delete entry')}}</li>
+                        <li v-on:click="action('move')">{{maketext('Move entry')}}</li>
                         <li v-on:click="action('permalink')">{{maketext('Get Permalink')}}</li>
                     </split-button>
                 </div>
@@ -111,9 +111,9 @@ export default {
     computed: {
         stateAction() {
             if(this.isClosed){
-                return 'Reopen Entry';
+                return 'Reopen entry';
             }
-            return 'Close Entry';
+            return 'Close entry';
         },
         isClosed() {
             let taskStatus = this.task.fields['Status'].value;

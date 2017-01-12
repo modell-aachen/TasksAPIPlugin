@@ -42,7 +42,7 @@
                                     <span @click="cancelMoveTask" class="button">{{maketext("Cancel")}}</span>
                                 </div>
                                 <div class="coloum">
-                                    <span @click="moveTask" class="button primary">{{maketext("Move entry")}}</span>
+                                    <span @click="moveTask" class="button primary">{{maketext("Move Entry")}}</span>
                                 </div>
                             </div>
                         </div>
@@ -214,9 +214,6 @@ export default {
         &.active, &:hover{
             background-color: #84878A;
             color: white;
-            i.fa{
-                transform: scale(1.3,1.3);
-            }
         }
     }
 }
@@ -240,13 +237,26 @@ div.dialog-overlay {
     top: 0;
     .tab-bar{
         background-color: rgba(255, 255, 255, 0.95);
+        span:hover{
+            color: black;
+            background-color: rgba(255, 255, 255, 0.95);
+        }
     }
     .content {
-        top: 50%;
-        transform: translateY(-50%);
+        top: 0;
+        width: 92%;
         position: absolute;
         padding: 40px 20px 40px 20px;
         left: 48px;
+        h3 {
+            padding: 10px 0;
+        }
+        select {
+            margin: 11px 0;
+        }
+        div.row {
+            margin: 10px 0;
+        }
     }
 }
 </style>
