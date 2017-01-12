@@ -11,8 +11,10 @@
 
 <script>
 import DataFieldMixin from "../../mixins/DataFieldMixin.vue";
+import MaketextMixin from '../../mixins/MaketextMixin.vue';
+/* global swal */
 export default {
-    mixins: [DataFieldMixin],
+    mixins: [DataFieldMixin, MaketextMixin],
     computed: {
         isClosed() {
             let field = this.config.field;
@@ -22,6 +24,18 @@ export default {
     },
     methods: {
       updateStatus() {
+        let self = this;
+        let onLeaseTaken = function(){
+            swal({
+                title: self.maketext("Editing not possible."),
+                text: self.maketext("This task is currently edited by another user. Please try again later."),
+                type: "warning",
+                confirmButtonColor: "#D83314",
+                confirmButtonText: self.maketext("Confirm"),
+                closeOnConfirm: true,
+                allowEscapeKey: false
+            });
+        };
         let newStatus = 'closed';
         if (this.isClosed) {
             newStatus = 'open';
@@ -30,7 +44,7 @@ export default {
             id: this.task.id,
             Status: newStatus,
         };
-        this.$store.dispatch('updateTask', {gridState: this.gridState, request});
+        this.$store.dispatch('updateTask', {gridState: this.gridState, request, onLeaseTaken});
       },
     }
 };

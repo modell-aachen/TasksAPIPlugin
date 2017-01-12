@@ -52,7 +52,7 @@ const actions = {
             commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
         }, "json");
     },
-    updateTask ({commit, state}, {gridState, request}){
+    updateTask ({commit, state}, {gridState, request, onLeaseTaken}){
         if(state.panelState.active){
             commit(types.CHANGE_PANEL_LOADING_STATE, true);
         }
@@ -67,7 +67,11 @@ const actions = {
             else{
                 commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
             }
-        }, "json");
+        }, "json").fail(() => {
+                commit(types.CHANGE_PANEL_LOADING_STATE, false);
+                commit(types.CHANGE_LOADING_STATE, {gridState, isLoading: false});
+                onLeaseTaken();
+            });
     },
     changeSortState ({dispatch, commit, state}, {gridState, newSortState, parentTask}){
         commit(types.CHANGE_SORT, {gridState, newSortState});

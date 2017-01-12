@@ -921,7 +921,6 @@ sub restUpdate {
         return '';
     }
 
-    $task->update(%data);
     my $lease = $task->{meta}->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
@@ -929,7 +928,15 @@ sub restUpdate {
 
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
+            $task->update(%data);
         }
+        else {
+             $response->header(-status => 403);
+        $response->body('{"status":"error","code":"lease_taken","msg":"Lease taken by another user"}');
+        return '';
+        }
+    } else {
+        $task->update(%data);
     }
 
     _deepen([$task], $depth, $order);

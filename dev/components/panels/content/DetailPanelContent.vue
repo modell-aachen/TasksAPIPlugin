@@ -272,7 +272,7 @@ export default {
                         id: this.task.id,
                         Status: newStatus,
                     };
-                    this.$store.dispatch('updateTask', {gridState: this.grid, request});
+                    this.$store.dispatch('updateTask', {gridState: this.grid, request, onLeaseTaken});
                     break;
                 }
                 default:
