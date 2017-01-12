@@ -1,6 +1,6 @@
 <template>
 <div class="flatskin-wrapped tasks-table">
-  <button v-on:click="newTask">New task</button>
+  <a class="small primary button float-right" v-on:click="newTask"><i class="fa fa-plus" aria-hidden="true" style="margin-right: 5px;"></i>{{maketext("Create new task")}}</a>
   <!-- Content -->
   <div v-if="parentTask == null || (config.subtaskHeader || false)" class="task-row">
       <div class="row-item" v-for="field in header" :class="field.class || field.id">

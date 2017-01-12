@@ -26,5 +26,6 @@ jsi18n.add('TaskGrid', {
       "The link was copied to your clipboard.": "Der Link wurde in Ihre Zwischenablage kopiert.",
       "Cancel": "Abbrechen",
       "Editing not possible.": "Bearbeiten nicht möglich.",
-      "This task is currently edited by another user. Please try again later.": "Diese Aufgabe wird gerade von einem anderen Benutzer bearbeitet. Bitte versuchen Sie es später erneut."
+      "This task is currently edited by another user. Please try again later.": "Diese Aufgabe wird gerade von einem anderen Benutzer bearbeitet. Bitte versuchen Sie es später erneut.",
+      "Create new task": "Neue Aufgabe erstellen"
 });
