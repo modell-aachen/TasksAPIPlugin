@@ -170,6 +170,7 @@ export default {
     left: 0;
     right: 0;
     z-index: 999;
+    background-color: rgba(0,0,0,0.3);
     >.panel-wrapper {
         border-left: 5px solid transparent;
         position: absolute;
