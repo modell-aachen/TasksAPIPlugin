@@ -1854,7 +1854,9 @@ SCRIPT
     Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
     require Foswiki::Plugins::CKEditorPlugin;
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
-    return "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>";
+    my $panel = "<task-panel-bootstrap preferences-selector='$prefSelector'></task-panel-bootstrap>";
+    my $replacement = "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>$panel";
+    return $replacement;
 }
 
 sub tagGrid {

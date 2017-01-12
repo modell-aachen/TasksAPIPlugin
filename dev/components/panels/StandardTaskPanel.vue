@@ -1,6 +1,6 @@
 <template>
     <transition name="toggle-panel">
-    <div v-show="isActive" class="overlay" v-on:click="requestClose">
+    <div v-show="isActive" class="overlay flatskin-wrapped " v-on:click="requestClose">
         <div class="panel-overlay active">
                 <div class="panel-wrapper active" v-on:click.stop>
                     <div class="tab-bar">

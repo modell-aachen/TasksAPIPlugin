@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import store from './store'
 
 import TaskGridBootstrap from './components/TaskGridBootstrap.vue'
+import TaskPanelBootstrap from './components/TaskPanelBootstrap.vue'
 import TaskGridMixin from './mixins/TaskGridMixin.vue'
 import TaskRowMixin from './mixins/TaskRowMixin.vue'
 import StandardTaskRow from './components/rows/StandardTaskRow.vue'
@@ -30,7 +31,8 @@ $( function () {
         el: '.foswikiTopic',
         store,
         components: {
-            TaskGridBootstrap
+            TaskGridBootstrap,
+            TaskPanelBootstrap
         }
     })
 })

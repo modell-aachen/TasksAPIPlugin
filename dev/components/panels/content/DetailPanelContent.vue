@@ -162,8 +162,6 @@ export default {
             return output;
         },
     },
-    watch: {
-    },
     methods: {
         toggleExpandText() {
             this.expandText = !this.expandText;
