@@ -54,29 +54,7 @@
                 </div>
             </div>
             <hr/>
-            <div>
-                <transition name="expand">
-                    <div v-show="addComment || comments.length == 0" class="newComment" style="transform-origin: 50% 0%;">
-                        <textarea v-model="newComment" :placeholder="maketext('new comment')"></textarea>
-                        <div class="right">
-                            <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
-                                <li v-on:click="action('saveCommentClose')">
-                        {{maketext(!isClosed ? "Save and close entry" : "Save and reopen entry")}}
-</li>
-                            </split-button>
-                        </div>
-                    </div>
-                </transition>
-                <template v-for="(comment, index) in comments">
-                    <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
-                        <div class="title columns shrink">{{comment.user.wikiname}}</div>
-                        <div class="title date columns">{{displayAt(comment.at)}}</div>
-                        <div v-show="hover === 'comment'+index" class="title columns right"><i class="fa fa-pencil"></i></div>
-                    </div>
-                    <div class="comment comment-body row" v-html="comment.comment"></div>
-                </template>
-                <p/>
-            </div>
+            <comment-area :addComment="addComment"></comment-area>
         </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
@@ -91,6 +69,7 @@
 <script>
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
+import CommentArea from "./CommentArea.vue";
 import * as mutations from '../../../store/mutation-types';
 
 /* global $ moment document foswiki swal */
@@ -102,13 +81,13 @@ export default {
             showChar: 1000,
             showReadMore: false,
             addComment: false,
-            newComment: '',
             permalink: '',
             hover: ''
         };
     },
     components: {
-        SplitButton
+        SplitButton,
+        CommentArea
     },
     computed: {
         stateAction() {
@@ -220,21 +199,6 @@ export default {
                         Status: 'deleted',
                     };
                     this.$store.dispatch('updateTask', {gridState: this.grid, request});
-                    break;
-                }
-                case 'saveComment': {
-                    let request = {
-                        id: this.task.id,
-                        comment: this.newComment,
-                    };
-                    this.$store.dispatch('updateTask', {gridState: this.grid, request});
-                    this.addComment = !this.addComment;
-                    this.newComment = '';
-                    break;
-                }
-                case 'saveCommentClose': {
-                    this.action('saveComment');
-                    this.action('updateStatus');
                     break;
                 }
                 case 'permalink': {
@@ -354,48 +318,6 @@ export default {
     .actions {
         text-align: right;
     }
-}
-.expand-enter-active, .expand-leave-active {
-    transition: all .1s ease;
-}
-.expand-enter, .expand-leave-to {
-    opacity: 0;
-    transform: scale(1,0);
-}
-.comment-header {
-    margin-top: 15px;
-    padding: 5px 20px;
-    border-radius: 4px 4px 0px 0px;
-    -moz-border-radius: 4px 4px 0px 0px;
-    -webkit-border-radius: 4px 4px 0px 0px;
-    border: 0px solid #000000;
-    background-color: #E2E2E2;
-    color: black;
-    min-height: 48px;
-    &.row  > .columns.title {
-        margin-right: 5px;
-        padding: 0;
-        color: black;
-        i {
-            color: #84878A;
-        }
-        &.date {
-            font-size: 11px;
-            color: #84878A;
-        }
-    }
-}
-.comment-body {
-    padding: 10px 20px;
-    border-radius: 0px 0px 4px 4px;
-    -moz-border-radius: 0px 0px 4px 4px;
-    -webkit-border-radius: 0px 0px 4px 4px;
-    border: 0px solid #000000;
-    background-color: #F7F7F7;
-    color: #282C2E;
-}
-.newComment {
-    margin-bottom: 30px;
 }
 .more-enter-active, .more-leave-active {
     transition: all .2s;
