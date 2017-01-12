@@ -2,7 +2,7 @@
     <div>
       <div class="input-group date-picker">
         <span class="input-group-label"><i class="fa fa-calendar calendersymbol" aria-hidden="true"></i></span>
-        <input type="text" class="input-group-field date-picker" ref="datepicker" v-bind:placeholder="placeholder">
+        <input type="text" class="input-group-field" ref="datepicker" v-bind:placeholder="placeholder">
       </div>
     </div>
 </template>
@@ -31,8 +31,12 @@ export default {
 
 <style lang="sass">
     .date-picker {
+        position: relative;
         input[readonly]{
             cursor: pointer;
+        }
+        .picker {
+            left: 0;
         }
         .picker__header {
             .picker__select--year,.picker__select--month {
