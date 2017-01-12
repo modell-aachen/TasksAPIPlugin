@@ -178,7 +178,8 @@ export default {
         bottom: 0;
         right: 0;
         background-color: transparent;
-        min-width: 33%;
+        min-width: 480px;
+        width: 33%;
         &.priority {
             border-left: 5px solid #D83314;
         }
@@ -206,7 +207,7 @@ export default {
     height: 100%;
     background: #E5E8EB;
     .fa {
-        font-size: 25px;
+        font-size: 20px;
         padding: 4px;
     }
     span {
@@ -256,17 +257,17 @@ div.dialog-overlay {
     position: absolute;
     top: 0;
     .tab-bar{
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(255, 255, 255, 0.90);
         span:hover{
             color: black;
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.90);
         }
     }
     .content {
         top: 0;
         width: 92%;
         position: absolute;
-        padding: 40px 20px 40px 20px;
+        padding: 61px 27px 40px 27px;
         left: 48px;
         h3 {
             padding: 10px 0;

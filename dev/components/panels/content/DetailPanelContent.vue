@@ -35,7 +35,7 @@
             <div>
                 <div class="row align-middle details" v-for="(field, index) in fieldsToShow">
                     <div class="columns title">{{description(field)}}:</div>
-                    <div class="columns small-5">{{displayValue(field)}}</div>
+                    <div class="columns small-7">{{displayValue(field)}}</div>
                 </div>
             </div>
             <div class="top-space row align-middle">
@@ -44,7 +44,7 @@
                 </div>
                 <div class="columns action" v-on:click="toggleAddComment">
                     <span>
-                        <template v-if="!addComment">
+                        <template v-if="!addComment && comments.length != 0">
                             <i class="fa fa-plus"></i>
                         </template>
                         <template v-else>
@@ -56,7 +56,7 @@
             <hr/>
             <div>
                 <transition name="expand">
-                    <div v-show="addComment" style="transform-origin: 50% 0%;">
+                    <div v-show="addComment || comments.length == 0" class="newComment" style="transform-origin: 50% 0%;">
                         <textarea v-model="newComment" :placeholder="maketext('new comment')"></textarea>
                         <div class="right">
                             <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
@@ -288,20 +288,23 @@ export default {
     .panel hr {
         height: 1px;
         color: #F7F6F3;
-        width: calc(100% +40px);
-        margin-left: -20px;
-        margin-right: -20px;
+        width: calc(100% +54px);
+        margin-left: -27px;
+        margin-right: -27px;
     }
 }
 .top-space{
-    margin-top: 25px;
+    margin-top: 35px;
+    .columns {
+        padding: 0;
+    }
 }
 .scroll-container {
     overflow-y: auto;
-    height: calc( 100vh - 9.5rem);
-    padding: 0px 20px;
+    height: calc( 100vh - 9.6rem);
+    padding: 0px 27px 50px;
     .details {
-        padding: 0;
+        padding: 6px 0;
         min-height: 30px;
         .columns {
             padding: 0;
@@ -321,7 +324,14 @@ export default {
     }
 }
 .top{
-    padding: 5px 20px 0px 20px;
+    padding: 5px 27px 0px 27px;
+    h3.top-title {
+        font-size: 18px;
+        padding: 4px 0px;
+    }
+    hr:last-child{
+        margin-bottom: 0;
+    }
 }
 .pseudo-hidden {
     position: absolute;
@@ -338,6 +348,7 @@ export default {
     }
     span.label{
         width: initial;
+        padding: .5em .6em .5em;
         min-width: 50px;
     }
     .actions {
@@ -383,6 +394,9 @@ export default {
     background-color: #F7F7F7;
     color: #282C2E;
 }
+.newComment {
+    margin-bottom: 30px;
+}
 .more-enter-active, .more-leave-active {
     transition: all .2s;
 }
@@ -408,6 +422,8 @@ export default {
     }
 }
 h3.top-title {
+    font-weight: 400;
+    font-size: 16px;
     color: #52cae4;
     margin: 0;
 }
@@ -415,18 +431,21 @@ h3.top-title {
     position: absolute;
     bottom: 0;
     left: 0;
-    border-top: solid 1px lightgray;
+    border-top: solid 2px #F7F6F3;
     width: 100%;
-    height: 3rem;
+    background-color: white;
+    height: 57px;
     justify-content: center;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: flex-start;
-    padding: 0 20px;
+    padding: 0 27px;
     .button {
-        padding: 9px 11px 9px 9px;
-        margin: 0.5rem 0.2rem;
+        height: 31px;
+        width: 31px;
+        padding: 0;
+        margin: 0.7rem 0.2rem;
     }
 }
 </style>
