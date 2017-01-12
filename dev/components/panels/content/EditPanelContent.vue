@@ -156,6 +156,7 @@ export default {
 }
 .field-description {
     color: #7f7b71;
+    margin-bottom: 20px;
 }
 .title-edit, .description-edit {
     margin: 1rem 0;
