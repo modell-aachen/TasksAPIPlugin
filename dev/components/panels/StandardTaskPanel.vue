@@ -2,7 +2,7 @@
     <transition name="toggle-panel">
     <div v-show="isActive" class="overlay flatskin-wrapped " v-on:click="requestClose">
         <div class="panel-overlay active">
-                <div class="panel-wrapper active" v-on:click.stop>
+                <div class="panel-wrapper active" :class="{priority: isPriority}" v-on:click.stop>
                     <div class="tab-bar">
                         <span class="primary" v-on:click="requestClose">
                             <i class="fa fa-times"></i>
@@ -30,7 +30,7 @@
                             </span>
                         </div>
                         <div class="content align-middle">
-                            <h3 class="top-title">{{maketext("Move Entry")}}</h3>
+                            <h3 class="top-title">{{maketext("Move entry")}}</h3>
                             {{maketext("Choose a new context")}}
                             <select v-model="newContext">
                                 <option v-for="(context, name) in task.contexts" v-bind:value="context">
@@ -42,7 +42,7 @@
                                     <span @click="cancelMoveTask" class="button">{{maketext("Cancel")}}</span>
                                 </div>
                                 <div class="coloum">
-                                    <span @click="moveTask" class="button primary">{{maketext("Move Entry")}}</span>
+                                    <span @click="moveTask" class="button primary">{{maketext("Move entry")}}</span>
                                 </div>
                             </div>
                         </div>
@@ -69,6 +69,14 @@ export default {
     computed: {
         view() {
             return this.$store.state.taskGrid.panelState.view;
+        },
+        isPriority() {
+            if(this.task && this.task.fields["Prioritize"]) {
+                if(this.task.fields["Prioritize"].value !== 'No') {
+                    return true;
+                }
+            }
+            return false;
         }
     },
     methods: {
@@ -160,14 +168,17 @@ export default {
     left: 0;
     right: 0;
     z-index: 999;
-    background-color: rgba(0,0,0,0.13);
     >.panel-wrapper {
+        border-left: 5px solid transparent;
         position: absolute;
         top: 0;
         bottom: 0;
         right: 0;
         background-color: transparent;
         min-width: 33%;
+        &.priority {
+            border-left: 5px solid #D83314;
+        }
         >.panel {
             bottom: 0px;
             position: absolute;

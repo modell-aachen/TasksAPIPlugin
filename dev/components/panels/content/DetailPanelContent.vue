@@ -60,7 +60,9 @@
                         <textarea v-model="newComment" :placeholder="maketext('new comment')"></textarea>
                         <div class="right">
                             <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
-                                <li v-on:click="action('saveCommentClose')">{{maketext('Save and close entry')}}</li>
+                                <li v-on:click="action('saveCommentClose')">
+                        {{maketext(!isClosed ? "Save and close entry" : "Save and reopen entry")}}
+</li>
                             </split-button>
                         </div>
                     </div>
