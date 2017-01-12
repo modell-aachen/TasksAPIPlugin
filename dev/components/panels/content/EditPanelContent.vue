@@ -26,7 +26,7 @@
     <hr/>
     <div class="details-edit">
     <div class="row align-middle" v-for="fieldName in nonHiddenFieldsToShow">
-        <div class="small-4 columns field-description">{{getFieldDescription(fieldName)}}<sup v-if="isMandatoryField(fieldName)">*</sup>:</div>
+        <div class="small-4 columns field-description">{{getFieldDescription(fieldName)}}<sup class="mandatory-star" v-if="isMandatoryField(fieldName)">*</sup>:</div>
         <div class="columns">
             <component :is="getComponentForField(fieldName)" :fields="taskToEdit.fields" :field-name="fieldName" :auto-assigns="autoAssigns">
             </component>
@@ -166,5 +166,8 @@ export default {
 }
 .edit-top {
     margin-top: 1rem;
+}
+.mandatory-star {
+    color: red;
 }
 </style>

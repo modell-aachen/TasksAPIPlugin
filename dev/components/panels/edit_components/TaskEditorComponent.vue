@@ -81,6 +81,7 @@ export default {
         .loading-indicator {
             position: relative;
             top: 30%;
+            color: #84878A;
         }
         @keyframes pulse {
             0% {
