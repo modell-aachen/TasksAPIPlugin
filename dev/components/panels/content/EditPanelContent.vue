@@ -33,6 +33,11 @@
         </div>
     </div>
     </div>
+    <div class="row">
+        <div class="columns">
+            <a class="primary button float-right" v-on:click="saveTask">{{maketext("Save entry")}}</a>
+        </div>
+    </div>
 </form>
 </div>
 </template>
