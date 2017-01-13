@@ -109,7 +109,9 @@ const actions = {
             let newTasksToShow = [data.data, ...state.panelState.correspondingGrid.tasksToShow];
             commit(types.SET_TASKS_TO_SHOW, {gridState: state.panelState.correspondingGrid, data: {data: newTasksToShow, total: state.panelState.correspondingGrid.resultCount}});
             commit(types.CHANGE_PANEL_LOADING_STATE, false);
-            commit(types.TOGGLE_PANEL_STATE);
+            commit(types.SET_PANEL_TASK, {task: data.data, gridState: state.panelState.correspondingGrid});
+            commit(types.SET_PANEL_EDIT_MODE, false);
+            commit(types.SET_PANEL_VIEW, {view: "detail"});
         }, "json");
     },
     switchEditMode({commit, state}, {enable, onLeaseTaken}){
@@ -209,6 +211,9 @@ const mutations = {
     },
     [types.SET_PANEL_EDIT_MODE] (state, isEditMode) {
         state.panelState.isEditMode = isEditMode;
+        if(!isEditMode){
+            state.panelState.isNewTaskEditMode = false;
+        }
     },
     [types.CHANGE_PANEL_LOADING_STATE] (state, isLoading) {
         state.panelState.isLoading = isLoading;
