@@ -11,7 +11,7 @@
     </div>
     <hr/>
     <div class="columns">
-        <text-component class="title-edit" :fields="taskToEdit.fields" field-name="Title" :placeholder="maketext('Task title')"></text-component>
+        <text-component ref="title" class="title-edit" :fields="taskToEdit.fields" field-name="Title" :placeholder="maketext('Task title')" :initial-focus="true"></text-component>
     </div>
     <hr/>
     <div class="columns">

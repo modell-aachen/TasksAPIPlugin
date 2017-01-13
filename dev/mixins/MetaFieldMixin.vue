@@ -8,7 +8,7 @@ export default {
             showValidationWarnings: false
         };
     },
-    props: ['fieldName', 'fields', 'autoAssigns'],
+    props: ['fieldName', 'fields', 'autoAssigns', 'initialFocus'],
     computed: {
         //Standard behaviour to check validity
         isValid() {
@@ -45,11 +45,21 @@ export default {
             }
         }
     },
+    methods: {
+        focus() {
+            //Implement me in components which use this mixin.
+        }
+    },
     created(){
         //Unfortunately we have to set validity state manually after init as
         //the watcher above does not trigger when the computed property
         //is initially set.
         this.fields[this.fieldName].isValid = this.isValid;
+    },
+    mounted(){
+        if(this.initialFocus){
+            this.focus();
+        }
     }
 };
 </script>
