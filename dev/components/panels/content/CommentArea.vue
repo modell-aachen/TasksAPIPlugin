@@ -67,7 +67,7 @@ export default {
     },
     methods: {
         toggleAddComment() {
-            this.$emit('toggleAddComment', !this.addComment);
+            this.$emit('toggle-add-comment', !this.addComment);
         },
         displayAt(at) {
             return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
