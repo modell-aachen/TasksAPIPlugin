@@ -267,7 +267,7 @@ div.dialog-overlay {
         top: 0;
         width: 92%;
         position: absolute;
-        padding: 61px 27px 40px 27px;
+        padding: 61px 35px 40px 35px;
         left: 48px;
         h3 {
             padding: 10px 0;

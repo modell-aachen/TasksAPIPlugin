@@ -21,9 +21,7 @@
         </div>
         <div class="scroll-container">
             <div ref="description" class="description">
-                <transition name="more" mode="out-in">
-                    <div v-html="readMore" :key="expandText" style="transform-origin: 50% 0%;"></div>
-                </transition>
+                <div v-html="readMore" :key="expandText"></div>
                 <div v-if="showReadMore" class="show-more">
                     <span class="button hollow secondary" v-on:click="toggleExpandText">
                         {{maketext(expandText ? "Show less" : "Show more")}}
@@ -43,8 +41,8 @@
                     <h3 class="top-title">{{maketext('Comments')}}</h3>
                 </div>
                 <div class="columns action" v-on:click="toggleAddComment">
-                    <span>
-                        <template v-if="!addComment && comments.length != 0">
+                    <span v-if="comments.length != 0">
+                        <template v-if="!addComment">
                             <i class="fa fa-plus"></i>
                         </template>
                         <template v-else>
@@ -54,7 +52,7 @@
                 </div>
             </div>
             <hr/>
-            <comment-area :addComment="addComment"></comment-area>
+            <comment-area v-on:toggleAddComment="toggleAddComment" :addComment="showAddComment"></comment-area>
         </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
@@ -90,6 +88,9 @@ export default {
         CommentArea
     },
     computed: {
+        showAddComment() {
+            return this.addComment || this.comments.length == 0;
+        },
         stateAction() {
             if(this.isClosed){
                 return 'Reopen entry';
@@ -147,8 +148,12 @@ export default {
         toggleExpandText() {
             this.expandText = !this.expandText;
         },
-        toggleAddComment() {
-            this.addComment = !this.addComment;
+        toggleAddComment(newState) {
+            if(typeof(newState) === "boolean"){
+                this.addComment = newState;
+            } else {
+                this.addComment = !this.addComment;
+            }
         },
         displayAt(at) {
             return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
@@ -250,11 +255,12 @@ export default {
 <style lang="sass">
 .flatskin-wrapped {
     .panel hr {
-        height: 1px;
+        height: 0px;
         color: #F7F6F3;
+        border-top: 2px solid #F7F6F3;
         width: calc(100% +54px);
-        margin-left: -27px;
-        margin-right: -27px;
+        margin-left: -35px;
+        margin-right: -35px;
     }
 }
 .top-space{
@@ -266,7 +272,7 @@ export default {
 .scroll-container {
     overflow-y: auto;
     height: calc( 100vh - 9.6rem);
-    padding: 0px 27px 50px;
+    padding: 0px 35px 50px;
     .details {
         padding: 6px 0;
         min-height: 30px;
@@ -288,7 +294,7 @@ export default {
     }
 }
 .top{
-    padding: 5px 27px 0px 27px;
+    padding: 5px 35px 0px 35px;
     h3.top-title {
         font-size: 18px;
         padding: 4px 0px;
@@ -318,12 +324,6 @@ export default {
     .actions {
         text-align: right;
     }
-}
-.more-enter-active, .more-leave-active {
-    transition: all .2s;
-}
-.more-enter, .more-leave-to {
-    transform: scale(1,0.5)
 }
 .description {
     position: relative;
@@ -362,7 +362,7 @@ h3.top-title {
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: flex-start;
-    padding: 0 27px;
+    padding: 0 35px;
     .button {
         height: 31px;
         width: 31px;

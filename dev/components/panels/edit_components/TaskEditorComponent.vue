@@ -49,9 +49,9 @@ export default {
 <style scoped lang="sass">
 .cke-component {
     .loading-placeholder {
-        animation-name: pulse;
-      animation-duration: 1s; 
-      animation-timing-function: linear; 
+      animation-name: pulse;
+      animation-duration: 1s;
+      animation-timing-function: linear;
       animation-delay: 0;
       animation-direction: alternate;
       animation-iteration-count: infinite;

@@ -1,7 +1,7 @@
 <template>
     <div>
         <transition name="expand">
-        <div v-show="addComment || comments.length == 0" class="newComment" style="transform-origin: 50% 0%;">
+        <div v-show="addComment && !loadingComments" class="new-comment" style="transform-origin: 50% 0%;">
             <textarea v-model="newComment" :placeholder="maketext('new comment')"></textarea>
             <div class="right">
                 <split-button v-on:action="action('saveComment')" :title="maketext('Save comment')">
@@ -12,21 +12,22 @@
             </div>
         </div>
         </transition>
+        <template v-if="loadingComments">
+            <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
+                <div class="title date columns"></div>
+            </div>
+            <div class="comment comment-body row" style="text-align: center;">
+                <div style="width:100%; height:100%">
+                    <i class="loading-indicator fa fa-refresh fa-spin fa-3x fa-fw"></i>
+                </div>
+        </template>
         <template v-for="(comment, index) in comments">
-            <template v-if="comment.loading">
-                <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
-                    <div class="title date columns"></div>
-                </div>
-                <div class="comment comment-body row"><i class="fa fa-loading"></i></div>
-            </template>
-            <template v-else>
-                <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
-                    <div class="title columns shrink">{{comment.user.wikiname}}</div>
-                    <div class="title date columns">{{displayAt(comment.at)}}</div>
-                    <div v-show="hover === 'comment'+index" class="title columns right"><i class="fa fa-pencil"></i></div>
-                </div>
-                <div class="comment comment-body row" v-html="comment.comment"></div>
-            </template>
+            <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">
+                <div class="title columns shrink">{{comment.user.wikiname}}</div>
+                <div class="title date columns">{{displayAt(comment.at)}}</div>
+                <div v-show="hover === 'comment'+index" class="title columns right"><i class="fa fa-pencil"></i></div>
+            </div>
+            <div class="comment comment-body row" v-html="comment.comment"></div>
         </template>
         <p/>
     </div>
@@ -57,20 +58,16 @@ export default {
         },
         comments() {
             if(this.task.changesets){
-                let serverComments = this.task.changesets.filter(function (change) {
+                return this.task.changesets.filter(function (change) {
                     return change.comment ? true : false;
                 }).reverse();
-                if(this.loadingComments) {
-                    return  [{loading: true},...serverComments];
-                }
-                return serverComments;
             }
             return {};
         },
     },
     methods: {
         toggleAddComment() {
-            this.addComment = !this.addComment;
+            this.$emit('toggleAddComment', !this.addComment);
         },
         displayAt(at) {
             return moment.unix(parseInt(at)).format('DD.MM.YYYY - HH:mm');
@@ -88,19 +85,19 @@ export default {
                     allowEscapeKey: false
                 });
             };
+            let onSuccess = function(){
+                self.loadingComments = false;
+            };
             switch (type) {
                 case 'saveComment': {
+                    this.toggleAddComment();
                     let request = {
                         id: this.task.id,
                         comment: this.newComment,
                     };
                     self = this;
-                    let onSuccess = function(){
-                        self.loadingComments = false;
-                    };
                     this.$store.dispatch('updateComment', {gridState: this.grid, request, onLeaseTaken, onSuccess});
                     this.loadingComments = true;
-                    this.$parent.addComment = !this.addComment;
                     this.newComment = '';
                     break;
                 }
@@ -114,8 +111,8 @@ export default {
                         Status: newStatus,
                         comment: this.newComment,
                     };
-                    this.$store.dispatch('updateTask', {gridState: this.grid, request, onLeaseTaken});
-                    this.$parent.addComment = !this.addComment;
+                    this.$store.dispatch('updateComment', {gridState: this.grid, request, onLeaseTaken, onSuccess});
+                    this.toggleAddComment();
                     this.newComment = '';
                     break;
                 }
@@ -160,7 +157,13 @@ export default {
     background-color: #F7F7F7;
     color: #282C2E;
 }
-.newComment {
+.new-comment {
     margin-bottom: 30px;
+    margin-top: 15px;
+}
+.loading-indicator {
+    position: relative;
+    top: 30%;
+    color: #84878A;
 }
 </style>
