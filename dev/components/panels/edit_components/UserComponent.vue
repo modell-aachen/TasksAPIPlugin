@@ -84,15 +84,20 @@ export default {
         }
         let selectedValues = [];
         let ids = this.fields[this.fieldName].value.split(/\s*,\s*/);
-        let displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
+        let displayValues = null;
+        if(this.fields[this.fieldName].displayValue){
+            displayValues = this.fields[this.fieldName].displayValue.split(/\s*,\s*/);
+        }
+        else {
+            displayValues = ids;
+        }
+
         for(let i = 0; i < ids.length; i++){
             selectedValues.push({
                 id: ids[i],
                 text: displayValues[i]
             });
         }
-        // if(!this.isMulti)
-        //     selectedValues = selectedValues[0];
         this.selectedValues = selectedValues;
     }
 };
