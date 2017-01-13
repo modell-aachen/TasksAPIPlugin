@@ -1088,7 +1088,7 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
-    if($options){
+    if(!$options->{noHtml}){
         $result->{html} = _renderTask($task->{meta}, $options, $task);
         $result->{html} = _removeBlocks($result->{html});
     }
@@ -1269,7 +1269,7 @@ sub restSearch {
     my $res;
     my $req;
     my $q = $session->{request};
-    my $noHtml = $session->{request}->param('noHtml') || "";
+    my $noHtml = $session->{request}->param('noHtml') || 0;
     my $limit = $session->{request}->param('limit') || 9999;
     my $offset = $session->{request}->param('offset') || 0;
     my $order = $session->{request}->param('order') || '';
@@ -1289,12 +1289,7 @@ sub restSearch {
 
     #my $depth = $req->{depth} || 0;
     $res->{tasks} = _deepen($res->{tasks}, $depth, $req->{order});
-    my $enrichOptions;
-    if ($noHtml) {
-        $enrichOptions = { childtasks => 1 };
-    } else {
-        $enrichOptions = { tasktemplate => $req->{tasktemplate} };
-    }
+    my $enrichOptions = { childtasks => 1, tasktemplate => $req->{tasktemplate}, noHtml => $noHtml };
     my @tasks = map { _enrich_data($_, $enrichOptions) } @{$res->{tasks}};
     foreach my $task (@tasks){
         amendDisplayValues($session, $task);
