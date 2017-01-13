@@ -34,6 +34,7 @@ pub/System/TasksAPIPlugin/js/jquery.tasksapi.uncompressed.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.js 0644
 pub/System/TasksAPIPlugin/js/tasktracker.min.js 0644
 pub/System/TasksAPIPlugin/js/taskgrid2.js 0644
+pub/System/TasksAPIPlugin/js/taskgrid2.js.map 0644
 pub/System/TasksAPIPlugin/js/i18n/jsi18n.de.js 0644
 pub/System/TasksAPIPlugin/js/i18n/jsi18n.de.min.js 0644
 pub/System/TasksAPIPlugin/js/i18n/jsi18n.TaskGrid.de.js 0644
