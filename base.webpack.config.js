@@ -26,6 +26,7 @@ module.exports = {
     path: path.join(__dirname, 'pub/System/TasksAPIPlugin/js'),
     filename: 'taskgrid2.js'
   },
+  devtool: "source-map",
   module: {
     loaders: [
       {
