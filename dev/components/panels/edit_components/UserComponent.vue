@@ -1,6 +1,6 @@
 <template>
 <div>
-<vue-select v-show="!isAutoAssigned" v-model="selectedValues" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :placeholder="maketext('Search')" :options="options" :on-search="onSearch" :prevent-search-filter="true" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
+<vue-select v-show="!isAutoAssigned" v-model="selectedValues" v-bind:class="{'ma-failure': showValidationWarnings && !isValid}" v-bind:aria-describedby="id" :multiple="isMulti" label="id" :placeholder="maketext('Search')" :options="options" :on-search="onSearchDebounce" :prevent-search-filter="true" :on-open="onOpen" :get-option-label="getOptionLabel"></vue-select>
 <p v-show="showValidationWarnings && !isValid" class="help-text" v-bind:id="id">{{maketext("This field is mandatory")}}</p>
 <div v-show="isAutoAssigned" class="autoassigned-value">
 {{this.fields[this.fieldName].value}}
@@ -12,6 +12,7 @@
 /* global foswiki $ */
 import MetaFieldMixin from '../../../mixins/MetaFieldMixin.vue';
 import VueSelect from 'vue-select/src/index.js';
+import _ from 'lodash';
 export default {
     mixins: [MetaFieldMixin],
     data() {
@@ -26,6 +27,9 @@ export default {
     computed: {
         isMulti() {
             return this.fields[this.fieldName].multi;
+        },
+        onSearchDebounce(){
+            return _.debounce(this.onSearch, 300);
         }
     },
     watch: {
