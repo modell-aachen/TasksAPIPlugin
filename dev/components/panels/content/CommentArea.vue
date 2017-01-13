@@ -111,7 +111,7 @@ export default {
                         Status: newStatus,
                         comment: this.newComment,
                     };
-                    this.$store.dispatch('updateComment', {gridState: this.grid, request, onLeaseTaken, onSuccess});
+                    this.$store.dispatch('updateTask', {gridState: this.grid, request, onLeaseTaken});
                     this.toggleAddComment();
                     this.newComment = '';
                     break;
