@@ -52,7 +52,7 @@
                 </div>
             </div>
             <hr/>
-            <comment-area v-on:toggleAddComment="toggleAddComment" :addComment="showAddComment"></comment-area>
+            <comment-area v-on:toggle-add-comment="toggleAddComment" :add-comment="showAddComment"></comment-area>
         </div>
         <div class="bottom-bar">
             <button class="button default" v-on:click="prev"><i class="fa fa-chevron-left"></i></button>
