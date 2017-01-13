@@ -20,14 +20,7 @@
             <hr/>
         </div>
         <div class="scroll-container">
-            <div ref="description" class="description">
-                <div v-html="readMore" :key="expandText"></div>
-                <div v-if="showReadMore" class="show-more">
-                    <span class="button hollow secondary" v-on:click="toggleExpandText">
-                        {{maketext(expandText ? "Show less" : "Show more")}}
-                    </span>
-                </div>
-            </div>
+            <read-more-field :content="displayValue('Description')"></read-more-field>
             <h3 class="top-title">Details</h3>
             <hr/>
             <div>
@@ -67,6 +60,7 @@
 <script>
 import TaskPanelMixin from "../../../mixins/TaskPanelMixin.vue";
 import SplitButton from "./SplitButton.vue";
+import ReadMoreField from "./ReadMoreField.vue";
 import CommentArea from "./CommentArea.vue";
 import * as mutations from '../../../store/mutation-types';
 
@@ -75,9 +69,6 @@ export default {
     mixins: [TaskPanelMixin],
     data() {
         return {
-            expandText: false,
-            showChar: 1000,
-            showReadMore: false,
             addComment: false,
             permalink: '',
             hover: ''
@@ -85,6 +76,7 @@ export default {
     },
     components: {
         SplitButton,
+        ReadMoreField,
         CommentArea
     },
     computed: {
@@ -100,25 +92,6 @@ export default {
         isClosed() {
             let taskStatus = this.task.fields['Status'].value;
             return taskStatus === 'closed';
-        },
-        readMore() {
-            let text = this.displayValue("Description");
-            if(!this.expandText && text.length > this.showChar) {
-                let content = text.substring(0, this.showChar);
-                this.showReadMore = true;
-                return content;
-            } else if (text.length > this.showChar) {
-                this.showReadMore = true;
-                return text;
-            }
-            this.showReadMore = false;
-            return text;
-        },
-        readAll() {
-            let text = this.displayValue("Description");
-            if(this.showReadMore) {
-                return text.substring(this.showChar, text.length - this.showChar);
-            }
         },
         comments() {
             if(this.task.changesets){
@@ -145,9 +118,6 @@ export default {
         },
     },
     methods: {
-        toggleExpandText() {
-            this.expandText = !this.expandText;
-        },
         toggleAddComment(newState) {
             if(typeof(newState) === "boolean"){
                 this.addComment = newState;
@@ -247,7 +217,7 @@ export default {
                 default:
                     console.warn("Unknown action: " + type);
             }
-        }
+        },
     }
 };
 </script>
@@ -323,24 +293,6 @@ export default {
     }
     .actions {
         text-align: right;
-    }
-}
-.description {
-    position: relative;
-    margin-bottom: 20px;
-    .show-more {
-        padding: 6px;
-        height: 53px;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        margin: 0;
-		background-color: white;
-        .button {
-            margin-top: 12px;
-            padding: 9px 10px;
-            font-size: 14px;
-        }
     }
 }
 h3.top-title {
