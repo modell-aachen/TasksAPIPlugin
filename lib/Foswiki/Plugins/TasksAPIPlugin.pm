@@ -1023,8 +1023,9 @@ sub _enrich_data {
         fields => {},
         changesets => [],
         tasktype => $task->getPref('TASK_TYPE'),
-        childform => $task->getPref('CHILD_FORM')
     };
+    my $childform = $task->getPref('CHILD_FORM'); # not necessarily defined
+    $result->{childform} = $childform if defined $childform;
     foreach my $c (@changesets) {
         my $cc = {
             name => $c->{name},
