@@ -1042,7 +1042,7 @@ sub _enrich_data {
         if($c->{comment}) {
             $cc->{comment} = $c->{comment};
         }
-        push ($result->{changesets}, $cc);
+        push (@{$result->{changesets}}, $cc);
     }
     foreach my $f (@$fields) {
         next if $f->{name} eq 'TopicType';
@@ -1812,14 +1812,14 @@ sub tagTaskGrid {
 
     ## Get Field infos from parseGridColumns
     my $columns = (_parseGridColumns($params->{columns} , $params->{headers}))[0];
-	while ( my ($field, $value) = each $columns ) {
+    while ( my ($field, $value) = each @$columns ) {
         my %newComponent = %{ _getComponent($value)};
         my( $index )= grep { $order->[$_] eq $value->{id} } 0..scalar @{$order};
         splice @{ $prefs->{config}->{tasktypes}->{default}->{fields} }, $index, 0, \%newComponent;
-	}
+    }
 
     # Translate Title Fields
-    while ( my ($types, $values) = each $prefs->{config}->{tasktypes}) {
+    while ( my ($types, $values) = each @{$prefs->{config}->{tasktypes}} ) {
         foreach my $field ( @{ $values->{fields} }) {
             my %field = %{$field};
            if($field{title}) {
