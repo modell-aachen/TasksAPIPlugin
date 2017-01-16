@@ -1924,6 +1924,7 @@ sub tagGrid {
 
     require Foswiki::Contrib::PickADateContrib;
     Foswiki::Contrib::PickADateContrib::initDatePicker();
+    Foswiki::Contrib::PickADateContrib::initTimePicker();
 
     my @jqdeps = (
         "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
