@@ -2457,12 +2457,13 @@ sub tagContextSelector {
 OPTION
 
     my %retval;
+    my $trashWeb = $Foswiki::cfg{TrashWebName};
     my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
     foreach my $a (@$ctx) {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
         );
-        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context} && $t->{fields}{Status} ne 'deleted') {
             unless($t->checkACL('change')){
                 next;
             }
