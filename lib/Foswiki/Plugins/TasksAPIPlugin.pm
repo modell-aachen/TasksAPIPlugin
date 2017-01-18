@@ -2246,7 +2246,6 @@ sub tagContextSelector {
 OPTION
 
     my %retval;
-    my $trashWeb = $Foswiki::cfg{TrashWebName};
     my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
     foreach my $a (@$ctx) {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
