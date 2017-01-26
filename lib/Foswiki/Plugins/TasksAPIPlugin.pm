@@ -1315,7 +1315,8 @@ sub _getZone {
     my ($session, $web, $topic, $meta, $zone) = @_;
     my @arr = ();
 
-    while (my ($k, $v) = each %{$session->{_zones}->{$zone}}) {
+    my $zones = $session->zones();
+    while (my ($k, $v) = each %{$zones->{_zones}->{$zone}}) {
         my $txt = Foswiki::Func::expandCommonVariables( $v->{text}, $topic, $web, $meta);
         my $reqs = $v->{requires};
         my @deps = ();
@@ -1727,9 +1728,6 @@ sub tagGrid {
         $err =~ s/</&lt;/;
         return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
-
-    require Foswiki::Contrib::PickADateContrib;
-    Foswiki::Contrib::PickADateContrib::initDatePicker();
 
     my @jqdeps = (
         "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
@@ -2253,7 +2251,7 @@ OPTION
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
         );
-        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context} && $t->{fields}{Status} ne 'deleted') {
             unless($t->checkACL('change')){
                 next;
             }
