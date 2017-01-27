@@ -1067,6 +1067,11 @@ sub _enrich_data {
     foreach my $a (@{$result->{attachments}}) {
         next if ref($a->{user});
 
+        unless (defined $a->{user}) {
+            # XXX unfortunately there is no method to get the login of the
+            # 'unknown user', however, currently this should always do
+            $a->{user} = 'BaseUserMapping_999';
+        }
         $a->{user} = {
             cuid => $a->{user},
             wikiusername => Foswiki::Func::getWikiUserName($a->{user}),
@@ -1074,11 +1079,13 @@ sub _enrich_data {
             loginname => Foswiki::Func::wikiToUserName($a->{user})
         };
 
+        $a->{date} = 0 unless defined $a->{date};
         $a->{date} = {
             epoch => $a->{date},
             gmt => Foswiki::Time::formatTime($a->{date})
         };
 
+        $a->{size} = 0 unless defined $a->{size};
         $a->{size} = {
             bytes => $a->{size},
             human => format_bytes($a->{size})
