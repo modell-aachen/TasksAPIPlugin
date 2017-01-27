@@ -1074,9 +1074,9 @@ sub _enrich_data {
         }
         $a->{user} = {
             cuid => $a->{user},
-            wikiusername => Foswiki::Func::getWikiUserName($a->{user}),
-            wikiname => Foswiki::Func::getWikiName($a->{user}),
-            loginname => Foswiki::Func::wikiToUserName($a->{user})
+            wikiusername => Foswiki::Func::getWikiUserName($a->{user}) || $a->{user},
+            wikiname => Foswiki::Func::getWikiName($a->{user}) || $a->{user},
+            loginname => Foswiki::Func::wikiToUserName($a->{user}) || $a->{user}
         };
 
         $a->{date} = 0 unless defined $a->{date};
