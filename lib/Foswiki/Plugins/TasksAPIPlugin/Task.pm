@@ -242,7 +242,7 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
-        my $cuid = Foswiki::Func::getCanonicalUserID($item);
+        my $cuid = Foswiki::Func::getCanonicalUserID($item) || '';
         if ($user eq $cuid || Foswiki::Func::isGroup($item) && Foswiki::Func::isGroupMember($item, $user)) {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;

@@ -1990,8 +1990,10 @@ SCRIPT
     $_tplDefault->($captionTemplate, 'tasksapi::grid::caption');
     $_tplDefault->($filterTemplate, 'tasksapi::grid::filter::defaults');
 
-    $templateFile =~ s#/#.#g if $templateFile;
-    Foswiki::Func::loadTemplate( $templateFile );
+    if($templateFile) {
+        $templateFile =~ s#/#.#g;
+        Foswiki::Func::loadTemplate( $templateFile );
+    }
 
     my $req = $session->{request};
     my $trackerid = $req->param('tid') || '';
@@ -2255,7 +2257,10 @@ sub _getDisplayName {
     $usr =~ s/\s+//g;
     my $session = $Foswiki::Plugins::SESSION;
     my $mapping = $session->{users}->_getMapping($usr);
-    return $mapping->can('getDisplayName') ? $mapping->getDisplayName($usr) : $session->{users}->getWikiName($usr);
+    my $displayName = $mapping->can('getDisplayName') ? $mapping->getDisplayName($usr) : $session->{users}->getWikiName($usr);
+    $displayName = $usr unless defined $displayName;
+
+    return $displayName;
 }
 
 sub _renderAttachment {
@@ -2310,7 +2315,7 @@ FORMAT
     unless ( $params->{format} ) {
         my $actor = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($cset->{actor}));
         my $curUser = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName($Foswiki::Plugins::SESSION->{user}));
-        if ( $actor eq $curUser )  {
+        if ( defined $actor && $actor eq $curUser )  {
             $addComment  = '%IF{"\'%TASKINFO{field="Status"}%\'!=\'closed\' AND \'$encComment\'=\'\'" then="<a href=\"#\" class=\"task-changeset-add\" title=\"$percntMAKETEXT{\"Add comment\"}$percnt\"><i class=\"fa fa-plus\"></i></a>"}%';
             my $encComment = Foswiki::urlEncode(defined $cset->{comment} ? $cset->{comment} : '');
             $addComment =~ s#\$encComment#$encComment#g;
