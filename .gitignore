@@ -2,3 +2,5 @@
 /node_modules/*
 /pub/System/TasksAPIPlugin/js
 /pub/System/TasksAPIPlugin/css
+*.log
+*.swp

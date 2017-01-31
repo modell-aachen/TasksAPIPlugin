@@ -1,0 +1,186 @@
+%META:TOPICINFO{author="BaseUserMapping_333" comment="" date="1483023236" format="1.1" version="2"}%
+%META:TOPICPARENT{name="WebHome"}%
+---+++ Default TaskGrid Configuration
+The default config can be used, by adding the TASKGRID Macro with an include of this topic.
+<verbatim>
+%TASKGRID{ "%WEB%.%TOPIC%"
+  columns="%PROJECT_TASKSGRID_COLUMNS{default=""}%"
+  headers="%PROJECT_TASKSGRID_HEADERS{default=""}%"
+  filters="%PROJECT_TASKSGRID_FILTERS{default=""}%"
+  config="%INCLUDE{"System.TaskGridConfig" section="TASKGRID_CONFIG"}%"
+}%
+</verbatim>
+%TWISTY{showlink="Show configuration" hidelink="Hide configuration" start="hide"}%
+<verbatim class="js">
+%STARTSECTION{"TASKGRID_CONFIG"}%
+{
+   'context': '%BASEWEB%.%BASETOPIC%',
+   'header': 'default',
+   'tasktypes': {
+      'default': {
+         'form': 'InternalProjects.InternalProjectTaskForm',
+         'autoassign': {
+			'AssignedTo': {
+				'Type': {
+					'values': ['Information','Decision'],
+					'assign': 'Team'
+				}
+			}
+		 },
+         'taskrow': 'standard',
+         'child_taskgrid': 'standard',
+         'panel': {
+            'fields': {
+               'include': [],
+               'exclude': ['Title','Closed','Parent','Description','Changed','Created','Status','Context','Type'],
+               'order': ['DueDate','Author','AssignedTo','Informees','Prioritize']
+            },
+            'allowUpload': true,
+            'allowComment': true
+         },
+         'fields': [{
+            'id': 'type',
+            'title': 'Type',
+            'sort_field': 'Type',
+            'component': {
+               'type': 'badge',
+               'class': 'type',
+               'labels': {
+                  'Information': 'default',
+                  'Decision': 'primary',
+                  'Task': 'info',
+                  'Measure': 'measure'
+               }
+            }
+            }, {
+            'id': 'assigned',
+            'title': 'Assigned to',
+            'sort_field': 'AssignedTo',
+            'component': {
+               'type': 'value',
+               'class': 'assigned',
+               'fields': ['AssignedTo']
+            }
+            }, {
+            'id': 'title',
+            'title': 'Title',
+            'component': {
+               'type': 'composed',
+               'class': 'title',
+               'components': [{
+                  'type': 'value',
+                  'class': 'created',
+                  'fields': ['Title']
+               }, {
+                  'type': 'attachments',
+                  'icon': 'file'
+               }, {
+                  'type': 'link',
+                  'class': 'created',
+                  'display': 'Context',
+                  'target': 'Context'
+               }]
+            },
+            'sort_field': 'Title'
+            }, {
+            'id': 'due',
+            'title': 'Due date',
+            'component': {
+               'type': 'value',
+               'class': 'due',
+               'fields': ['DueDate']
+            },
+            'sort_field': 'DueDate'
+            }, {
+            'id': 'status',
+            'title': 'Status',
+            'component': {
+               'type': 'signal',
+               'class': 'status',
+               'warn': '5'
+            },
+            'sort_field': 'Status'
+            }, {
+            'id': 'close',
+            'title': '',
+            'component': {
+               'type': 'check-box',
+               'class': 'close',
+               'field': 'Status'
+            }
+         }]
+      },
+      'meilstone': {
+         'taskrow': 'milestone',
+         'child_taskgrid': 'standard',
+         'panel': {
+            'fields': {
+                'include': [],
+                'exclude': ['Title','Closed','Parent','Description','Changed','Created','Status','Context','Type'],
+                'order': ['DueDate','Author','AssignedTo','Informees','Prioritize']
+            },
+            'allowUpload': true,
+            'allowComment': true
+         },
+         'fields': [{
+            'id': 'expand',
+            'component': {
+               'type': 'expand',
+               'class': 'expand'
+            },
+            'title': ''
+         }, {
+            'id': 'count',
+            'title': 'Count',
+            'sort_field': '',
+            'component': {
+               'type': 'quantity',
+               'class': 'quantity'
+            }
+         }, {
+            'id': 'title',
+            'title': 'Title',
+            'component': {
+               'type': 'composed',
+               'class': 'title',
+               'components': [{
+                  'type': 'value',
+                  'class': 'created',
+                  'fields': ['Title']
+               }]
+            },
+            'sort_field': 'Title'
+         },{
+            'id': 'assigned',
+            'title': 'Assigned to',
+            'sort_field': 'AssignedTo',
+            'component': {
+               'type': 'value',
+               'class': 'assigned',
+               'fields': ['AssignedTo']
+            }
+         }, {
+            'id': 'due',
+            'title': 'Due date',
+            'component': {
+               'type': 'value',
+               'class': 'label label-due',
+               'fields': ['DueDate']
+            },
+            'sort_field': 'DueDate'
+         },{
+            'id': 'close',
+            'title': '',
+            'component': {
+               'type': 'check-box',
+               'class': 'close',
+               'field': 'Status'
+            }
+         }]
+      }
+   }
+}
+%ENDSECTION{"TASKGRID_CONFIG"}%
+</verbatim>
+%ENDTWISTY%
+

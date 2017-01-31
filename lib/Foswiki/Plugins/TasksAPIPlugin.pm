@@ -22,6 +22,7 @@ use HTML::Entities;
 use JSON;
 use Number::Bytes::Human qw(format_bytes);
 use POSIX;
+use Digest::MD5 qw(md5_hex);
 
 our $VERSION = '0.2';
 our $RELEASE = '0.2';
@@ -119,6 +120,7 @@ sub initPlugin {
     Foswiki::Func::registerTagHandler( 'TASKSAMPEL', \&Foswiki::Plugins::AmpelPlugin::_SIGNALTAG );
 
     Foswiki::Func::registerTagHandler( 'TASKSGRID', \&tagGrid );
+    Foswiki::Func::registerTagHandler( 'TASKGRID', \&tagTaskGrid);
     Foswiki::Func::registerTagHandler( 'TASKSSEARCH', \&tagSearch );
     Foswiki::Func::registerTagHandler( 'TASKSTYPEFILTER', \&tagTaskTypeFilter );
     Foswiki::Func::registerTagHandler( 'TASKSFILTER', \&tagFilter );
@@ -893,10 +895,12 @@ sub restCreate {
     }
 
     $response->header(-status => 200);
+    my $task = _enrich_data($res, _optionsFromRest($session));
+    amendDisplayValues($session, $task);
     $response->body(encode_json({
         status => 'ok',
         id => $res->{id},
-        data => _enrich_data($res, _optionsFromRest($session)),
+        data => $task,
     }));
     return '';
 }
@@ -917,7 +921,6 @@ sub restUpdate {
         return '';
     }
 
-    $task->update(%data);
     my $lease = $task->{meta}->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
@@ -925,14 +928,24 @@ sub restUpdate {
 
         if ( $cuid eq $ccuid ) {
             $task->{meta}->clearLease();
+            $task->update(%data);
         }
+        else {
+             $response->header(-status => 403);
+        $response->body('{"status":"error","code":"lease_taken","msg":"Lease taken by another user"}');
+        return '';
+        }
+    } else {
+        $task->update(%data);
     }
 
     _deepen([$task], $depth, $order);
     $response->header(-status => 200);
+    $task = _enrich_data($task, _optionsFromRest($session));
+    amendDisplayValues($session, $task);
     $response->body(encode_json({
         status => 'ok',
-        data => _enrich_data($task, _optionsFromRest($session)),
+        data => $task,
     }));
     return '';
 }
@@ -965,6 +978,27 @@ sub _translate {
     $meta->expandMacros("%MAKETEXT{\"$text\"}%");
 };
 
+sub _available_contexts {
+    my $task = shift;
+    return unless $task;
+    my $type = $task->getPref('TASK_TYPE') || '';
+    my $title = _getTopicTitle($task->{fields}{Context});
+    my %contexts;
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    foreach my $a (@$ctx) {
+        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
+            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
+        );
+        if ($a->[0] ne '' && $t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
+            unless($t->checkACL('change')){
+                next;
+            }
+            $title = _getTopicTitle($a->[0]);
+            $contexts{$title} = $a->[0];
+        }
+    }
+    return %contexts;
+}
 # Given a task object, returns a structure suitable for serializing to JSON
 # that contains all the information we need
 sub _enrich_data {
@@ -973,13 +1007,43 @@ sub _enrich_data {
 
     my $d = $task->data;
     my $fields = $d->{form}->getFields;
+    my @childtasks = [];
+    my @changesets = $task->{meta}->find('TASKCHANGESET');
+    if($options->{childtasks} && $task->{children_acl} ){
+        @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
+    }
+    my %contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
+        children => \@childtasks,
+        contexts => \%contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
+        changesets => [],
+        tasktype => $task->getPref('TASK_TYPE'),
     };
+    my $childform = $task->getPref('CHILD_FORM'); # not necessarily defined
+    $result->{childform} = $childform if defined $childform;
+    foreach my $c (@changesets) {
+        my $cc = {
+            name => $c->{name},
+            user => {
+                cuid => $c->{actor},
+                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}),
+                wikiname => Foswiki::Func::getWikiName($c->{actor}),
+                loginname => Foswiki::Func::wikiToUserName($c->{actor})
+            },
+            actor => $c->{actor},
+            at => $c->{at},
+            changes => $c->{changes}
+        };
+        if($c->{comment}) {
+            $cc->{comment} = $c->{comment};
+        }
+        push (@{$result->{changesets}}, $cc);
+    }
     foreach my $f (@$fields) {
         next if $f->{name} eq 'TopicType';
         my $ff = {
@@ -987,11 +1051,14 @@ sub _enrich_data {
             multi => $f->isMultiValued ? JSON::true : JSON::false,
             mapped => $f->can('isValueMapped') ? ($f->isValueMapped ? JSON::true : JSON::false) : JSON::false,
             tooltip => _translate($task->{meta}, $f->{tooltip} || ''),
+            description => _translate($task->{meta}, $f->{description} || ''),
             mandatory => $f->isMandatory ? JSON::true : JSON::false,
             hidden => ($f->{attributes} =~ /H/) ? JSON::true : JSON::false,
             type => $f->{type},
             size => $f->{size},
             attributes => $f->{attributes},
+            options => $f->can('getOptions') ? $f->getOptions() : "",
+            map => $f->{valueMap} ? $f->{valueMap} : "",
             value => $d->{fields}{$f->{name}} || '',
         };
         $result->{fields}{$f->{name}} = $ff;
@@ -1022,11 +1089,13 @@ sub _enrich_data {
         $a->{link} = "$pub/$web/$topic/" . $a->{name};
     }
 
-    $result->{html} = _renderTask($task->{meta}, $options, $task);
+    if(!$options->{noHtml}){
+        $result->{html} = _renderTask($task->{meta}, $options, $task);
+        $result->{html} = _removeBlocks($result->{html});
+    }
     $result->{_canChange} = $task->{_canChange};
     $result->{_canChange} = 1 unless defined $result->{_canChange};
 
-    $result->{html} = _removeBlocks($result->{html});
     return $result;
 }
 
@@ -1201,11 +1270,17 @@ sub restSearch {
     my $res;
     my $req;
     my $q = $session->{request};
+    my $noHtml = $session->{request}->param('noHtml') || 0;
+    my $limit = $session->{request}->param('limit') || 9999;
+    my $offset = $session->{request}->param('offset') || 0;
+    my $order = $session->{request}->param('order') || '';
+    my $desc = $session->{request}->param('desc') || '';
+    my $depth = $session->{request}->param('depth') || 0;
 
     eval {
         $req = from_json($q->param('request') || '{}');
         delete $req->{acl};
-        $res = _query(query => $req);
+        $res = _query(query => $req, count => $limit, offset => $offset, order => $order, desc => $desc);
     };
     if ($@) {
         $response->header(-status => 500);
@@ -1213,12 +1288,35 @@ sub restSearch {
         return '';
     }
 
-    my $depth = $req->{depth} || 0;
-    _deepen($res->{tasks}, $depth, $req->{order});
-    my @tasks = map { _enrich_data($_, { tasktemplate => $req->{tasktemplate} }) } @{$res->{tasks}};
+    #my $depth = $req->{depth} || 0;
+    $res->{tasks} = _deepen($res->{tasks}, $depth, $req->{order});
+    my $enrichOptions = { childtasks => 1, tasktemplate => $req->{tasktemplate}, noHtml => $noHtml };
+    my @tasks = map { _enrich_data($_, $enrichOptions) } @{$res->{tasks}};
+    foreach my $task (@tasks){
+        amendDisplayValues($session, $task);
+    }
     $response->header(-status => 200);
-    $response->body(encode_json({status => 'ok', data => \@tasks}));
+    $response->body(encode_json({status => 'ok', data => \@tasks, total => $res->{total}}));
     return '';
+}
+
+sub amendDisplayValues {
+    my ( $session, $task) = @_;
+    if($task && $task->{children} && ref($task->{children}[0]) ne 'ARRAY') {
+        foreach my $childTask (@{ $task->{children} }) {
+            amendDisplayValues($session, $childTask);
+        }
+    }
+    foreach my $key (keys %{$task->{fields}}){
+        if($task->{fields}->{$key}->{type} eq 'user'){
+            $task->{fields}->{$key}->{displayValue} = _getDisplayName($task->{fields}->{$key}->{value});
+        } else {
+            my $displayValue = _getDisplayValue( $session, $task->{form}, $key, $task->{fields}->{$key}->{value});
+            if($displayValue) {
+                $task->{fields}->{$key}->{displayValue} = $displayValue;
+            }
+        }
+    }
 }
 
 sub restLease {
@@ -1669,6 +1767,102 @@ sub _parseGridColumns {
     return (\%colInfo, \@colOrder);
 }
 
+sub _getComponent {
+    my ($value) = @_;
+    my %newComponent = (
+        id => $value->{id},
+        title => $value->{title},
+        sort_field => $value->{sortkey},
+        component => {
+            type => 'value',
+            class => $value->{id},
+            fields => $value->{fields}
+        }
+    );
+    return \%newComponent;
+}
+
+sub tagTaskGrid {
+    my( $session, $params, $topic, $web, $topicObject ) = @_;
+
+    my $component = $params->{component} || 'standard';
+    my $context = $params->{_DEFAULT} || $params->{context} || "$web.$topic";
+    my $config = $params->{config} || '{}';
+
+    my $pluginURL = '%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin';
+    my $debug = $Foswiki::cfg{TasksAPIPlugin}{Debug} || 0;
+    my $suffix = $debug ? '' : '.min';
+    my $lang = $session->i18n->language();
+    $lang = 'en' unless ( $lang =~ /^(de|en)$/);
+
+    $config =~ s/\'/\"/g;
+
+    my $prefs = {
+        component => $component,
+        config => from_json($config)
+    };
+
+    # Add custom fields
+    ## Get Order from parseGridColumns
+    my @defaultColumns;
+    foreach my $field ( @{ $prefs->{config}->{tasktypes}->{default}->{fields} }) {
+        push @defaultColumns, $field->{id} .'='.$field->{id};
+    }
+    my $orderColumns = join(',', @defaultColumns,$params->{columns});
+    my $order = (_parseGridColumns($orderColumns , $params->{headers}))[1];
+
+    ## Get Field infos from parseGridColumns
+    my $columns = (_parseGridColumns($params->{columns} , $params->{headers}))[0];
+    while ( my ($field, $value) = each %$columns ) {
+        my %newComponent = %{ _getComponent($value)};
+        my( $index )= grep { $order->[$_] eq $value->{id} } 0..scalar @{$order};
+        splice @{ $prefs->{config}->{tasktypes}->{default}->{fields} }, $index, 0, \%newComponent;
+    }
+
+    # Translate Title Fields
+    while ( my ($types, $values) = each %{$prefs->{config}->{tasktypes}} ) {
+        foreach my $field ( @{ $values->{fields} }) {
+            my %field = %{$field};
+           if($field{title}) {
+                $field->{title} = $session->i18n->maketext($field{title});
+           }
+        }
+    }
+
+    my $prefId = md5_hex(rand);
+    my $prefSelector = "TASKGRIDPREF_$prefId";
+    my $jsonPrefs = to_json($prefs);
+
+    Foswiki::Func::addToZone( 'head', 'FONTAWESOME',
+        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome.min.css" />');
+    Foswiki::Func::addToZone( 'head', 'FLATSKIN_WRAPPED',
+        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FlatSkin/css/flatskin_wrapped.min.css" />');
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
+<link rel='stylesheet' type='text/css' media='all' href='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/css/tasktracker.css' />
+STYLE
+    Foswiki::Func::addToZone( 'script', $prefSelector,
+        "<script type='text/json'>$jsonPrefs</script>");
+
+    Foswiki::Func::addToZone( 'script', 'TASKGRID',
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>");
+
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID', <<SCRIPT, 'jsi18nCore' );
+<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>
+SCRIPT
+    Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
+    Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::sweetalert2', $session);
+
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
+    Foswiki::Func::getContext()->{'NOWYSIWYG'} = 0;
+    require Foswiki::Plugins::CKEditorPlugin;
+    Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
+    my $panel = "<task-panel-bootstrap preferences-selector='$prefSelector'></task-panel-bootstrap>";
+    my $replacement = "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>$panel";
+    return $replacement;
+}
+
 sub tagGrid {
     my( $session, $params, $topic, $web, $topicObject ) = @_;
 
@@ -1967,6 +2161,10 @@ SCRIPT
     my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
     my $json = to_json( \%settings );
+    # Inside of quotes, angle brackets are valid json, however, when put into
+    # a div element, they will be interpreted as html-tags and break the
+    # settings. They often originate from "columns" params.
+    $json =~ s#([<>])#sprintf('&\#x%02x;',ord($1))#ge;
     local $currentOptions = \%settings;
 
     my %tmplAttrs = (
@@ -2040,6 +2238,16 @@ PAGER
     }
 
     return $grid;
+}
+
+sub _getDisplayValue {
+    my ($session, $form, $key, $value) = @_;
+    my ($fweb, $ftopic) = split(/\./, $form);
+    my $formObject = Foswiki::Form->new($session, $fweb, $ftopic);
+    my $formField = $formObject->getField($key);
+    return unless $formField;
+    return unless $formField->can('getDisplayValue');
+    return $formField->getDisplayValue($value);
 }
 
 sub _getDisplayName {
