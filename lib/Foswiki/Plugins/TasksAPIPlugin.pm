@@ -1923,6 +1923,9 @@ sub tagGrid {
         return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
 
+    require Foswiki::Contrib::PickADateContrib;
+    Foswiki::Contrib::PickADateContrib::initDatePicker();
+
     my @jqdeps = (
         "blockui", "select2", "tabpane", "tasksapi", "ui::dialog",
         "jqp::moment", "jqp::tooltipster", "jqp::underscore",
