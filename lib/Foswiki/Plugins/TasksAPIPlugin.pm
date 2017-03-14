@@ -1518,9 +1518,14 @@ sub restLink {
         my $state = $task->{fields}{Status} || '';
         my $assignee = $task->{fields}{AssignedTo} || '';
         my @informees = split(/\s*,\s*/, $task->{fields}{Informees} || '');
-        my $login = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName());
-        $login = 'BaseUserMapping_333' if $login eq 'admin';
-        $login = 'BaseUserMapping_666' if $login eq 'guest';
+        my $login;
+        if ($Foswiki::cfg{LoginManager} eq 'Foswiki::LoginManager::UnifiedLogin') {
+            $login = Foswiki::Func::getCanonicalUserID();
+        } else {
+            $login = Foswiki::Func::wikiToUserName(Foswiki::Func::getWikiName());
+            $login = 'BaseUserMapping_333' if $login eq 'admin';
+            $login = 'BaseUserMapping_666' if $login eq 'guest';
+        }
         my $author = $task->{fields}{Author} || '';
         if ($author eq $login) {
             $params = "tid=taskgrid_own;tab=tasks_own";
