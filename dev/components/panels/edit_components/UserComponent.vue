@@ -70,7 +70,7 @@ export default {
             let request = {
                 skin: "text",
                 contenttype: "text/plain",
-                section: "select2::user",
+                section: "select2::usergroup",
                 limit: 10,
                 start: start,
                 q: search
