@@ -20,6 +20,7 @@
                 <div style="width:100%; height:100%">
                     <i class="loading-indicator fa fa-refresh fa-spin fa-3x fa-fw"></i>
                 </div>
+            </div>
         </template>
         <template v-for="(comment, index) in comments">
             <div class="comment-header row align-middle" @mouseover="hover = 'comment'+index" @mouseleave="hover=''">

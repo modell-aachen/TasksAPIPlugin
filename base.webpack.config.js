@@ -2,9 +2,12 @@ var path = require('path')
 var projectRoot = path.resolve(__dirname);
 var webpack = require('webpack')
 
+var babelLoaderOptions = {
+  presets: ['es2015','stage-2']
+}
+
 var includeDirs = [
   projectRoot + '/dev',
-  projectRoot + '/tests',
   projectRoot + '/node_modules/nprogress/',
   projectRoot + '/node_modules/vue-select/',
   projectRoot + '/node_modules/vue-simple-pagination/'
@@ -12,15 +15,10 @@ var includeDirs = [
 
 module.exports = {
   resolve: {
-    alias: {
-      vue$: 'vue/dist/vue.common.js'
-    }
-  },
-  babel: {
-    presets: ['es2015', 'stage-2']
+    extensions: ['.vue', '.js']
   },
   entry: {
-    app: ['babel-polyfill', './dev/main.js']
+    app: ['./dev/main.js']
   },
   output: {
     path: path.join(__dirname, 'pub/System/TasksAPIPlugin/js'),
@@ -28,30 +26,34 @@ module.exports = {
   },
   devtool: "source-map",
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.vue$/,
-        loader: 'vue',
-        include: includeDirs
+        loader: 'vue-loader',
+        include: includeDirs,
+         options: {
+           loaders: {
+            js:'babel-loader?' + JSON.stringify(babelLoaderOptions)
+          },
+       }
       },
       {
         test: /\.js$/,
-        loader: 'babel',
-        include: includeDirs
+        loader: 'babel-loader',
+        include: includeDirs,
+        options: babelLoaderOptions
       },
       {
         test: /\.css$/,
-        loader: 'style-loader!css-loader',
-        include: includeDirs
-      },
-      {
-        test: /\.json$/,
-        loader: 'json',
-        include: includeDirs
+        include: includeDirs,
+        use: [
+          "style-loader",
+          "css-loader"
+        ]
       },
       {
         test: /\.(woff2?|eot|ttf|otf|svg)(\?.*)?$/,
-        loader: 'url',
+        loader: 'url-loader',
         include: includeDirs
       }
     ]

@@ -49,7 +49,7 @@ import SelectComponent from "../edit_components/SelectComponent.vue";
 import UserComponent from "../edit_components/UserComponent.vue";
 import TaskEditorComponent from "../edit_components/TaskEditorComponent.vue";
 import DateComponent from "../edit_components/DateComponent.vue";
-import _ from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 export default {
     data(){
         return {
@@ -139,7 +139,7 @@ export default {
     },
     watch: {
         task(){
-            this.taskToEdit = _.cloneDeep(this.task);
+            this.taskToEdit = cloneDeep(this.task);
         },
         "taskToEdit.fields": {
             deep: true,
@@ -149,7 +149,7 @@ export default {
         }
     },
     created(){
-        this.taskToEdit = _.cloneDeep(this.task);
+        this.taskToEdit = cloneDeep(this.task);
         this.$set(this.taskToEdit.fields, "showValidationWarnings", false);
     }
 };

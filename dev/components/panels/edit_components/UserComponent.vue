@@ -12,7 +12,7 @@
 /* global foswiki $ */
 import MetaFieldMixin from '../../../mixins/MetaFieldMixin.vue';
 import VueSelect from 'vue-select/src/index.js';
-import _ from 'lodash';
+import debounce from 'lodash/debounce';
 export default {
     mixins: [MetaFieldMixin],
     data() {
@@ -29,7 +29,7 @@ export default {
             return this.fields[this.fieldName].multi;
         },
         onSearchDebounce(){
-            return _.debounce(this.onSearch, 300);
+            return debounce(this.onSearch, 300);
         }
     },
     watch: {
