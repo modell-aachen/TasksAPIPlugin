@@ -1,4 +1,3 @@
-import Vuex from 'vuex'
 import taskGrid from './modules/TaskGrid'
 
 const debug = process.env.NODE_ENV !== 'production';
