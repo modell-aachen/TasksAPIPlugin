@@ -1890,7 +1890,7 @@ sub tagGrid {
     my $editorTemplate = $params->{editortemplate};
     my $updateurl = $params->{updateurl} || '';
     my $columns = 'created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $AttachCount $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox,'. ($params->{columns} || '');
-    my $filters = $params->{filters} || '"Created" range="1" max="true", "Changed" range="1" max="true"';
+    my $filters = $params->{filters} || '"Created" range="1" max="true", "Changed" range="1" max="true", Type';
     my $headers = 'created=Created:Created,type=Type,assigned=Assigned to,title=Title:Title,due=DueDate:Due date,status=Status,checkbox=,'. ($params->{headers} || '');
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
@@ -2097,7 +2097,7 @@ SCRIPT
     $query->{Status} = $req->param('state') if $override && $req->param('state');
 
     if ($override) {
-        my @list = map {$_ =~ s/^f_//; $_} grep(/^f_/, @{$req->{param_list}});
+        my @list = map {$_ =~ s/^f_//r} grep(/^f_/, @{$req->{param_list}});
         foreach my $l (@list) {
             next if $l =~ /^_/; # Skip select2 preset inputs
             my $val = $req->param("f_$l");
@@ -2216,6 +2216,9 @@ SCRIPT
         push(@q, 'order=' . $req->param('order')) if $req->param('order') && $override;
         push(@q, 'desc=' . $req->param('desc')) if defined $req->param('desc') && $override;
         push(@q, 'tab=' . $req->param('tab')) if $req->param('tab');
+        foreach my $f_param ( grep{ $_ =~ m#^f_# } $req->multi_param() ) {
+            push(@q, "$f_param=" . $req->param($f_param));
+        }
         push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $override;
         my $qstr = "&" . join('&', grep(/^.+$/, @q));
 
