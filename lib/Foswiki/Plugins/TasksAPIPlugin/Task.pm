@@ -766,6 +766,7 @@ sub solrize {
       'container_id' => $self->{fields}{Context},
       'container_url' => $ctxurl,
       'container_title' => $self->{fields}{Title},
+      'container_title_escaped_s' => $indexer->escapeHtml($self->{fields}{Title}),
       'task_created_dt' => $created,
       'task_due_dt' => $date,
       'task_state_s' => $state,
@@ -917,6 +918,7 @@ sub indexAttachment {
         date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
         version => $attachment->{'version'} || 1,
         name => $name,
+        name_escaped_s => $indexer->escapeHtml($name),
         comment => $attachment->{'comment'} || '',
         size => $attachment->{'size'} || 0,
         icon => $indexer->mapToIconFileName($extension),
@@ -925,6 +927,7 @@ sub indexAttachment {
         container_topic => $ctxTopic,
         container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic) . "?id=$self->{id}",
         container_title => $self->{fields}{Title},
+        container_title_escaped_s => $indexer->escapeHtml($self->{fields}{Title}),
         task_context_s => $self->{fields}{Context},
         author_s => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$attachment->{user}\"}%", $ctxTopic, $ctxWeb)
     );
