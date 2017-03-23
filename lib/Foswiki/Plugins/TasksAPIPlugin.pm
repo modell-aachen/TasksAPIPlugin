@@ -1890,7 +1890,7 @@ sub tagGrid {
     my $editorTemplate = $params->{editortemplate};
     my $updateurl = $params->{updateurl} || '';
     my $columns = 'created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $AttachCount $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox,'. ($params->{columns} || '');
-    my $filters = $params->{filters} || '"Created" range="1" max="true", "Changed" range="1" max="true", Type';
+    my $filters = $params->{filters} || '"Created" range="1" max="true", "Changed" range="1" max="true"';
     my $headers = 'created=Created:Created,type=Type,assigned=Assigned to,title=Title:Title,due=DueDate:Due date,status=Status,checkbox=,'. ($params->{headers} || '');
     my $captionTemplate = $params->{captiontemplate};
     my $filterTemplate = $params->{filtertemplate};
