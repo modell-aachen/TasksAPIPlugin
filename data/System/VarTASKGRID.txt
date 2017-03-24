@@ -1,0 +1,71 @@
+%META:TOPICINFO{author="BaseUserMapping_999" date="1476196880" format="1.1" version="1"}%
+%META:TOPICPARENT{name="Plugins"}%
+---+ !TasksAPIPlugin
+
+%SHORTDESCRIPTION%
+
+%TOC%
+
+---++ Introduction
+
+---++ Installation
+%$INSTALL_INSTRUCTIONS%
+
+---++ Configuration
+The TaskGid needs a config JSON object.
+This can be passed as parameter to the TaskGrid. It can be given as string or by adding it via %<nop>INCLUDE%. The JSON Object must contain ' in place of ", so the macro is working correct.
+An Example config is shown in [[System.TaskGridConfig]].
+
+Example:
+
+<verbatim class="tml">
+%TASKGRID{
+  columns="%PROJECT_TASKSGRID_COLUMNS{default=""}%"
+  headers="%PROJECT_TASKSGRID_HEADERS{default=""}%"
+  config="%INCLUDE{"System.TaskGridConfig" section="TASKGRID_CONFIG"}%"
+}%
+</verbatim>
+
+The following parameters are available:
+
+| *Parameter* | *Description* | *Default* |
+| config="..." | complex '-JSON config to for complex configurations. For more information [[#ConfigParamter][Config Paramter]] | {} |
+| columns="..." | Definition of extra/altered/removed columns, see section below | created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox |
+| headers="..." | Definition of extra/altered/removed headers, see section below | created=Created:Created,type=Type,assigned=Assigned to,title=Title:Title,due=DueDate:Due date,status=Status,checkbox= |
+
+
+---+++ Config Paramter
+
+| *Parameter* | *Description* | *Default* |
+| context | Context to search for. Only tasks with this context will be shown. Use =any= to show tasks from anywhere (in this case, setting a query is recommended to avoid getting an enormous list). | WEB.TOPIC |
+| header | Name of the row component which is used to render the header. The tasktypes | default |
+| tasktypes | tasktypes contains objects of taskrows depending on the task type | {} |
+
+---++++ Tasktypes
+
+Tasktypes are objects with the tasktype as key and a configuration object as value. The parameters for the configuration are:
+
+| *Parameter* | *Description* | *Default* |
+| taskrow | the name of the task row component. '-task-row' is added automatically | standard |
+| child_taskgrid | the name of the child task task-grid. '-task-grid' is added automatically | standard |
+| fields | Contains objects of fields (Data Field Comonents) with the specific data field paramteters. | {} |
+
+
+---++++ Fields
+
+   * expand
+      * twisty like field
+   * badge
+      * Renders a badge.
+   * value
+      * Shows display values of fields.
+   * composed
+      * can contain different fields.
+   * signal
+      * Renders a traffic light.
+   * check-box
+      * Renders a CheckBox.
+   * quantity
+      * Displays the amaount of child tasks.
+   * attachments
+      * Displays the amount of attachmants with an custom fa-icon.

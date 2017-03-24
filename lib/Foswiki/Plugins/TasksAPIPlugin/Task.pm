@@ -242,7 +242,7 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
-        my $cuid = Foswiki::Func::getCanonicalUserID($item);
+        my $cuid = Foswiki::Func::getCanonicalUserID($item) || '';
         if ($user eq $cuid || Foswiki::Func::isGroup($item) && Foswiki::Func::isGroupMember($item, $user)) {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
@@ -315,6 +315,7 @@ sub create {
     my %data = @_;
     my $form = delete $data{form};
     my $fields;
+    my $dontSave = delete $data{dontsave};
 
     my $web = $Foswiki::cfg{TasksAPIPlugin}{DBWeb};
     my ($formWeb, $formTopic) = Foswiki::Func::normalizeWebTopicName($web, $form);
@@ -356,7 +357,7 @@ sub create {
         }
     }
 
-    $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+    $meta->saveAs($web, $topic, dontlog => 1, minor => 1) unless $dontSave;
     my $task = load($meta);
 
     if (my $statusmap = $task->getPref("MAP_STATUS_FIELD")) {
@@ -378,14 +379,14 @@ sub create {
         my $mstatus = $meta->get('FIELD', $statusmap);
         $meta->putKeyed('FIELD', {name => 'Status', title => '', value => $data{Status}});
         $meta->putKeyed('FIELD', {name => $statusmap, title => '', value => $mstatus->{value}});
-        $meta->saveAs($web, $topic, dontlog => 1, minor => 1);
+        $meta->saveAs($web, $topic, dontlog => 1, minor => 1) unless $dontSave;
         $task = load($meta);
     }
 
     $task->notify('created');
     $task->_postCreate();
     $task->_postUpdate();
-    Foswiki::Plugins::TasksAPIPlugin::_index($task);
+    Foswiki::Plugins::TasksAPIPlugin::_index($task) unless $dontSave;
     $task->{_canChange} = $task->checkACL('change');
     $task;
 }
@@ -765,6 +766,7 @@ sub solrize {
       'container_id' => $self->{fields}{Context},
       'container_url' => $ctxurl,
       'container_title' => $self->{fields}{Title},
+      'container_title_escaped_s' => $indexer->escapeHtml($self->{fields}{Title}),
       'task_created_dt' => $created,
       'task_due_dt' => $date,
       'task_state_s' => $state,
@@ -916,6 +918,7 @@ sub indexAttachment {
         date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
         version => $attachment->{'version'} || 1,
         name => $name,
+        name_escaped_s => $indexer->escapeHtml($name),
         comment => $attachment->{'comment'} || '',
         size => $attachment->{'size'} || 0,
         icon => $indexer->mapToIconFileName($extension),
@@ -924,6 +927,7 @@ sub indexAttachment {
         container_topic => $ctxTopic,
         container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic) . "?id=$self->{id}",
         container_title => $self->{fields}{Title},
+        container_title_escaped_s => $indexer->escapeHtml($self->{fields}{Title}),
         task_context_s => $self->{fields}{Context},
         author_s => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$attachment->{user}\"}%", $ctxTopic, $ctxWeb)
     );

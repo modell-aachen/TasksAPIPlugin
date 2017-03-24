@@ -82,6 +82,9 @@ module.exports = function(grunt) {
           '<%= pkg.pubDir %>/js/i18n/jsi18n.de.js': [
             '<%= pkg.pubDir %>/src/js/i18n/de.js'
           ],
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.TaskGrid.de.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/TaskGrid.de.js'
+          ],
           '<%= pkg.pubDir %>/js/i18n/jsi18n.en.js': [
             '<%= pkg.pubDir %>/src/js/i18n/en.js'
           ]
@@ -96,6 +99,9 @@ module.exports = function(grunt) {
         files: {
           '<%= pkg.pubDir %>/js/i18n/jsi18n.de.min.js': [
             '<%= pkg.pubDir %>/src/js/i18n/de.js'
+          ],
+          '<%= pkg.pubDir %>/js/i18n/jsi18n.TaskGrid.de.min.js': [
+            '<%= pkg.pubDir %>/src/js/i18n/TaskGrid.de.js'
           ],
           '<%= pkg.pubDir %>/js/i18n/jsi18n.en.min.js': [
             '<%= pkg.pubDir %>/src/js/i18n/en.js'
