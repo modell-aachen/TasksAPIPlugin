@@ -2,6 +2,12 @@
 
 package Foswiki::Plugins::TasksAPIPlugin;
 
+BEGIN {
+    # suppress "HOME is not set" message (File::BaseDir)
+    # It does not matter where this points, since we do not use the home dir.
+    $ENV{HOME} ||= '/var/www';
+}
+
 use strict;
 use warnings;
 
