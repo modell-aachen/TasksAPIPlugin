@@ -1856,7 +1856,7 @@ STYLE
         "<script type='text/json'>$jsonPrefs</script>");
 
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
-        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>");
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>", "VUEJSPLUGIN");
 
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID', <<SCRIPT, 'jsi18nCore' );
 <script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>

@@ -6,12 +6,14 @@ var merge = require('webpack-merge');
 
 
 module.exports = merge.smart(baseConfig, {
-    eslint: {
-        configFile: projectRoot + '/.eslintrc'
-    },
-    vue: {
-        loaders: {
-            js:'babel!eslint'
-        }
-    }
+	module: {
+		rules: [
+			{
+				enforce: 'pre',
+				test: /.(vue|js)$/,
+				loader: 'eslint-loader',
+				exclude: /node_modules/
+			}
+		]
+	}
 });
