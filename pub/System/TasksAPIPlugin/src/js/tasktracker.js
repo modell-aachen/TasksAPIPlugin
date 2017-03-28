@@ -976,8 +976,10 @@
         url = opts.updateurl + '&page=' + page + '&tid=' + tid;
       }
 
-      for(var i = 1; i < filters.length; i++) {
-          url += '&' + filters[i];
+      if(filters) {
+        for(var i = 1; i < filters.length; i++) {
+            url += '&' + filters[i];
+        }
       }
 
       if (tab) {
