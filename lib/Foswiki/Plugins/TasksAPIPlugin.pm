@@ -38,6 +38,7 @@ our $NO_PREFS_IN_TOPIC = 1;
 my $db;
 my %schema_versions;
 my %tmpWikiACLs;
+
 my @schema_updates = (
     [
         # Basic relations
@@ -53,7 +54,8 @@ my @schema_updates = (
             created INT NOT NULL,
             due INT,
             position INT,
-            raw TEXT
+            raw TEXT,
+            topictype TEXT NOT NULL DEFAULT 'task'
         )",
         "CREATE INDEX tasks_context_idx ON tasks (context)",
         "CREATE INDEX tasks_parent_idx ON tasks (parent)",
@@ -65,12 +67,10 @@ my @schema_updates = (
         "CREATE TABLE task_multi (
             id TEXT NOT NULL,
             type TEXT NOT NULL,
-            value TEXT NOT NULL
+            value TEXT NOT NULL COLLATE \"en_US\"
         )",
         "CREATE INDEX task_multi_id_idx ON task_multi (id, type, value)",
-        "CREATE INDEX task_type_idx ON task_multi (type, value)"
-    ],
-    [
+        "CREATE INDEX task_type_idx ON task_multi (type, value)",
         # Jobs
         "CREATE TABLE jobs (
             task_id TEXT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE ON UPDATE RESTRICT,
@@ -81,10 +81,6 @@ my @schema_updates = (
         )",
         "CREATE INDEX jobs_task ON jobs (task_id)",
         "CREATE INDEX jobs_done_time ON jobs (job_done, job_time)",
-    ],
-    [
-        # Distinguish task types for exotic features like template tasks
-        "ALTER TABLE tasks ADD COLUMN topictype TEXT NOT NULL DEFAULT 'task'",
     ],
 );
 my %singles = (
@@ -397,19 +393,10 @@ sub afterSaveHandler {
 
 sub db {
     return $db if defined $db;
-    $db = DBI->connect("DBI:SQLite:dbname=$Foswiki::cfg{DataDir}/$Foswiki::cfg{TasksAPIPlugin}{DBWeb}/tasks.db",
-        '', # user
-        '', # pwd
-        {
-            RaiseError => 1,
-            PrintError => 0,
-            AutoCommit => 1,
-            FetchHashKeyName => 'NAME_lc',
-            sqlite_unicode => $Foswiki::UNICODE ? 1 : 0
-        }
-    );
+    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi');
+    $db = $connection->{db};
     eval {
-        %schema_versions = %{ $db->selectall_hashref("SELECT * FROM meta", 'type') };
+        %schema_versions = %{$db->selectall_hashref("SELECT * FROM meta", 'type', {})};
     };
     _applySchema('core', @schema_updates);
     $db;
@@ -482,6 +469,7 @@ sub query {
     my $join = '';
     my $filter = '';
     my $order = $opts{order} || '';
+    my $order_select = ''; # select additional columns to order/group on
     my @args;
     my $filterprefix = ' WHERE';
     my %joins;
@@ -535,11 +523,13 @@ sub query {
                         $k = "$t";
                         $k .= ".value" unless $order =~ /\.value$/;
                     }
-                    push(@orders, "$k COLLATE NOCASE" . ($v ? ' DESC' : ''));
+                    push(@orders, "$k" . ($v ? ' DESC' : ''));
                 }
             }
             $order = " ORDER BY " . join(', ', @orders);
+            $order_select = " ," . join(', ', @orders);
         } elsif (!$singles{$order} && !$joins{$order}) {
+            next if $order =~ m/\W/;
             my $t = "$order";
             $t = "j_$t" unless $t =~ /^j_/;
             $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
@@ -547,16 +537,19 @@ sub query {
             $order .= ".value" unless $order =~ /\.value$/;
         }
 
-        if (!$isArray) {
-            $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
-            $order .= " DESC" if $order && $opts{desc};
+        if (!$isArray && $order) {
+            if ($order =~ m/^[\w.]+$/) {
+                $order_select = " ,$order";
+                $order = " ORDER BY $order";
+            }
+            $order .= " DESC" if $opts{desc};
         }
     }
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
-    $limit = " LIMIT $offset, $count" if $count;
+    $limit = " LIMIT $count OFFSET $offset" if defined $count && $count > 0;
     my $group = '';
-    $group = ' GROUP BY t.id' if $join;
-    my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
+    $group = ' GROUP BY t.id, t.raw'.$order_select if $join;
+    my $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$join$filter$group$order$limit", {}, @args);
     my $total = db()->selectrow_array("SELECT count(*) FROM tasks t$join$filter", {}, @args);
 
     return {tasks => [], total => 0} unless @$ids;
@@ -990,7 +983,7 @@ sub _available_contexts {
     my $type = $task->getPref('TASK_TYPE') || '';
     my $title = _getTopicTitle($task->{fields}{Context});
     my %contexts;
-    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t");
     foreach my $a (@$ctx) {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
@@ -2482,7 +2475,7 @@ sub tagContextSelector {
 OPTION
 
     my %retval;
-    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t");
     foreach my $a (@$ctx) {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
             Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
