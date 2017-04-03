@@ -103,7 +103,7 @@ my $renderRecurse = 0;
 our $currentTask;
 our $currentOptions;
 our $currentExpands;
-our $storedTemplates;
+our $storedTemplates = {};
 
 my $aclCache = {};
 my $caclCache = {};
@@ -1687,8 +1687,8 @@ sub _deepen {
 # per column, along with a definition of corresponding headers.
 sub _parseGridColumns {
     my ($columns, $headers) = @_;
-    my @columns = grep /\S/, map { s/^\s*|\s*$//gr } split(/,/, $columns);
-    my @headers = grep /\S/, map { s/^\s*|\s*$//gr =~ s/\$comma/,/gr } split(/,/, $headers);
+    my @columns = grep /\S/, map { s/^\s*|\s*$//gr } split(/,/, $columns || '');
+    my @headers = grep /\S/, map { s/^\s*|\s*$//gr =~ s/\$comma/,/gr } split(/,/, $headers || '');
 
     my (%headerTitles, %headerSort);
     my (%colInfo, @colOrder);
@@ -2688,8 +2688,7 @@ sub tagInfo {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
         if ($meta eq 'json') {
-            local $storedTemplates;
-            my $json = to_json(_enrich_data($task, {tasktemplate => 'tasksapi::empty'}));
+            my $json = to_json(_enrich_data($task, {tasktemplate => 'tasksapi::empty', noHtml => $params->{noHtml}}));
             $json =~ s/&/&amp;/g;
             $json =~ s/</&lt;/g;
             $json =~ s/>/&gt;/g;
