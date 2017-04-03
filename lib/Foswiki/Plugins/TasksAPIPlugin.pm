@@ -39,6 +39,7 @@ our $NO_PREFS_IN_TOPIC = 1;
 my $db;
 my %schema_versions;
 my %tmpWikiACLs;
+my %contexts_cache; # cache available contexts associated with type
 
 my @schema_updates = (
     [
@@ -155,12 +156,15 @@ sub initPlugin {
 
     $indexerCalled = 0;
 
+    %contexts_cache = ();
+
     return 1;
 }
 
 sub finishPlugin {
     undef $db;
     undef %schema_versions;
+    %contexts_cache = ();
     $aclCache = {};
     $caclCache = {};
     $aclExpands = {};
@@ -978,8 +982,8 @@ sub _available_contexts {
     my $task = shift;
     return unless $task;
     my $type = $task->getPref('TASK_TYPE') || '';
-    my $title = _getTopicTitle($task->{fields}{Context});
-    my %contexts;
+    return $contexts_cache{$type} if $contexts_cache{$type};
+    my %contexts = ();
     my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t");
     foreach my $a (@$ctx) {
         my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
@@ -990,10 +994,11 @@ sub _available_contexts {
                 next;
             }
             $title = _getTopicTitle($a->[0]);
-            $contexts{$title} = $a->[0];
+            $contexts{$a->[0]} = $title;
         }
     }
-    return %contexts;
+    $contexts_cache{$type} = \%contexts;
+    return \%contexts;
 }
 # Given a task object, returns a structure suitable for serializing to JSON
 # that contains all the information we need
@@ -1008,12 +1013,12 @@ sub _enrich_data {
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
-    my %contexts = _available_contexts($task);
+    my $contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
         children => \@childtasks,
-        contexts => \%contexts,
+        contexts => $contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
