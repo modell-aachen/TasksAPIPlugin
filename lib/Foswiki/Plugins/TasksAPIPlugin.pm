@@ -18,6 +18,7 @@ use Foswiki::Time ();
 use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::SolrPlugin;
+use Foswiki::Plugins::JSi18nPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
 
@@ -969,12 +970,8 @@ sub restMultiUpdate {
 
 # Translate stuff without having to worry about escaping
 sub _translate {
-    my ($meta, $text) = @_;
-    $text =~ s#(\\+)#$1\\#g;
-    $text =~ s#(?<!\\)"#\\"#g;
-    $text =~ s#\$#\$dollar#g;
-    $text =~ s#%#\$percnt#g;
-    $meta->expandMacros("%MAKETEXT{\"$text\"}%");
+    # my ($meta, $text) = @_;
+    return Foswiki::Plugins::JSi18nPlugin::MAKETEXT($_[0]->session(), {_DEFAULT => $_[1]});
 };
 
 sub _available_contexts {
