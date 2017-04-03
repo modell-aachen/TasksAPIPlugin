@@ -1635,7 +1635,7 @@ sub _addToZone {
         push(@paths, $meta->expandMacros($path));
     }
 
-    my $section = "TASKSAPI::TYPE::$id::" . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
+    my $section = "TASKSAPI::TYPE::${id}::" . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     my $dep = 'TASKSAPI::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     $dep .= ', jsi18nCore' if $zone eq 'script';
     my @includes = ();
