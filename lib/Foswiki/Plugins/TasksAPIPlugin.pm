@@ -2466,30 +2466,19 @@ sub tagContextSelector {
     if (!$task) {
         return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
     }
-    my $type = $task->getPref('TASK_TYPE') || '';
-    if (!$type) {
-        return '%RED%TASKCONTEXTSELECTOR: missing preference TASK_TYPE for given task%ENDCOLOR%%BR%';
-    }
 
-    my $title = _getTopicTitle($task->{fields}{Context});
+    my $ctx = _available_contexts($task);
+    my $current = $task->{fields}{Context};
+    my $currentTitle = $ctx->{$current} || _getTopicTitle($current);
     my @options = (<<OPTION);
-<option class="foswikiOption" value="$task->{fields}{Context}" selected="selected">$title</option>
+<option class="foswikiOption" value="$current" selected="selected">$currentTitle</option>
 OPTION
 
     my %retval;
-    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t");
-    foreach my $a (@$ctx) {
-        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
-            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
-        );
-        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context} && $t->{fields}{Status} ne 'deleted') {
-            unless($t->checkACL('change')){
-                next;
-            }
-            $title = _getTopicTitle($a->[0]);
-            my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
-            push(@options, $option);
-        }
+    foreach my $a (keys %$ctx) {
+        next if $a eq $current;
+        my $option = "<option class=\"foswikiOption\" value=\"$a\">$ctx->{$a}</option>";
+        push(@options, $option);
     }
 
     my $inner = join('', @options);
