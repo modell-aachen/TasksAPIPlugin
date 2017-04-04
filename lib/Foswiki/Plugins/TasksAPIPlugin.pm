@@ -730,6 +730,10 @@ sub _index {
             $wiki_acl_view = 'dummy';
         }
         my @keys = keys %vals;
+        # make sure INT fields are not empty strings
+        foreach my $intKey ( grep { $_ =~ m/^(?:created|due|position)$/i } @keys ) {
+            $vals{$intKey} = 0 unless $vals{$intKey} && $vals{$intKey} =~ m/^\d+$/;
+        }
         $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id});
         $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
         $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
