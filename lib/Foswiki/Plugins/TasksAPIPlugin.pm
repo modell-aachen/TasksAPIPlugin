@@ -354,18 +354,17 @@ sub afterSaveHandler {
 
     # Index
     return unless $data->{solrStatus} && $data->{solrStatus} == 200;
-
-    my $skipIndex = 0;
+    my $aclsChanged = 0;
     foreach my $key (keys %{$data->{acls}}) {
         my $topicPref = $meta->getPreference($key);
         $topicPref = '' unless defined $topicPref;
         my $wikiPref = $data->{acls}->{$key};
         $wikiPref = '' unless defined $wikiPref;
-        $skipIndex = $wikiPref ne $topicPref;
-        last if $skipIndex;
+        $aclsChanged = $wikiPref ne $topicPref;
+        last if $aclsChanged;
     }
 
-    unless ($skipIndex) {
+    unless ($aclsChanged) {
         return;
     }
 
