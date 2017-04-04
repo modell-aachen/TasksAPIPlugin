@@ -24,6 +24,7 @@ use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use Encode;
+use Error qw(:try);
 use File::MimeInfo;
 use HTML::Entities;
 use JSON;
@@ -675,58 +676,66 @@ sub _index {
     my $aclCache = shift || {};
     $transact = 1 unless defined $transact;
     my $db = db();
-    $db->begin_work if $transact;
-    my $form = $task->{form};
-    # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
-    my $raw = $Foswiki::UNICODE ? $task->{meta}->getEmbeddedStoreForm : Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm);
-    my @taskAcl = $task->getACL('VIEW');
-    my ($allowed, $denied, $wiki_acl_view) = ([], [], undef);
-    foreach my $access ( @taskAcl ) {
-        if ($access =~ /\$wikiACL\((\S+)\s+([^)]+)\)/) {
-            $wiki_acl_view = "$1 $2" unless defined $wiki_acl_view;
-        } else {
-            push @$allowed, $access;
+    try {
+        $db->begin_work if $transact;
+        my $form = $task->{form};
+        # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
+        my $raw = $Foswiki::UNICODE ? $task->{meta}->getEmbeddedStoreForm : Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm);
+        my @taskAcl = $task->getACL('VIEW');
+        my ($allowed, $denied, $wiki_acl_view) = ([], [], undef);
+        foreach my $access ( @taskAcl ) {
+            if ($access =~ /\$wikiACL\((\S+)\s+([^)]+)\)/) {
+                $wiki_acl_view = "$1 $2" unless defined $wiki_acl_view;
+            } else {
+                push @$allowed, $access;
+            }
         }
-    }
-    my %vals = (
-        id => $task->{id},
-        acl_allow => $allowed,
-        wiki_acl_view => $wiki_acl_view,
-        form => $form->web .'.'. $form->topic,
-        Parent => '',
-        raw => $raw,
-        tasktype => $task->getPref('TASK_TYPE'),
-    );
-    my @extra;
-    for my $f (keys %{$task->{fields}}) {
-        my $v = $task->{fields}{$f};
-        next unless defined $v;
-        my $field = $form->getField($f);
-        if ($field && $field->can('isMultiValued') && $field->isMultiValued()) {
-            $v = [ split(/\s*,\s*/, $v) ];
-        } else {
-            $v = [ $v ];
+        my %vals = (
+            id => $task->{id},
+            acl_allow => $allowed,
+            wiki_acl_view => $wiki_acl_view,
+            form => $form->web .'.'. $form->topic,
+            Parent => '',
+            raw => $raw,
+            tasktype => $task->getPref('TASK_TYPE'),
+        );
+        my @extra;
+        for my $f (keys %{$task->{fields}}) {
+            my $v = $task->{fields}{$f};
+            next unless defined $v;
+            my $field = $form->getField($f);
+            if ($field && $field->can('isMultiValued') && $field->isMultiValued()) {
+                $v = [ split(/\s*,\s*/, $v) ];
+            } else {
+                $v = [ $v ];
+            }
+            if ($singles{$f}) {
+                $vals{$f} = $v->[0];
+            } else {
+                push @extra, map { { type => $f, value => $_ } } @$v;
+            }
         }
-        if ($singles{$f}) {
-            $vals{$f} = $v->[0];
+        if ($wiki_acl_view && not $aclCache->{$wiki_acl_view}) {
+            $aclCache->{$wiki_acl_view} = 1;
+            _storeWebtopicAcls($db, $wiki_acl_view);
         } else {
-            push @extra, map { { type => $f, value => $_ } } @$v;
+            $wiki_acl_view = 'dummy';
         }
-    }
-    if ($wiki_acl_view && not $aclCache->{$wiki_acl_view}) {
-        $aclCache->{$wiki_acl_view} = 1;
-        _storeWebtopicAcls($db, $wiki_acl_view);
-    } else {
-        $wiki_acl_view = 'dummy';
-    }
-    my @keys = keys %vals;
-    $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id});
-    $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
-    $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
-    foreach my $e (@extra) {
-        $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
-    }
-    $db->commit if $transact;
+        my @keys = keys %vals;
+        $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id});
+        $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
+        $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
+        foreach my $e (@extra) {
+            $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
+        }
+        $db->commit if $transact;
+        $transact = 0; # cancel rollback
+    } finally {
+        if($transact) {
+            Foswiki::Func::writeWarning("Could not index task! Rolling back transaction.");
+            $db->rollback();
+        }
+    };
 }
 
 # Will put the acls for a webtopic into to db.
