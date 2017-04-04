@@ -662,7 +662,7 @@ sub _getJoinString {
     if($users->{mapping}->can('getMembershipsCUID')) {
         @items = @{$users->{mapping}->getMembershipsCUID($cuid)};
     } else {
-        @items = @{$users->{mapping}->getMemberships($cuid)};
+        @items = $users->{mapping}->eachMembership($cuid)->all();
     }
     push @items, $cuid;
 
