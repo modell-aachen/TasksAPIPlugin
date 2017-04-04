@@ -162,8 +162,18 @@ sub _reduce {
     $cur;
 }
 
+sub getACL {
+    my ($this, $type) = @_;
+
+    return _getACL($this->{meta}, $this->{form}, $type);
+}
+
 sub _getACL {
     my ($this, $form, $type) = @_;
+
+    # XXX It is entirely possible to get collect multiple wikiACLs, however
+    # only the first will be evaluated in _checkACL and also the db will only
+    # hold a single value.
 
     $type = "\U$type";
     my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
@@ -607,7 +617,7 @@ sub update {
     }
 
     $self->_postUpdate;
-    Foswiki::Plugins::TasksAPIPlugin::_index($self);
+    Foswiki::Plugins::TasksAPIPlugin::_index($self, 0, $data{aclCache});
 
     require Foswiki::Plugins::SolrPlugin;
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
