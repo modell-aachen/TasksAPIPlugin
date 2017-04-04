@@ -38,7 +38,7 @@ our $NO_PREFS_IN_TOPIC = 1;
 
 my $db;
 my %schema_versions;
-my %tmpWikiACLs;
+my @tmpWikiACLs = ();
 my %contexts_cache; # cache available contexts associated with type
 
 my @schema_updates = (
@@ -171,6 +171,10 @@ sub finishPlugin {
     $gridCounter = 1;
     $renderRecurse = 0;
     $storedTemplates = {};
+    if(scalar @tmpWikiACLs) {
+        Foswiki::Func::writeWarning("There were unresolved tmpWikiACLs!");
+        @tmpWikiACLs = ();
+    }
 }
 
 sub indexTopicHandler {
@@ -257,11 +261,13 @@ sub beforeSaveHandler {
     my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
     my $search = $solr->entityDecode('topic:*Form text:"$wikiACL"', 1);
     my $raw = $solr->solrSearch($search)->{raw_response};
-    $tmpWikiACLs{solrStatus} = $raw->{_rc};
+    my $data = {};
+    push @tmpWikiACLs, $data;
+    $data->{solrStatus} = $raw->{_rc};
     return unless $raw->{_rc} == 200;
 
     my ($oldMeta) = Foswiki::Func::readTopic($web, $topic);
-    $tmpWikiACLs{acls} = {
+    $data->{acls} = {
         ALLOWTOPICVIEW   => $oldMeta->getPreference('ALLOWTOPICVIEW'),
         ALLOWTOPICCHANGE => $oldMeta->getPreference('ALLOWTOPICCHANGE'),
         DENYTOPICVIEW    => $oldMeta->getPreference('DENYTOPICVIEW'),
@@ -287,7 +293,7 @@ sub beforeSaveHandler {
         }
     }
 
-    $tmpWikiACLs{forms} = \@forms;
+    $data->{forms} = \@forms;
 }
 
 
@@ -343,21 +349,23 @@ sub afterSaveHandler {
         }
     }
 
+    return unless scalar @tmpWikiACLs;
+    my $data = pop @tmpWikiACLs;
+
     # Index
-    return unless $tmpWikiACLs{solrStatus} && $tmpWikiACLs{solrStatus} == 200;
+    return unless $data->{solrStatus} && $data->{solrStatus} == 200;
 
     my $skipIndex = 0;
-    foreach my $key (keys %{$tmpWikiACLs{acls}}) {
+    foreach my $key (keys %{$data->{acls}}) {
         my $topicPref = $meta->getPreference($key);
         $topicPref = '' unless defined $topicPref;
-        my $wikiPref = $tmpWikiACLs{acls}->{$key};
+        my $wikiPref = $data->{acls}->{$key};
         $wikiPref = '' unless defined $wikiPref;
         $skipIndex = $wikiPref ne $topicPref;
         last if $skipIndex;
     }
 
     unless ($skipIndex) {
-        undef %tmpWikiACLs;
         return;
     }
 
@@ -376,12 +384,11 @@ sub afterSaveHandler {
 
     # If one or more $wikiACL were present within a task form,
     # process them as well
-    unless (defined $tmpWikiACLs{forms}) {
-        undef %tmpWikiACLs;
+    unless (defined $data->{forms}) {
         return;
     }
 
-    foreach my $form (@{$tmpWikiACLs{forms}}) {
+    foreach my $form (@{$data->{forms}}) {
         $res = _query(acl => 0, query => {form => "$form"});
         if (defined $res->{tasks}) {
             foreach my $task (@{$res->{tasks}}) {
@@ -392,8 +399,6 @@ sub afterSaveHandler {
             }
         }
     }
-
-    undef %tmpWikiACLs;
 }
 
 sub db {
