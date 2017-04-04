@@ -625,8 +625,8 @@ sub query {
     eval {
         $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
 
-        if($count >= 0) {
-           $total = db()->selectrow_array("SELECT count(*) FROM tasks t$aclJoin$join$filter$group", {}, @args);
+        if($limit ne '') {
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
         } else {
             $total = scalar @$ids;
         }
