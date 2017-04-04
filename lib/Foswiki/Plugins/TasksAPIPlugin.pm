@@ -1587,16 +1587,19 @@ sub _renderTask {
     my $type = $task->getPref('TASK_TYPE');
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
-    unless ($storedTemplates->{$type}) {
+    my $taskFormWeb = $task->{form}->web();
+    unless (defined $storedTemplates->{$taskFormWeb}->{$type}) {
         $file =~ s#/#.#g;
-        Foswiki::Func::pushTopicContext($task->{form}->web, $task->{form}->topic);
+        # The pushTopicContext will pick up any CustomSkin...Templates.
+        # Assuming all forms in that web generate the same context.
+        Foswiki::Func::pushTopicContext($taskFormWeb, $task->{form}->topic());
         Foswiki::Func::loadTemplate($file) if $file;
         Foswiki::Func::popTopicContext();
-        $storedTemplates->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
-        $storedTemplates->{"$ftype"} = $taskForm;
+        $storedTemplates->{$taskFormWeb}->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
+        $storedTemplates->{$taskFormWeb}->{"$ftype"} = $taskForm;
     }
 
-    if ($storedTemplates->{"$ftype"} ne $taskForm) {
+    if ($storedTemplates->{$taskFormWeb}->{"$ftype"} ne $taskForm) {
         Foswiki::Func::writeWarning(
             "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
             . "Possible override of task templates specified in $storedTemplates->{$ftype}."
@@ -1619,7 +1622,7 @@ sub _renderTask {
         ($renderweb, $rendertopic) = ($task->{fields}{Context} =~ /^(.*)\.(.*)$/);
     }
     Foswiki::Func::pushTopicContext($renderweb, $rendertopic);
-    $task = $meta->expandMacros($storedTemplates->{$type});
+    $task = $meta->expandMacros($storedTemplates->{$taskFormWeb}->{$type});
     Foswiki::Func::popTopicContext();
     $task = $meta->renderTML($task);
 
