@@ -346,6 +346,14 @@ sub beforeSaveHandler {
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
 
+    # update wiki_acls when WebPreferences changed
+    if (defined $topic && $topic eq $Foswiki::cfg{WebPrefsTopicName}) {
+        my $db = db();
+        foreach my $webtopic_mode (@{$db->selectrow_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ? OR webtopic_mode LIKE ?', {}, "$web.\%", "$web/\%")}) {
+            _storeWebtopicAcls($db, $webtopic_mode);
+        }
+    }
+
     # If we're dealing with a save from a template topic that contains template
     # tasks, copy them
     my $templatetopic = $Foswiki::Plugins::SESSION->{request}->param('templatetopic');
