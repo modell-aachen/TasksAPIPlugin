@@ -348,6 +348,7 @@ sub afterSaveHandler {
 
     # update wiki_acls when WebPreferences changed
     if (defined $topic && $topic eq $Foswiki::cfg{WebPrefsTopicName}) {
+        local $Foswiki::Plugins::SESSION = Foswiki->new($Foswiki::Plugins::SESSION->{user});
         my $db = db();
         foreach my $webtopic_mode (@{$db->selectrow_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ? OR webtopic_mode LIKE ?', {}, "$web.\%", "$web/\%") || []}) {
             _storeWebtopicAcls($db, $webtopic_mode);
