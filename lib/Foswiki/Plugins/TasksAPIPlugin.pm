@@ -423,7 +423,7 @@ sub afterSaveHandler {
 
     # update wiki_acls
     my $db = db();
-    foreach my $webtopic_mode (@{$db->selectrow_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ?', {}, "$web.$topic \%")}) {
+    foreach my $webtopic_mode (@{$db->selectrow_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ?', {}, "$web.$topic \%") || []}) {
         _storeWebtopicAcls($db, $webtopic_mode);
     }
 
