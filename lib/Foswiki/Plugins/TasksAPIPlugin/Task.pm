@@ -462,7 +462,12 @@ sub notify {
         }
     }
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', $actor);
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
+    my $mailPreferences = {};
+    my $mailLanguage = Foswiki::Func::getPreferencesValue('MAIL_LANGUAGE');
+    if($mailLanguage){
+        $mailPreferences->{LANGUAGE} = $mailLanguage;
+    }
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, $mailPreferences, 1) });
     Foswiki::Func::popTopicContext();
 }
 

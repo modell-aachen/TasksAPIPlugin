@@ -294,6 +294,9 @@ In addition, Foswiki's =VIEW permissions= are inherited.
    * Set TASKACL_VIEW = $curvalue(AssignedTo),$curvalue(Author),$curvalue(Informees)
 </verbatim>
 
+---++ General mail settings
+The language for emails can be configured by setting the *MAIL_LANGUAGE* preference (e.g. by setting it on WebPreferences). Specifically the preference needs to be set on the topic which is set as the tasks context. If this is not defined then mails will be sent in the browser language of the user who triggered the mail.
+
 ---++ Prototype tasks ("templates")
 
 In some cases you might want to have template topics complete with a few
