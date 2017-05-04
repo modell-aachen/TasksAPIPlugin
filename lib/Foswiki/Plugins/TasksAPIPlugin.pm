@@ -810,6 +810,8 @@ sub _storeWebtopicAcls {
         last unless $web =~ s#(.*)[./].*#$1#;
     }
     if (not defined $allowList) {
+        my ($sw, $st) = Foswiki::Func::normalizeWebTopicName(undef, $Foswiki::cfg{LocalSitePreferences});
+        ($meta) = Foswiki::Func::readTopic($sw, $st);
         $allowList = &$_getACL( $meta, 'ALLOWROOT' . $mode );
         my $rootDenyList = &$_getACL( $meta, 'DENYROOT' . $mode );
         if($rootDenyList) {
