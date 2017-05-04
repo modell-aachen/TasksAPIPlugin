@@ -346,11 +346,19 @@ sub beforeSaveHandler {
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
 
-    # update wiki_acls when WebPreferences changed
+    # update wiki_acls when WebPreferences/SitePreferences changed
+    # XXX it would be nice if this only happens when the ACLs changed
+    my ($sitePrefsWeb, $sitePrefsTopic) = Foswiki::Func::normalizeWebTopicName(undef, $Foswiki::cfg{LocalSitePreferences});
     if (defined $topic && $topic eq $Foswiki::cfg{WebPrefsTopicName}) {
         local $Foswiki::Plugins::SESSION = Foswiki->new($Foswiki::Plugins::SESSION->{user});
         my $db = db();
         foreach my $webtopic_mode (@{$db->selectcol_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ? OR webtopic_mode LIKE ?', {}, "$web.\%", "$web/\%") || []}) {
+            _storeWebtopicAcls($db, $webtopic_mode);
+        }
+    } elsif (defined $topic && $topic eq $sitePrefsTopic && $web eq $sitePrefsWeb) {
+        local $Foswiki::Plugins::SESSION = Foswiki->new($Foswiki::Plugins::SESSION->{user});
+        my $db = db();
+        foreach my $webtopic_mode (@{$db->selectcol_arrayref("SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode != 'dummy'", {}) || []}) {
             _storeWebtopicAcls($db, $webtopic_mode);
         }
     }
