@@ -1475,7 +1475,7 @@ TasksPanel = function(tasktracker) {
       // scroll highlighted task into view...
       self.currentTask.removeClass('highlight');
       nextTask.addClass('highlight');
-      togglePermalinkButton(nextTask);
+      self.buttons.permalink['show']();
       var wh = $(window).height();
       var sy = window.scrollY;
       var ot = nextTask.offset().top;
@@ -1528,33 +1528,6 @@ TasksPanel = function(tasktracker) {
     });
 
     return deferred.promise();
-  };
-
-  var togglePermalinkButton = function(task) {
-    var data = task.data('task_data');
-    var user = foswiki.getPreference('USERNAME');
-    if (user === 'admin') {
-        user = 'BaseUserMapping_333';
-        userUA = '3abfa98b-f92b-42ab-986e-872abca52a49';
-    }
-    if (user === 'guest') {
-        user = 'BaseUserMapping_666';
-        userUA = '09c180b0-fc8b-4f2c-a378-c09ccf6fb9f9';
-    }
-    var canPermalink = false;
-    try {
-      canPermalink = (data.fields.Author.value === user
-        || data.fields.AssignedTo.value === user
-        || data.fields.Informees.value.split(/\s*,\s*/).indexOf(user) > -1)
-        || (data.fields.Author.value === userUA
-        || data.fields.AssignedTo.value === userUA
-        || data.fields.Informees.value.split(/\s*,\s*/).indexOf(userUA) > -1);
-    } catch (e) {
-      // ignore;
-    }
-
-    var linkFunc = canPermalink ? 'show' : 'hide';
-    self.buttons.permalink[linkFunc]();
   };
 
   var handleLease = function( action, payload ) {
@@ -1812,7 +1785,7 @@ TasksPanel = function(tasktracker) {
     self.currentTask = $task;
     checkCanChange($task.data('task_data')._canChange);
     self.currentTask.addClass('highlight');
-    togglePermalinkButton($task);
+    self.buttons.permalink['show']();
     self.panel.empty();
 
     var $content = $('<div class="content slide-in"></div>').css('display', 'none');

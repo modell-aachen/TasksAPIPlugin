@@ -2,6 +2,12 @@
 
 package Foswiki::Plugins::TasksAPIPlugin;
 
+BEGIN {
+    # suppress "HOME is not set" message (File::BaseDir)
+    # It does not matter where this points, since we do not use the home dir.
+    $ENV{HOME} ||= '/var/www';
+}
+
 use strict;
 use warnings;
 
@@ -12,11 +18,13 @@ use Foswiki::Time ();
 use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
 use Foswiki::Plugins::SolrPlugin;
+use Foswiki::Plugins::JSi18nPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
 
 use DBI;
 use Encode;
+use Error qw(:try);
 use File::MimeInfo;
 use HTML::Entities;
 use JSON;
@@ -31,7 +39,9 @@ our $NO_PREFS_IN_TOPIC = 1;
 
 my $db;
 my %schema_versions;
-my %tmpWikiACLs;
+my @tmpWikiACLs = ();
+my %contexts_cache; # cache available contexts associated with type
+
 my @schema_updates = (
     [
         # Basic relations
@@ -39,6 +49,8 @@ my @schema_updates = (
         "INSERT INTO meta (type, version) VALUES('core', 0)",
         "CREATE TABLE tasks (
             id TEXT NOT NULL UNIQUE,
+            acl_allow TEXT[] DEFAULT '{\"*\"}',
+            wiki_acl_view TEXT,
             context TEXT NOT NULL,
             parent TEXT,
             status TEXT NOT NULL DEFAULT 'open',
@@ -47,7 +59,9 @@ my @schema_updates = (
             created INT NOT NULL,
             due INT,
             position INT,
-            raw TEXT
+            raw TEXT,
+            tasktype TEXT NOT NULL,
+            topictype TEXT NOT NULL DEFAULT 'task'
         )",
         "CREATE INDEX tasks_context_idx ON tasks (context)",
         "CREATE INDEX tasks_parent_idx ON tasks (parent)",
@@ -59,12 +73,20 @@ my @schema_updates = (
         "CREATE TABLE task_multi (
             id TEXT NOT NULL,
             type TEXT NOT NULL,
-            value TEXT NOT NULL
+            value TEXT NOT NULL COLLATE \"en_US\"
         )",
         "CREATE INDEX task_multi_id_idx ON task_multi (id, type, value)",
-        "CREATE INDEX task_type_idx ON task_multi (type, value)"
-    ],
-    [
+        "CREATE INDEX task_type_idx ON task_multi (type, value)",
+        # Wiki acls (of context topics)
+        # The dummy is to check the acls on the task itself
+        "CREATE TABLE wiki_acls (
+            webtopic_mode TEXT NOT NULL,
+            acl_allow TEXT[] NOT NULL DEFAULT '{\"*\"}',
+            acl_deny TEXT[] NOT NULL DEFAULT '{}',
+            PRIMARY KEY(webtopic_mode)
+        )",
+        "CREATE INDEX webtopic_mode_idx ON wiki_acls (webtopic_mode)",
+        "INSERT INTO wiki_acls (webtopic_mode, acl_allow, acl_deny) VALUES ('dummy', '{}', '{}')",
         # Jobs
         "CREATE TABLE jobs (
             task_id TEXT NOT NULL REFERENCES tasks (id) ON DELETE CASCADE ON UPDATE RESTRICT,
@@ -75,10 +97,6 @@ my @schema_updates = (
         )",
         "CREATE INDEX jobs_task ON jobs (task_id)",
         "CREATE INDEX jobs_done_time ON jobs (job_done, job_time)",
-    ],
-    [
-        # Distinguish task types for exotic features like template tasks
-        "ALTER TABLE tasks ADD COLUMN topictype TEXT NOT NULL DEFAULT 'task'",
     ],
 );
 my %singles = (
@@ -100,7 +118,7 @@ my $renderRecurse = 0;
 our $currentTask;
 our $currentOptions;
 our $currentExpands;
-our $storedTemplates;
+our $storedTemplates = {};
 
 my $aclCache = {};
 my $caclCache = {};
@@ -152,18 +170,25 @@ sub initPlugin {
 
     $indexerCalled = 0;
 
+    %contexts_cache = ();
+
     return 1;
 }
 
 sub finishPlugin {
     undef $db;
     undef %schema_versions;
+    %contexts_cache = ();
     $aclCache = {};
     $caclCache = {};
     $aclExpands = {};
     $gridCounter = 1;
     $renderRecurse = 0;
     $storedTemplates = {};
+    if(scalar @tmpWikiACLs) {
+        Foswiki::Func::writeWarning("There were unresolved tmpWikiACLs!");
+        @tmpWikiACLs = ();
+    }
 }
 
 sub indexTopicHandler {
@@ -187,30 +212,61 @@ sub afterRenameHandler {
 
     return if $oldAttachment || $newAttachment;
 
+    my $db = db();
+
     # Context topic moved
     if ($oldTopic && $newTopic) {
         ($oldWeb, $oldTopic) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
         ($newWeb, $newTopic) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+        my $oldContext = "$oldWeb.$oldTopic";
+        my $newContext = "$newWeb.$newTopic";
+        my $aclCache = {};
+
+        # wiki_acls
+        foreach my $old_acl ( @{$db->selectcol_arrayref('SELECT DISTINCT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ?', {}, "$oldContext \%")} ) {
+            my ($ctxtTopic, $mode) = $old_acl =~ m/(.*) (.*)/;
+            my $new_acl = "$newContext $mode";
+            $db->do('DELETE FROM wiki_acls WHERE webtopic_mode=? OR webtopic_mode=?', {}, $new_acl, $old_acl);
+            unless ($aclCache->{$new_acl}) {
+                _storeWebtopicAcls($db, $new_acl); # the old acls are not necessarily identical to the new ones, eg. moved to non-existing topic or different web
+                $aclCache->{$new_acl} = 1;
+            }
+        }
+
+        # Update tasks
+
         my $query = {
-            Context => "$oldWeb.$oldTopic"
+            Context => $oldContext,
         };
 
         Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
-        my $res = _query(query => $query, count => -1);
+        my $res = _query(query => $query, count => -1, acl => 0);
         my $tasks = $res->{tasks};
         foreach my $task (@$tasks) {
-            my %data = (Context => "$newWeb.$newTopic");
+            my %data = (Context => $newContext, aclCache => $aclCache);
             $data{Status} = 'deleted' if $newWeb eq $Foswiki::cfg{TrashWebName};
             $task->update(%data);
         }
-
         Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
+
+        # Update acls
+
+        # wiki_allow
+        # XXX this is a valid assumption for things like $contextACL and
+        # $parentACL, however for more complex %MAKRO{...}%s this might fail!
+        $db->do('UPDATE tasks SET wiki_acl_view=? || substr(wiki_acl_view,?) WHERE wiki_acl_view LIKE ?', {}, $newContext, length($oldContext)+1, "$oldContext \%");
+
+        # all done
+
         return;
     }
 
     # Context web moved
     ($oldWeb) = Foswiki::Func::normalizeWebTopicName($oldWeb, $oldTopic);
     ($newWeb) = Foswiki::Func::normalizeWebTopicName($newWeb, $newTopic);
+
+    # delete old wiki_acls, the new ones will be created by _index
+    $db->do('DELETE FROM wiki_acls WHERE webtopic_mode LIKE ? OR webtopic_mode LIKE ?', {}, "$newWeb \%", "$oldWeb \%");
 
     # It might happen that the form is not updated by Foswiki yet.
     # Using TasksAPI's query method will fail in that case.
@@ -221,6 +277,7 @@ sub afterRenameHandler {
     my $r = $content->{response};
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '1');
+    my $aclCache = {};
     foreach my $doc (@{$r->{docs}}) {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName(undef, $doc->{task_id_s});
         my ($meta) = Foswiki::Func::readTopic($tweb, $ttopic);
@@ -238,7 +295,7 @@ sub afterRenameHandler {
         my %data = (Context => "$newWeb.$ctopic");
         $data{Status} = 'deleted' if $newWeb =~ /^$Foswiki::cfg{TrashWebName}/;
         $task->update(%data);
-        _index($task);
+        _index($task, 1, $aclCache);
     }
 
     Foswiki::Func::setPreferencesValue('tasksapi_suppress_logging', '0');
@@ -250,11 +307,13 @@ sub beforeSaveHandler {
     my $solr = Foswiki::Plugins::SolrPlugin::getSearcher();
     my $search = $solr->entityDecode('topic:*Form text:"$wikiACL"', 1);
     my $raw = $solr->solrSearch($search)->{raw_response};
-    $tmpWikiACLs{solrStatus} = $raw->{_rc};
+    my $data = {};
+    push @tmpWikiACLs, $data;
+    $data->{solrStatus} = $raw->{_rc};
     return unless $raw->{_rc} == 200;
 
     my ($oldMeta) = Foswiki::Func::readTopic($web, $topic);
-    $tmpWikiACLs{acls} = {
+    $data->{acls} = {
         ALLOWTOPICVIEW   => $oldMeta->getPreference('ALLOWTOPICVIEW'),
         ALLOWTOPICCHANGE => $oldMeta->getPreference('ALLOWTOPICCHANGE'),
         DENYTOPICVIEW    => $oldMeta->getPreference('DENYTOPICVIEW'),
@@ -280,12 +339,29 @@ sub beforeSaveHandler {
         }
     }
 
-    $tmpWikiACLs{forms} = \@forms;
+    $data->{forms} = \@forms;
 }
 
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    # update wiki_acls when WebPreferences/SitePreferences changed
+    # XXX it would be nice if this only happens when the ACLs changed
+    my ($sitePrefsWeb, $sitePrefsTopic) = Foswiki::Func::normalizeWebTopicName(undef, $Foswiki::cfg{LocalSitePreferences});
+    if (defined $topic && $topic eq $Foswiki::cfg{WebPrefsTopicName}) {
+        local $Foswiki::Plugins::SESSION = Foswiki->new($Foswiki::Plugins::SESSION->{user});
+        my $db = db();
+        foreach my $webtopic_mode (@{$db->selectcol_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ? OR webtopic_mode LIKE ?', {}, "$web.\%", "$web/\%") || []}) {
+            _storeWebtopicAcls($db, $webtopic_mode);
+        }
+    } elsif (defined $topic && $topic eq $sitePrefsTopic && $web eq $sitePrefsWeb) {
+        local $Foswiki::Plugins::SESSION = Foswiki->new($Foswiki::Plugins::SESSION->{user});
+        my $db = db();
+        foreach my $webtopic_mode (@{$db->selectcol_arrayref("SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode != 'dummy'", {}) || []}) {
+            _storeWebtopicAcls($db, $webtopic_mode);
+        }
+    }
 
     # If we're dealing with a save from a template topic that contains template
     # tasks, copy them
@@ -336,23 +412,31 @@ sub afterSaveHandler {
         }
     }
 
-    # Index
-    return unless $tmpWikiACLs{solrStatus} && $tmpWikiACLs{solrStatus} == 200;
+    return unless scalar @tmpWikiACLs;
+    my $data = pop @tmpWikiACLs;
 
-    my $skipIndex = 0;
-    foreach my $key (keys %{$tmpWikiACLs{acls}}) {
+    my $aclsChanged = 0;
+    foreach my $key (keys %{$data->{acls}}) {
         my $topicPref = $meta->getPreference($key);
         $topicPref = '' unless defined $topicPref;
-        my $wikiPref = $tmpWikiACLs{acls}->{$key};
+        my $wikiPref = $data->{acls}->{$key};
         $wikiPref = '' unless defined $wikiPref;
-        $skipIndex = $wikiPref ne $topicPref;
-        last if $skipIndex;
+        $aclsChanged = $wikiPref ne $topicPref;
+        last if $aclsChanged;
     }
 
-    unless ($skipIndex) {
-        undef %tmpWikiACLs;
+    unless ($aclsChanged) {
         return;
     }
+
+    # update wiki_acls
+    my $db = db();
+    foreach my $webtopic_mode (@{$db->selectrow_arrayref('SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode LIKE ?', {}, "$web.$topic \%") || []}) {
+        _storeWebtopicAcls($db, $webtopic_mode);
+    }
+
+    # Index
+    return unless $data->{solrStatus} && $data->{solrStatus} == 200;
 
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
 
@@ -369,12 +453,11 @@ sub afterSaveHandler {
 
     # If one or more $wikiACL were present within a task form,
     # process them as well
-    unless (defined $tmpWikiACLs{forms}) {
-        undef %tmpWikiACLs;
+    unless (defined $data->{forms}) {
         return;
     }
 
-    foreach my $form (@{$tmpWikiACLs{forms}}) {
+    foreach my $form (@{$data->{forms}}) {
         $res = _query(acl => 0, query => {form => "$form"});
         if (defined $res->{tasks}) {
             foreach my $task (@{$res->{tasks}}) {
@@ -385,25 +468,14 @@ sub afterSaveHandler {
             }
         }
     }
-
-    undef %tmpWikiACLs;
 }
 
 sub db {
     return $db if defined $db;
-    $db = DBI->connect("DBI:SQLite:dbname=$Foswiki::cfg{DataDir}/$Foswiki::cfg{TasksAPIPlugin}{DBWeb}/tasks.db",
-        '', # user
-        '', # pwd
-        {
-            RaiseError => 1,
-            PrintError => 0,
-            AutoCommit => 1,
-            FetchHashKeyName => 'NAME_lc',
-            sqlite_unicode => $Foswiki::UNICODE ? 1 : 0
-        }
-    );
+    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi');
+    $db = $connection->{db};
     eval {
-        %schema_versions = %{ $db->selectall_hashref("SELECT * FROM meta", 'type') };
+        %schema_versions = %{$db->selectall_hashref("SELECT * FROM meta", 'type', {})};
     };
     _applySchema('core', @schema_updates);
     $db;
@@ -476,6 +548,7 @@ sub query {
     my $join = '';
     my $filter = '';
     my $order = $opts{order} || '';
+    my $order_select = ''; # select additional columns to order/group on
     my @args;
     my $filterprefix = ' WHERE';
     my %joins;
@@ -529,11 +602,13 @@ sub query {
                         $k = "$t";
                         $k .= ".value" unless $order =~ /\.value$/;
                     }
-                    push(@orders, "$k COLLATE NOCASE" . ($v ? ' DESC' : ''));
+                    push(@orders, "$k" . ($v ? ' DESC' : ''));
                 }
             }
             $order = " ORDER BY " . join(', ', @orders);
+            $order_select = " ," . join(', ', @orders);
         } elsif (!$singles{$order} && !$joins{$order}) {
+            next if $order =~ m/\W/;
             my $t = "$order";
             $t = "j_$t" unless $t =~ /^j_/;
             $join .= " LEFT JOIN task_multi $t ON(t.id = $t.id AND $t.type='$order')";
@@ -541,19 +616,36 @@ sub query {
             $order .= ".value" unless $order =~ /\.value$/;
         }
 
-        if (!$isArray) {
-            $order = " ORDER BY $order COLLATE NOCASE" if $order && $order =~ /^[\w.]+$/;
-            $order .= " DESC" if $order && $opts{desc};
+        if (!$isArray && $order) {
+            if ($order =~ m/^[\w.]+$/) {
+                $order_select = " ,$order";
+                $order = " ORDER BY $order";
+            }
+            $order .= " DESC" if $opts{desc};
         }
     }
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
-    $limit = " LIMIT $offset, $count" if $count;
-    my $group = '';
-    $group = ' GROUP BY t.id' if $join;
-    my $ids = db()->selectall_arrayref("SELECT t.id, raw FROM tasks t$join$filter$group$order$limit", {}, @args);
-    my $total = db()->selectrow_array("SELECT count(*) FROM tasks t$join$filter", {}, @args);
+    $count = -1 unless defined $count;
+    $limit = " LIMIT $count OFFSET $offset" if $count >= 0;
+    my $group = ' GROUP BY t.id, t.raw';
+    $group .= $order_select if $order_select;
+    my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
+    my ($ids, $total);
+    eval {
+        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
 
-    return {tasks => [], total => 0} unless @$ids;
+        if($limit ne '') {
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+        } else {
+            $total = scalar @$ids;
+        }
+    };
+    if($@) {
+        Foswiki::Func::writeWarning("Error querying: $@");
+        $total = 0;
+    }
+
+    return {tasks => [], total => $total} unless @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
@@ -562,57 +654,193 @@ sub query {
     } @$ids;
 
     my $ret = {tasks => \@tasks, total => $total};
-    return $ret unless $useACL;
-    @tasks = grep {
-        $_->checkACL('view')
-    } @tasks;
 
-    $ret->{tasks} = \@tasks;
     $ret;
 }
 *_query = \&query; # Backwards compatibility
+
+sub _getJoinString {
+    my ($args, $contextOnly) = @_;
+    return '' if Foswiki::Func::isAnAdmin();
+    my $users = $Foswiki::Plugins::SESSION->{users};
+    my $cuid = Foswiki::Func::getCanonicalUserID();
+    my @c = ();
+
+    # User and groups where user is member
+    my @items;
+    if($users->{mapping}->can('getMembershipsCUID')) {
+        @items = @{$users->{mapping}->getMembershipsCUID($cuid)};
+    } else {
+        @items = $users->{mapping}->eachMembership($cuid)->all();
+    }
+    push @items, $cuid;
+
+    unshift @$args, @items unless $contextOnly; # webtopic_mode=dummy
+    unshift @$args, @items; # acl_allow
+    unshift @$args, @items; # acl_deny
+
+    # This array will hold all valid identifiers for the user.
+    # NOTE: Must include ALL groups for the DENY prefs.
+    my $array = 'ARRAY[' . join(',', map{'?'} @items) . ']'; # TODO: somehow name this and create it only once
+
+    return " JOIN wiki_acls ON (" . ($contextOnly ? '' : "(wiki_acls.webtopic_mode='dummy' AND $array && t.acl_allow) OR ") . "(wiki_acls.webtopic_mode=t.wiki_acl_view AND (($array && wiki_acls.acl_allow OR wiki_acls.acl_allow='{}') AND NOT $array && wiki_acls.acl_deny)))";
+}
 
 # Create/update the task entry in the database
 sub _index {
     my $task = shift;
     my $transact = shift;
+    my $aclCache = shift || {};
     $transact = 1 unless defined $transact;
     my $db = db();
-    $db->begin_work if $transact;
-    $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id}) if $transact;
-    $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id}) if $transact;
-    my $form = $task->{form};
-    # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
-    my $raw = $Foswiki::UNICODE ? $task->{meta}->getEmbeddedStoreForm : Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm);
-    my %vals = (
-        id => $task->{id},
-        form => $form->web .'.'. $form->topic,
-        Parent => '',
-        raw => $raw,
-    );
-    my @extra;
-    for my $f (keys %{$task->{fields}}) {
-        my $v = $task->{fields}{$f};
-        next unless defined $v;
-        my $field = $form->getField($f);
-        if ($field && $field->can('isMultiValued') && $field->isMultiValued()) {
-            $v = [ split(/\s*,\s*/, $v) ];
-        } else {
-            $v = [ $v ];
+    try {
+        $db->begin_work if $transact;
+        my $form = $task->{form};
+        # Convert to Unicode as a workaround for bad constellation of perl/DBD::SQLite versions
+        my $raw = $Foswiki::UNICODE ? $task->{meta}->getEmbeddedStoreForm : Encode::decode($Foswiki::cfg{Site}{CharSet}, $task->{meta}->getEmbeddedStoreForm);
+        my @taskAcl = $task->getACL('VIEW');
+        my ($allowed, $denied, $wiki_acl_view) = ([], [], undef);
+        foreach my $access ( @taskAcl ) {
+            if ($access =~ /\$wikiACL\((\S+)\s+([^)]+)\)/) {
+                $wiki_acl_view = "$1 $2" unless defined $wiki_acl_view;
+            } else {
+                push @$allowed, $access;
+            }
         }
-        if ($singles{$f}) {
-            $vals{$f} = $v->[0];
-        } else {
-            push @extra, map { { type => $f, value => $_ } } @$v;
+        my %vals = (
+            id => $task->{id},
+            acl_allow => $allowed,
+            wiki_acl_view => $wiki_acl_view,
+            form => $form->web .'.'. $form->topic,
+            Parent => '',
+            raw => $raw,
+            tasktype => $task->getPref('TASK_TYPE'),
+        );
+        my @extra;
+        for my $f (keys %{$task->{fields}}) {
+            my $v = $task->{fields}{$f};
+            next unless defined $v;
+            my $field = $form->getField($f);
+            if ($field && $field->can('isMultiValued') && $field->isMultiValued()) {
+                $v = [ split(/\s*,\s*/, $v) ];
+            } else {
+                $v = [ $v ];
+            }
+            if ($singles{$f}) {
+                $vals{$f} = $v->[0];
+            } else {
+                push @extra, map { { type => $f, value => $_ } } @$v;
+            }
         }
-    }
-    my @keys = keys %vals;
-    $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
-    foreach my $e (@extra) {
-        $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
-    }
-    $db->commit if $transact;
+        if ($wiki_acl_view && not $aclCache->{$wiki_acl_view}) {
+            $aclCache->{$wiki_acl_view} = 1;
+            _storeWebtopicAcls($db, $wiki_acl_view);
+        } else {
+            $wiki_acl_view = 'dummy';
+        }
+        my @keys = keys %vals;
+        # make sure INT fields are not empty strings
+        foreach my $intKey ( grep { $_ =~ m/^(?:created|due|position)$/i } @keys ) {
+            $vals{$intKey} = 0 unless $vals{$intKey} && $vals{$intKey} =~ m/^\d+$/;
+        }
+        $db->do("DELETE FROM tasks WHERE id=?", {}, $task->{id});
+        $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
+        $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
+        foreach my $e (@extra) {
+            $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
+        }
+        $db->commit if $transact;
+        $transact = 0; # cancel rollback
+    } finally {
+        if($transact) {
+            Foswiki::Func::writeWarning("Could not index task! Rolling back transaction.");
+            $db->rollback();
+        }
+    };
 }
+
+# Will put the acls for a webtopic into to db.
+#
+# Parameters:
+#    * db: handle to db
+#    * webtopic_mod: WebTopic and mode separated by a space, eg. "Minutes.Minute0000 VIEW"
+sub _storeWebtopicAcls {
+    my ($db, $webtopic_mode) = @_;
+    my ($allowList, $denyList);
+    my ($webtopic, $mode) = $webtopic_mode =~ m#^(.*) (.*)#;
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $webtopic);
+
+    my $mapping = $Foswiki::Plugins::SESSION->{users}->{mapping};
+    my $convert = $mapping->can('loginOrGroup2cUID'); # this is a UnifiedAuth speciality
+
+    # copied/modified from Foswiki/Access/TopicACLAccess.pm
+    my $_getACL = sub {
+        my ( $meta, $mode ) = @_;
+
+        if ( defined $meta->topic && !defined $meta->getLoadedRev ) {
+            # Lazy load the latest version.
+            $meta->loadVersion();
+        }
+
+        my $text = $meta->getPreference($mode);
+        return undef unless defined $text;
+
+        # Remove HTML tags (compatibility, inherited from Users.pm
+        $text =~ s/(<[^>]*>)//g;
+
+        # Dump the users web specifier if userweb
+        # Convert to cUIDs
+        my @list = grep { /\S/ } map {
+            my $item = $_;
+            $item =~ s/^($Foswiki::cfg{UsersWebName}|%USERSWEB%|%MAINWEB%)\.//;
+            if($convert) {
+                $item = &$convert($mapping, $item);
+            }
+            defined $item ? $item : '';
+        } split( /[,\s]+/, $text );
+
+        return undef unless scalar @list; # empty counts as 'not set'
+        return \@list;
+    };
+
+    my ($meta) = Foswiki::Func::readTopic($web, $topic);
+
+    $allowList = &$_getACL( $meta, 'ALLOWTOPIC' . $mode );
+    $denyList  = &$_getACL( $meta, 'DENYTOPIC' . $mode );
+    while (not defined $allowList) {
+        ($meta) = Foswiki::Func::readTopic($web, undef);
+        $allowList = &$_getACL( $meta, 'ALLOWWEB' . $mode );
+        my $webDenyList = &$_getACL( $meta, 'DENYWEB' . $mode );
+        if($webDenyList) {
+            $denyList ||= [];
+            push @$denyList, @$webDenyList;
+        }
+        last unless $web =~ s#(.*)[./].*#$1#;
+    }
+    if (not defined $allowList) {
+        my ($sw, $st) = Foswiki::Func::normalizeWebTopicName(undef, $Foswiki::cfg{LocalSitePreferences});
+        ($meta) = Foswiki::Func::readTopic($sw, $st);
+        $allowList = &$_getACL( $meta, 'ALLOWROOT' . $mode );
+        my $rootDenyList = &$_getACL( $meta, 'DENYROOT' . $mode );
+        if($rootDenyList) {
+            $denyList ||= [];
+            push @$denyList, @$rootDenyList;
+        }
+    }
+
+    # make sure they exist and filter duplicates
+    sub unique {
+        my @data = @{shift || []};
+        my %hash = map { $_ => 1 } @data;
+        my @keys = keys %hash;
+        return \@keys;
+    };
+    $allowList =  unique($allowList);
+    $denyList =  unique($denyList);
+    $db->do("DELETE FROM wiki_acls WHERE webtopic_mode=?", {}, $webtopic_mode);
+    $db->do("INSERT INTO wiki_acls (webtopic_mode, acl_allow, acl_deny) VALUES (?, ?, ?)", {}, $webtopic_mode, $allowList, $denyList);
+}
+
 # Bring the entire database up-to-date
 sub _fullindex {
     my $noprint = shift;
@@ -625,9 +853,10 @@ sub _fullindex {
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
     $indexer->deleteByQuery('task_id_s:*');
 
+    my $aclCache = {};
     foreach my $t (Foswiki::Plugins::TasksAPIPlugin::Task::loadMany()) {
         print $t->{id} ."\n" unless $noprint;
-        _index($t, 0);
+        _index($t, 0, $aclCache);
         next if $t->{fields}{TopicType} ne 'task';
         $t->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
@@ -970,34 +1199,30 @@ sub restMultiUpdate {
 
 # Translate stuff without having to worry about escaping
 sub _translate {
-    my ($meta, $text) = @_;
-    $text =~ s#(\\+)#$1\\#g;
-    $text =~ s#(?<!\\)"#\\"#g;
-    $text =~ s#\$#\$dollar#g;
-    $text =~ s#%#\$percnt#g;
-    $meta->expandMacros("%MAKETEXT{\"$text\"}%");
+    # my ($meta, $text) = @_;
+    return Foswiki::Plugins::JSi18nPlugin::MAKETEXT($_[0]->session(), {_DEFAULT => $_[1]});
 };
 
 sub _available_contexts {
     my $task = shift;
     return unless $task;
     my $type = $task->getPref('TASK_TYPE') || '';
-    my $title = _getTopicTitle($task->{fields}{Context});
-    my %contexts;
-    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
+    return $contexts_cache{$type} if $contexts_cache{$type};
+    my %contexts = ();
+    my @args = ($type);
+    my $aclJoin = _getJoinString(\@args, 1);
+    my $ctx = db()->selectcol_arrayref("SELECT DISTINCT t.Context FROM tasks t $aclJoin WHERE t.tasktype=? ORDER BY t.Context", {}, @args);
     foreach my $a (@$ctx) {
-        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
-            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
-        );
-        if ($a->[0] ne '' && $t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context}) {
-            unless($t->checkACL('change')){
-                next;
-            }
-            $title = _getTopicTitle($a->[0]);
-            $contexts{$title} = $a->[0];
+        if ($a ne '') {
+            my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $a);
+            my ($meta) = Foswiki::Func::readTopic($web, $topic);
+            next unless($meta->haveAccess('CHANGE'));
+            my $title = _getTopicTitle($meta);
+            $contexts{$a} = $title;
         }
     }
-    return %contexts;
+    $contexts_cache{$type} = \%contexts;
+    return \%contexts;
 }
 # Given a task object, returns a structure suitable for serializing to JSON
 # that contains all the information we need
@@ -1012,12 +1237,12 @@ sub _enrich_data {
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
-    my %contexts = _available_contexts($task);
+    my $contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
         children => \@childtasks,
-        contexts => \%contexts,
+        contexts => $contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
@@ -1582,16 +1807,19 @@ sub _renderTask {
     my $type = $task->getPref('TASK_TYPE');
     my $ftype = $type . '_form';
     my $taskForm = join('.', Foswiki::Func::normalizeWebTopicName($task->{form}->web, $task->{form}->topic));
-    unless ($storedTemplates->{$type}) {
+    my $taskFormWeb = $task->{form}->web();
+    unless (defined $storedTemplates->{$taskFormWeb}->{$type}) {
         $file =~ s#/#.#g;
-        Foswiki::Func::pushTopicContext($task->{form}->web, $task->{form}->topic);
+        # The pushTopicContext will pick up any CustomSkin...Templates.
+        # Assuming all forms in that web generate the same context.
+        Foswiki::Func::pushTopicContext($taskFormWeb, $task->{form}->topic());
         Foswiki::Func::loadTemplate($file) if $file;
         Foswiki::Func::popTopicContext();
-        $storedTemplates->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
-        $storedTemplates->{"$ftype"} = $taskForm;
+        $storedTemplates->{$taskFormWeb}->{$type} = Foswiki::Func::expandTemplate($taskTemplate);
+        $storedTemplates->{$taskFormWeb}->{"$ftype"} = $taskForm;
     }
 
-    if ($storedTemplates->{"$ftype"} ne $taskForm) {
+    if ($storedTemplates->{$taskFormWeb}->{"$ftype"} ne $taskForm) {
         Foswiki::Func::writeWarning(
             "Non-unique value for TASKCFG_TASK_TYPE in '$taskForm' detected! "
             . "Possible override of task templates specified in $storedTemplates->{$ftype}."
@@ -1614,7 +1842,7 @@ sub _renderTask {
         ($renderweb, $rendertopic) = ($task->{fields}{Context} =~ /^(.*)\.(.*)$/);
     }
     Foswiki::Func::pushTopicContext($renderweb, $rendertopic);
-    $task = $meta->expandMacros($storedTemplates->{$type});
+    $task = $meta->expandMacros($storedTemplates->{$taskFormWeb}->{$type});
     Foswiki::Func::popTopicContext();
     $task = $meta->renderTML($task);
 
@@ -1639,7 +1867,7 @@ sub _addToZone {
         push(@paths, $meta->expandMacros($path));
     }
 
-    my $section = "TASKSAPI::TYPE::$id::" . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
+    my $section = "TASKSAPI::TYPE::${id}::" . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     my $dep = 'TASKSAPI::' . ($zone eq 'head' ? 'STYLES' : 'SCRIPTS');
     $dep .= ', jsi18nCore' if $zone eq 'script';
     my @includes = ();
@@ -1691,8 +1919,8 @@ sub _deepen {
 # per column, along with a definition of corresponding headers.
 sub _parseGridColumns {
     my ($columns, $headers) = @_;
-    my @columns = grep /\S/, map { s/^\s*|\s*$//gr } split(/,/, $columns);
-    my @headers = grep /\S/, map { s/^\s*|\s*$//gr =~ s/\$comma/,/gr } split(/,/, $headers);
+    my @columns = grep /\S/, map { s/^\s*|\s*$//gr } split(/,/, $columns || '');
+    my @headers = grep /\S/, map { s/^\s*|\s*$//gr =~ s/\$comma/,/gr } split(/,/, $headers || '');
 
     my (%headerTitles, %headerSort);
     my (%colInfo, @colOrder);
@@ -1856,7 +2084,7 @@ STYLE
         "<script type='text/json'>$jsonPrefs</script>");
 
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
-        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>");
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>", "VUEJSPLUGIN");
 
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID', <<SCRIPT, 'jsi18nCore' );
 <script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>
@@ -2448,11 +2676,16 @@ sub _decodeChanges {
 }
 
 sub _getTopicTitle {
-    my $topic = shift;
-    my ($w, $t) = Foswiki::Func::normalizeWebTopicName(undef, $topic);
-    my ($meta) = Foswiki::Func::readTopic($w, $t);
+    my $param = shift;
+    my $meta;
+    if(ref $param) {
+        $meta = $param;
+    } else {
+        my ($w, $t) = Foswiki::Func::normalizeWebTopicName(undef, $param);
+        ($meta) = Foswiki::Func::readTopic($w, $t);
+    }
     my $title = $meta->get('FIELD', 'TopicTitle');
-    return  $title->{value} || $topic;
+    return  $title->{value} || $meta->topic();
 }
 
 sub tagContextSelector {
@@ -2465,30 +2698,19 @@ sub tagContextSelector {
     if (!$task) {
         return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
     }
-    my $type = $task->getPref('TASK_TYPE') || '';
-    if (!$type) {
-        return '%RED%TASKCONTEXTSELECTOR: missing preference TASK_TYPE for given task%ENDCOLOR%%BR%';
-    }
 
-    my $title = _getTopicTitle($task->{fields}{Context});
+    my $ctx = _available_contexts($task);
+    my $current = $task->{fields}{Context};
+    my $currentTitle = $ctx->{$current} || _getTopicTitle($current);
     my @options = (<<OPTION);
-<option class="foswikiOption" value="$task->{fields}{Context}" selected="selected">$title</option>
+<option class="foswikiOption" value="$current" selected="selected">$currentTitle</option>
 OPTION
 
     my %retval;
-    my $ctx = db()->selectall_arrayref("SELECT DISTINCT t.Context, t.id FROM tasks t GROUP BY t.Context");
-    foreach my $a (@$ctx) {
-        my $t = Foswiki::Plugins::TasksAPIPlugin::Task::load(
-            Foswiki::Func::normalizeWebTopicName(undef, $a->[1])
-        );
-        if ($t->getPref('TASK_TYPE') eq $type && $task->{fields}{Context} ne $t->{fields}{Context} && $t->{fields}{Status} ne 'deleted') {
-            unless($t->checkACL('change')){
-                next;
-            }
-            $title = _getTopicTitle($a->[0]);
-            my $option = "<option class=\"foswikiOption\" value=\"$a->[0]\">$title</option>";
-            push(@options, $option);
-        }
+    foreach my $a (keys %$ctx) {
+        next if $a eq $current;
+        my $option = "<option class=\"foswikiOption\" value=\"$a\">$ctx->{$a}</option>";
+        push(@options, $option);
     }
 
     my $inner = join('', @options);
@@ -2561,7 +2783,10 @@ sub tagInfo {
 
     my $task = $currentTask;
     if ($params->{task}) {
-        $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
+        my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $params->{task});
+        unless ($currentTask && $currentTask->{fields}->{id} && $currentTask->{fields}->{id} eq "$web.$topic") {
+            $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
+        }
     }
     if (!$task) {
         return '%RED%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
@@ -2692,8 +2917,7 @@ sub tagInfo {
         return $task->form->web .'.'. $task->form->topic if $meta eq 'form';
         return $task->id if $meta eq 'id';
         if ($meta eq 'json') {
-            local $storedTemplates;
-            my $json = to_json(_enrich_data($task, {tasktemplate => 'tasksapi::empty'}));
+            my $json = to_json(_enrich_data($task, {tasktemplate => 'tasksapi::empty', noHtml => $params->{noHtml}}));
             $json =~ s/&/&amp;/g;
             $json =~ s/</&lt;/g;
             $json =~ s/>/&gt;/g;
