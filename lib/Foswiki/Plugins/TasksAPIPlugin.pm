@@ -75,8 +75,8 @@ my @schema_updates = (
             type TEXT NOT NULL,
             value TEXT NOT NULL COLLATE \"en_US\"
         )",
-        "CREATE INDEX task_multi_id_idx ON task_multi (id, type, (md5(value)))",
-        "CREATE INDEX task_type_idx ON task_multi (type, (md5(value)))",
+        "CREATE INDEX task_multi_id_idx ON task_multi (id, type, value)",
+        "CREATE INDEX task_type_idx ON task_multi (type, value)",
         # Wiki acls (of context topics)
         # The dummy is to check the acls on the task itself
         "CREATE TABLE wiki_acls (
@@ -98,6 +98,12 @@ my @schema_updates = (
         "CREATE INDEX jobs_task ON jobs (task_id)",
         "CREATE INDEX jobs_done_time ON jobs (job_done, job_time)",
     ],
+    [
+        "DROP INDEX task_multi_id_idx",
+        "DROP INDEX task_type_idx",
+        "CREATE INDEX task_multi_id_idx ON task_multi (id, type, (md5(value)))",
+        "CREATE INDEX task_type_idx ON task_multi (type, (md5(value)))",
+    ]
 );
 my %singles = (
     id => 1,
