@@ -162,8 +162,18 @@ sub _reduce {
     $cur;
 }
 
+sub getACL {
+    my ($this, $type) = @_;
+
+    return _getACL($this->{meta}, $this->{form}, $type);
+}
+
 sub _getACL {
     my ($this, $form, $type) = @_;
+
+    # XXX It is entirely possible to get collect multiple wikiACLs, however
+    # only the first will be evaluated in _checkACL and also the db will only
+    # hold a single value.
 
     $type = "\U$type";
     my $aclPref = $form->getPreference("TASKACL_\U$type") || '';
@@ -242,7 +252,7 @@ sub _checkACL {
             Foswiki::Plugins::TasksAPIPlugin::_cacheContextACL("$aclwt,$type", $ccache);
             return $ccache;
         }
-        my $cuid = Foswiki::Func::getCanonicalUserID($item);
+        my $cuid = Foswiki::Func::getCanonicalUserID($item) || '';
         if ($user eq $cuid || Foswiki::Func::isGroup($item) && Foswiki::Func::isGroupMember($item, $user)) {
             Foswiki::Plugins::TasksAPIPlugin::_cacheACL($aclstring, 1);
             return 1;
@@ -452,7 +462,12 @@ sub notify {
         }
     }
     Foswiki::Func::setPreferencesValue('TASKSAPI_ACTOR', $actor);
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, {}, 1) });
+    my $mailPreferences = {};
+    my $mailLanguage = Foswiki::Func::getPreferencesValue('MAIL_LANGUAGE');
+    if($mailLanguage){
+        $mailPreferences->{LANGUAGE} = $mailLanguage;
+    }
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, $mailPreferences, 1) });
     Foswiki::Func::popTopicContext();
 }
 
@@ -607,7 +622,7 @@ sub update {
     }
 
     $self->_postUpdate;
-    Foswiki::Plugins::TasksAPIPlugin::_index($self);
+    Foswiki::Plugins::TasksAPIPlugin::_index($self, 0, $data{aclCache});
 
     require Foswiki::Plugins::SolrPlugin;
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
@@ -766,6 +781,7 @@ sub solrize {
       'container_id' => $self->{fields}{Context},
       'container_url' => $ctxurl,
       'container_title' => $self->{fields}{Title},
+      'container_title_escaped_s' => $indexer->escapeHtml($self->{fields}{Title}),
       'task_created_dt' => $created,
       'task_due_dt' => $date,
       'task_state_s' => $state,
@@ -917,6 +933,7 @@ sub indexAttachment {
         date => Foswiki::Func::formatTime($attachment->{'date'} || 0, 'iso', 'gmtime'),
         version => $attachment->{'version'} || 1,
         name => $name,
+        name_escaped_s => $indexer->escapeHtml($name),
         comment => $attachment->{'comment'} || '',
         size => $attachment->{'size'} || 0,
         icon => $indexer->mapToIconFileName($extension),
@@ -925,6 +942,7 @@ sub indexAttachment {
         container_topic => $ctxTopic,
         container_url => Foswiki::Func::getViewUrl($ctxWeb, $ctxTopic) . "?id=$self->{id}",
         container_title => $self->{fields}{Title},
+        container_title_escaped_s => $indexer->escapeHtml($self->{fields}{Title}),
         task_context_s => $self->{fields}{Context},
         author_s => Foswiki::Func::expandCommonVariables("%RENDERUSER{\"$attachment->{user}\"}%", $ctxTopic, $ctxWeb)
     );

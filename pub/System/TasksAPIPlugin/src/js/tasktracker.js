@@ -968,10 +968,18 @@
     var opts = $tracker.data('tasktracker_options');
     var tid = $tracker.attr('id');
     if (opts.updateurl) {
+      var filters = /[[?&;](f_[^&;].*)/g.exec(url);
+
       if (showAll) {
         url = opts.updateurl + '&page=1&pagesize=-1&tid=' + tid;
       } else {
         url = opts.updateurl + '&page=' + page + '&tid=' + tid;
+      }
+
+      if(filters) {
+        for(var i = 1; i < filters.length; i++) {
+            url += '&' + filters[i];
+        }
       }
 
       if (tab) {

@@ -1475,7 +1475,7 @@ TasksPanel = function(tasktracker) {
       // scroll highlighted task into view...
       self.currentTask.removeClass('highlight');
       nextTask.addClass('highlight');
-      togglePermalinkButton(nextTask);
+      self.buttons.permalink['show']();
       var wh = $(window).height();
       var sy = window.scrollY;
       var ot = nextTask.offset().top;
@@ -1528,24 +1528,6 @@ TasksPanel = function(tasktracker) {
     });
 
     return deferred.promise();
-  };
-
-  var togglePermalinkButton = function(task) {
-    var data = task.data('task_data');
-    var user = foswiki.getPreference('USERNAME');
-    if (user === 'admin') user = 'BaseUserMapping_333';
-    if (user === 'guest') user = 'BaseUserMapping_666';
-    var canPermalink = false;
-    try {
-      canPermalink = data.fields.Author.value === user
-        || data.fields.AssignedTo.value === user
-        || data.fields.Informees.value.split(/\s*,\s*/).indexOf(user) > -1;
-    } catch (e) {
-      // ignore;
-    }
-
-    var linkFunc = canPermalink ? 'show' : 'hide';
-    self.buttons.permalink[linkFunc]();
   };
 
   var handleLease = function( action, payload ) {
@@ -1803,7 +1785,7 @@ TasksPanel = function(tasktracker) {
     self.currentTask = $task;
     checkCanChange($task.data('task_data')._canChange);
     self.currentTask.addClass('highlight');
-    togglePermalinkButton($task);
+    self.buttons.permalink['show']();
     self.panel.empty();
 
     var $content = $('<div class="content slide-in"></div>').css('display', 'none');

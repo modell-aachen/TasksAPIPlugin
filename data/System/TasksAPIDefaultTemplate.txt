@@ -273,7 +273,7 @@ $edit"
 %RENDERFOREDIT{
   form="%taskeditor_form%"
   fields="Title"
-  format="<table><tr><td><span class=\"title\" title=\"%TASKINFO{field="Title" task="%taskeditor_task%"}%\">$edit</span></td><td>$mandatory</td></tr></table>"
+  format="<table><tr><td><span class=\"title\" title=\"%TASKINFO{field="Title" task="%taskeditor_task%" escape="1"}%\">$edit</span></td><td>$mandatory</td></tr></table>"
   header=""
   footer=""
 }%
@@ -457,7 +457,7 @@ $edit"
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title view-only">
-      <span class="title" title="%TASKINFO{field="Title"}%">%ENCODE{"%TASKINFO{field="Title" shorten="90"}%" type="entity"}%</span>
+      <span class="title" title="%TASKINFO{field="Title" escape="1"}%">%ENCODE{"%TASKINFO{field="Title" shorten="90"}%" type="entity"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
@@ -527,7 +527,7 @@ $edit"
 %TMPL:DEF{"tasksapi::task"}%%{
 }%<tr class="task %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
 %TASKINFO{type="columns"}%
-<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json"}%</literal></div></td>
+<td class="hidden task-data-container"><div class="task-data"><literal>%TASKINFO{meta="json" noHtml="1"}%</literal></div></td>
 <td class="hidden task-fullview-container"><div class="task-fullview">%TASKINFO{expandtemplate="%TASKINFO{expand="fullviewtemplate"}%"}%</div></td>
 </tr>%{
 }%%IF{"$'URLPARAM{taskDetails}'" then="$percntTMPL:P{\"tasksapi::task::pdetails\"}$percnt"}%%{

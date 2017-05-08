@@ -26,6 +26,7 @@ The following types of requests for information about tasks are supported:
       * =ChangesetCount=: returns the number of changesets.
       * =FetchedChildCount=: returns the number of child tasks (limited to those fetched by the surrounding task grid, for performance reasons).
    * <code>template=foo</code>: renders the task using the template section =foo=.
+   * <code>escape=foo</code>: escapes =&amp;=, =&lt;=, =&gt;= and =&quot;= if =foo= is set to a Perl true value
 
 ---++++ Get information about the task grid
 

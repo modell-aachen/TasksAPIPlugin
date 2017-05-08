@@ -51,7 +51,7 @@ The following parameters are available:
 | states="..." | The options available in the status filter widget in =select+values+ format. The key should match a valid task state (one or more of 'open', 'closed', 'deleted', 'all'). | %<nop>MAKETEXT{"open"}%=open,%<nop>MAKETEXT{"closed"}%=closed,%<nop>MAKETEXT{"all"}%=all |
 | tasktemplate="..." | Name of the template used to render a task entry | tasksapi::task |
 | template="..." | The name of the task grid template | tasksapi::grid |
-| templatefile="..." | Name of the template file to be read before applying templates | %<nop>SYSTEMWEB%.TasksAPITemplate |
+| templatefile="..." | Name of the template file to be read before applying templates | %<nop>SYSTEMWEB%.TasksAPIDefaultTemplate |
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
 | titlelength="..." | Number of characters before a task's title gets trancuated. Set to =0= to disable title length restrictions. | 100 |
 | updateurl="..." | An URL used for async grid loading. | |
