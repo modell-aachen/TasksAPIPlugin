@@ -583,8 +583,10 @@ sub query {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
         } else {
-            $filter .= "$filterprefix $q = ?";
-            push @args, $v;
+            unless($q eq 'Status' && $v eq 'closed' && $opts{depth} ne 0 && $opts{depth} ne ''){
+                $filter .= "$filterprefix $q = ?";
+                push @args, $v;
+            }
         }
         $filterprefix = ' AND';
     }
@@ -1884,7 +1886,7 @@ sub _addToZone {
 
 # Given an array of tasks, fetch children up to a specified depth
 sub _deepen {
-    my ($tasks, $depth, $order) = @_;
+    my ($tasks, $depth, $order, $status) = @_;
     $depth |= 0;
 
     for my $t (@$tasks) {
@@ -1900,7 +1902,7 @@ sub _deepen {
         last unless @ids;
 
         $depth--;
-        my $children = query(query => {Parent => \@ids}, order => $order);
+        my $children = query(query => {Parent => \@ids, Status => $status}, order => $order);
         @taskstofetch = ();
         for my $c (@{$children->{tasks}}) {
             $c->{_depth} = $depth;
@@ -2391,7 +2393,8 @@ SCRIPT
         order => $order,
         desc => $desc,
         count => $pageSize,
-        offset => $offset
+        offset => $offset,
+        depth => $depth
     );
 
     my $id_param = $req->param('id');
@@ -2401,7 +2404,27 @@ SCRIPT
         );
         unshift @{$res->{tasks}}, @{$extrares->{tasks}} if $extrares && $extrares->{tasks};
     }
-    _deepen($res->{tasks}, $depth, $params->{order});
+    _deepen($res->{tasks}, $depth, $params->{order}, $query->{Status});
+
+    my $thash = {};
+    @{$thash}{map {$_->{id}} @{$res->{tasks}}} = @{$res->{tasks}};
+        #remove parent if stauts is not equal and no child with that status is available
+    if($query->{Status} eq "closed"){
+        foreach my $x (@{$res->{tasks}}) {
+            my $parent = $thash->{$x->{fields}{Parent}};
+            if(!$parent && $x->{fields}{Status} ne $query->{Status} && scalar($x->{children_acl}) < 1){
+                #remove from@$res->{tasks} if is parent and status ne
+                @{$res->{tasks}} = grep {$_ ne $x} @{$res->{tasks}};
+            } else {
+                foreach my $y (@{$x->{children_acl}}) {
+                    if($y->{fields}{Status} ne $query->{Status}){
+                        #remove from@$res->{tasks} if is parent and status ne
+                        @{$x->{children_acl}} = grep {$_ ne $y} @{$x->{children_acl}};
+                    }
+                }
+            }
+        }
+    }
 
     my $select = join('\n', @options);
     $settings{totalsize} = $res->{total};
