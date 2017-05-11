@@ -105,8 +105,8 @@ TasksPanel = function(tasktracker) {
       if ( self.isUpload ) {
         toggleUpload();
       }
-
-      self.createTask();
+      var obj = $.parseJSON(self.currentTask.find('.task-data').html())
+      self.createTask(obj.fields.Parent.value);
       return false;
     });
 
