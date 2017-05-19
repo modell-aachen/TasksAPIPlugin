@@ -583,7 +583,7 @@ sub query {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
         } else {
-            unless($q eq 'Status' && $v eq 'closed' && $opts{depth} ne 0 && $opts{depth} ne ''){
+            unless($q eq 'Status' && ($v eq 'closed' || $v eq 'open') && $opts{depth} ne 0 && $opts{depth} ne ''){
                 $filter .= "$filterprefix $q = ?";
                 push @args, $v;
             }
