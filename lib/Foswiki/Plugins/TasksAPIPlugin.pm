@@ -375,29 +375,30 @@ sub afterSaveHandler {
     if ($templatetopic) {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($web, $templatetopic);
         my $res = _query(query => {Context => "$tweb.$ttopic", TopicType => 'task-prototype'});
-        return unless defined $res && @{$res->{tasks}};
 
-        # Tasks are sorted such that tasks without parents are copied first.
-        # This ensures that their new id can be set as the parent on copied
-        # child tasks.
-        my @stasks = sort { $a->{fields}{Parent} cmp $b->{fields}{Parent} } @{$res->{tasks}};
-        my $newTasksMapping = {};
-        foreach my $t (@stasks) {
-            if ($t->{fields}{Parent} && $t->{fields}{Parent} ne '') {
-                $t->copy(
-                    context => "$web.$topic",
-                    form => $t->getPref('INSTANTIATED_FORM'),
-                    type => 'task',
-                    fields => {
-                        Parent => $newTasksMapping->{$t->{fields}{Parent}}->{id},
-                    },
-                );
-            } else {
-                $newTasksMapping->{$t->{id}} = $t->copy(
-                    context => "$web.$topic",
-                    form => $t->getPref('INSTANTIATED_FORM'),
-                    type => 'task',
-                );
+        if(defined $res && @{$res->{tasks}}) {
+            # Tasks are sorted such that tasks without parents are copied first.
+            # This ensures that their new id can be set as the parent on copied
+            # child tasks.
+            my @stasks = sort { $a->{fields}{Parent} cmp $b->{fields}{Parent} } @{$res->{tasks}};
+            my $newTasksMapping = {};
+            foreach my $t (@stasks) {
+                if ($t->{fields}{Parent} && $t->{fields}{Parent} ne '') {
+                    $t->copy(
+                        context => "$web.$topic",
+                        form => $t->getPref('INSTANTIATED_FORM'),
+                        type => 'task',
+                        fields => {
+                            Parent => $newTasksMapping->{$t->{fields}{Parent}}->{id},
+                        },
+                    );
+                } else {
+                    $newTasksMapping->{$t->{id}} = $t->copy(
+                        context => "$web.$topic",
+                        form => $t->getPref('INSTANTIATED_FORM'),
+                        type => 'task',
+                    );
+                }
             }
         }
     }
