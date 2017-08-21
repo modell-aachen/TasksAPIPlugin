@@ -539,8 +539,11 @@ Queries the database for tasks. =%opts= may contain the following keys:
    * =desc=: 1 to sort in descending order
    * =offset=: skip this many results
    * =count=: return at most this many results
+   * =groupbyField=: a FormField name to aggregate results by; return value
+     will look like {values:['A Value', ....], total: 23}
 
-Returns a list of matching task objects.
+Returns a list of matching task objects (except when =groupbyField= was
+specified).
 
 =cut
 
@@ -637,30 +640,49 @@ sub query {
     my $group = ' GROUP BY t.id, t.raw';
     $group .= $order_select if $order_select;
     my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
-    my ($ids, $total);
-    eval {
-        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
+    my $ret;
+    if(!$opts{groupbyField}) {
+        my ($ids, $total);
+        eval {
+            $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
 
-        if($limit ne '') {
-           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
-        } else {
-            $total = scalar @$ids;
+            if($limit ne '') {
+               $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+            } else {
+                $total = scalar @$ids;
+            }
+        };
+        if($@) {
+            Foswiki::Func::writeWarning("Error querying: $@");
+            $total = 0;
         }
-    };
-    if($@) {
-        Foswiki::Func::writeWarning("Error querying: $@");
-        $total = 0;
+
+        return {tasks => [], total => $total} unless @$ids;
+        my @tasks = map {
+            my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
+            my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
+            $task->{_canChange} = $task->checkACL('change');
+            $task
+        } @$ids;
+
+        $ret = {tasks => \@tasks, total => $total};
+    } else {
+        # XXX does not support limit or group (haha) parameters
+        my ($ids, $total);
+        eval {
+            push @args, $opts{groupbyField};
+            $ids = db()->selectcol_arrayref("SELECT value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter$order AND type = ? GROUP BY value", {}, @args);
+
+            $total = scalar @$ids;
+        };
+        if($@) {
+            Foswiki::Func::writeWarning("Error querying: $@");
+            $total = 0;
+        }
+
+        return {values => [], total => $total} unless @$ids;
+        $ret = {values => $ids, total => $total};
     }
-
-    return {tasks => [], total => $total} unless @$ids;
-    my @tasks = map {
-        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
-        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
-        $task->{_canChange} = $task->checkACL('change');
-        $task
-    } @$ids;
-
-    my $ret = {tasks => \@tasks, total => $total};
 
     $ret;
 }
@@ -1364,21 +1386,11 @@ sub tagTaskTypeFilter {
     my($session, $params, $topic, $web, $topicObject) = @_;
 
     my $query = $currentOptions->{query} || '{}';
-    if ($query) {
-        $query = from_json($query);
-    }
+    $query = from_json($query);
+    $query->{groupbyField} = 'Type';
 
-    my $res = _query($query, 0);
-    my @types = map {
-        $_->{fields}{Type}
-    } @{$res->{tasks}};
-
-    my @unique;
-    foreach my $type (@types) {
-        push @unique, $type unless grep(/$type/, @unique);
-    }
-
-    return join(',', @unique);
+    my $res = _query(%$query);
+    return join(',', @{$res->{values}});
 }
 
 sub tagFilter {
