@@ -549,55 +549,23 @@ specified).
 
 sub query {
     my %opts = @_;
+
+    return _queryGroup(\%opts) if $opts{groupbyField};
+
     my $useACL = $opts{acl};
     $useACL = 1 unless defined $useACL;
 
     my $query = $opts{query} || {};
     $query->{TopicType} ||= 'task';
 
-    my $join = '';
-    my $filter = '';
     my $order = $opts{order} || '';
     my $order_select = ''; # select additional columns to order/group on
-    my @args;
-    my $filterprefix = ' WHERE';
-    my %joins;
-    for my $q (keys %$query) {
-        next unless $q =~ /^\w+$/s;
-        my $v = $query->{$q};
 
-        if ($singles{$q}) {
-            $q = 't.id' if $q eq 'id';
-        } else {
-            my $t = "j_$q";
-            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
-            $joins{$q} = 1;
-            if ($order eq $q) {
-                $order = "$t.value";
-                $joins{$order} = 1; # make sure we don't add this join again for ordering
-            }
-            $q = "$t.value";
-        }
-
-        if (ref($v) eq 'ARRAY') {
-            $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
-            push @args, @$v;
-        } elsif (ref($v) eq 'HASH') {
-            if ($v->{type} eq 'range') {
-                $filter .= "$filterprefix $q BETWEEN ? AND ?";
-                push @args, $v->{from}, $v->{to};
-            } elsif ($v->{type} eq 'like') {
-                $filter .= "$filterprefix $q LIKE ?";
-                push @args, "\%$v->{substring}%";
-            } else {
-                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
-            }
-        } else {
-            $filter .= "$filterprefix $q = ?";
-            push @args, $v;
-        }
-        $filterprefix = ' AND';
-    }
+    my ($filter, $scalarArgs, $join, $scalarJoins);
+    ($filter, $scalarArgs, $join, $scalarJoins, $order) = _processQueryParams($query, $order);
+    my @args = @$scalarArgs;
+    my %joins = %$scalarJoins;
+    $filter = " WHERE $filter" if $filter;
 
     if ($order) {
         my $isArray = ref($order) eq 'ARRAY';
@@ -641,52 +609,146 @@ sub query {
     $group .= $order_select if $order_select;
     my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
     my $ret;
-    if(!$opts{groupbyField}) {
-        my ($ids, $total);
-        eval {
-            $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
+    my ($ids, $total);
+    eval {
+        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
 
-            if($limit ne '') {
-               $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
-            } else {
-                $total = scalar @$ids;
-            }
-        };
-        if($@) {
-            Foswiki::Func::writeWarning("Error querying: $@");
-            $total = 0;
-        }
-
-        return {tasks => [], total => $total} unless @$ids;
-        my @tasks = map {
-            my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
-            my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
-            $task->{_canChange} = $task->checkACL('change');
-            $task
-        } @$ids;
-
-        $ret = {tasks => \@tasks, total => $total};
-    } else {
-        # XXX does not support limit or group (haha) parameters
-        my ($ids, $total);
-        eval {
-            push @args, $opts{groupbyField};
-            $ids = db()->selectcol_arrayref("SELECT value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter$order AND type = ? GROUP BY value", {}, @args);
-
+        if($limit ne '') {
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+        } else {
             $total = scalar @$ids;
-        };
-        if($@) {
-            Foswiki::Func::writeWarning("Error querying: $@");
-            $total = 0;
         }
-
-        return {values => [], total => $total} unless @$ids;
-        $ret = {values => $ids, total => $total};
+    };
+    if($@) {
+        Foswiki::Func::writeWarning("Error querying: $@");
+        $total = 0;
     }
+
+    return {tasks => [], total => $total} unless $ids && scalar @$ids;
+    my @tasks = map {
+        my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
+        $task->{_canChange} = $task->checkACL('change');
+        $task
+    } @$ids;
+
+    $ret = {tasks => \@tasks, total => $total};
 
     $ret;
 }
 *_query = \&query; # Backwards compatibility
+
+
+=begin TML
+
+---++ StaticMethod _processQueryParams($query, $order) -> $filterString, @filterArgs, $joinString, %joins, $orderString
+
+Parses the =query= and generates a filter SQL string with arguments and also
+join and order SQL strings.
+
+The filter string will deal with various filters in the query (eg. type=...),
+while the join string will handle formfield queries.
+
+The joins hash will simply remember which formfields have already been joined.
+
+=cut
+
+sub _processQueryParams {
+    my ($query, $order) = @_;
+
+    my $join = '';
+    my @filters = ();
+    my @args = ();
+    my %joins;
+
+    for my $q (keys %$query) {
+        next unless $q =~ /^\w+$/s;
+        my $v = $query->{$q};
+
+        if ($singles{$q}) {
+            $q = 't.id' if $q eq 'id';
+        } else {
+            my $t = "j_$q";
+            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
+            $joins{$q} = 1;
+            if ($order eq $q) {
+                $order = "$t.value";
+                $joins{$order} = 1; # make sure we don't add this join again for ordering
+            }
+            $q = "$t.value";
+        }
+
+        if (ref($v) eq 'ARRAY') {
+            push @filters, "$q IN(". join(',', map { '?' } @$v) .")";
+            push @args, @$v;
+        } elsif (ref($v) eq 'HASH') {
+            if ($v->{type} eq 'range') {
+                push @filters, "$q BETWEEN ? AND ?";
+                push @args, $v->{from}, $v->{to};
+            } elsif ($v->{type} eq 'like') {
+                push @filters, "$q LIKE ?";
+                push @args, "\%$v->{substring}%";
+            } else {
+                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
+            }
+        } else {
+            push @filters, "$q = ?";
+            push @args, $v;
+        }
+    }
+
+    return (join(' AND ', @filters), \@args, $join, \%joins, $order);
+}
+
+=begin TML
+
+---++ StaticMethod _queryGroup( %opts ) -> {values => @values, count: $count}
+
+Queries the database for for a formfield and aggregates.
+
+Parameters: see =sub query=
+
+=cut
+
+sub _queryGroup {
+    my $opts = shift;
+
+    my $query = $opts->{query} || {};
+
+    my @args;
+    my $typefilter = " WHERE task_multi.type = ? ";
+    push @args, $opts->{groupbyField};
+
+    my ($filter, $scalarArgs, $join, $scalarJoins);
+    ($filter, $scalarArgs, $join) = _processQueryParams($query, '');
+    push @args, @$scalarArgs;
+
+    $filter = $typefilter . ($filter ? " AND $filter" : '');
+
+    my $useACL = $opts->{acl};
+    $useACL = 1 unless defined $useACL;
+    my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
+
+    my $order; # Note: ignoring order from _processQueryParams
+    # XXX sorts before MAKETEXT
+    if(defined $opts->{order}) {
+        $order = " ORDER BY task_multi.value " . ($opts->{order} && $opts->{order} ne 'DESC' ? 'ASC' : 'DESC');
+    } else {
+        $order = '';
+    }
+
+    my ($ids, $total);
+    eval {
+        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value$order", {}, @args);
+    };
+    if($@) {
+        Foswiki::Func::writeWarning("Error querying: $@");
+        $total = 0;
+    }
+
+    return {values => [], total => 0} unless $ids && scalar @$ids;
+    return {values => $ids, total => scalar @$ids};
+}
 
 sub _getJoinString {
     my ($args, $contextOnly) = @_;
@@ -1387,9 +1449,8 @@ sub tagTaskTypeFilter {
 
     my $query = $currentOptions->{query} || '{}';
     $query = from_json($query);
-    $query->{groupbyField} = 'Type';
 
-    my $res = _query(%$query);
+    my $res = query(query => $query, groupbyField => 'Type', order => 'ASC');
     return join(',', @{$res->{values}});
 }
 
@@ -2376,7 +2437,15 @@ SCRIPT
         }
     }
 
+    # Make settings available to macros in the form
+    $settings{query} = to_json($query);
+    local $currentOptions = \%settings;
+
     if ($form) {
+        # XXX make sure Foswiki hasn't cached this form (we need to re-expand macros in correct settings)
+        my ( $vweb, $vtopic ) = $session->normalizeWebTopicName( $web, $form );
+        delete $session->{forms}->{"$vweb.$vtopic"};
+
         my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
         my $topicType = $f->getField('TopicType');
         if ($topicType && !defined $query->{TopicType}) {
