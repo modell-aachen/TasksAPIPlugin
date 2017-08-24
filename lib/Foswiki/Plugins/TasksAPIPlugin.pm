@@ -729,17 +729,9 @@ sub _queryGroup {
     $useACL = 1 unless defined $useACL;
     my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
 
-    my $order; # Note: ignoring order from _processQueryParams
-    # XXX sorts before MAKETEXT
-    if(defined $opts->{order}) {
-        $order = " ORDER BY task_multi.value " . ($opts->{order} && $opts->{order} ne 'DESC' ? 'ASC' : 'DESC');
-    } else {
-        $order = '';
-    }
-
     my ($ids, $total);
     eval {
-        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value$order", {}, @args);
+        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value", {}, @args);
     };
     if($@) {
         Foswiki::Func::writeWarning("Error querying: $@");
@@ -747,7 +739,22 @@ sub _queryGroup {
     }
 
     return {values => [], total => 0} unless $ids && scalar @$ids;
-    return {values => $ids, total => scalar @$ids};
+
+    # XXX fix legacy select+values ids by stripping select-part.
+    my %seen;
+    grep {!$seen{$_ =~ s#^.*=##r}++} @$ids;
+    my @u_ids = keys %seen;
+
+    # XXX sorts before MAKETEXT
+    if(defined $opts->{order}) {
+        if($opts->{order} && $opts->{order} ne 'DESC') {
+            @u_ids = sort @u_ids;
+        } else {
+            @u_ids = sort backwards @u_ids;
+        }
+    }
+
+    return {values => \@u_ids, total => scalar @u_ids};
 }
 
 sub _getJoinString {
