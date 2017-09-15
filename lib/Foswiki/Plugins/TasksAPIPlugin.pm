@@ -602,6 +602,7 @@ sub query {
             $order .= " DESC" if $opts{desc};
         }
     }
+    $order_select =~ s/ DESC//g;
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $count = -1 unless defined $count;
     $limit = " LIMIT $count OFFSET $offset" if $count >= 0;
