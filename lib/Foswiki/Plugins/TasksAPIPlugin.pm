@@ -1314,6 +1314,7 @@ sub _available_contexts {
     foreach my $a (@$ctx) {
         if ($a ne '') {
             my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $a);
+            next if $web eq 'Trash';
             my ($meta) = Foswiki::Func::readTopic($web, $topic);
             next unless($meta->haveAccess('CHANGE'));
             my $title = _getTopicTitle($meta);
