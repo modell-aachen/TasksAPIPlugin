@@ -1213,6 +1213,13 @@ sub restCreate {
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
     }
+
+    if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        return '';
+    }
+
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
     $res->{_depth} = $depth;
 
@@ -1242,6 +1249,13 @@ sub restUpdate {
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
     }
+
+    if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        return '';
+    }
+
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, delete $data{id});
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
@@ -1875,12 +1889,17 @@ sub _renderTask {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
 
+    if(Foswiki::Func::isGroupMember("ReadOnlyGroup",$meta->session()->{user})){
+        Foswiki::Func::getContext()->{'task_readonly'} = 1;
+        Foswiki::Func::getContext()->{'task_allowcreate'} = 0;
+    }
+
     $renderRecurse++;
     local $currentTask = $task;
     my $taskTemplate = $settings->{tasktemplate} || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
-    my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
+    my $readonly = Foswiki::Func::getContext()->{'task_readonly'} || 0;
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
 
     if ( $task->{_depth} ne 0 ) {
@@ -1940,6 +1959,10 @@ sub _renderTask {
     } elsif ($canChange) {
         $Foswiki::Plugins::SESSION->leaveContext('task_canedit'); # remove altogether
     }
+
+    #Foswiki::Func::getContext()->{'task_readonly'} = 1;
+    #Foswiki::Func::getContext()->{'task_allowcreate'} = 0;
+
     $renderRecurse--;
     return $task;
 }
@@ -2387,6 +2410,7 @@ SCRIPT
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
+    $fctx->{task_allowcreate} = 0 if Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user});
     $fctx->{task_readonly} = 1 if $readonly;
     $fctx->{task_showexpandercol} = 1 if $depth;
 
