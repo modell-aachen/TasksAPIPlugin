@@ -539,62 +539,33 @@ Queries the database for tasks. =%opts= may contain the following keys:
    * =desc=: 1 to sort in descending order
    * =offset=: skip this many results
    * =count=: return at most this many results
+   * =groupbyField=: a FormField name to aggregate results by; return value
+     will look like {values:['A Value', ....], total: 23}
 
-Returns a list of matching task objects.
+Returns a list of matching task objects (except when =groupbyField= was
+specified).
 
 =cut
 
 sub query {
     my %opts = @_;
+
+    return _queryGroup(\%opts) if $opts{groupbyField};
+
     my $useACL = $opts{acl};
     $useACL = 1 unless defined $useACL;
 
     my $query = $opts{query} || {};
     $query->{TopicType} ||= 'task';
 
-    my $join = '';
-    my $filter = '';
     my $order = $opts{order} || '';
     my $order_select = ''; # select additional columns to order/group on
-    my @args;
-    my $filterprefix = ' WHERE';
-    my %joins;
-    for my $q (keys %$query) {
-        next unless $q =~ /^\w+$/s;
-        my $v = $query->{$q};
 
-        if ($singles{$q}) {
-            $q = 't.id' if $q eq 'id';
-        } else {
-            my $t = "j_$q";
-            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
-            $joins{$q} = 1;
-            if ($order eq $q) {
-                $order = "$t.value";
-                $joins{$order} = 1; # make sure we don't add this join again for ordering
-            }
-            $q = "$t.value";
-        }
-
-        if (ref($v) eq 'ARRAY') {
-            $filter .= "$filterprefix $q IN(". join(',', map { '?' } @$v) .")";
-            push @args, @$v;
-        } elsif (ref($v) eq 'HASH') {
-            if ($v->{type} eq 'range') {
-                $filter .= "$filterprefix $q BETWEEN ? AND ?";
-                push @args, $v->{from}, $v->{to};
-            } elsif ($v->{type} eq 'like') {
-                $filter .= "$filterprefix $q LIKE ?";
-                push @args, "\%$v->{substring}%";
-            } else {
-                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
-            }
-        } else {
-            $filter .= "$filterprefix $q = ?";
-            push @args, $v;
-        }
-        $filterprefix = ' AND';
-    }
+    my ($filter, $scalarArgs, $join, $scalarJoins);
+    ($filter, $scalarArgs, $join, $scalarJoins, $order) = _processQueryParams($query, $order);
+    my @args = @$scalarArgs;
+    my %joins = %$scalarJoins;
+    $filter = " WHERE $filter" if $filter;
 
     if ($order) {
         my $isArray = ref($order) eq 'ARRAY';
@@ -631,12 +602,14 @@ sub query {
             $order .= " DESC" if $opts{desc};
         }
     }
+    $order_select =~ s/ DESC//g;
     my ($limit, $offset, $count) = ('', $opts{offset} || 0, $opts{count});
     $count = -1 unless defined $count;
     $limit = " LIMIT $count OFFSET $offset" if $count >= 0;
     my $group = ' GROUP BY t.id, t.raw';
     $group .= $order_select if $order_select;
     my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
+    my $ret;
     my ($ids, $total);
     eval {
         $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
@@ -652,7 +625,7 @@ sub query {
         $total = 0;
     }
 
-    return {tasks => [], total => $total} unless @$ids;
+    return {tasks => [], total => $total} unless $ids && scalar @$ids;
     my @tasks = map {
         my ($tweb, $ttopic) = Foswiki::Func::normalizeWebTopicName($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $_->[0]);
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::_loadRaw($tweb, $ttopic, $_->[1]);
@@ -660,11 +633,130 @@ sub query {
         $task
     } @$ids;
 
-    my $ret = {tasks => \@tasks, total => $total};
+    $ret = {tasks => \@tasks, total => $total};
 
     $ret;
 }
 *_query = \&query; # Backwards compatibility
+
+
+=begin TML
+
+---++ StaticMethod _processQueryParams($query, $order) -> $filterString, @filterArgs, $joinString, %joins, $orderString
+
+Parses the =query= and generates a filter SQL string with arguments and also
+join and order SQL strings.
+
+The filter string will deal with various filters in the query (eg. type=...),
+while the join string will handle formfield queries.
+
+The joins hash will simply remember which formfields have already been joined.
+
+=cut
+
+sub _processQueryParams {
+    my ($query, $order) = @_;
+
+    my $join = '';
+    my @filters = ();
+    my @args = ();
+    my %joins;
+
+    for my $q (keys %$query) {
+        next unless $q =~ /^\w+$/s;
+        my $v = $query->{$q};
+
+        if ($singles{$q}) {
+            $q = 't.id' if $q eq 'id';
+        } else {
+            my $t = "j_$q";
+            $join .= " JOIN task_multi $t ON(t.id = $t.id AND $t.type='$q')" unless $joins{$q};
+            $joins{$q} = 1;
+            if ($order eq $q) {
+                $order = "$t.value";
+                $joins{$order} = 1; # make sure we don't add this join again for ordering
+            }
+            $q = "$t.value";
+        }
+
+        if (ref($v) eq 'ARRAY') {
+            push @filters, "$q IN(". join(',', map { '?' } @$v) .")";
+            push @args, @$v;
+        } elsif (ref($v) eq 'HASH') {
+            if ($v->{type} eq 'range') {
+                push @filters, "$q BETWEEN ? AND ?";
+                push @args, $v->{from}, $v->{to};
+            } elsif ($v->{type} eq 'like') {
+                push @filters, "$q LIKE ?";
+                push @args, "\%$v->{substring}%";
+            } else {
+                Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
+            }
+        } else {
+            push @filters, "$q = ?";
+            push @args, $v;
+        }
+    }
+
+    return (join(' AND ', @filters), \@args, $join, \%joins, $order);
+}
+
+=begin TML
+
+---++ StaticMethod _queryGroup( %opts ) -> {values => @values, count: $count}
+
+Queries the database for for a formfield and aggregates.
+
+Parameters: see =sub query=
+
+=cut
+
+sub _queryGroup {
+    my $opts = shift;
+
+    my $query = $opts->{query} || {};
+
+    my @args;
+    my $typefilter = " WHERE task_multi.type = ? ";
+    push @args, $opts->{groupbyField};
+
+    my ($filter, $scalarArgs, $join, $scalarJoins);
+    ($filter, $scalarArgs, $join) = _processQueryParams($query, '');
+    push @args, @$scalarArgs;
+
+    $filter = $typefilter . ($filter ? " AND $filter" : '');
+
+    my $useACL = $opts->{acl};
+    $useACL = 1 unless defined $useACL;
+    my $aclJoin = ($useACL) ? _getJoinString(\@args) : '';
+
+    my ($ids, $total);
+    eval {
+        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value", {}, @args);
+    };
+    if($@) {
+        Foswiki::Func::writeWarning("Error querying: $@");
+        $total = 0;
+    }
+
+    return {values => [], total => 0} unless $ids && scalar @$ids;
+
+    # XXX fix legacy select+values ids by stripping select-part.
+    my %seen;
+    grep {!$seen{$_ =~ s#^.*=##r}++} @$ids;
+    my @u_ids = keys %seen;
+
+    # XXX sorts before MAKETEXT
+    if(defined $opts->{order}) {
+        if($opts->{order} && $opts->{order} ne 'DESC') {
+            @u_ids = sort @u_ids;
+        } else {
+            @u_ids = sort backwards @u_ids;
+        }
+    }
+
+    return {values => \@u_ids, total => scalar @u_ids};
+}
 
 sub _getJoinString {
     my ($args, $contextOnly) = @_;
@@ -1121,6 +1213,13 @@ sub restCreate {
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
     }
+
+    if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        return '';
+    }
+
     my $res = Foswiki::Plugins::TasksAPIPlugin::Task::create(%data);
     $res->{_depth} = $depth;
 
@@ -1150,6 +1249,13 @@ sub restUpdate {
     for my $k ($q->param) {
         $data{$k} = $q->param($k);
     }
+
+    if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        return '';
+    }
+
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, delete $data{id});
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
@@ -1222,6 +1328,7 @@ sub _available_contexts {
     foreach my $a (@$ctx) {
         if ($a ne '') {
             my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $a);
+            next if $web eq $Foswiki::cfg{TrashWebName};
             my ($meta) = Foswiki::Func::readTopic($web, $topic);
             next unless($meta->haveAccess('CHANGE'));
             my $title = _getTopicTitle($meta);
@@ -1364,21 +1471,10 @@ sub tagTaskTypeFilter {
     my($session, $params, $topic, $web, $topicObject) = @_;
 
     my $query = $currentOptions->{query} || '{}';
-    if ($query) {
-        $query = from_json($query);
-    }
+    $query = from_json($query);
 
-    my $res = _query($query, 0);
-    my @types = map {
-        $_->{fields}{Type}
-    } @{$res->{tasks}};
-
-    my @unique;
-    foreach my $type (@types) {
-        push @unique, $type unless grep(/$type/, @unique);
-    }
-
-    return join(',', @unique);
+    my $res = query(query => $query, groupbyField => 'Type', order => 'ASC');
+    return join(',', @{$res->{values}});
 }
 
 sub tagFilter {
@@ -1793,12 +1889,17 @@ sub _renderTask {
         return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
 
+    if(Foswiki::Func::isGroupMember("ReadOnlyGroup",$meta->session()->{user})){
+        Foswiki::Func::getContext()->{'task_readonly'} = 1;
+        Foswiki::Func::getContext()->{'task_allowcreate'} = 0;
+    }
+
     $renderRecurse++;
     local $currentTask = $task;
     my $taskTemplate = $settings->{tasktemplate} || $task->getPref('TASK_TEMPLATE') || 'tasksapi::task';
     my $canChange = $task->checkACL('CHANGE');
     my $haveCtx = $Foswiki::Plugins::SESSION->inContext('task_canedit') || 0;
-    my $readonly = Foswiki::Func::getContext()->{task_readonly} || 0;
+    my $readonly = Foswiki::Func::getContext()->{'task_readonly'} || 0;
     $Foswiki::Plugins::SESSION->enterContext('task_canedit', $haveCtx + 1) if $canChange;
 
     if ( $task->{_depth} ne 0 ) {
@@ -1858,6 +1959,10 @@ sub _renderTask {
     } elsif ($canChange) {
         $Foswiki::Plugins::SESSION->leaveContext('task_canedit'); # remove altogether
     }
+
+    #Foswiki::Func::getContext()->{'task_readonly'} = 1;
+    #Foswiki::Func::getContext()->{'task_allowcreate'} = 0;
+
     $renderRecurse--;
     return $task;
 }
@@ -2305,6 +2410,7 @@ SCRIPT
 
     my $fctx = Foswiki::Func::getContext();
     $fctx->{task_allowcreate} = 1 if $allowCreate;
+    $fctx->{task_allowcreate} = 0 if Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user});
     $fctx->{task_readonly} = 1 if $readonly;
     $fctx->{task_showexpandercol} = 1 if $depth;
 
@@ -2364,7 +2470,15 @@ SCRIPT
         }
     }
 
+    # Make settings available to macros in the form
+    $settings{query} = to_json($query);
+    local $currentOptions = \%settings;
+
     if ($form) {
+        # XXX make sure Foswiki hasn't cached this form (we need to re-expand macros in correct settings)
+        my ( $vweb, $vtopic ) = $session->normalizeWebTopicName( $web, $form );
+        delete $session->{forms}->{"$vweb.$vtopic"};
+
         my $f = Foswiki::Form->new($session, Foswiki::Func::normalizeWebTopicName(undef, $form) );
         my $topicType = $f->getField('TopicType');
         if ($topicType && !defined $query->{TopicType}) {
@@ -2590,7 +2704,7 @@ FORMAT
 %MAKETEXT{"[_1] removed: [_2]" args="\$title,\$old(shorten:25)"}%
 FORMAT
     } else {
-        $defaultFFormat = '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins>';
+        $defaultFFormat = '<li><strong>$title</strong>: <del>$old(shorten:140)</del> &#8594; <ins>$new(shorten:140)</ins></li>';
         $defaultFAddFormat = '<li>%MAKETEXT{"[_1] added: [_2]" args="<strong>$title</strong>,$new(shorten:140)"}%</li>';
         $defaultFDeleteFormat = '<li>%MAKETEXT{"[_1] removed: [_2]" args="<strong>$title</strong>,$old(shorten:140)"}%</li>';
     }

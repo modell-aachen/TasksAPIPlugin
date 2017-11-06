@@ -110,7 +110,7 @@ The default config can be used, by adding the TASKGRID Macro with an include of 
             }
          }]
       },
-      'meilstone': {
+      'milestone': {
          'taskrow': 'milestone',
          'child_taskgrid': 'standard',
          'panel': {

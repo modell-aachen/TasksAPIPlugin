@@ -4,12 +4,12 @@
 %{the entire grid}%
 %TMPL:DEF{"tasksapi::grid"}%<noautolink><div id="%TASKINFO{expand="id"}%" class="tasktracker">%{
 }%%TMPL:P{"tasksapi::grid::filter"}%%{
-}%<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
+}%<div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
+<div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
+<table id="tasks-table-%TASKINFO{expand="id"}%" class="tasks-table">
     <thead>%TASKINFO{expandtemplate="%TASKINFO{expand="captiontemplate"}%"}%</thead>
     <tbody class="tasks">%TASKINFO{expand="tasks"}%</tbody>
   </table>
-  <div class="settings"><literal>%TASKINFO{expand="settings"}%</literal></div>
-  <div class="overlay">%TMPL:P{"tasksapi::overlay"}%</div>
 </div></noautolink>%TMPL:END%
 
 

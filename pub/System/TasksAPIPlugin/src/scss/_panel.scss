@@ -662,3 +662,7 @@ div[name="comment"] {
 .select2-hide-arrow .select2-selection__arrow {
   display: none;
 }
+/* hide permalink, po wants to think about it */
+a.panel-btn.link {
+  display: none !important;
+}
