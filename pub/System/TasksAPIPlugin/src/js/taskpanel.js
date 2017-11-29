@@ -140,7 +140,6 @@ TasksPanel = function(tasktracker) {
       var id = self.currentTask.data('id');
       var file = $(this).find('a.hidden').attr('href');
       file = file.replace(/^#/, '');
-      file = encodeURIComponent(file);
       var p = foswiki.preferences;
       var endpoint = isDelete ? 'delete' : 'download';
       var url = [
@@ -152,7 +151,7 @@ TasksPanel = function(tasktracker) {
       ].join('');
 
       if (!isDelete) {
-        url += '?id=' + self.currentTask.data('id') + '&file=' + file;
+        url += '?id=' + self.currentTask.data('id') + '&file=' + encodeURIComponent(file);
         window.open && window.open(url, '_blank');
         return false;
       }
