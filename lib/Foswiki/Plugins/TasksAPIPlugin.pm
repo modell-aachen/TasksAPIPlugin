@@ -1351,12 +1351,10 @@ sub _enrich_data {
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
-    my $contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
         children => \@childtasks,
-        contexts => $contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
