@@ -2248,7 +2248,7 @@ sub tagGrid {
     my $readonly = $params->{readonly} || 0;
     my $showAttachments = $params->{showattachments};
     $showAttachments = 1 unless defined $showAttachments;
-    my $order = $params->{order} || 'Created';
+    my $order = $params->{order} || 'DueDate';
     my $depth = $params->{depth} || 0;
     my $offset = $params->{offset} || 0;
     my $sortable = $params->{sortable};
@@ -2257,7 +2257,7 @@ sub tagGrid {
     my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $desc = $params->{desc};
-    $desc = 1 unless defined $desc;
+    $desc = 0 unless defined $desc;
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
