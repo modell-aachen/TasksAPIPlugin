@@ -1018,7 +1018,7 @@ sub restDownload {
     $response->header(
         -type => mimetype($file),
         -status => 200,
-        "-Content-Disposition" => "attachment; filename=\"$file\"",
+        "-Content-Disposition" => "attachment; filename=\"$file\"; filename*=UTF-8''".Foswiki::urlEncode($file),
         "-Content-Transfer-Encoding" => "binary"
     );
 
