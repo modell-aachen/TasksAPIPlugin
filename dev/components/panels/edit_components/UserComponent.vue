@@ -11,7 +11,6 @@
 <script>
 /* global foswiki $ */
 import MetaFieldMixin from '../../../mixins/MetaFieldMixin.vue';
-import VueSelect from 'vue-select/src/index.js';
 import debounce from 'lodash/debounce';
 export default {
     mixins: [MetaFieldMixin],
@@ -20,9 +19,6 @@ export default {
             options: [],
             selectedValues: []
         };
-    },
-    components: {
-        VueSelect
     },
     computed: {
         isMulti() {

@@ -151,7 +151,7 @@ TasksPanel = function(tasktracker) {
       ].join('');
 
       if (!isDelete) {
-        url += '?id=' + self.currentTask.data('id') + '&file=' + file;
+        url += '?id=' + self.currentTask.data('id') + '&file=' + encodeURIComponent(file);
         window.open && window.open(url, '_blank');
         return false;
       }

@@ -1018,7 +1018,7 @@ sub restDownload {
     $response->header(
         -type => mimetype($file),
         -status => 200,
-        "-Content-Disposition" => "attachment; filename=\"$file\"",
+        "-Content-Disposition" => "attachment; filename=\"$file\"; filename*=UTF-8''".Foswiki::urlEncode($file),
         "-Content-Transfer-Encoding" => "binary"
     );
 
@@ -1351,12 +1351,10 @@ sub _enrich_data {
     if($options->{childtasks} && $task->{children_acl} ){
         @childtasks = map { _enrich_data($_, $options) } @{$task->{children_acl}}
     }
-    my $contexts = _available_contexts($task);
     my $result = {
         id => $d->{id},
         depth => $task->{_depth},
         children => \@childtasks,
-        contexts => $contexts,
         form => $d->{form}->web .'.'. $d->{form}->topic,
         attachments => [$task->{meta}->find('FILEATTACHMENT')],
         fields => {},
@@ -2250,7 +2248,7 @@ sub tagGrid {
     my $readonly = $params->{readonly} || 0;
     my $showAttachments = $params->{showattachments};
     $showAttachments = 1 unless defined $showAttachments;
-    my $order = $params->{order} || 'Created';
+    my $order = $params->{order} || 'DueDate';
     my $depth = $params->{depth} || 0;
     my $offset = $params->{offset} || 0;
     my $sortable = $params->{sortable};
@@ -2259,7 +2257,7 @@ sub tagGrid {
     my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $desc = $params->{desc};
-    $desc = 1 unless defined $desc;
+    $desc = 0 unless defined $desc;
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
