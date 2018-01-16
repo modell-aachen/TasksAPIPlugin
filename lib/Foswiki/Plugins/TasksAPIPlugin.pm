@@ -1366,16 +1366,16 @@ sub _enrich_data {
     $result->{childform} = $childform if defined $childform;
     foreach my $c (@changesets) {
         my $cc = {
-            name => $c->{name},
+            name => $c->{name} || '',
             user => {
-                cuid => $c->{actor},
-                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}),
-                wikiname => Foswiki::Func::getWikiName($c->{actor}),
-                loginname => Foswiki::Func::wikiToUserName($c->{actor})
+                cuid => $c->{actor} || '',
+                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}) || '',
+                wikiname => Foswiki::Func::getWikiName($c->{actor}) || '',
+                loginname => Foswiki::Func::wikiToUserName($c->{actor}) || '',
             },
-            actor => $c->{actor},
-            at => $c->{at},
-            changes => $c->{changes}
+            actor => $c->{actor} || '',
+            at => $c->{at} || '',
+            changes => $c->{changes} || '',
         };
         if($c->{comment}) {
             $cc->{comment} = $c->{comment};
