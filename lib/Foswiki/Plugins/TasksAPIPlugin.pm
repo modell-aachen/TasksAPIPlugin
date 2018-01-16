@@ -2915,7 +2915,9 @@ sub tagInfo {
         my $val = $task->{fields}{$field} || $params->{default} || '';
         if (Foswiki::isTrue($params->{display})) {
             my $ffield = $task->{form}->getField($field);
-            $val = $ffield->getDisplayValue($val) if $ffield && $ffield->can('getDisplayValue');
+            unless ($ffield->isa('Foswiki::Form::User') && grep(/^$val$/, @{$currentOptions->{autouser} || ['Team']})) {
+                $val = $ffield->getDisplayValue($val) if $ffield && $ffield->can('getDisplayValue');
+            }
         }
         if ($type eq 'title') {
             return $task->form->getField($field)->{tooltip} || $field;
@@ -2939,7 +2941,7 @@ sub tagInfo {
             }
 
             foreach my $v (@vals) {
-                unless(grep(/$v/, $currentOptions->{autouser} || 'Team')) {
+                unless(grep(/^$v$/, @{$currentOptions->{autouser} || ['Team']})) {
                     my $tmp = $v;
                     $v = _getDisplayName($v) if $v;
                     $v = $tmp unless $v;
