@@ -1082,12 +1082,12 @@ sub restDelete {
     my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
     my $newid = 1 + pop(@ids);
 
-    my @changes = ({type => 'delete', name => '_attachment', old => $file});
+    my @changes = ({type => 'delete', name => '_attachment', old => $file, hist_version => 2});
     $task->{meta}->putKeyed('TASKCHANGESET', {
         name => $newid,
         actor => $session->{user},
         at => scalar(time),
-        changes => encode_json(\@changes)
+        changes => to_json(\@changes)
     });
 
     $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -1154,12 +1154,12 @@ sub restAttach {
             $newid = 1;
         }
 
-        my @changes = ({type => 'add', name => '_attachment', new => $name});
+        my @changes = ({type => 'add', name => '_attachment', new => $name, hist_version => 2});
         $task->{meta}->putKeyed('TASKCHANGESET', {
             name => $newid,
             actor => $session->{user},
             at => scalar(time),
-            changes => encode_json(\@changes)
+            changes => to_json(\@changes)
         });
 
         $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
