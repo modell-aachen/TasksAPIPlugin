@@ -14,6 +14,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Time ();
+use Foswiki::Render ();
 
 use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
@@ -2916,7 +2917,10 @@ sub tagInfo {
         if (Foswiki::isTrue($params->{display})) {
             my $ffield = $task->{form}->getField($field);
             unless ($ffield->isa('Foswiki::Form::User') && grep(/^$val$/, @{$currentOptions->{autouser} || ['Team']})) {
-                $val = $ffield->getDisplayValue($val) if $ffield && $ffield->can('getDisplayValue');
+                $val = Foswiki::Render::protectFormFieldValue(
+                    $ffield->getDisplayValue($val),
+                    { protectdollar => 1, newline => ''}
+                ) if $ffield && $ffield->can('getDisplayValue');
             }
         }
         if ($type eq 'title') {
