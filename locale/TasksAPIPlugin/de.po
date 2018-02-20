@@ -348,6 +348,9 @@ msgstr "Status"
 msgid "Created"
 msgstr "Erstellt"
 
+msgid "Uploaded on"
+msgstr "Hochgeladen am"
+
 msgid "Changed"
 msgstr "Geändert"
 

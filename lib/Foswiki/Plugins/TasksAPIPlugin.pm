@@ -2988,7 +2988,7 @@ sub tagInfo {
             my $out = _renderAttachment($topicObject, $task, $attachment, $params);
             push @out, $out if $out ne '';
         }
-        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Created"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th><th></th></tr></thead></tbody>';
+        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Uploaded on"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th><th></th></tr></thead></tbody>';
         my $footer = $params->{footer} || '</tbody></table>';
         return $header . join($params->{separator} || "\n", @out) . $footer;
     }
