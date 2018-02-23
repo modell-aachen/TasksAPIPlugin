@@ -354,6 +354,9 @@ msgstr "Hochgeladen am"
 msgid "Changed"
 msgstr "Geändert"
 
+msgid "Format error - rendering failed."
+msgstr "Fehlerhafte Daten - Darstellung nicht möglich."
+
 msgid "Page %1 of %2"
 msgstr "Seite %1 von %2"
 

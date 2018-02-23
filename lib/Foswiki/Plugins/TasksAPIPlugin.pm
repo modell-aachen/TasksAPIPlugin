@@ -2721,6 +2721,12 @@ FORMAT
     $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
     my $changes = _decodeChanges($cset->{changes});
+
+    if ($changes->{Description} && $changes->{Description}->{error} && $changes->{Description}->{error}=='1' ) {
+        $changes->{Description}->{new} = _translate($meta, $changes->{Description}->{new});
+        Foswiki::Func::writeWarning("Decoding error in Task-Changeset",$task->{meta}->{_web},$task->{meta}->{_topic});
+    }
+
     foreach my $f (@$fields) {
         my $change = $changes->{$f->{name}};
         next unless $change;
@@ -2788,7 +2794,18 @@ sub _shorten {
 sub _decodeChanges {
     my $changes = shift;
     return {} unless $changes;
-    $changes = from_json($changes);
+
+    eval { $changes = from_json($changes); };
+    if($@){
+        $changes = {
+            Description => {
+                type => 'change',
+                new => 'Format error - rendering failed.',
+                error => '1'
+            }
+        };
+    }
+
     if (ref $changes eq 'ARRAY') {
         $changes = { map { ($_->{name}, $_) } @$changes };
     }
