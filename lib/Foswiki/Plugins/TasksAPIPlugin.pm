@@ -1118,6 +1118,27 @@ sub restAttach {
         return '';
     }
 
+    # check if filename has a valid length
+    require bytes;
+    if( bytes::length( $name ) > 255 ){
+        my ($nameonly, $extension) = ($1, $2) if $name =~ /(^.*)(\.[^.]*)$/;
+        my $extensionLength = bytes::length($extension);
+
+        while(bytes::length( $nameonly ) + $extensionLength > 255){
+            $nameonly = substr $nameonly, 0, -1;
+        }
+
+        $response->header(-status => 403);
+        $response->body(encode_json({
+            status => 'error',
+            code => 'filenamelength_error',
+            msg => 'Attachment filename exceeds length limit. Please shorten the filename, e.g.: ',
+            validname => $nameonly.$extension
+        }));
+        return '';
+}
+
+
     eval {
         my $q = Foswiki::Func::getCgiQuery();
         my $stream = $q->upload('filepath');
