@@ -407,3 +407,7 @@ msgstr "Zugriff verweigert"
 
 msgid "The link you clicked seems to be invalid."
 msgstr "Der Link, den Sie geklickt haben scheint ungültig zu sein."
+
+msgid "Attachment filename exceeds length limit. Please shorten the filename, e.g.:"
+msgstr "Der Dateiname überschreitet die zulässige Länge. Bitte verwenden Sie einen kürzeren Namen, z.B.:"
+

@@ -1098,6 +1098,32 @@ sub restDelete {
     return '';
 }
 
+sub validFilenameLength {
+    my ( $session, $name, $response ) = @_;
+    my $isValid = '1';
+    # check if filename has a valid length
+    require bytes;
+    if( bytes::length( $name ) > 255 ){
+        my ($nameonly, $extension) = ($1, $2) if $name =~ /(^.*)(\.[^.]*)$/;
+        my $extensionLength = bytes::length($extension);
+
+        while(bytes::length( $nameonly ) + $extensionLength > 255){
+            $nameonly = substr $nameonly, 0, -1;
+        }
+
+        my $errortext =  $session->i18n->maketext("Attachment filename exceeds length limit. Please shorten the filename, e.g.:");
+
+        $response->header(-status => 403);
+        $response->body(encode_json({
+            status => 'error',
+            code => 'filenamelength_error',
+            msg => $errortext." ".$nameonly.$extension
+        }));
+        $isValid = '';
+    }
+    return $isValid;
+}
+
 sub restAttach {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = Foswiki::Func::getCgiQuery();
@@ -1118,26 +1144,9 @@ sub restAttach {
         return '';
     }
 
-    # check if filename has a valid length
-    require bytes;
-    if( bytes::length( $name ) > 255 ){
-        my ($nameonly, $extension) = ($1, $2) if $name =~ /(^.*)(\.[^.]*)$/;
-        my $extensionLength = bytes::length($extension);
-
-        while(bytes::length( $nameonly ) + $extensionLength > 255){
-            $nameonly = substr $nameonly, 0, -1;
-        }
-
-        $response->header(-status => 403);
-        $response->body(encode_json({
-            status => 'error',
-            code => 'filenamelength_error',
-            msg => 'Attachment filename exceeds length limit. Please shorten the filename, e.g.: ',
-            validname => $nameonly.$extension
-        }));
+    unless (validFilenameLength( $session, $name, $response )) {
         return '';
-}
-
+    }
 
     eval {
         my $q = Foswiki::Func::getCgiQuery();
