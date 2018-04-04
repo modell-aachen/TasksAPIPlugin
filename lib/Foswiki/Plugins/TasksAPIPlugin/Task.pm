@@ -766,6 +766,8 @@ sub solrize {
     my @attachments = $self->{meta}->find('FILEATTACHMENT');
     my @attNames = map {$_->{name}} @attachments;
 
+    $indexer->deleteByQuery("type:task task_id_s:$self->{id}"); # our context might have moved
+
     my $doc = $indexer->newDocument();
     $doc->add_fields(
       'id' => $self->{id} . '@' . $self->{fields}{Context},
