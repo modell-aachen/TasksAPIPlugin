@@ -397,6 +397,11 @@ sub create {
     $task->_postCreate();
     $task->_postUpdate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task) unless $dontSave;
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    $task->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+
     $task->{_canChange} = $task->checkACL('change');
     $task;
 }
