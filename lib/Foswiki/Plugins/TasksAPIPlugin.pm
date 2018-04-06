@@ -14,6 +14,7 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Time ();
+use Foswiki::Render ();
 
 use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
@@ -1081,12 +1082,12 @@ sub restDelete {
     my @ids = sort {$a <=> $b} (map {int($_->{name})} @changesets);
     my $newid = 1 + pop(@ids);
 
-    my @changes = ({type => 'delete', name => '_attachment', old => $file});
+    my @changes = ({type => 'delete', name => '_attachment', old => $file, hist_version => 2});
     $task->{meta}->putKeyed('TASKCHANGESET', {
         name => $newid,
         actor => $session->{user},
         at => scalar(time),
-        changes => encode_json(\@changes)
+        changes => to_json(\@changes)
     });
 
     $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -1095,6 +1096,32 @@ sub restDelete {
 
     $response->header(-status => 200);
     return '';
+}
+
+sub validFilenameLength {
+    my ( $session, $name, $response ) = @_;
+    my $isValid = '1';
+    # check if filename has a valid length
+    require bytes;
+    if( bytes::length( $name ) > 255 ){
+        my ($nameonly, $extension) = ($1, $2) if $name =~ /(^.*)(\.[^.]*)$/;
+        my $extensionLength = bytes::length($extension);
+
+        while(bytes::length( $nameonly ) + $extensionLength > 255){
+            $nameonly = substr $nameonly, 0, -1;
+        }
+
+        my $errortext =  $session->i18n->maketext("Attachment filename exceeds length limit. Please shorten the filename, e.g.:");
+
+        $response->header(-status => 403);
+        $response->body(encode_json({
+            status => 'error',
+            code => 'filenamelength_error',
+            msg => $errortext." ".$nameonly.$extension
+        }));
+        $isValid = '';
+    }
+    return $isValid;
 }
 
 sub restAttach {
@@ -1114,6 +1141,10 @@ sub restAttach {
             code => 'acl_change',
             msg => 'No permission to attach files to this task'
         }));
+        return '';
+    }
+
+    unless (validFilenameLength( $session, $name, $response )) {
         return '';
     }
 
@@ -1153,12 +1184,12 @@ sub restAttach {
             $newid = 1;
         }
 
-        my @changes = ({type => 'add', name => '_attachment', new => $name});
+        my @changes = ({type => 'add', name => '_attachment', new => $name, hist_version => 2});
         $task->{meta}->putKeyed('TASKCHANGESET', {
             name => $newid,
             actor => $session->{user},
             at => scalar(time),
-            changes => encode_json(\@changes)
+            changes => to_json(\@changes)
         });
 
         $task->{meta}->saveAs($web, $topic, dontlog => 1, minor => 1);
@@ -1365,16 +1396,16 @@ sub _enrich_data {
     $result->{childform} = $childform if defined $childform;
     foreach my $c (@changesets) {
         my $cc = {
-            name => $c->{name},
+            name => $c->{name} || '',
             user => {
-                cuid => $c->{actor},
-                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}),
-                wikiname => Foswiki::Func::getWikiName($c->{actor}),
-                loginname => Foswiki::Func::wikiToUserName($c->{actor})
+                cuid => $c->{actor} || '',
+                wikiusername => Foswiki::Func::getWikiUserName($c->{actor}) || '',
+                wikiname => Foswiki::Func::getWikiName($c->{actor}) || '',
+                loginname => Foswiki::Func::wikiToUserName($c->{actor}) || '',
             },
-            actor => $c->{actor},
-            at => $c->{at},
-            changes => $c->{changes}
+            actor => $c->{actor} || '',
+            at => $c->{at} || '',
+            changes => $c->{changes} || '',
         };
         if($c->{comment}) {
             $cc->{comment} = $c->{comment};
@@ -2720,6 +2751,12 @@ FORMAT
     $xlate->($format, $fformat, $faddformat, $fdeleteformat);
 
     my $changes = _decodeChanges($cset->{changes});
+
+    if ($changes->{Description} && $changes->{Description}->{error} && $changes->{Description}->{error}=='1' ) {
+        $changes->{Description}->{new} = _translate($meta, $changes->{Description}->{new});
+        Foswiki::Func::writeWarning("Decoding error in Task-Changeset",$task->{meta}->{_web},$task->{meta}->{_topic});
+    }
+
     foreach my $f (@$fields) {
         my $change = $changes->{$f->{name}};
         next unless $change;
@@ -2787,7 +2824,18 @@ sub _shorten {
 sub _decodeChanges {
     my $changes = shift;
     return {} unless $changes;
-    $changes = from_json($changes);
+
+    eval { $changes = from_json($changes); };
+    if($@){
+        $changes = {
+            Description => {
+                type => 'change',
+                new => 'Format error - rendering failed.',
+                error => '1'
+            }
+        };
+    }
+
     if (ref $changes eq 'ARRAY') {
         $changes = { map { ($_->{name}, $_) } @$changes };
     }
@@ -2916,7 +2964,10 @@ sub tagInfo {
         if (Foswiki::isTrue($params->{display})) {
             my $ffield = $task->{form}->getField($field);
             unless ($ffield->isa('Foswiki::Form::User') && grep(/^$val$/, @{$currentOptions->{autouser} || ['Team']})) {
-                $val = $ffield->getDisplayValue($val) if $ffield && $ffield->can('getDisplayValue');
+                $val = Foswiki::Render::protectFormFieldValue(
+                    $ffield->getDisplayValue($val),
+                    { protectdollar => 1, newline => ''}
+                ) if $ffield && $ffield->can('getDisplayValue');
             }
         }
         if ($type eq 'title') {
@@ -2984,7 +3035,7 @@ sub tagInfo {
             my $out = _renderAttachment($topicObject, $task, $attachment, $params);
             push @out, $out if $out ne '';
         }
-        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Created"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th><th></th></tr></thead></tbody>';
+        my $header = $params->{header} || '<table class="task-attachments"><thead><tr><th>&nbsp;</th><th class="created">%MAKETEXT{"Uploaded on"}%</th><th class="name">%MAKETEXT{"Name"}%</th><th class="size">%MAKETEXT{"Size"}%</th><th></th></tr></thead></tbody>';
         my $footer = $params->{footer} || '</tbody></table>';
         return $header . join($params->{separator} || "\n", @out) . $footer;
     }

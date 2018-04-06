@@ -348,8 +348,14 @@ msgstr "Status"
 msgid "Created"
 msgstr "Erstellt"
 
+msgid "Uploaded on"
+msgstr "Hochgeladen am"
+
 msgid "Changed"
 msgstr "Geändert"
+
+msgid "Format error - rendering failed."
+msgstr "Fehlerhafte Daten - Darstellung nicht möglich."
 
 msgid "Page %1 of %2"
 msgstr "Seite %1 von %2"
@@ -401,3 +407,7 @@ msgstr "Zugriff verweigert"
 
 msgid "The link you clicked seems to be invalid."
 msgstr "Der Link, den Sie geklickt haben scheint ungültig zu sein."
+
+msgid "Attachment filename exceeds length limit. Please shorten the filename, e.g.:"
+msgstr "Der Dateiname überschreitet die zulässige Länge. Bitte verwenden Sie einen kürzeren Namen, z.B.:"
+
