@@ -398,9 +398,7 @@ sub create {
     $task->_postUpdate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task) unless $dontSave;
 
-    require Foswiki::Plugins::SolrPlugin;
-    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    $task->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($meta->text(), $topic, $web, my $error, $meta);
 
     $task->{_canChange} = $task->checkACL('change');
     $task;
@@ -437,8 +435,7 @@ sub copy {
     }
     # Index again to pick up the attachment metadata
     Foswiki::Plugins::TasksAPIPlugin::_index($dest);
-    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($self->{meta}->text(), $self->{meta}->{topic}, $self->{meta}->web(), my $error, $self->{meta});
     return $dest;
 }
 
@@ -629,9 +626,7 @@ sub update {
     $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self, 0, $data{aclCache});
 
-    require Foswiki::Plugins::SolrPlugin;
-    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    $self->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($meta->text(), $topic, $web, my $error, $meta);
 }
 
 sub close {
