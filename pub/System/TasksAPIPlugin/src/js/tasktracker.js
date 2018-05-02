@@ -120,17 +120,17 @@
       $this.on('mouseenter', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
         if ( $i.hasClass('closed') ) {
-          $i.removeClass('fa-check-square').addClass('fa-square-o');
+          $i.removeClass('fa-check-square').addClass('fa-square');
         } else {
-          $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+          $i.removeClass('fa-square').addClass('fa-check-square');
         }
       });
       $this.on('mouseleave', '.task > td.close', function() {
         var $i = $(this).find('> span > i');
         if ( $i.hasClass('closed') ) {
-          $i.removeClass('fa-square-o').addClass('fa-check-square');
+          $i.removeClass('fa-square').addClass('fa-check-square');
         } else {
-          $i.removeClass('fa-check-square-o').addClass('fa-square-o');
+          $i.removeClass('fa-check-square').addClass('fa-square');
         }
       });
 

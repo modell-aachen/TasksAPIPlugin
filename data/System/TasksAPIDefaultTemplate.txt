@@ -58,13 +58,13 @@
         }%</div>
         <div>
           <a href="#" title="%MAKETEXT{"Create permanent link"}%" class="panel-btn link"><i class="fa fa-link"></i></a>%{
-}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit entry\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a><a href='#' title='$percntMAKETEXT{\"Attach file(s)\"}$percnt' class='panel-btn upload'><i class='fa fa-upload'></i></a><a href='#' title='$percntMAKETEXT{\"Add comment\"}$percnt' class='panel-btn comment'><i class='fa fa-commenting-o'></i></a>"}%%{
+}%%IF{"not context task_readonly" then="<a href='#' title='$percntMAKETEXT{\"Edit entry\"}$percnt' class='panel-btn edit'><i class='fa fa-pencil'></i></a><a href='#' title='$percntMAKETEXT{\"Attach file(s)\"}$percnt' class='panel-btn upload'><i class='fa fa-upload'></i></a><a href='#' title='$percntMAKETEXT{\"Add comment\"}$percnt' class='panel-btn comment'><i class='fa fa-comment-alt'></i></a>"}%%{
         }%</div>
       </div>
       <div class="edit">
         <div>
           <a href="#" title="%MAKETEXT{"Save"}%" class="panel-btn save"><i class="fa fa-save"></i></a>
-          <a href="#" title="%MAKETEXT{"Cancel"}%" class="panel-btn cancel"><i class="fa fa-remove"></i></a>
+          <a href="#" title="%MAKETEXT{"Cancel"}%" class="panel-btn cancel"><i class="fa fa-times"></i></a>
         </div>
       </div>
     </div>
@@ -152,7 +152,7 @@
   <div class="content">
     <div class="meta">
       <div class="task-meta-entry">
-        <i class="fa fa-calendar-plus-o"></i>
+        <i class="fa fa-calendar-plus"></i>
         <div>
           <span class="title">%MAKETEXT{"Created"}%</span>
           <span>%MAKEDATE%</span>
@@ -201,7 +201,7 @@ $edit"
     <div class="content">
     <div class="meta">
       <div class="task-meta-entry">
-        <i class="fa fa-group"></i>
+        <i class="fa fa-users"></i>
         <div>
           <span>
 %RENDERFOREDIT{
@@ -282,7 +282,7 @@ $edit"
   <div class="content">
     <div class="meta">
       <div class="task-meta-entry">
-        <i class="fa fa-calendar-plus-o"></i>
+        <i class="fa fa-calendar-plus"></i>
         <div>
           <span class="title">%MAKETEXT{"Created"}%</span>
           <span>%TASKINFO{field="Created" format="$day $month $year" task="%taskeditor_task%"}%</span>
@@ -333,7 +333,7 @@ $edit"
   <div class="content">
     <div class="meta">
       <div class="task-meta-entry">
-        <i class="fa fa-group"></i>
+        <i class="fa fa-users"></i>
         <div>
 %RENDERFOREDIT{
   form="%taskeditor_form%"
@@ -459,12 +459,12 @@ $edit"
     <div class="title view-only">
       <span class="title" title="%TASKINFO{field="Title" escape="1"}%">%ENCODE{"%TASKINFO{field="Title" shorten="90"}%" type="entity"}%</span>
     </div>%{
-    }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
+    }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
   <div class="content">
     <div class="meta">
       <div class="task-meta-entry">
-        <i class="fa fa-calendar-plus-o"></i>
+        <i class="fa fa-calendar-plus"></i>
         <div>
           <span class="title">%MAKETEXT{"Created"}%</span>
           <span>%TASKINFO{field="Created" format="$day $month $year"}%</span>
@@ -512,7 +512,7 @@ $edit"
     <div class="title view-only">
       <span class="title" title="%TASKINFO{field="Title"}%">%ENCODE{"%TASKINFO{field="Title" shorten="90"}%" type="entity"}%</span>
     </div>%{
-    }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square-o'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
+    }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='fa fa-square'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
   <div class="content">%TASKINFO{type="attachments"}%</div>
 </div>%{
@@ -562,7 +562,7 @@ $edit"
 
 %{quick actions: close/reopen}%
 %TMPL:DEF{"tasksapi::controls::right"}%%{
-}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-fw fa-square-o\"></i></span>"}%%{
+}%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='open'" then="<span class=\"task-btn btn-close\"><i class=\"fa fa-fw fa-square\"></i></span>"}%%{
 }%%IF{"context task_canedit and not context task_readonly  and '%TASKINFO{field="Status"}%'='closed'" then="<span ><i class=\"closed fa fa-fw fa-check-square\"></i></span>"}%%{
 }%%TMPL:END%
 
