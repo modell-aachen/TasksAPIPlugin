@@ -2241,7 +2241,15 @@ SCRIPT
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
     my $panel = "<task-panel-bootstrap preferences-selector='$prefSelector'></task-panel-bootstrap>";
     my $replacement = "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>$panel";
-    return $replacement;
+
+    my $clientId = "TaskGrid_" . substr(md5_hex(rand), -6);
+    my $clientToken = Foswiki::Plugins::VueJSPlugin::registerClient( $clientId );
+    return sprintf(
+        '<div class="TaskGridContainer" data-vue-client-id="%s" data-vue-client-token="%s">%s</div>',
+        $clientId,
+        $clientToken,
+        $replacement
+    );
 }
 
 sub tagGrid {
