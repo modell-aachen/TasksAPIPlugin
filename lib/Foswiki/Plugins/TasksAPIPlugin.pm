@@ -2223,7 +2223,7 @@ sub tagTaskGrid {
     Foswiki::Func::addToZone( 'script', $prefSelector,
         "<script type='text/json'>$jsonPrefs</script>");
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
-        "<script type='text/javascript' src='%PUBU,RL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js?v=$RELEASE'></script>", "VUEJSPLUGIN");
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js?v=$RELEASE'></script>", "VUEJSPLUGIN");
     Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID',
         "<script type='text/javascript' src='$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js?v=$RELEASE'></script>", 'jsi18nCore' );
 
