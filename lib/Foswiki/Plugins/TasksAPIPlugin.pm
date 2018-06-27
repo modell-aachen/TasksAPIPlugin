@@ -2215,21 +2215,18 @@ sub tagTaskGrid {
     my $jsonPrefs = to_json($prefs);
 
     Foswiki::Func::addToZone( 'head', 'FONTAWESOME',
-        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome.min.css" />');
+        "<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FontAwesomeContrib/css/font-awesome.min.css?v=$RELEASE' />");
     Foswiki::Func::addToZone( 'head', 'FLATSKIN_WRAPPED',
-        '<link rel="stylesheet" type="text/css" media="all" href="%PUBURLPATH%/%SYSTEMWEB%/FlatSkin/css/flatskin_wrapped.min.css" />');
-    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES', <<STYLE );
-<link rel='stylesheet' type='text/css' media='all' href='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/css/tasktracker.css' />
-STYLE
+        "<link rel='stylesheet' type='text/css' media='all' href='%PUBURLPATH%/%SYSTEMWEB%/FlatSkin/css/flatskin_wrapped.min.css?v=$RELEASE' />");
+    Foswiki::Func::addToZone( 'head', 'TASKSAPI::STYLES',
+        "<link rel='stylesheet' type='text/css' media='all' href='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/css/tasktracker.css?v=$RELEASE' />" );
     Foswiki::Func::addToZone( 'script', $prefSelector,
         "<script type='text/json'>$jsonPrefs</script>");
-
     Foswiki::Func::addToZone( 'script', 'TASKGRID',
-        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js'></script>", "VUEJSPLUGIN");
+        "<script type='text/javascript' src='%PUBURL%/%SYSTEMWEB%/TasksAPIPlugin/js/taskgrid2.js?v=$RELEASE'></script>", "VUEJSPLUGIN");
+    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID',
+        "<script type='text/javascript' src='$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js?v=$RELEASE'></script>", 'jsi18nCore' );
 
-    Foswiki::Func::addToZone( 'script', 'TASKSAPI::I18N::TASKGRID', <<SCRIPT, 'jsi18nCore' );
-<script type="text/javascript" src="$pluginURL/js/i18n/jsi18n.TaskGrid.$lang$suffix.js"></script>
-SCRIPT
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::moment', $session);
     Foswiki::Plugins::JQueryPlugin::createPlugin('jqp::sweetalert2', $session);
 
@@ -2241,7 +2238,13 @@ SCRIPT
     Foswiki::Plugins::CKEditorPlugin::_loadEditor('', $topic, $web);
     my $panel = "<task-panel-bootstrap preferences-selector='$prefSelector'></task-panel-bootstrap>";
     my $replacement = "%JSI18N{folder=\"%PUBURLPATH%/%SYSTEMWEB%/TasksAPIPlugin/js/i18n\" id=\"TaskGrid\"}% <task-grid-bootstrap preferences-selector='$prefSelector'></task-grid-bootstrap>$panel";
-    return $replacement;
+
+    my $clientToken = Foswiki::Plugins::VueJSPlugin::getClientToken();
+    return <<HTML;
+        <div class="TaskGridContainer" data-vue-client-token="$clientToken">
+            $replacement
+        </div>
+HTML
 }
 
 sub tagGrid {
