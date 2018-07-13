@@ -787,11 +787,13 @@ TasksPanel = function(tasktracker) {
     }
 
     for (var i in CKEDITOR.instances) {
-      try {
-        CKEDITOR.instances[i].destroy();
-      } catch(e) {
-        if (window.console && console.error) {
-          console.error(e);
+      if($('div.task-details').has(CKEDITOR.instances[i].container.$).length) {
+        try {
+          CKEDITOR.instances[i].destroy();
+        } catch(e) {
+          if (window.console && console.error) {
+            console.error(e);
+          }
         }
       }
     }
