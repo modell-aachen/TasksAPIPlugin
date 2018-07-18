@@ -469,7 +469,7 @@ sub notify {
     if($mailLanguage){
         $mailPreferences->{LANGUAGE} = $mailLanguage;
     }
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, $mailPreferences, 1) });
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1, IncludeCurrentUser => 0}, $mailPreferences, 1) });
     Foswiki::Func::popTopicContext();
 }
 
