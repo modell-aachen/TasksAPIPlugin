@@ -791,22 +791,26 @@
 
     $tracker.children('.filter').find('input, select').each(function() {
       var $filter = $(this);
-      $filter.val('');
-      if ($filter.is('input')) {
-        if ($filter.data('default')) {
-          $filter.val($filter.data('default'));
-        }
-      }
-
-      if ($filter.is('select')) {
-        $filter.children('option').each(function() {
-          var $o = $(this);
-          $o.removeAttr('selected');
-          if ($o.data('default')) {
-            $o.attr('selected', 'selected');
-            $filter.val($o.val());
+      if($filter.hasClass('foswikiPickADate')) {
+        $filter.pickadate('picker').clear();
+      } else {
+        $filter.val('');
+        if ($filter.is('input')) {
+          if ($filter.data('default')) {
+            $filter.val($filter.data('default'));
           }
-        });
+        }
+
+        if ($filter.is('select')) {
+          $filter.children('option').each(function() {
+            var $o = $(this);
+            $o.removeAttr('selected');
+            if ($o.data('default')) {
+              $o.attr('selected', 'selected');
+              $filter.val($o.val());
+            }
+          });
+        }
       }
     });
 
