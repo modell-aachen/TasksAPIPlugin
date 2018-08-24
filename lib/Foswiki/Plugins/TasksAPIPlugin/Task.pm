@@ -397,6 +397,9 @@ sub create {
     $task->_postCreate();
     $task->_postUpdate();
     Foswiki::Plugins::TasksAPIPlugin::_index($task) unless $dontSave;
+
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($meta->text(), $topic, $web, my $error, $meta);
+
     $task->{_canChange} = $task->checkACL('change');
     $task;
 }
@@ -432,8 +435,7 @@ sub copy {
     }
     # Index again to pick up the attachment metadata
     Foswiki::Plugins::TasksAPIPlugin::_index($dest);
-    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    $dest->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($self->{meta}->text(), $self->{meta}->{topic}, $self->{meta}->web(), my $error, $self->{meta});
     return $dest;
 }
 
@@ -467,7 +469,7 @@ sub notify {
     if($mailLanguage){
         $mailPreferences->{LANGUAGE} = $mailLanguage;
     }
-    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1}, $mailPreferences, 1) });
+    Foswiki::Plugins::TasksAPIPlugin::withCurrentTask($self, sub { Foswiki::Contrib::MailTemplatesContrib::sendMail($tpl, {GenerateInAdvance => 1, IncludeCurrentUser => 0}, $mailPreferences, 1) });
     Foswiki::Func::popTopicContext();
 }
 
@@ -624,9 +626,7 @@ sub update {
     $self->_postUpdate;
     Foswiki::Plugins::TasksAPIPlugin::_index($self, 0, $data{aclCache});
 
-    require Foswiki::Plugins::SolrPlugin;
-    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    $self->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    Foswiki::Plugins::SolrPlugin::afterSaveHandler($meta->text(), $topic, $web, my $error, $meta);
 }
 
 sub close {
@@ -760,6 +760,8 @@ sub solrize {
     $icon = $self->{meta}->expandMacros($icon) if $icon =~ /%[^%]+%/;
     my @attachments = $self->{meta}->find('FILEATTACHMENT');
     my @attNames = map {$_->{name}} @attachments;
+
+    $indexer->deleteByQuery("type:task task_id_s:$self->{id}"); # our context might have moved
 
     my $doc = $indexer->newDocument();
     $doc->add_fields(

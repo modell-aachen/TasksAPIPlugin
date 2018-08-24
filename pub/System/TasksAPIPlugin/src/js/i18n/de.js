@@ -49,5 +49,6 @@ if ( jsi18n && typeof jsi18n.add === 'function') {
     "One day over due":"Seit einem Tag abgelaufen",
     "In [_1] days":"In [_1] Tagen",
     "[_1] days over due":"Seit [_1] Tagen abgelaufen",
+    "file_too_large": "Maximale Dateigröße überschritten (maximal: [_1]MB)"
   });
 }

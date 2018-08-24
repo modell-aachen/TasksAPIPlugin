@@ -24,12 +24,13 @@ var TasksAPIPlugin = {
 window.TasksAPIPlugin = TasksAPIPlugin;
 
 $( function () {
-    new Vue({
-        el: '.foswikiTopic',
-        store,
-        components: {
+    Vue.instantiateEach(
+        '.TaskGridContainer',
+        { store: store,
+          components: {
             TaskGridBootstrap,
             TaskPanelBootstrap
+          }
         }
-    })
+    );
 })
