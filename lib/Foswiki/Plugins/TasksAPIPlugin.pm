@@ -690,6 +690,9 @@ sub _processQueryParams {
             } elsif ($v->{type} eq 'like') {
                 push @filters, "$q LIKE ?";
                 push @args, "\%$v->{substring}%";
+            } elsif ($v->{type} eq 'nlike' or $v->{type} eq 'not like') {
+                push @filters, "$q NOT LIKE ?";
+                push @args, "\%$v->{substring}";
             } else {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
