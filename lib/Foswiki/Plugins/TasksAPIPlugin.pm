@@ -1127,6 +1127,49 @@ sub validFilenameLength {
     return $isValid;
 }
 
+sub getAllTaskIdsByContext {
+    my ($context) = @_;
+    my $tasks;
+
+    if (Foswiki::Func::isAnAdmin()){
+        $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
+    }else{
+        die "Only accessibile for admins";
+    }
+
+    return $tasks;
+}
+
+sub hardDeleteTask {
+    my ($taskId) = @_;
+
+    use Cwd qw(cwd);
+    use File::Path;
+    my $cwd = cwd;
+
+    if (Foswiki::Func::isAnAdmin()){
+        db()->begin_work;
+        db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
+        db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+
+        my $taskDir = $taskId;
+        $taskDir =~ s/\./\//g;
+
+        my $taskPub = join('/', $cwd, '..', 'pub', $taskDir);
+        my $taskData = join('/', $cwd, '..', 'data',  $taskDir);
+        my $taskHistory = $taskData . ",pfv";
+        my $taskFile = $taskData . ".txt";
+
+        File::Path::rmtree($taskPub, $taskHistory);
+        File::Path::rmtree($taskHistory);
+        unlink($taskFile);
+
+        db()->commit;
+    }else{
+        die "Only accessibile for admins";
+    }
+}
+
 sub restAttach {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = Foswiki::Func::getCgiQuery();
