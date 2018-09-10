@@ -690,7 +690,7 @@ sub _processQueryParams {
             } elsif ($v->{type} eq 'like') {
                 push @filters, "$q LIKE ?";
                 push @args, "\%$v->{substring}%";
-            } elsif ($v->{type} eq 'nlike' or $v->{type} eq 'not like') {
+            } elsif ($v->{type} eq 'not like') {
                 push @filters, "$q NOT LIKE ?";
                 push @args, "\%$v->{substring}";
             } else {
@@ -1147,27 +1147,24 @@ sub hardDeleteTask {
     use File::Path;
     my $cwd = cwd;
 
-    if (Foswiki::Func::isAnAdmin()){
-        db()->begin_work;
-        db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
-        db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+    db()->begin_work;
+    db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
 
-        my $taskDir = $taskId;
-        $taskDir =~ s/\./\//g;
+    my $taskDir = $taskId;
+    $taskDir =~ s/\./\//g;
 
-        my $taskPub = join('/', $cwd, '..', 'pub', $taskDir);
-        my $taskData = join('/', $cwd, '..', 'data',  $taskDir);
-        my $taskHistory = $taskData . ",pfv";
-        my $taskFile = $taskData . ".txt";
+    my $taskPub = join('/', $cwd, '..', 'pub', $taskDir);
+    my $taskData = join('/', $cwd, '..', 'data',  $taskDir);
+    my $taskHistory = $taskData . ",pfv";
+    my $taskFile = $taskData . ".txt";
 
-        File::Path::rmtree($taskPub, $taskHistory);
-        File::Path::rmtree($taskHistory);
-        unlink($taskFile);
+    File::Path::rmtree($taskPub, $taskHistory);
+    File::Path::rmtree($taskHistory);
+    unlink($taskFile);
 
-        db()->commit;
-    }else{
-        die "Only accessibile for admins";
-    }
+    db()->commit;
+
 }
 
 sub restAttach {
