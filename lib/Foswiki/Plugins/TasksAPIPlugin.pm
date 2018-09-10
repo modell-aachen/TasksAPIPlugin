@@ -1151,20 +1151,16 @@ sub hardDeleteTask {
     db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
     db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
 
-    my $taskDir = $taskId;
-    $taskDir =~ s/\./\//g;
 
-    my $taskPub = join('/', $cwd, '..', 'pub', $taskDir);
-    my $taskData = join('/', $cwd, '..', 'data',  $taskDir);
-    my $taskHistory = $taskData . ",pfv";
-    my $taskFile = $taskData . ".txt";
+    my $cuid = Foswiki::Func::getCanonicalUserID();
+    my $plainFileStore = Foswiki::Store::PlainFile->new();
+    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $taskId);
+    my $taskMeta = Foswiki::Meta->load( $Foswiki::Plugins::SESSION, $web, $topic);
 
-    File::Path::rmtree($taskPub, $taskHistory);
-    File::Path::rmtree($taskHistory);
-    unlink($taskFile);
+    $plainFileStore->remove($cuid, $taskMeta);
+    $plainFileStore->finish();
 
     db()->commit;
-
 }
 
 sub restAttach {
