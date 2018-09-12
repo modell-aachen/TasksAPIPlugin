@@ -1127,20 +1127,35 @@ sub validFilenameLength {
     return $isValid;
 }
 
-sub getAllTaskIdsByContext {
+sub getAllTaskIdsForWeb {
     my ($context) = @_;
-    my $tasks;
-
-    if (Foswiki::Func::isAnAdmin()){
-        $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
-    }else{
-        die "Only accessibile for admins";
-    }
-
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
     return $tasks;
 }
 
-sub hardDeleteTask {
+sub getAllTaskIdsForTopic {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context = ?", {}, "$context");
+    return $tasks;
+}
+
+sub deleteAllTasksForTopic {
+    my ($webTopic) = @_;
+    my $tasks = getAllTaskIdsForTopic( $webTopic );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub deleteAllTasksForWeb {
+    my ($web) = @_;
+    my $tasks = getAllTaskIdsForWeb( $web );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub _hardDeleteTask {
     my ($taskId) = @_;
 
     use Cwd qw(cwd);
@@ -1151,14 +1166,7 @@ sub hardDeleteTask {
     db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
     db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
 
-
-    my $cuid = Foswiki::Func::getCanonicalUserID();
-    my $plainFileStore = Foswiki::Store::PlainFile->new();
-    my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $taskId);
-    my $taskMeta = Foswiki::Meta->load( $Foswiki::Plugins::SESSION, $web, $topic);
-
-    $plainFileStore->remove($cuid, $taskMeta);
-    $plainFileStore->finish();
+    Foswiki::Plugins::ModacHelpersPlugin::deleteTopic($taskId);
 
     db()->commit;
 }
