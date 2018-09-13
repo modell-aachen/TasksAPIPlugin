@@ -1155,6 +1155,10 @@ sub deleteAllTasksForWeb {
     }
 }
 
+=pro
+Hard delete a single Tasks given by its webTopic name, i.e. Task.Task-234234234234234234234324234.
+Task will be irretrievable removed from database and filesystem.
+=cut
 sub _hardDeleteTask {
     my ($taskId) = @_;
 
@@ -1165,6 +1169,7 @@ sub _hardDeleteTask {
     db()->begin_work;
     db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
     db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM jobs WHERE task_id = ?",{}, $taskId);
 
     Foswiki::Plugins::ModacHelpersPlugin::deleteTopic($taskId);
 
