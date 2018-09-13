@@ -690,6 +690,9 @@ sub _processQueryParams {
             } elsif ($v->{type} eq 'like') {
                 push @filters, "$q LIKE ?";
                 push @args, "\%$v->{substring}%";
+            } elsif ($v->{type} eq 'not like') {
+                push @filters, "$q NOT LIKE ?";
+                push @args, "\%$v->{substring}";
             } else {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
@@ -1122,6 +1125,55 @@ sub validFilenameLength {
         $isValid = '';
     }
     return $isValid;
+}
+
+sub getAllTaskIdsForWeb {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
+    return $tasks;
+}
+
+sub getAllTaskIdsForTopic {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context = ?", {}, "$context");
+    return $tasks;
+}
+
+sub deleteAllTasksForTopic {
+    my ($webTopic) = @_;
+    my $tasks = getAllTaskIdsForTopic( $webTopic );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub deleteAllTasksForWeb {
+    my ($web) = @_;
+    my $tasks = getAllTaskIdsForWeb( $web );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+=pro
+Hard delete a single Tasks given by its webTopic name, i.e. Task.Task-234234234234234234234324234.
+Task will be irretrievable removed from database and filesystem.
+=cut
+sub _hardDeleteTask {
+    my ($taskId) = @_;
+
+    use Cwd qw(cwd);
+    use File::Path;
+    my $cwd = cwd;
+
+    db()->begin_work;
+    db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM jobs WHERE task_id = ?",{}, $taskId);
+
+    Foswiki::Plugins::ModacHelpersPlugin::deleteTopic($taskId);
+
+    db()->commit;
 }
 
 sub restAttach {
