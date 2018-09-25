@@ -55,6 +55,7 @@ The following parameters are available:
 | title="..." | Title of the tasks grid | %<nop>MAKETEXT{"Tasks"}% |
 | titlelength="..." | Number of characters before a task's title gets trancuated. Set to =0= to disable title length restrictions. | 100 |
 | updateurl="..." | An URL used for async grid loading. | |
+| localTo="..." | Limit results to _LocalTasks_, ie. tasks that have a =LocalTo= formfield with the same value as defined here. These tasks will not show up on grids without the =localTo= parameter. | _none_ |
 
 ---++++ Customizing headers and columns
 

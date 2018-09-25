@@ -564,9 +564,13 @@ sub query {
 
     my ($filter, $scalarArgs, $join, $scalarJoins);
     ($filter, $scalarArgs, $join, $scalarJoins, $order) = _processQueryParams($query, $order);
+
+    _addLocalTaskFilter($opts{localTo}, \$filter, $scalarArgs, \$join) if exists $opts{localTo};
+
+    $filter = "WHERE $filter" if $filter;
+
     my @args = @$scalarArgs;
     my %joins = %$scalarJoins;
-    $filter = " WHERE $filter" if $filter;
 
     if ($order) {
         my $isArray = ref($order) eq 'ARRAY';
@@ -613,10 +617,10 @@ sub query {
     my $ret;
     my ($ids, $total);
     eval {
-        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
+        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t $aclJoin$join$filter$group$order$limit", {}, @args);
 
         if($limit ne '') {
-           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t $aclJoin$join$filter", {}, @args);
         } else {
             $total = scalar @$ids;
         }
@@ -640,6 +644,52 @@ sub query {
 }
 *_query = \&query; # Backwards compatibility
 
+sub _addLocalTaskFilter {
+    my ($localTo, $filterRef, $scalarArgs, $joinRef) = @_;
+
+    my $localFilter;
+    $$joinRef .= " LEFT JOIN task_multi local_task ON(t.id = local_task.id AND local_task.type='LocalTask')";
+    if($localTo) {
+        $localFilter = "local_task.value = ?";
+        push @$scalarArgs, $localTo;
+    } else {
+        $localFilter = "local_task IS NULL OR local_task.value = ''";
+    }
+
+    if($$filterRef) {
+        $$filterRef = "($$filterRef) AND ($localFilter)";
+    } else {
+        $$filterRef = "$localFilter";
+    }
+}
+
+sub reindexContext {
+    my %options = @_;
+
+    my $context;
+    if($options{context}) {
+        $context = $options{context};
+    } elsif ($options{subcontexts}) {
+        $context = $options{subcontexts} . '.%';
+    }
+    print STDERR "context $context";
+    my $db = db();
+    $db->begin_work;
+    my @taskIds = $db->selectrow_array("SELECT id FROM tasks WHERE context like ?", {}, $context);
+
+    #    require Foswiki::Plugins::SolrPlugin;
+    #my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    #$indexer->deleteByQuery('task_id_s:*');
+
+    my $aclCache = {};
+    foreach my $id (@taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        Foswiki::Func::writeWarning("reindexing $id");
+        _index($task, 0, $aclCache);
+    }
+
+    $db->commit;
+}
 
 =begin TML
 
@@ -2347,6 +2397,7 @@ sub tagGrid {
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
+    my $localTo = $params->{localTo} || '';
 
     eval {
         $order =~s /^\s*//g;
@@ -2489,7 +2540,8 @@ SCRIPT
         titlelength => int($titlelength),
         updateurl => $updateurl,
         _baseweb => $web,
-        _basetopic => $topic
+        _basetopic => $topic,
+        localTo => $localTo,
     );
 
     my $fctx = Foswiki::Func::getContext();
@@ -2595,7 +2647,8 @@ SCRIPT
         order => $order,
         desc => $desc,
         count => $pageSize,
-        offset => $offset
+        offset => $offset,
+        localTo => $localTo,
     );
 
     my $id_param = $req->param('id');
