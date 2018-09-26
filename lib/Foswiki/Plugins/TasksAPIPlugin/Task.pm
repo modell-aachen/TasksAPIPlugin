@@ -75,7 +75,7 @@ sub load {
 sub _mapLocalTaskToKVP {
     my ($unmapped, $ctx) = @_;
 
-    my @pairs = split(/\*,\*/, $unmapped);
+    my @pairs = split(/\s*,\s*/, $unmapped);
     push @pairs, '' unless scalar @pairs;
 
     my $value = '';
