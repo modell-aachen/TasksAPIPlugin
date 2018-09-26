@@ -22,6 +22,7 @@ use Foswiki::Plugins::SolrPlugin;
 use Foswiki::Plugins::JSi18nPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
+use Foswiki::Plugins::TaskDaemonPlugin;
 
 use DBI;
 use Encode;
@@ -198,6 +199,17 @@ sub finishPlugin {
     }
 }
 
+sub grinder {
+    my ($department, $session, $type, $json, $caches) = @_;
+
+    my $data = from_json($json);
+    if ($type eq 'reindex') {
+        reindexContext(context => $data->{context});
+    } else {
+        Foswiki::Func::writeWarning("Unknown message for grinder: $type");
+    }
+}
+
 sub indexTopicHandler {
     my ($indexer, $doc, $web, $topic, $meta, $text) = @_;
 
@@ -349,9 +361,23 @@ sub beforeSaveHandler {
     $data->{forms} = \@forms;
 }
 
+sub _reindexWithDaemon {
+    my ($web, $topic) = @_;
+
+    my $session = $Foswiki::Plugins::SESSION;
+    my $json = to_json({
+        user => $session->{user},
+        webtopic => "$web.$topic",
+        context => "$web.$topic",
+        callback => "Foswiki::Plugins::TasksAPIPlugin",
+    });
+    Foswiki::Plugins::TaskDaemonPlugin::send($json, 'reindex', 'TaskDaemonPlugin', 0);
+}
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    _reindexWithDaemon($web, $topic) if $web && $topic;
 
     # update wiki_acls when WebPreferences/SitePreferences changed
     # XXX it would be nice if this only happens when the ACLs changed
@@ -649,12 +675,21 @@ sub _addLocalTaskFilter {
 
     my $localFilter;
     $$joinRef .= " LEFT JOIN task_multi local_task ON(t.id = local_task.id AND local_task.type='LocalTask')";
-    if($localTo) {
-        $localFilter = "local_task.value = ?";
-        push @$scalarArgs, $localTo;
-    } else {
-        $localFilter = "local_task IS NULL OR local_task.value = ''";
+
+    my @localToParts;
+    @localToParts = split(/\s*,\s*/, $localTo) if defined $localTo;
+    push @localToParts, '' unless scalar @localToParts;
+
+    my @localFilterParts = ();
+    foreach my $eachLocalTo (@localToParts) {
+        if($eachLocalTo) {
+            push @localFilterParts, "local_task.value = ?";
+            push @$scalarArgs, $eachLocalTo;
+        } else {
+            push @localFilterParts, "(local_task IS NULL OR local_task.value = '')";
+        }
     }
+    $localFilter = join(' OR ', @localFilterParts);
 
     if($$filterRef) {
         $$filterRef = "($$filterRef) AND ($localFilter)";
@@ -672,7 +707,6 @@ sub reindexContext {
     } elsif ($options{subcontexts}) {
         $context = $options{subcontexts} . '.%';
     }
-    print STDERR "context $context";
     my $db = db();
     $db->begin_work;
     my @taskIds = $db->selectrow_array("SELECT id FROM tasks WHERE context like ?", {}, $context);
