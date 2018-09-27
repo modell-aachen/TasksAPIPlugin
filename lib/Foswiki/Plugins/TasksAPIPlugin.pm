@@ -682,7 +682,7 @@ sub _addLocalTaskFilter {
 
     my @localFilterParts = ();
     foreach my $eachLocalTo (@localToParts) {
-        if($eachLocalTo) {
+        if($eachLocalTo && $eachLocalTo ne '-') {
             push @localFilterParts, "local_task.value = ?";
             push @$scalarArgs, $eachLocalTo;
         } else {
