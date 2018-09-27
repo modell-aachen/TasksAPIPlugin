@@ -681,10 +681,10 @@ sub _addLocalTaskFilter {
     push @localToParts, '' unless scalar @localToParts;
 
     my @localFilterParts = ();
-    foreach my $eachLocalTo (@localToParts) {
-        if($eachLocalTo && $eachLocalTo ne '-') {
+    foreach my $localToPart (@localToParts) {
+        if($localToPart && $localToPart ne '-') {
             push @localFilterParts, "local_task.value = ?";
-            push @$scalarArgs, $eachLocalTo;
+            push @$scalarArgs, $localToPart;
         } else {
             push @localFilterParts, "(local_task IS NULL OR local_task.value = '')";
         }
