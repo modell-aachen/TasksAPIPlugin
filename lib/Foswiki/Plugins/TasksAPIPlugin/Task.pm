@@ -548,6 +548,10 @@ sub update {
             my $defValue = $f->getDefaultValue() if $f->can('getDefaultValue');
             $defValue = '' unless defined $defValue;
             $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $defValue });
+            if($name eq 'LocalTask') {
+                my $ctx = $data{Context} || ($meta->get('FIELD', 'Context') || {})->{value};
+                $defValue = _mapLocalTaskToKVP($defValue, $ctx);
+            }
             $self->{fields}{$name} = $defValue;
             $defChange = 1 if $defValue ne '';
             next;
