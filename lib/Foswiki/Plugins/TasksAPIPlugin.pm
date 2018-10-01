@@ -1407,6 +1407,26 @@ sub restCreate {
     return '';
 }
 
+sub migrateTaskType {
+    my %options = @_;
+
+    my $context;
+    if($options{context}) {
+        $context = $options{context};
+    } elsif ($options{subcontexts}) {
+        $context = $options{subcontexts} . '.%';
+    }
+
+    my $db = db();
+    my $taskIds = $db->selectcol_arrayref("SELECT tasks.id FROM tasks JOIN task_multi ON (tasks.id = task_multi.id) WHERE context like ? AND value = ? AND task_multi.type = 'Type'", {}, $context, $options{from});
+
+    my $aclCache = {};
+    foreach my $id (@$taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        $task->update(Type => $options{to});
+    }
+}
+
 sub restUpdate {
     my ($session, $subject, $verb, $response) = @_;
     my $q = $session->{request};
