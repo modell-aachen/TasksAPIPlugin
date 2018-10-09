@@ -53,6 +53,10 @@ sub load {
         $defValue = '' unless defined $defValue;
         my $val = $entry ? $entry->{value} : undef;
         $val = $defValue unless defined $val && $val ne '';
+        if($name eq 'LocalTask') {
+            my $ctx = $data{Context} || ($meta->get('FIELD', 'Context') || {})->{value};
+            $val = _mapLocalTaskToKVP($val, $ctx);
+        }
         $data{$name} = $val;
     }
     if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
@@ -66,6 +70,31 @@ sub load {
     my $task = __PACKAGE__->new(%data);
     $task->{_canChange} = $task->checkACL('change');
     $task;
+}
+
+sub _mapLocalTaskToKVP {
+    my ($unmapped, $ctx) = @_;
+
+    my @pairs = split(/\s*,\s*/, $unmapped);
+    push @pairs, '' unless scalar @pairs;
+
+    my $value = '';
+    foreach my $pair (@pairs) {
+        if($pair =~ m#^State (.*?)=(.*)#) {
+            my $state = $1;
+            my $stateVal = $2;
+            my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
+            my $ctxState = Foswiki::Plugins::KVPPlugin::_WORKFLOWSTATE($Foswiki::Plugins::SESSION, {}, $ctxTopic, $ctxWeb);
+            if($state eq $ctxState) {
+                $value = $stateVal;
+                last;
+            }
+        } else {
+            $value = $pair;
+            last;
+        }
+    }
+    return $value;
 }
 
 sub data {
@@ -519,6 +548,10 @@ sub update {
             my $defValue = $f->getDefaultValue() if $f->can('getDefaultValue');
             $defValue = '' unless defined $defValue;
             $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $defValue });
+            if($name eq 'LocalTask') {
+                my $ctx = $data{Context} || ($meta->get('FIELD', 'Context') || {})->{value};
+                $defValue = _mapLocalTaskToKVP($defValue, $ctx);
+            }
             $self->{fields}{$name} = $defValue;
             $defChange = 1 if $defValue ne '';
             next;

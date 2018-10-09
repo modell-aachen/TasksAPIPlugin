@@ -22,6 +22,7 @@ use Foswiki::Plugins::SolrPlugin;
 use Foswiki::Plugins::JSi18nPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
+use Foswiki::Plugins::TaskDaemonPlugin;
 
 use DBI;
 use Encode;
@@ -198,6 +199,17 @@ sub finishPlugin {
     }
 }
 
+sub grinder {
+    my ($department, $session, $type, $json, $caches) = @_;
+
+    my $data = from_json($json);
+    if ($type eq 'reindex') {
+        reindexContext(context => $data->{context});
+    } else {
+        Foswiki::Func::writeWarning("Unknown message for grinder: $type");
+    }
+}
+
 sub indexTopicHandler {
     my ($indexer, $doc, $web, $topic, $meta, $text) = @_;
 
@@ -349,9 +361,23 @@ sub beforeSaveHandler {
     $data->{forms} = \@forms;
 }
 
+sub _reindexWithDaemon {
+    my ($web, $topic) = @_;
+
+    my $session = $Foswiki::Plugins::SESSION;
+    my $json = to_json({
+        user => $session->{user},
+        webtopic => "$web.$topic",
+        context => "$web.$topic",
+        callback => "Foswiki::Plugins::TasksAPIPlugin",
+    });
+    Foswiki::Plugins::TaskDaemonPlugin::send($json, 'reindex', 'TaskDaemonPlugin', 0);
+}
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    _reindexWithDaemon($web, $topic) if $web && $topic;
 
     # update wiki_acls when WebPreferences/SitePreferences changed
     # XXX it would be nice if this only happens when the ACLs changed
@@ -564,9 +590,13 @@ sub query {
 
     my ($filter, $scalarArgs, $join, $scalarJoins);
     ($filter, $scalarArgs, $join, $scalarJoins, $order) = _processQueryParams($query, $order);
+
+    _addLocalTaskFilter($opts{localTo}, \$filter, $scalarArgs, \$join) if exists $opts{localTo};
+
+    $filter = "WHERE $filter" if $filter;
+
     my @args = @$scalarArgs;
     my %joins = %$scalarJoins;
-    $filter = " WHERE $filter" if $filter;
 
     if ($order) {
         my $isArray = ref($order) eq 'ARRAY';
@@ -613,10 +643,10 @@ sub query {
     my $ret;
     my ($ids, $total);
     eval {
-        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
+        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t $aclJoin$join$filter$group$order$limit", {}, @args);
 
         if($limit ne '') {
-           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t $aclJoin$join$filter", {}, @args);
         } else {
             $total = scalar @$ids;
         }
@@ -640,6 +670,60 @@ sub query {
 }
 *_query = \&query; # Backwards compatibility
 
+sub _addLocalTaskFilter {
+    my ($localTo, $filterRef, $scalarArgs, $joinRef) = @_;
+
+    my $localFilter;
+    $$joinRef .= " LEFT JOIN task_multi local_task ON(t.id = local_task.id AND local_task.type='LocalTask')";
+
+    my @localToParts;
+    @localToParts = split(/\s*,\s*/, $localTo) if defined $localTo;
+    push @localToParts, '' unless scalar @localToParts;
+
+    my @localFilterParts = ();
+    foreach my $localToPart (@localToParts) {
+        if($localToPart && $localToPart ne '-') {
+            push @localFilterParts, "local_task.value = ?";
+            push @$scalarArgs, $localToPart;
+        } else {
+            push @localFilterParts, "(local_task IS NULL OR local_task.value = '')";
+        }
+    }
+    $localFilter = join(' OR ', @localFilterParts);
+
+    if($$filterRef) {
+        $$filterRef = "($$filterRef) AND ($localFilter)";
+    } else {
+        $$filterRef = "$localFilter";
+    }
+}
+
+sub reindexContext {
+    my %options = @_;
+
+    my $context;
+    if($options{context}) {
+        $context = $options{context};
+    } elsif ($options{subcontexts}) {
+        $context = $options{subcontexts} . '.%';
+    }
+    my $db = db();
+    $db->begin_work;
+    my @taskIds = $db->selectrow_array("SELECT id FROM tasks WHERE context like ?", {}, $context);
+
+    #    require Foswiki::Plugins::SolrPlugin;
+    #my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+    #$indexer->deleteByQuery('task_id_s:*');
+
+    my $aclCache = {};
+    foreach my $id (@taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        Foswiki::Func::writeWarning("reindexing $id");
+        _index($task, 0, $aclCache);
+    }
+
+    $db->commit;
+}
 
 =begin TML
 
@@ -690,6 +774,9 @@ sub _processQueryParams {
             } elsif ($v->{type} eq 'like') {
                 push @filters, "$q LIKE ?";
                 push @args, "\%$v->{substring}%";
+            } elsif ($v->{type} eq 'not like') {
+                push @filters, "$q NOT LIKE ?";
+                push @args, "\%$v->{substring}";
             } else {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
@@ -1124,6 +1211,55 @@ sub validFilenameLength {
     return $isValid;
 }
 
+sub getAllTaskIdsForWeb {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
+    return $tasks;
+}
+
+sub getAllTaskIdsForTopic {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context = ?", {}, "$context");
+    return $tasks;
+}
+
+sub deleteAllTasksForTopic {
+    my ($webTopic) = @_;
+    my $tasks = getAllTaskIdsForTopic( $webTopic );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub deleteAllTasksForWeb {
+    my ($web) = @_;
+    my $tasks = getAllTaskIdsForWeb( $web );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+=pro
+Hard delete a single Tasks given by its webTopic name, i.e. Task.Task-234234234234234234234324234.
+Task will be irretrievable removed from database and filesystem.
+=cut
+sub _hardDeleteTask {
+    my ($taskId) = @_;
+
+    use Cwd qw(cwd);
+    use File::Path;
+    my $cwd = cwd;
+
+    db()->begin_work;
+    db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM jobs WHERE task_id = ?",{}, $taskId);
+
+    Foswiki::Plugins::ModacHelpersPlugin::deleteTopic($taskId);
+
+    db()->commit;
+}
+
 sub restAttach {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = Foswiki::Func::getCgiQuery();
@@ -1269,6 +1405,26 @@ sub restCreate {
         data => $task,
     }));
     return '';
+}
+
+sub migrateTaskType {
+    my %options = @_;
+
+    my $context;
+    if($options{context}) {
+        $context = $options{context};
+    } elsif ($options{subcontexts}) {
+        $context = $options{subcontexts} . '.%';
+    }
+
+    my $db = db();
+    my $taskIds = $db->selectcol_arrayref("SELECT tasks.id FROM tasks JOIN task_multi ON (tasks.id = task_multi.id) WHERE context like ? AND value = ? AND task_multi.type = 'Type'", {}, $context, $options{from});
+
+    my $aclCache = {};
+    foreach my $id (@$taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        $task->update(Type => $options{to});
+    }
 }
 
 sub restUpdate {
@@ -2295,6 +2451,7 @@ sub tagGrid {
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
+    my $localTo = $params->{localTo} || '';
 
     eval {
         $order =~s /^\s*//g;
@@ -2437,7 +2594,8 @@ SCRIPT
         titlelength => int($titlelength),
         updateurl => $updateurl,
         _baseweb => $web,
-        _basetopic => $topic
+        _basetopic => $topic,
+        localTo => $localTo,
     );
 
     my $fctx = Foswiki::Func::getContext();
@@ -2543,7 +2701,8 @@ SCRIPT
         order => $order,
         desc => $desc,
         count => $pageSize,
-        offset => $offset
+        offset => $offset,
+        localTo => $localTo,
     );
 
     my $id_param = $req->param('id');

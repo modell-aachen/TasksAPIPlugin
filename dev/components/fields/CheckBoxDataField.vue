@@ -1,7 +1,7 @@
 <template>
     <span :class="config.class" v-on:click.stop="updateStatus">
         <template v-if="!isClosed">
-            <i class="fa fa-fw fa-square-o"></i>
+            <i class="fa fa-fw fa-square"></i>
         </template>
         <template v-else>
             <i class="cloased fa fa-fw fa-check-square"></i>
