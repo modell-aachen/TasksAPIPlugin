@@ -1733,45 +1733,46 @@ sub tagFilter {
             my $default = $value ? 'data-default="' . $query->{$filter} . '"' : '';
             push(@out, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
         } elsif ($f->{type} =~ /^select/) {
-            push(@out, "<select name=\"$filter\" class=\"filter\">");
-            my @opts = ();
-            my @labels = ();
+            push(@out, "<select name=\"json:$filter\" class=\"filter\">");
+            my @aggregatedLabels = ();
+            my %valuesForLabel = ();
             my @arr = split(',', $f->{value});
             next if(scalar @arr < 2 );
             foreach my $a (@arr) {
                 next if ($f->{name} eq 'Status' && $a =~ /deleted/ && !Foswiki::Func::isAnAdmin());
                 $a =~ s/(^\s*)|(\s*$)//g;
+
+                my ($fieldSelect, $fieldValue);
                 if ( $f->{type} =~ m/values/i ) {
-                    my @pair = split('=', $a);
-                    push(@opts, pop @pair);
-                    push(@labels, pop @pair);
+                    ($fieldSelect, $fieldValue) = split('=', $a);
                 } else {
-                    push(@opts, $a);
+                    $fieldSelect = $fieldValue = $a;
+                }
+                $fieldSelect =~ s#^\s+##;
+                $fieldSelect =~ s#\s+$##;
+                $fieldValue =~ s#^\s+##;
+                $fieldValue =~ s#\s+$##;
+                if(exists $valuesForLabel{$fieldSelect}) {
+                    push @{$valuesForLabel{$fieldSelect}}, $fieldValue;
+                } else {
+                    $valuesForLabel{$fieldSelect} = [$fieldValue];
+                    push @aggregatedLabels, $fieldSelect;
                 }
             }
 
             my $selected = '';
             my $hasSelected = 0;
             my @options = ();
-            if ( scalar @opts eq scalar @labels) {
-                for (my $i=0; $i < scalar @opts; $i++) {
-                    my $val = $opts[$i];
-                    $val =~ s/(^\s*)|(\s*$)//g;
-                    my $label = $labels[$i];
-                    $label =~ s/(^\s*)|(\s*$)//g;
-
-                    $selected = $isSelected->($query->{$filter}, $val);
-                    $hasSelected = 1 if $selected;
-                    push(@options, "<option value=\"$val\" $selected>$label</option>")
+            foreach my $label (@aggregatedLabels) {
+                my $values = $valuesForLabel{$label};
+                foreach my $value (@$values) {
+                    $selected = $isSelected->($query->{$filter}, $value);
+                    last if $selected;
                 }
-            } else {
-                for (my $i=0; $i < scalar @opts; $i++) {
-                    my $val = $opts[$i];
-                    $val =~ s/(^\s*)|(\s*$)//g;
-                    $selected = $isSelected->($query->{$filter}, $val);
-                    $hasSelected = 1 if $selected;
-                    push(@options, "<option value=\"$val\">$val</option>")
-                }
+                $hasSelected = 1 if $selected;
+                my $valueJson = to_json($values);
+                $valueJson =~ s/(["'%&])/'&#' . ord($1) . ';'/ge;
+                push(@options, "<option value=\"$valueJson\" $selected>$label</option>")
             }
 
             if ($hasSelected eq 0) {
@@ -2653,6 +2654,10 @@ SCRIPT
                 if ($l eq 'Status' && $val eq 'all') {
                     $query->{$l} = ['open', 'closed'];
                 }elsif($val ne 'all'){
+                    if($l =~ m#^json:(.*)#) {
+                        $l = $1;
+                        $val = from_json($val);
+                    }
                     $query->{$l} = $val;
                 }
             } else {
