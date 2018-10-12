@@ -105,7 +105,10 @@ my @schema_updates = (
         "DROP INDEX task_type_idx",
         "CREATE INDEX task_multi_id_idx ON task_multi (id, type, (md5(value)))",
         "CREATE INDEX task_type_idx ON task_multi (type, (md5(value)))",
-    ]
+    ],
+    [
+        "ALTER TABLE task_multi ADD COLUMN display_value TEXT COLLATE \"en_US\"",
+    ],
 );
 my %singles = (
     id => 1,
@@ -820,7 +823,7 @@ sub _queryGroup {
 
     my ($ids, $total);
     eval {
-        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value", {}, @args);
+        $ids = db()->selectall_arrayref("SELECT task_multi.value, task_multi.display_value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value, task_multi.display_value", { Columns => [1, 2] }, @args);
     };
     if($@) {
         Foswiki::Func::writeWarning("Error querying: $@");
@@ -828,22 +831,7 @@ sub _queryGroup {
     }
 
     return {values => [], total => 0} unless $ids && scalar @$ids;
-
-    # XXX fix legacy select+values ids by stripping select-part.
-    my %seen;
-    grep {!$seen{$_ =~ s#^.*=##r}++} @$ids;
-    my @u_ids = keys %seen;
-
-    # XXX sorts before MAKETEXT
-    if(defined $opts->{order}) {
-        if($opts->{order} && $opts->{order} ne 'DESC') {
-            @u_ids = sort @u_ids;
-        } else {
-            @u_ids = sort backwards @u_ids;
-        }
-    }
-
-    return {values => \@u_ids, total => scalar @u_ids};
+    return {values => $ids, total => scalar @$ids};
 }
 
 sub _getJoinString {
@@ -913,10 +901,14 @@ sub _index {
             } else {
                 $v = [ $v ];
             }
+            my $displayValue;
             if ($singles{$f}) {
                 $vals{$f} = $v->[0];
             } else {
-                push @extra, map { { type => $f, value => $_ } } @$v;
+                foreach my $extraValue ( @$v ) {
+                    my $displayValue = $field->getDisplayValue($extraValue);
+                    push @extra, { type => $f, value => $extraValue, display_value => $displayValue };
+                }
             }
         }
         if ($wiki_acl_view && not $aclCache->{$wiki_acl_view}) {
@@ -934,7 +926,7 @@ sub _index {
         $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
         $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
         foreach my $e (@extra) {
-            $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
+            $db->do("INSERT INTO task_multi (id, type, value, display_value) VALUES(?, ?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value}, $e->{display_value});
         }
         $db->commit if $transact;
         $transact = 0; # cancel rollback
@@ -1658,8 +1650,34 @@ sub tagTaskTypeFilter {
     my $query = $currentOptions->{query} || '{}';
     $query = from_json($query);
 
-    my $res = query(query => $query, groupbyField => 'Type', order => 'ASC');
-    return join(',', @{$res->{values}});
+    my $res = query(query => $query, groupbyField => 'Type');
+    my $values;
+    if($params->{selectPlusValues}) {
+        $values = _expandOrTranslateMappedValues($session, $res->{values});
+    } else {
+        $values = [map{ $_->[0] } @{$res->{values}}];
+    }
+
+    @$values = sort @$values;
+
+    return join(',', @$values);
+}
+
+sub _expandOrTranslateMappedValues {
+    my ($session, $valueSelectPairs) = @_;
+
+    my @mappedValues = ();
+    foreach my $pair (@$valueSelectPairs) {
+        my $select = $pair->[1];
+        my $value = $pair->[0];
+        if($value ne $select) {
+            $select = Foswiki::Func::expandCommonVariables($select);
+        } else {
+            $select = Foswiki::Plugins::JSi18nPlugin::MAKETEXT($session, {string => $value, literal => 1});
+        }
+        push @mappedValues, "$select=$value";
+    }
+    return \@mappedValues;
 }
 
 sub tagFilter {
