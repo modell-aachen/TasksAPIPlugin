@@ -1668,8 +1668,7 @@ sub _expandOrTranslateMappedValues {
 
     my @mappedValues = ();
     foreach my $pair (@$valueSelectPairs) {
-        my $select = $pair->[1];
-        my $value = $pair->[0];
+        my ($value, $select) = @$pair;
         if($value ne $select) {
             $select = Foswiki::Func::expandCommonVariables($select);
         } else {
