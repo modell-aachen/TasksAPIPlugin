@@ -228,9 +228,10 @@ span.label {
   line-height: 1;
   color: #fff;
   text-align: center;
-  white-space: nowrap;
   vertical-align: baseline;
   border-radius: .25em;
+  white-space: normal;
+  word-wrap: break-word;
 
   &.label-default{
     background-color: #337ab7;
