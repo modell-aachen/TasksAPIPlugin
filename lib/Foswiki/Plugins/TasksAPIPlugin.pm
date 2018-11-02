@@ -1049,7 +1049,7 @@ sub _cachedACL {
     $aclCache->{$acl};
 }
 sub _cacheACL {
-    $aclCache->{$_[0]} = $_[1];
+    $aclCache->{$_[0]} = [$_[1], $_[2]];
 }
 sub _cachedContextACL {
     my $acl = shift;
