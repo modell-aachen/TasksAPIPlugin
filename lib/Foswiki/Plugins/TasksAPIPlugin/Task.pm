@@ -9,6 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 use Foswiki::Plugins::KVPPlugin;
+use Foswiki::Plugins::WysiwygPlugin::Handlers;
 
 use Date::Manip;
 use Digest::SHA;
@@ -785,6 +786,10 @@ sub solrize {
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
 
+    my $text = $self->{fields}{Description};
+    $text = Foswiki::Plugins::WysiwygPlugin::Handlers::TranslateHTML2TML($text, $topic, $web);
+    $text = $indexer->plainify($text);
+
     my $mappedState = $self->getPref('MAP_STATUS_FIELD') || 'Status';
     my $state = $self->{fields}{$mappedState} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
@@ -807,7 +812,7 @@ sub solrize {
       'createdate' => $created,
       'date' => $created,
       'title' => $self->{fields}{Title},
-      'text' => Foswiki::Plugins::TasksAPIPlugin::_shorten($self->{fields}{Description} || '', 140),
+      'text' => $text,
       'url' => $taskurl,
       'author' => $self->{fields}{Author},
       'contributor' => $self->{fields}{Author},
