@@ -714,18 +714,19 @@ sub reindexContext {
     $db->begin_work;
     my @taskIds = $db->selectrow_array("SELECT id FROM tasks WHERE context like ?", {}, $context);
 
-    #    require Foswiki::Plugins::SolrPlugin;
-    #my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
-    #$indexer->deleteByQuery('task_id_s:*');
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
 
     my $aclCache = {};
     foreach my $id (@taskIds) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         Foswiki::Func::writeWarning("reindexing $id");
         _index($task, 0, $aclCache);
+        $task->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
 
     $db->commit;
+    $indexer->commitPendingWork();
 }
 
 =begin TML
@@ -1049,7 +1050,7 @@ sub _cachedACL {
     $aclCache->{$acl};
 }
 sub _cacheACL {
-    $aclCache->{$_[0]} = $_[1];
+    $aclCache->{$_[0]} = [$_[1], $_[2]];
 }
 sub _cachedContextACL {
     my $acl = shift;
