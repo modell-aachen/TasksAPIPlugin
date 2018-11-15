@@ -73,6 +73,15 @@ sub load {
     $task;
 }
 
+sub getEditLock {
+    my ($web, $topic) = @_;
+
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
+
+    my (undef, $loginName, $unlockTime) = Foswiki::Func::checkTopicEditLock($web, $topic);
+    return ($loginName, $unlockTime);
+}
+
 sub _mapLocalTaskToKVP {
     my ($unmapped, $ctx) = @_;
 
