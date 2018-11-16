@@ -704,21 +704,16 @@ sub _addLocalTaskFilter {
 sub reindexContext {
     my %options = @_;
 
-    my $context;
-    if($options{context}) {
-        $context = $options{context};
-    } elsif ($options{subcontexts}) {
-        $context = $options{subcontexts} . '.%';
-    }
     my $db = db();
     $db->begin_work;
-    my @taskIds = $db->selectrow_array("SELECT id FROM tasks WHERE context like ?", {}, $context);
+
+    my $taskIds = _getTasksByContext($db, \%options);
 
     require Foswiki::Plugins::SolrPlugin;
     my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
 
     my $aclCache = {};
-    foreach my $id (@taskIds) {
+    foreach my $id (@$taskIds) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
         Foswiki::Func::writeWarning("reindexing $id");
         _index($task, 0, $aclCache);
@@ -727,6 +722,35 @@ sub reindexContext {
 
     $db->commit;
     $indexer->commitPendingWork();
+}
+
+sub getEditLocksForContext {
+    my %options = @_;
+
+    my $taskIds = _getTasksByContext(db(), \%options);
+
+    my %loginsWithLocks;
+    foreach my $id (@$taskIds) {
+        my ($login, $unlockTime) = Foswiki::Plugins::TasksAPIPlugin::Task::getEditLock($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        if($unlockTime) {
+            $loginsWithLocks{$login} = 1;
+        }
+    }
+
+    return { loginsWithLocks => [keys %loginsWithLocks] };
+}
+
+sub _getTasksByContext{
+    my ($db, $options) = @_;
+
+    my $context;
+    if($options->{context}) {
+        $context = $options->{context};
+    } elsif ($options->{subcontexts}) {
+        $context = $options->{subcontexts} . '.%';
+    }
+
+    return $db->selectrow_arrayref("SELECT id FROM tasks WHERE context like ?", {}, $context);
 }
 
 =begin TML
