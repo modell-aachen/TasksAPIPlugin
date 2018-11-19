@@ -94,7 +94,7 @@ sub _mapLocalTaskToKVP {
             my $state = $1;
             my $stateVal = $2;
             my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
-            my $ctxState = Foswiki::Plugins::KVPPlugin::_WORKFLOWSTATE($Foswiki::Plugins::SESSION, {}, $ctxTopic, $ctxWeb);
+            my $ctxState = Foswiki::Plugins::KVPPlugin::WORKFLOWSTATE($Foswiki::Plugins::SESSION, {}, $ctxTopic, $ctxWeb);
             if($state eq $ctxState) {
                 $value = $stateVal;
                 last;
