@@ -1240,6 +1240,20 @@ sub getAllTaskIdsForTopic {
     return $tasks;
 }
 
+sub getAllTaskIdsForField {
+    my ($context, $field, $value) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ? AND id IN ( SELECT id FROM task_multi WHERE type = ? AND value = ?)", {}, "$context", "$field", "$value");
+    return $tasks;
+}
+
+sub deleteAllTasksForField {
+    my ($context, $field, $value) = @_;
+    my $tasks = getAllTaskIdsForField($context, $field, $value);
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
 sub deleteAllTasksForTopic {
     my ($webTopic) = @_;
     my $tasks = getAllTaskIdsForTopic( $webTopic );
