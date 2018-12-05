@@ -2501,6 +2501,7 @@ sub tagGrid {
     my $sortable = $params->{sortable};
     $sortable = 1 unless defined $sortable;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
+    $autoassign = '' if $autoassign eq 'none';
     my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $desc = $params->{desc};

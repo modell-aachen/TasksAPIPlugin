@@ -24,7 +24,7 @@ The following parameters are available:
 | "..." (or context="...") | Context to search for. Only tasks with this context will be shown. Use =any= to show tasks from anywhere (in this case, setting a query is recommended to avoid getting an enormous list). | %<nop>WEB%.%<nop>TOPIC% |
 | allowcreate="..." | Show a button to create a new task | 1 |
 | allowupload="..." | In the task editor, render an interface to upload attachments | 1 |
-| autoassign="..." | Key-Value pair to automatically assign a given user or group to a specified task state. See also =autoassigntarget= | Decision=Team,Information=Team |
+| autoassign="..." | Key-Value pair to automatically assign a given user or group to a specified task state. Set to =none= to disable this feature. See also =autoassigntarget= | Decision=Team,Information=Team |
 | autoassigntarget="..." | Name of the form field holding the information about the person or group who's responsible for that specific task | !AssignedTo |
 | captiontemplate="..." | Name of the template used to render the caption area | tasksapi::grid::caption |
 | columns="..." | Definition of extra/altered/removed columns, see section below | created=Created Author,type=$Badge,assigned=AssignedTo,title=Title $ContextLink,due=DueDate,status=$Signal,checkbox=$Checkbox |
