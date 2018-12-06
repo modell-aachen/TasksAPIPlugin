@@ -82,6 +82,7 @@ A number of other fields, if used, should use these standard names:
      Nevertheless, lists of users are supported, too.
    * =Description=: user-defined detail information about the task
    * =DueDate=: the due date for the task
+   * =LocalTask=: any value. Another filter TASKGRIDs can use.%BR%For [[KVPPlugin]] integration you can specify multiple values in the format =State NameOfMyState=MyLocalTaskValue, State MyOtherState=MyOtherLocalTaskValue,...=; so if the context topic is in state =NameOfMyState=, the task will be indexed with the value =MyLocalTaskValue=. A value without state mapping will always be used regardless of state. The first match applies if there are multiple valid values.
 
 ---++ Configuration
 
@@ -364,6 +365,9 @@ a date range:
 
 ---+++ TASKSFILTER
 %INCLUDE{"VarTASKSFILTER"}%
+
+---+++ TASKSTYPEFILTER
+%INCLUDE{"VarTASKSTYPEFILTER"}%
 
 ---+++ TASKINFO
 %INCLUDE{"VarTASKINFO"}%
