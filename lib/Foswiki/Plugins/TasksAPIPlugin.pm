@@ -480,7 +480,7 @@ sub afterSaveHandler {
 
 sub db {
     return $db if defined $db;
-    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi');
+    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi', 1);
     $db = $connection->{db};
     eval {
         %schema_versions = %{$db->selectall_hashref("SELECT * FROM meta", 'type', {})};
