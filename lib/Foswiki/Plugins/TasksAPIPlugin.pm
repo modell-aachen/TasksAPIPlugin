@@ -367,14 +367,20 @@ sub beforeSaveHandler {
 sub _reindexWithDaemon {
     my ($web, $topic) = @_;
 
-    my $session = $Foswiki::Plugins::SESSION;
-    my $json = to_json({
-        user => $session->{user},
-        webtopic => "$web.$topic",
-        context => "$web.$topic",
-        callback => "Foswiki::Plugins::TasksAPIPlugin",
-    });
-    Foswiki::Plugins::TaskDaemonPlugin::send($json, 'reindex', 'TaskDaemonPlugin', 0);
+    my $context = "$web.$topic";
+
+    if(Foswiki::Func::getContext()->{MattDaemonIsGrinding}) {
+        reindexContext(context => $context);
+    } else {
+        my $session = $Foswiki::Plugins::SESSION;
+        my $json = to_json({
+            user => $session->{user},
+            webtopic => "$web.$topic",
+            context => $context,
+            callback => "Foswiki::Plugins::TasksAPIPlugin",
+        });
+        Foswiki::Plugins::TaskDaemonPlugin::send($json, 'reindex', 'TaskDaemonPlugin', 0);
+    }
 }
 
 sub afterSaveHandler {
