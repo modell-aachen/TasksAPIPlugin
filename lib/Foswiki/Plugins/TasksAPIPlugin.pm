@@ -1047,8 +1047,18 @@ sub _storeWebtopicAcls {
     };
     $allowList =  unique($allowList);
     $denyList =  unique($denyList);
+
+    my $transaction = 0;
+    if(!$db->{BegunWork}){
+        $db->begin_work();
+        $transaction = 1;
+    }
     $db->do("DELETE FROM wiki_acls WHERE webtopic_mode=?", {}, $webtopic_mode);
     $db->do("INSERT INTO wiki_acls (webtopic_mode, acl_allow, acl_deny) VALUES (?, ?, ?)", {}, $webtopic_mode, $allowList, $denyList);
+
+    if($transaction){
+        $db->commit();
+    }
 }
 
 # Bring the entire database up-to-date
