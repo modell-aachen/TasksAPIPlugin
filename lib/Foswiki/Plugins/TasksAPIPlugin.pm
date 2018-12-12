@@ -1053,6 +1053,9 @@ sub _storeWebtopicAcls {
         $db->begin_work();
         $transaction = 1;
     }
+    # Lock the acl row for this transaction
+    $db->do("SELECT webtopic_mode FROM wiki_acls WHERE webtopic_mode=?", {}, $webtopic_mode);
+
     $db->do("DELETE FROM wiki_acls WHERE webtopic_mode=?", {}, $webtopic_mode);
     $db->do("INSERT INTO wiki_acls (webtopic_mode, acl_allow, acl_deny) VALUES (?, ?, ?)", {}, $webtopic_mode, $allowList, $denyList);
 
