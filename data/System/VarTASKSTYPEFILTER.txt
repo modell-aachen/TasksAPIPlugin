@@ -1,0 +1,13 @@
+%META:TOPICPARENT{name="TasksAPIPlugin"}%
+---+ TASKSTYPEFILTER macro
+
+_This is a macro from [[TasksAPIPlugin]], used to query/display various pieces of information related to tasks and task grids._
+
+%STARTINCLUDE%
+Collect available tasktypes. Useful for forms.
+
+---++++ Parameters
+
+| *Parameter* | *Descripton* | *Default* |
+| =selectPlusValues= | Set to =1= to emit types in a _select+values_ compatible form (=display value=value=).%BR%If a value has no associated _select_, the value will be run through [[VarMAKETEXT][MAKETEXT]]. | _false_ |
+

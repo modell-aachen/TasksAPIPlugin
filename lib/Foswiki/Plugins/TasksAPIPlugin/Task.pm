@@ -9,6 +9,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Form ();
 use Foswiki::Plugins::KVPPlugin;
+use Foswiki::Plugins::WysiwygPlugin::Handlers;
 
 use Date::Manip;
 use Digest::SHA;
@@ -53,6 +54,10 @@ sub load {
         $defValue = '' unless defined $defValue;
         my $val = $entry ? $entry->{value} : undef;
         $val = $defValue unless defined $val && $val ne '';
+        if($name eq 'LocalTask') {
+            my $ctx = $data{Context} || ($meta->get('FIELD', 'Context') || {})->{value};
+            $val = _mapLocalTaskToKVP($val, $ctx);
+        }
         $data{$name} = $val;
     }
     if (!$data{TopicType} || $data{TopicType} !~ /^task\b/) {
@@ -66,6 +71,40 @@ sub load {
     my $task = __PACKAGE__->new(%data);
     $task->{_canChange} = $task->checkACL('change');
     $task;
+}
+
+sub getEditLock {
+    my ($web, $topic) = @_;
+
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
+
+    my (undef, $loginName, $unlockTime) = Foswiki::Func::checkTopicEditLock($web, $topic);
+    return ($loginName, $unlockTime);
+}
+
+sub _mapLocalTaskToKVP {
+    my ($unmapped, $ctx) = @_;
+
+    my @pairs = split(/\s*,\s*/, $unmapped);
+    push @pairs, '' unless scalar @pairs;
+
+    my $value = '';
+    foreach my $pair (@pairs) {
+        if($pair =~ m#^State (.*?)=(.*)#) {
+            my $state = $1;
+            my $stateVal = $2;
+            my ($ctxWeb, $ctxTopic) = Foswiki::Func::normalizeWebTopicName(undef, $ctx);
+            my $ctxState = Foswiki::Plugins::KVPPlugin::WORKFLOWSTATE($Foswiki::Plugins::SESSION, {}, $ctxTopic, $ctxWeb);
+            if($state eq $ctxState) {
+                $value = $stateVal;
+                last;
+            }
+        } else {
+            $value = $pair;
+            last;
+        }
+    }
+    return $value;
 }
 
 sub data {
@@ -519,6 +558,10 @@ sub update {
             my $defValue = $f->getDefaultValue() if $f->can('getDefaultValue');
             $defValue = '' unless defined $defValue;
             $meta->putKeyed('FIELD', { name => $name, title => $f->{description}, value => $defValue });
+            if($name eq 'LocalTask') {
+                my $ctx = $data{Context} || ($meta->get('FIELD', 'Context') || {})->{value};
+                $defValue = _mapLocalTaskToKVP($defValue, $ctx);
+            }
             $self->{fields}{$name} = $defValue;
             $defChange = 1 if $defValue ne '';
             next;
@@ -752,6 +795,10 @@ sub solrize {
         Foswiki::Func::normalizeWebTopicName(undef, $self->{fields}{Context})
     );
 
+    my $text = $self->{fields}{Description};
+    $text = Foswiki::Plugins::WysiwygPlugin::Handlers::TranslateHTML2TML($text, $topic, $web);
+    $text = $indexer->plainify($text);
+
     my $mappedState = $self->getPref('MAP_STATUS_FIELD') || 'Status';
     my $state = $self->{fields}{$mappedState} || 'open';
     my $taskurl = "$ctxurl?id=" . $self->{id} . "&state=$state&tab=tasks_$state";
@@ -774,7 +821,7 @@ sub solrize {
       'createdate' => $created,
       'date' => $created,
       'title' => $self->{fields}{Title},
-      'text' => Foswiki::Plugins::TasksAPIPlugin::_shorten($self->{fields}{Description} || '', 140),
+      'text' => $text,
       'url' => $taskurl,
       'author' => $self->{fields}{Author},
       'contributor' => $self->{fields}{Author},
@@ -797,14 +844,33 @@ sub solrize {
     my $ignoreContextACL = $self->getBoolPref('IGNORE_CONTEXT_ACL') || 0;
     my $ignoreWikiACL = $self->getBoolPref('IGNORE_WIKI_ACL') || 0;
     my @acl = _getACL($self->{meta}, $self->{form}, 'VIEW');
-    my $granted;
+    my ($granted, $denied);
     unless (scalar @acl) {
-        $granted = $ignoreContextACL ? 'all' : join(',', topicACL($indexer, $web, $topic));
+        if($ignoreContextACL) {
+            $granted = ['all'];
+            $denied = [];
+        } else {
+            my @fromIndexer = topicACL($indexer, $web, $topic);
+            $granted = $fromIndexer[0];
+            $denied = $fromIndexer[1];
+        }
     } else {
+        # Unfortunately we can not reproduce our ACLs with this completely.
+        # The Wiki only supports one ACL, not multiple. This means, that a
+        # 'deny' from one $wikiACL also applies to another $wikiACL and
+        # even the list of users.
+        # So if we have the ACL string 'UserOne, $wikiACL(MyTopic)' and we
+        # set DENYTOPICVIEW=UserOne in MyTopic, the user wil not find this
+        # task via Solr.
+
+        my $mapping = $Foswiki::Plugins::SESSION->{users}->{mapping};
+        my $cuidConverter = $mapping->can('loginOrGroup2cUID'); # this is a UnifiedAuth speciality
         my $aclstring = join(',', @acl);
         $aclstring .= ",\$wikiACL($ctx VIEW)" unless grep(/\$wikiACL\($ctx[^\)]+\)/, @acl);
-        my $expanded = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
-        unless ($expanded) {
+        my $fromCache = Foswiki::Plugins::TasksAPIPlugin::_cachedACLExpands($aclstring);
+        if($fromCache) {
+            ($granted, $denied) = @{$fromCache};
+        } else {
             my @arr = ();
             foreach my $entry (@acl) {
                 next if $entry =~ /Team/;
@@ -813,21 +879,28 @@ sub solrize {
                     next;
                 }
 
-                if ( Foswiki::Func::isGroup($entry) ) {
-                    my $members = Foswiki::Func::eachGroupMember($entry, {expand => 'true'});
-                    while ($members->hasNext()) {
-                        my $user = $members->next();
-                        push @arr, $user;
-                    }
+                if($cuidConverter) {
+                    push @arr, &$cuidConverter($mapping, $entry);
                 } else {
-                    push @arr, Foswiki::Func::getWikiName($entry);
+                    if ( Foswiki::Func::isGroup($entry) ) {
+                        my $members = Foswiki::Func::eachGroupMember($entry, {expand => 'true'});
+                        while ($members->hasNext()) {
+                            my $user = $members->next();
+                            push @arr, $user;
+                        }
+                    } else {
+                        push @arr, Foswiki::Func::getWikiName($entry);
+                    }
                 }
             }
 
             # unless explicitely defined, we're going to inherit context's ACLs
-            my @users;
+            my @grantedUsers;
+            my @deniedUsers;
             unless ($ignoreContextACL) {
-                push @users, topicACL($indexer, $web, $topic);
+                my @fromIndexer = topicACL($indexer, $web, $topic);
+                push @grantedUsers, @{$fromIndexer[0]};
+                push @deniedUsers, @{$fromIndexer[1]};
             }
 
             for (my $i = 0; $i < scalar(@arr); $i++) {
@@ -836,27 +909,26 @@ sub solrize {
                 } elsif ($arr[$i] =~ /\$wikiACL\(([^\)]+) VIEW\)/) {
                     $arr[$i] = undef;
                     unless ($ignoreWikiACL) {
-                        push @users, topicACL(
-                            $indexer,
+                        my @fromIndexer = topicACL($indexer,
                             Foswiki::Func::normalizeWebTopicName(undef, $1)
                         );
+                        push @grantedUsers, @{$fromIndexer[0]};
+                        push @deniedUsers, @{$fromIndexer[1]};
                     }
                 }
             }
 
-            my %unique;
-            push @users, grep defined, @arr;
-            @users = grep !$unique{$_}++, @users;
+            my %uniqueGranted;
+            my %uniqueDenied;
+            push @grantedUsers, grep defined, @arr;
+            $granted = [grep !$uniqueGranted{$_}++, @grantedUsers];
+            $denied = [grep !$uniqueDenied{$_}++, @deniedUsers];
 
-            $expanded = join(',', @users);
-            Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $expanded);
+            Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $granted, $denied);
         }
-
-        $granted = $expanded;
     }
 
-    my @users = split(/,/, $granted);
-    $doc->add_fields('access_granted' => \@users);
+    $doc->add_fields('access_granted' => $granted, 'access_denied' => $denied);
 
     if ( $legacy ) {
         my $collection = $Foswiki::cfg{SolrPlugin}{DefaultCollection} || "wiki";
@@ -866,7 +938,7 @@ sub solrize {
     }
     try {
         $indexer->add($doc);
-        my %extraFields = ('access_granted' => \@users);
+        my %extraFields = ('access_granted' => $granted, 'access_denied' => $denied);
         foreach my $key (qw(task_created_dt task_due_dt task_state_s task_type_s task_id_s)) {
             $extraFields{$key} = $doc->value_for($key);
         }
@@ -883,8 +955,8 @@ sub solrize {
 sub topicACL {
     my ($indexer, $web, $topic) = @_;
     my ($meta) = Foswiki::Func::readTopic($web, $topic);
-    my ($str, $aclFields) = $indexer->getAclFields($web, $topic, $meta);
-    @{$aclFields};
+    my %acls = $indexer->getAclFields($web, $topic, $meta);
+    return ($acls{access_granted}, $acls{access_denied});
 }
 
 sub indexAttachment {

@@ -468,12 +468,12 @@ TasksPanel = function(tasktracker) {
     self.panel.on('mouseenter', '.controls', function(evt) {
       var $i = $(this).find('i');
       if ( evt.ctrlKey ) {
-        $i.removeClass('fa-check-square fa-square-o').addClass('fa-trash-o');
+        $i.removeClass('fa-check-square fa-square').addClass('fa-trash-alt');
       } else {
         if ( $i.hasClass('closed') ) {
-          $i.removeClass('fa-check-square').addClass('fa-square-o');
+          $i.removeClass('fa-check-square').addClass('fa-square');
         } else {
-          $i.removeClass('fa-square-o').addClass('fa-check-square-o');
+          $i.removeClass('fa-square').addClass('fa-check-square');
         }
       }
     });
@@ -482,15 +482,15 @@ TasksPanel = function(tasktracker) {
     self.panel.on('mouseleave', '.controls', function() {
       var $i = $(this).find('i');
       if ( $i.hasClass('closed') ) {
-        $i.removeClass('fa-square-o fa-trash-o').addClass('fa-check-square');
+        $i.removeClass('fa-square fa-trash-alt').addClass('fa-check-square');
       } else {
-        $i.removeClass('fa-check-square-o fa-trash-o').addClass('fa-square-o');
+        $i.removeClass('fa-check-square fa-trash-alt').addClass('fa-square');
       }
     });
 
     // handle quick actions (close, reopen, delete)
     self.panel.on('click', '.caption > .controls', function() {
-      var isDelete = $(this).find('i').hasClass('fa-trash-o');
+      var isDelete = $(this).find('i').hasClass('fa-trash-alt');
       var data = self.currentTask.data('task_data');
       var isOpen = data.fields.Status.value === 'open';
       var deferred = $.Deferred();
@@ -787,11 +787,13 @@ TasksPanel = function(tasktracker) {
     }
 
     for (var i in CKEDITOR.instances) {
-      try {
-        CKEDITOR.instances[i].destroy();
-      } catch(e) {
-        if (window.console && console.error) {
-          console.error(e);
+      if($('div.task-details').has(CKEDITOR.instances[i].container.$).length) {
+        try {
+          CKEDITOR.instances[i].destroy();
+        } catch(e) {
+          if (window.console && console.error) {
+            console.error(e);
+          }
         }
       }
     }

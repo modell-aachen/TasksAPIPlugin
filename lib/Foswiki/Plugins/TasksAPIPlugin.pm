@@ -22,6 +22,7 @@ use Foswiki::Plugins::SolrPlugin;
 use Foswiki::Plugins::JSi18nPlugin;
 use Foswiki::Plugins::TasksAPIPlugin::Task;
 use Foswiki::Plugins::TasksAPIPlugin::Job;
+use Foswiki::Plugins::TaskDaemonPlugin;
 
 use DBI;
 use Encode;
@@ -104,7 +105,10 @@ my @schema_updates = (
         "DROP INDEX task_type_idx",
         "CREATE INDEX task_multi_id_idx ON task_multi (id, type, (md5(value)))",
         "CREATE INDEX task_type_idx ON task_multi (type, (md5(value)))",
-    ]
+    ],
+    [
+        "ALTER TABLE task_multi ADD COLUMN display_value TEXT COLLATE \"en_US\"",
+    ],
 );
 my %singles = (
     id => 1,
@@ -195,6 +199,17 @@ sub finishPlugin {
     if(scalar @tmpWikiACLs) {
         Foswiki::Func::writeWarning("There were unresolved tmpWikiACLs!");
         @tmpWikiACLs = ();
+    }
+}
+
+sub grinder {
+    my ($department, $session, $type, $json, $caches) = @_;
+
+    my $data = from_json($json);
+    if ($type eq 'reindex') {
+        reindexContext(context => $data->{context});
+    } else {
+        Foswiki::Func::writeWarning("Unknown message for grinder: $type");
     }
 }
 
@@ -349,9 +364,29 @@ sub beforeSaveHandler {
     $data->{forms} = \@forms;
 }
 
+sub _reindexWithDaemon {
+    my ($web, $topic) = @_;
+
+    my $context = "$web.$topic";
+
+    if(Foswiki::Func::getContext()->{MattDaemonIsGrinding}) {
+        reindexContext(context => $context);
+    } else {
+        my $session = $Foswiki::Plugins::SESSION;
+        my $json = to_json({
+            user => $session->{user},
+            webtopic => "$web.$topic",
+            context => $context,
+            callback => "Foswiki::Plugins::TasksAPIPlugin",
+        });
+        Foswiki::Plugins::TaskDaemonPlugin::send($json, 'reindex', 'TaskDaemonPlugin', 0);
+    }
+}
 
 sub afterSaveHandler {
     my ( $text, $topic, $web, $error, $meta ) = @_;
+
+    _reindexWithDaemon($web, $topic) if $web && $topic;
 
     # update wiki_acls when WebPreferences/SitePreferences changed
     # XXX it would be nice if this only happens when the ACLs changed
@@ -480,7 +515,7 @@ sub afterSaveHandler {
 
 sub db {
     return $db if defined $db;
-    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi');
+    my $connection = Foswiki::Contrib::PostgreContrib::getConnection('foswiki_tasksapi', 1);
     $db = $connection->{db};
     eval {
         %schema_versions = %{$db->selectall_hashref("SELECT * FROM meta", 'type', {})};
@@ -564,9 +599,13 @@ sub query {
 
     my ($filter, $scalarArgs, $join, $scalarJoins);
     ($filter, $scalarArgs, $join, $scalarJoins, $order) = _processQueryParams($query, $order);
+
+    _addLocalTaskFilter($opts{localTo}, \$filter, $scalarArgs, \$join) if exists $opts{localTo};
+
+    $filter = "WHERE $filter" if $filter;
+
     my @args = @$scalarArgs;
     my %joins = %$scalarJoins;
-    $filter = " WHERE $filter" if $filter;
 
     if ($order) {
         my $isArray = ref($order) eq 'ARRAY';
@@ -613,10 +652,10 @@ sub query {
     my $ret;
     my ($ids, $total);
     eval {
-        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t$aclJoin$join$filter$group$order$limit", {}, @args);
+        $ids = db()->selectall_arrayref("SELECT t.id, t.raw $order_select FROM tasks t $aclJoin$join$filter$group$order$limit", {}, @args);
 
         if($limit ne '') {
-           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t$aclJoin$join$filter", {}, @args);
+           $total = db()->selectrow_array("SELECT COUNT(DISTINCT(t.id, t.raw $order_select)) FROM tasks t $aclJoin$join$filter", {}, @args);
         } else {
             $total = scalar @$ids;
         }
@@ -640,6 +679,85 @@ sub query {
 }
 *_query = \&query; # Backwards compatibility
 
+sub _addLocalTaskFilter {
+    my ($localTo, $filterRef, $scalarArgs, $joinRef) = @_;
+
+    my $localFilter;
+    $$joinRef .= " LEFT JOIN task_multi local_task ON(t.id = local_task.id AND local_task.type='LocalTask')";
+
+    my @localToParts;
+    @localToParts = split(/\s*,\s*/, $localTo) if defined $localTo;
+    push @localToParts, '' unless scalar @localToParts;
+
+    my @localFilterParts = ();
+    foreach my $localToPart (@localToParts) {
+        if($localToPart && $localToPart ne '-') {
+            push @localFilterParts, "local_task.value = ?";
+            push @$scalarArgs, $localToPart;
+        } else {
+            push @localFilterParts, "(local_task IS NULL OR local_task.value = '')";
+        }
+    }
+    $localFilter = join(' OR ', @localFilterParts);
+
+    if($$filterRef) {
+        $$filterRef = "($$filterRef) AND ($localFilter)";
+    } else {
+        $$filterRef = "$localFilter";
+    }
+}
+
+sub reindexContext {
+    my %options = @_;
+
+    my $db = db();
+    $db->begin_work;
+
+    my $taskIds = _getTasksByContext($db, \%options);
+
+    require Foswiki::Plugins::SolrPlugin;
+    my $indexer = Foswiki::Plugins::SolrPlugin::getIndexer();
+
+    my $aclCache = {};
+    foreach my $id (@$taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        Foswiki::Func::writeWarning("reindexing $id");
+        _index($task, 0, $aclCache);
+        $task->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
+    }
+
+    $db->commit;
+    $indexer->commitPendingWork();
+}
+
+sub getEditLocksForContext {
+    my %options = @_;
+
+    my $taskIds = _getTasksByContext(db(), \%options);
+
+    my %loginsWithLocks;
+    foreach my $id (@$taskIds) {
+        my ($login, $unlockTime) = Foswiki::Plugins::TasksAPIPlugin::Task::getEditLock($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        if($unlockTime) {
+            $loginsWithLocks{$login} = 1;
+        }
+    }
+
+    return { loginsWithLocks => [keys %loginsWithLocks] };
+}
+
+sub _getTasksByContext{
+    my ($db, $options) = @_;
+
+    my $context;
+    if($options->{context}) {
+        $context = $options->{context};
+    } elsif ($options->{subcontexts}) {
+        $context = $options->{subcontexts} . '.%';
+    }
+
+    return $db->selectrow_arrayref("SELECT id FROM tasks WHERE context like ?", {}, $context);
+}
 
 =begin TML
 
@@ -690,6 +808,9 @@ sub _processQueryParams {
             } elsif ($v->{type} eq 'like') {
                 push @filters, "$q LIKE ?";
                 push @args, "\%$v->{substring}%";
+            } elsif ($v->{type} eq 'not like') {
+                push @filters, "$q NOT LIKE ?";
+                push @args, "\%$v->{substring}";
             } else {
                 Foswiki::Func::writeWarning("Invalid query object: type = $v->{type}");
             }
@@ -733,7 +854,7 @@ sub _queryGroup {
 
     my ($ids, $total);
     eval {
-        $ids = db()->selectcol_arrayref("SELECT task_multi.value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value", {}, @args);
+        $ids = db()->selectall_arrayref("SELECT task_multi.value, task_multi.display_value FROM task_multi NATURAL JOIN tasks t $aclJoin$join$filter GROUP BY task_multi.value, task_multi.display_value", { Columns => [1, 2] }, @args);
     };
     if($@) {
         Foswiki::Func::writeWarning("Error querying: $@");
@@ -741,22 +862,7 @@ sub _queryGroup {
     }
 
     return {values => [], total => 0} unless $ids && scalar @$ids;
-
-    # XXX fix legacy select+values ids by stripping select-part.
-    my %seen;
-    grep {!$seen{$_ =~ s#^.*=##r}++} @$ids;
-    my @u_ids = keys %seen;
-
-    # XXX sorts before MAKETEXT
-    if(defined $opts->{order}) {
-        if($opts->{order} && $opts->{order} ne 'DESC') {
-            @u_ids = sort @u_ids;
-        } else {
-            @u_ids = sort backwards @u_ids;
-        }
-    }
-
-    return {values => \@u_ids, total => scalar @u_ids};
+    return {values => $ids, total => scalar @$ids};
 }
 
 sub _getJoinString {
@@ -826,10 +932,14 @@ sub _index {
             } else {
                 $v = [ $v ];
             }
+            my $displayValue;
             if ($singles{$f}) {
                 $vals{$f} = $v->[0];
             } else {
-                push @extra, map { { type => $f, value => $_ } } @$v;
+                foreach my $extraValue ( @$v ) {
+                    my $displayValue = $field->getDisplayValue($extraValue);
+                    push @extra, { type => $f, value => $extraValue, display_value => $displayValue };
+                }
             }
         }
         if ($wiki_acl_view && not $aclCache->{$wiki_acl_view}) {
@@ -847,7 +957,7 @@ sub _index {
         $db->do("DELETE FROM task_multi WHERE id=?", {}, $task->{id});
         $db->do("INSERT INTO tasks (". join(',', @keys) .") VALUES(". join(',', map {'?'} @keys) .")", {}, @vals{@keys});
         foreach my $e (@extra) {
-            $db->do("INSERT INTO task_multi (id, type, value) VALUES(?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value});
+            $db->do("INSERT INTO task_multi (id, type, value, display_value) VALUES(?, ?, ?, ?)", {}, $task->{id}, $e->{type}, $e->{value}, $e->{display_value});
         }
         $db->commit if $transact;
         $transact = 0; # cancel rollback
@@ -937,8 +1047,21 @@ sub _storeWebtopicAcls {
     };
     $allowList =  unique($allowList);
     $denyList =  unique($denyList);
+
+    my $transaction = 0;
+    if(!$db->{BegunWork}){
+        $db->begin_work();
+        $transaction = 1;
+    }
+    # Lock the acl row for this transaction
+    $db->do("SELECT * FROM wiki_acls WHERE webtopic_mode=? FOR UPDATE", {}, $webtopic_mode);
+
     $db->do("DELETE FROM wiki_acls WHERE webtopic_mode=?", {}, $webtopic_mode);
     $db->do("INSERT INTO wiki_acls (webtopic_mode, acl_allow, acl_deny) VALUES (?, ?, ?)", {}, $webtopic_mode, $allowList, $denyList);
+
+    if($transaction){
+        $db->commit();
+    }
 }
 
 # Bring the entire database up-to-date
@@ -970,7 +1093,7 @@ sub _cachedACL {
     $aclCache->{$acl};
 }
 sub _cacheACL {
-    $aclCache->{$_[0]} = $_[1];
+    $aclCache->{$_[0]} = [$_[1], $_[2]];
 }
 sub _cachedContextACL {
     my $acl = shift;
@@ -1124,6 +1247,69 @@ sub validFilenameLength {
     return $isValid;
 }
 
+sub getAllTaskIdsForWeb {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ?", {}, "$context\%");
+    return $tasks;
+}
+
+sub getAllTaskIdsForTopic {
+    my ($context) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context = ?", {}, "$context");
+    return $tasks;
+}
+
+sub getAllTaskIdsForField {
+    my ($context, $field, $value) = @_;
+    my $tasks = db()->selectcol_arrayref("SELECT id FROM tasks WHERE context LIKE ? AND id IN ( SELECT id FROM task_multi WHERE type = ? AND value = ?)", {}, "$context", "$field", "$value");
+    return $tasks;
+}
+
+sub deleteAllTasksForField {
+    my ($context, $field, $value) = @_;
+    my $tasks = getAllTaskIdsForField($context, $field, $value);
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub deleteAllTasksForTopic {
+    my ($webTopic) = @_;
+    my $tasks = getAllTaskIdsForTopic( $webTopic );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+sub deleteAllTasksForWeb {
+    my ($web) = @_;
+    my $tasks = getAllTaskIdsForWeb( $web );
+    foreach my $taskID (@$tasks) {
+        _hardDeleteTask($taskID);
+    }
+}
+
+=pro
+Hard delete a single Tasks given by its webTopic name, i.e. Task.Task-234234234234234234234324234.
+Task will be irretrievable removed from database and filesystem.
+=cut
+sub _hardDeleteTask {
+    my ($taskId) = @_;
+
+    use Cwd qw(cwd);
+    use File::Path;
+    my $cwd = cwd;
+
+    db()->begin_work;
+    db()->do( "DELETE FROM tasks WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM task_multi WHERE id = ?",{}, $taskId);
+    db()->do( "DELETE FROM jobs WHERE task_id = ?",{}, $taskId);
+
+    Foswiki::Plugins::ModacHelpersPlugin::deleteTopic($taskId);
+
+    db()->commit;
+}
+
 sub restAttach {
     my ( $session, $subject, $verb, $response ) = @_;
     my $q = Foswiki::Func::getCgiQuery();
@@ -1269,6 +1455,26 @@ sub restCreate {
         data => $task,
     }));
     return '';
+}
+
+sub migrateTaskType {
+    my %options = @_;
+
+    my $context;
+    if($options{context}) {
+        $context = $options{context};
+    } elsif ($options{subcontexts}) {
+        $context = $options{subcontexts} . '.%';
+    }
+
+    my $db = db();
+    my $taskIds = $db->selectcol_arrayref("SELECT tasks.id FROM tasks JOIN task_multi ON (tasks.id = task_multi.id) WHERE context like ? AND value = ? AND task_multi.type = 'Type'", {}, $context, $options{from});
+
+    my $aclCache = {};
+    foreach my $id (@$taskIds) {
+        my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
+        $task->update(Type => $options{to});
+    }
 }
 
 sub restUpdate {
@@ -1502,8 +1708,33 @@ sub tagTaskTypeFilter {
     my $query = $currentOptions->{query} || '{}';
     $query = from_json($query);
 
-    my $res = query(query => $query, groupbyField => 'Type', order => 'ASC');
-    return join(',', @{$res->{values}});
+    my $res = query(query => $query, groupbyField => 'Type');
+    my $values;
+    if($params->{selectPlusValues}) {
+        $values = _expandOrTranslateMappedValues($session, $res->{values});
+    } else {
+        $values = [map{ $_->[0] } @{$res->{values}}];
+    }
+
+    @$values = sort @$values;
+
+    return join(',', @$values);
+}
+
+sub _expandOrTranslateMappedValues {
+    my ($session, $valueSelectPairs) = @_;
+
+    my @mappedValues = ();
+    foreach my $pair (@$valueSelectPairs) {
+        my ($value, $select) = @$pair;
+        if($value ne $select) {
+            $select = Foswiki::Func::expandCommonVariables($select);
+        } else {
+            $select = Foswiki::Plugins::JSi18nPlugin::MAKETEXT($session, {string => $value, literal => 1});
+        }
+        push @mappedValues, "$select=$value";
+    }
+    return \@mappedValues;
 }
 
 sub tagFilter {
@@ -1559,45 +1790,46 @@ sub tagFilter {
             my $default = $value ? 'data-default="' . $query->{$filter} . '"' : '';
             push(@out, "<input type=\"text\" name=\"${filter}-like\" class=\"filter\" $value $default />");
         } elsif ($f->{type} =~ /^select/) {
-            push(@out, "<select name=\"$filter\" class=\"filter\">");
-            my @opts = ();
-            my @labels = ();
+            push(@out, "<select name=\"json:$filter\" class=\"filter\">");
+            my @aggregatedLabels = ();
+            my %valuesForLabel = ();
             my @arr = split(',', $f->{value});
             next if(scalar @arr < 2 );
             foreach my $a (@arr) {
                 next if ($f->{name} eq 'Status' && $a =~ /deleted/ && !Foswiki::Func::isAnAdmin());
                 $a =~ s/(^\s*)|(\s*$)//g;
+
+                my ($fieldSelect, $fieldValue);
                 if ( $f->{type} =~ m/values/i ) {
-                    my @pair = split('=', $a);
-                    push(@opts, pop @pair);
-                    push(@labels, pop @pair);
+                    ($fieldSelect, $fieldValue) = split('=', $a);
                 } else {
-                    push(@opts, $a);
+                    $fieldSelect = $fieldValue = $a;
+                }
+                $fieldSelect =~ s#^\s+##;
+                $fieldSelect =~ s#\s+$##;
+                $fieldValue =~ s#^\s+##;
+                $fieldValue =~ s#\s+$##;
+                if(exists $valuesForLabel{$fieldSelect}) {
+                    push @{$valuesForLabel{$fieldSelect}}, $fieldValue;
+                } else {
+                    $valuesForLabel{$fieldSelect} = [$fieldValue];
+                    push @aggregatedLabels, $fieldSelect;
                 }
             }
 
             my $selected = '';
             my $hasSelected = 0;
             my @options = ();
-            if ( scalar @opts eq scalar @labels) {
-                for (my $i=0; $i < scalar @opts; $i++) {
-                    my $val = $opts[$i];
-                    $val =~ s/(^\s*)|(\s*$)//g;
-                    my $label = $labels[$i];
-                    $label =~ s/(^\s*)|(\s*$)//g;
-
-                    $selected = $isSelected->($query->{$filter}, $val);
-                    $hasSelected = 1 if $selected;
-                    push(@options, "<option value=\"$val\" $selected>$label</option>")
+            foreach my $label (@aggregatedLabels) {
+                my $values = $valuesForLabel{$label};
+                foreach my $value (@$values) {
+                    $selected = $isSelected->($query->{$filter}, $value);
+                    last if $selected;
                 }
-            } else {
-                for (my $i=0; $i < scalar @opts; $i++) {
-                    my $val = $opts[$i];
-                    $val =~ s/(^\s*)|(\s*$)//g;
-                    $selected = $isSelected->($query->{$filter}, $val);
-                    $hasSelected = 1 if $selected;
-                    push(@options, "<option value=\"$val\">$val</option>")
-                }
+                $hasSelected = 1 if $selected;
+                my $valueJson = to_json($values);
+                $valueJson =~ s/(["'%&])/'&#' . ord($1) . ';'/ge;
+                push(@options, "<option value=\"$valueJson\" $selected>$label</option>")
             }
 
             if ($hasSelected eq 0) {
@@ -2288,6 +2520,7 @@ sub tagGrid {
     my $sortable = $params->{sortable};
     $sortable = 1 unless defined $sortable;
     my $autoassign = $params->{autoassign} || 'Decision=Team,Information=Team';
+    $autoassign = '' if $autoassign eq 'none';
     my @autouser = map {(split(/=/, $_))[-1]} split(/,/, $autoassign);
     my $autoassignTarget = $params->{autoassigntarget} || 'AssignedTo';
     my $desc = $params->{desc};
@@ -2295,6 +2528,7 @@ sub tagGrid {
     my $title = $params->{title} || '';
     my $createText = $params->{createlinktext};
     $createText = '%MAKETEXT{"Add item"}%' unless defined $createText;
+    my $localTo = $params->{localTo} || '';
 
     eval {
         $order =~s /^\s*//g;
@@ -2437,7 +2671,8 @@ SCRIPT
         titlelength => int($titlelength),
         updateurl => $updateurl,
         _baseweb => $web,
-        _basetopic => $topic
+        _basetopic => $topic,
+        localTo => $localTo,
     );
 
     my $fctx = Foswiki::Func::getContext();
@@ -2477,6 +2712,10 @@ SCRIPT
                 if ($l eq 'Status' && $val eq 'all') {
                     $query->{$l} = ['open', 'closed'];
                 }elsif($val ne 'all'){
+                    if($l =~ m#^json:(.*)#) {
+                        $l = $1;
+                        $val = from_json($val);
+                    }
                     $query->{$l} = $val;
                 }
             } else {
@@ -2543,7 +2782,8 @@ SCRIPT
         order => $order,
         desc => $desc,
         count => $pageSize,
-        offset => $offset
+        offset => $offset,
+        localTo => $localTo,
     );
 
     my $id_param = $req->param('id');
