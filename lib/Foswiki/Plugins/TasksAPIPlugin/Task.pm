@@ -924,7 +924,7 @@ sub solrize {
             $granted = [grep !$uniqueGranted{$_}++, @grantedUsers];
             $denied = [grep !$uniqueDenied{$_}++, @deniedUsers];
 
-            Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, $granted, $denied);
+            Foswiki::Plugins::TasksAPIPlugin::_cacheACLExpands($aclstring, [$granted, $denied]);
         }
     }
 
