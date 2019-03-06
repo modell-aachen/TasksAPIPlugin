@@ -721,7 +721,6 @@ sub reindexContext {
     my $aclCache = {};
     foreach my $id (@$taskIds) {
         my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, $id);
-        Foswiki::Func::writeWarning("reindexing $id");
         _index($task, 0, $aclCache);
         $task->solrize($indexer, $Foswiki::cfg{TasksAPIPlugin}{LegacySolrIntegration});
     }
