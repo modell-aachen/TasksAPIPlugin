@@ -38,7 +38,9 @@ our $VERSION = '0.2';
 our $RELEASE = '0.2';
 our $SHORTDESCRIPTION = 'API and frontend for managing assignable tasks';
 our $NO_PREFS_IN_TOPIC = 1;
-
+our $SITEPREFS = {
+    TASKS_IMMUTABLE_COMMENTS => 0,
+};
 my $db;
 my %schema_versions;
 my @tmpWikiACLs = ();
@@ -1499,6 +1501,12 @@ sub restUpdate {
         return '';
     }
 
+    if( $data{cid} && Foswiki::Func::getPreferencesValue('TASKS_IMMUTABLE_COMMENTS')){
+        $response->header(-status => 403);
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update comments"}');
+        return '';
+    }
+
     my $lease = $task->{meta}->getLease();
     if ( $lease ) {
         my $cuid = $lease->{user};
@@ -2956,7 +2964,9 @@ FORMAT
             $addComment  = '%IF{"\'%TASKINFO{field="Status"}%\'!=\'closed\' AND \'$encComment\'=\'\'" then="<a href=\"#\" class=\"task-changeset-add\" title=\"$percntMAKETEXT{\"Add comment\"}$percnt\"><i class=\"fa fa-plus\"></i></a>"}%';
             my $encComment = Foswiki::urlEncode(defined $cset->{comment} ? $cset->{comment} : '');
             $addComment =~ s#\$encComment#$encComment#g;
-            $editComment = '<div class="icons"><a href="#" class="task-changeset-edit" title="%MAKETEXT{"Edit comment"}%"><i class="fa fa-pencil"></i></a><a href="#" class="task-changeset-remove" title="%MAKETEXT{"Remove comment"}%"><i class="fa fa-times"></i></a></div>' if $cset->{comment};
+            if(!Foswiki::Func::getPreferencesValue("TASKS_IMMUTABLE_COMMENTS")) {
+                $editComment = '<div class="icons"><a href="#" class="task-changeset-edit" title="%MAKETEXT{"Edit comment"}%"><i class="fa fa-pencil"></i></a><a href="#" class="task-changeset-remove" title="%MAKETEXT{"Remove comment"}%"><i class="fa fa-times"></i></a></div>' if $cset->{comment};
+            }
         }
 
         $format =~ s#\$addComment#$addComment#g;
