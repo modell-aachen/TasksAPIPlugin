@@ -904,16 +904,18 @@ sub solrize {
             }
 
             for (my $i = 0; $i < scalar(@arr); $i++) {
-                if ($arr[$i] =~ /\$wikiACL\($ctx[^\)]+\)/) {
-                    $arr[$i] = undef;
-                } elsif ($arr[$i] =~ /\$wikiACL\(([^\)]+) VIEW\)/) {
-                    $arr[$i] = undef;
-                    unless ($ignoreWikiACL) {
-                        my @fromIndexer = topicACL($indexer,
-                            Foswiki::Func::normalizeWebTopicName(undef, $1)
-                        );
-                        push @grantedUsers, @{$fromIndexer[0]};
-                        push @deniedUsers, @{$fromIndexer[1]};
+                if(defined $arr[$i]) {
+                    if ($arr[$i] =~ /\$wikiACL\($ctx[^\)]+\)/) {
+                        $arr[$i] = undef;
+                    } elsif ($arr[$i] =~ /\$wikiACL\(([^\)]+) VIEW\)/) {
+                        $arr[$i] = undef;
+                        unless ($ignoreWikiACL) {
+                            my @fromIndexer = topicACL($indexer,
+                                Foswiki::Func::normalizeWebTopicName(undef, $1)
+                            );
+                            push @grantedUsers, @{$fromIndexer[0]};
+                            push @deniedUsers, @{$fromIndexer[1]};
+                        }
                     }
                 }
             }

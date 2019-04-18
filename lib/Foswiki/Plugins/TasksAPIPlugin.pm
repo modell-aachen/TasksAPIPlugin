@@ -15,6 +15,7 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Time ();
 use Foswiki::Render ();
+use Foswiki ();
 
 use Foswiki::Plugins::AmpelPlugin;
 use Foswiki::Plugins::JQueryPlugin;
@@ -2844,7 +2845,7 @@ SCRIPT
         push(@q, 'desc=' . $req->param('desc')) if defined $req->param('desc') && $override;
         push(@q, 'tab=' . $req->param('tab')) if $req->param('tab');
         foreach my $f_param ( grep{ $_ =~ m#^f_# } $req->multi_param() ) {
-            push(@q, "$f_param=" . $req->param($f_param));
+            push(@q, "$f_param=" . Foswiki::urlEncode($req->param($f_param)));
         }
         push(@q, 'pagesize=' . $req->param('pagesize')) if $req->param('pagesize') && $override;
         my $qstr = "&" . join('&', grep(/^.+$/, @q));
@@ -3380,8 +3381,8 @@ sub afterUploadHandler {
 sub beforeCommonTagsHandler {
     my ($text, $topic, $web, $meta) = @_;
 
-    $web |= '';
-    $topic |= '';
+    $web ||= '';
+    $topic ||= '';
 
     unless ($indexerCalled) {
         $indexerCalled = 1;
