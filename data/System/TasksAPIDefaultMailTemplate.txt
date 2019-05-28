@@ -10,8 +10,12 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi_contextlink"}%%{
-}%%MAKETEXT{"Link to %WEB%"}%:
+}%%MAKETEXT{"Link to [_1]: [_2]" arg1="%TMPL:P{"application_name"}%" arg2="%FORMFIELD{"TopicTitle"}%"}%:
 %MAKETEXT{"%SCRIPTURL{"view" topic="%WEB%.%BASETOPIC%"}%"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"application_name"}%%{
+}%%FORMATLIST{"$map(%WEB%)" map="%MODAC_WEBMAPPINGS%"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi_mailstate"}%%{
