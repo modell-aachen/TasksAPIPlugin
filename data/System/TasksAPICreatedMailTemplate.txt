@@ -1,15 +1,20 @@
 %TMPL:INCLUDE{"TasksAPIDefaultMail"}%
 
-%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
+%TMPL:DEF{"ModacMailSubject"}%[%WIKITOOLNAME%] %MAKETEXT{"Task created in"}% %TMPL:P{"application_name"}%: %FORMFIELD{"TopicTitle"}%: %TMPL:P{"ModacMailTitle"}%%TMPL:END%
 
 %TMPL:DEF{"ModacMailContents"}%
-%MAKETEXT{"[_1] created a task" arg1="%TASKSAPI_ACTOR%"}%: %TMPL:P{"ModacMailTitle"}%
+%MAKETEXT{"[_1] created a task in [_2]: [_3]:" arg1="%TASKSAPI_ACTOR%" arg2="%TMPL:P{"application_name"}%" arg3="%FORMFIELD{"TopicTitle"}%" }%
+%TMPL:P{"ModacMailTitle"}%
 
 %MAKETEXT{"Assigned to"}%: %RENDERUSER{"%TASKINFO{field="AssignedTo"}%"}%
+%MAKETEXT{"Task Title"}%: %TASKINFO{field="Title" default="%MAKETEXT{(no title)}%"}%
 %MAKETEXT{"Due date"}%: %TASKINFO{field="DueDate" format="$day $month $year"}%
 %MAKETEXT{"Prioritize"}%: %MAKETEXT{"%TASKINFO{field="Prioritize"}%"}%
 
 %MAKETEXT{"Description"}%:
 %TASKINFO{field="Description" nohtml="1"}%
 %TMPL:P{"tasksapi_maillink"}%
+
+%TMPL:P{"tasksapi_contextlink"}%
+
 %TMPL:END%
