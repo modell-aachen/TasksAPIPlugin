@@ -3320,7 +3320,7 @@ sub tagInfo {
             for my $f (@{$info->{fields}}) {
                 if ($f !~ /^\$/) {
                     # TODO suitable alternative to hardcoding <span>
-                    push @fields, qq[<span>%TASKINFO{field="$f" display="on"}%</span>];
+                    push @fields, qq[<span>%TASKINFO{field="$f" escape="true" display="on"}%</span>];
                 } elsif (lc($f) eq '$checkbox') {
                     $out = q[%TMPL:P{"tasksapi::task::field::checkbox"}%];
                 } else {
