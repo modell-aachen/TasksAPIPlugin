@@ -495,7 +495,7 @@ $edit"
       %TMPL:P{"tasksapi::details::content::customfields"}%
     </div>
     <div class="description">
-      <article>%TASKINFO{field="Description" display="1"}%</article>
+      <article>%TASKINFO{field="Description" display="1" escape="usercontext"}%</article>
     </div>
     <div class="clear"></div>
   </div>%{

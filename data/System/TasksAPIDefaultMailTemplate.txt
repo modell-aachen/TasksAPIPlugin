@@ -15,7 +15,7 @@
 }%%TMPL:END%
 
 %TMPL:DEF{"application_name"}%%{
-}%%FORMATLIST{"$map(%WEB%)" map="%MODAC_WEBMAPPINGS%"}%%{
+}%%FORMATLIST{"$map(%WEB%)" map="%MODAC_WEBMAPPINGS{encode="none"}%"}%%{
 }%%TMPL:END%
 
 %TMPL:DEF{"tasksapi_mailstate"}%%{

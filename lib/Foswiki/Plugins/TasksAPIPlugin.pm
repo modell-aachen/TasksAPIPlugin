@@ -2155,7 +2155,7 @@ sub restLink {
 sub _renderTask {
     my ($meta, $settings, $task, $addtozone) = @_;
     if ($renderRecurse >= 16) {
-        return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
+        return '%RED{encode="none"}%Error: deep recursion in task rendering%ENDCOLOR{encode="none"}%';
     }
 
     if(Foswiki::Func::isGroupMember("ReadOnlyGroup",$meta->session()->{user})){
@@ -2546,7 +2546,7 @@ sub tagGrid {
         my $err = $@;
         $err =~ s/&/&amp;/;
         $err =~ s/</&lt;/;
-        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
+        return "%RED{encode=\"none\"}%TASKSGRID: invalid query ($@)%ENDCOLOR{encode=\"none\"}%%BR%";
     }
 
     require Foswiki::Contrib::PickADateContrib;
@@ -2608,7 +2608,7 @@ SCRIPT
 
     unless ($ctx eq 'any') {
         $templateFile = 'TasksAPIDefault' unless $templateFile;
-        return "<strong>%RED%TASKSGRID: missing parameter form!%ENDCOLOR%<strong>"unless $form
+        return "<strong>%RED{encode=\"none\"}%TASKSGRID: missing parameter form!%ENDCOLOR{encode=\"none\"}%<strong>"unless $form
     }
 
     my $_tplDefault = sub {
@@ -2704,7 +2704,7 @@ SCRIPT
         my $err = $@;
         $err =~ s/&/&amp;/;
         $err =~ s/</&lt;/;
-        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
+        return "%RED{encode=\"none\"}%TASKSGRID: invalid query ($@)%ENDCOLOR{encode=\"none\"}%%BR%";
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
@@ -3116,7 +3116,7 @@ sub tagContextSelector {
         $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
     }
     if (!$task) {
-        return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
+        return '%RED{encode="none"}%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR{encode="none"}%%BR%';
     }
 
     my $ctx = _available_contexts($task);
@@ -3155,19 +3155,19 @@ sub tagInfo {
 
     if (my $option = $params->{option}) {
         if (!$currentOptions) {
-            return '%RED%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR%%BR%';
+            return '%RED{encode="none"}%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR{encode="none"}%%BR%';
         }
         return $currentOptions->{$option};
     }
     if (my $expand = $params->{expand}) {
         if (!$currentExpands) {
-            return '%RED%TASKINFO: parameter =expand= can only be used in task grid templates%ENDCOLOR%%BR%';
+            return '%RED{encode="none"}%TASKINFO: parameter =expand= can only be used in task grid templates%ENDCOLOR{encode="none"}%%BR%';
         }
         return $currentExpands->{$expand};
     }
     if (my $expandTpl = $params->{expandtemplate}) {
         if (!$currentOptions) {
-            return '%RED%TASKINFO: parameter =expandtemplate= can only be used in grid/task templates%ENDCOLOR%%BR%';
+            return '%RED{encode="none"}%TASKINFO: parameter =expandtemplate= can only be used in grid/task templates%ENDCOLOR{encode="none"}%%BR%';
         }
         return Foswiki::Func::expandTemplate($expandTpl);
     }
@@ -3209,7 +3209,7 @@ sub tagInfo {
         }
     }
     if (!$task) {
-        return '%RED%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
+        return '%RED{encode="none"}%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR{encode="none"}%%BR%';
     }
 
     if (my $field = $params->{field}) {
@@ -3224,7 +3224,8 @@ sub tagInfo {
             }
         }
         if ($type eq 'title') {
-            return $task->form->getField($field)->{tooltip} || $field;
+            my $fieldTitle = $task->form->getField($field)->{tooltip} || $field;
+            return Foswiki::Func::encode($fieldTitle, 'safe');
         }
         $val = _shorten($val, $params->{shorten});
         if ($params->{format}) {
@@ -3254,15 +3255,18 @@ sub tagInfo {
 
             $val = join('<br>', sort { lc($a) cmp lc($b) } @vals);
         }
-        if (Foswiki::isTrue($params->{escape}, 0)) {
+        if (Foswiki::isTrue($params->{nohtml}, 0)) {
+            $val =~ s|<.+?>||g;
+            $val = HTML::Entities::decode_entities($val);
+        }
+        if ($params->{escape} eq 'usercontext') {
+            $val = Foswiki::Func::encode($val, 'usercontext');
+        }
+        elsif (Foswiki::isTrue($params->{escape}, 1)) {
             $val =~ s/&/&amp;/g;
             $val =~ s/</&lt;/g;
             $val =~ s/>/&gt;/g;
             $val =~ s/"/&quot;/g;
-        }
-        if (Foswiki::isTrue($params->{nohtml}, 0)) {
-            $val =~ s|<.+?>||g;
-            $val = HTML::Entities::decode_entities($val);
         }
         return $val;
     }
@@ -3320,7 +3324,7 @@ sub tagInfo {
             for my $f (@{$info->{fields}}) {
                 if ($f !~ /^\$/) {
                     # TODO suitable alternative to hardcoding <span>
-                    push @fields, qq[<span>%TASKINFO{field="$f" escape="true" display="on"}%</span>];
+                    push @fields, qq[<span>%TASKINFO{field="$f" display="on"}%</span>];
                 } elsif (lc($f) eq '$checkbox') {
                     $out = q[%TMPL:P{"tasksapi::task::field::checkbox"}%];
                 } else {
