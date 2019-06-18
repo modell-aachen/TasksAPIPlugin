@@ -3165,7 +3165,7 @@ sub makeDate {
     $date = Foswiki::Time::formatTime(time()) unless $date;
 
     if($date =~ /(\d{2}) (\w{3}) (\d{4})/) {
-         $date = "$1 %MAKETEXT{\"$2\"}% $3"
+         $date = "$1 " . $session->i18n->maketext($2) . " $3"
     }
     return $date;
 }
@@ -3254,7 +3254,7 @@ sub tagInfo {
                 $val = Foswiki::Time::formatTime($val, $params->{format});
             }
 
-            $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
+            $val =~ s/([^\d\s:\(\)]+)/$session->i18n->maketext($1)/e;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
             my @vals = ();
@@ -3279,15 +3279,7 @@ sub tagInfo {
             $val =~ s|<.+?>||g;
             $val = HTML::Entities::decode_entities($val);
         }
-        if (defined $params->{escape} && ($params->{escape} eq 'usercontext')) {
-            $val = Foswiki::Func::encode($val, 'usercontext');
-        }
-        elsif (Foswiki::isTrue($params->{escape}, 1)) {
-            $val =~ s/&/&amp;/g;
-            $val =~ s/</&lt;/g;
-            $val =~ s/>/&gt;/g;
-            $val =~ s/"/&quot;/g;
-        }
+        $val = Foswiki::Func::encode($val, $params->{escape});
         return $val;
     }
     if ($type eq 'changeset') {
