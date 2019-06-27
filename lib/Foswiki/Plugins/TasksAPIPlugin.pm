@@ -3259,7 +3259,7 @@ sub tagInfo {
             $val =~ s|<.+?>||g;
             $val = HTML::Entities::decode_entities($val);
         }
-        if ($params->{escape} eq 'usercontext') {
+        if (defined $params->{escape} && ($params->{escape} eq 'usercontext')) {
             $val = Foswiki::Func::encode($val, 'usercontext');
         }
         elsif (Foswiki::isTrue($params->{escape}, 1)) {
