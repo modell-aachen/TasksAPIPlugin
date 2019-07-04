@@ -535,7 +535,7 @@ $edit"
 
 %TMPL:DEF{"tasksapi::task::pdetails"}%
     <tr class="task pdetails %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
-      <td colspan="99" class="description">%TASKINFO{field="Description"}%</td>
+      <td colspan="99" class="description">%TASKINFO{field="Description" escape="usercontext"}%</td>
     </tr>
     <tr class="task pspacer">
       <td colspan="99"> </td>
