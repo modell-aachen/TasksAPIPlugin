@@ -9,6 +9,15 @@
 %SCRIPTURL{view}%/%TASKINFO{field="Context"}%?id=%TASKINFO{meta="id"}%&tid=%TMPL:P{"tasksapi_mailstate"}%&tab=%TMPL:P{"tasksapi_mailstate"}%%{
 }%%TMPL:END%
 
+%TMPL:DEF{"tasksapi_contextlink"}%%{
+}%%MAKETEXT{"Link to [_1]: [_2]" arg1="%TMPL:P{"application_name"}%" arg2="%FORMFIELD{"TopicTitle"}%"}%:
+%MAKETEXT{"%SCRIPTURL{"view" topic="%WEB%.%BASETOPIC%"}%"}%%{
+}%%TMPL:END%
+
+%TMPL:DEF{"application_name"}%%{
+}%%FORMATLIST{"$map(%WEB%)" map="%MODAC_WEBMAPPINGS{encode="none"}%"}%%{
+}%%TMPL:END%
+
 %TMPL:DEF{"tasksapi_mailstate"}%%{
 }%%IF{
 "'%TASKINFO{taskcfg="MAP_STATUS_FIELD"}%'"

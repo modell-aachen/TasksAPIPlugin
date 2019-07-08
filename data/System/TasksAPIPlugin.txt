@@ -385,7 +385,7 @@ header.
 
 ---+++ User defined tempaltes
 ---++++ Content template
-%MAROON% *mandatory* %ENDCOLOR%<br>
+%MAROON{encode="none"}% *mandatory* %ENDCOLOR{encode="none"}%<br>
 Used to render a task in details view aka the task panel which opens after a
 task has been clicked by a user. =TasksAPIPlugin= includes the content of that
 template into its internal overlay definitions.
@@ -396,7 +396,7 @@ template into its internal overlay definitions.
 </verbatim>
 
 ---++++ Caption template
-%MAROON% *mandatory* %ENDCOLOR%<br>
+%MAROON{encode="none"}% *mandatory* %ENDCOLOR{encode="none"}%<br>
 A HTML table row defining the task tracker's table head. In order to enable sorting
 for a column, specify the _data-sort_ attribute as shown below.
 <verbatim class="tml">
@@ -410,7 +410,7 @@ for a column, specify the _data-sort_ attribute as shown below.
 </verbatim>
 
 ---++++ Editor template
-%MAROON% *mandatory* %ENDCOLOR%<br>
+%MAROON{encode="none"}% *mandatory* %ENDCOLOR{encode="none"}%<br>
 A template to render the task editor. =TasksAPIPlugin= sets a context so that it's
 possible to distinguish between editing and creating a task.
 <verbatim class="tml">
@@ -432,7 +432,7 @@ possible to distinguish between editing and creating a task.
 </verbatim>
 
 ---++++ Filter template
-%GREEN% *optional* %ENDCOLOR%<br>
+%GREEN{encode="none"}% *optional* %ENDCOLOR{encode="none"}%<br>
 A custom template specifying the filter controls to include within a task tracker
 <verbatim class="tml">
 %TMPL:DEF{"myapp::filter"}%
@@ -441,7 +441,7 @@ A custom template specifying the filter controls to include within a task tracke
 </verbatim>
 
 ---++++ Task template
-%MAROON% *mandatory* %ENDCOLOR%<br>
+%MAROON{encode="none"}% *mandatory* %ENDCOLOR{encode="none"}%<br>
 Defines a task's representation within a tasks table. In equivalence to the caption
 template a task (entry) template has to be a table row.<br>
 In addition, there are several requirements for a task template
