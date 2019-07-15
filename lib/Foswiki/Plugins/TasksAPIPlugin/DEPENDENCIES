@@ -10,5 +10,4 @@ Foswiki::Contrib::JQPluginContrib,>=1.0,perl,Required.
 Foswiki::Contrib::PickADateContrib,>=1.0,perl,Required.
 Foswiki::Contrib::MailTemplatesContrib,>=1.0,perl,Required.
 Foswiki::Plugins::DnDUploadPlugin,>=1.0,perl,Required.
-Foswiki::Plugins::MoreFormfieldsPlugin,>=1.0,perl,Required.
 Foswiki::Plugins::QueryUserPlugin,>=0,perl,Required.
