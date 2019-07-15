@@ -1175,23 +1175,15 @@ sub restDelete {
 
     unless ($id && $file) {
         $response->header(-status => 400);
-        $response->body(encode_json({
-            status => 'error',
-            'code' => 'client_error',
-            msg => "Request error: Missing filename or task id parameter."
-        }));
+        $response->body('{"status":"error","code":"client_error","msg":"Request error: Missing filename or task id parameter."}');
         return '';
     }
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
-    unless ($task->checkACL('change')) {
+    if (Foswiki::Func::isGroupMember("ReadOnlyGroup", $session->{user}) || !$task->checkACL('change')) {
         $response->header(-status => 403);
-        $response->body(encode_json({
-            status => 'error',
-            code => 'acl_change',
-            msg => 'No permission to remove attachments of this task'
-        }));
+        $response->body('{"status":"error","code":"acl_change","msg":"No permission to remove task"}');
         return '';
     }
 
