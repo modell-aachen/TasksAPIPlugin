@@ -1177,20 +1177,20 @@ sub restDelete {
         $response->header(-status => 400);
         $response->body(encode_json({
             status => 'error',
-            'code' => 'client_error',
-            msg => "Request error: Missing filename or task id parameter."
+            code => 'client_error',
+            msg => 'Request error: Missing filename or task id parameter'
         }));
         return '';
     }
 
     my ($web, $topic) = Foswiki::Func::normalizeWebTopicName(undef, $id);
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($web, $topic);
-    unless ($task->checkACL('change')) {
+    if (Foswiki::Func::isGroupMember("ReadOnlyGroup", $session->{user}) || !$task->checkACL('change')) {
         $response->header(-status => 403);
         $response->body(encode_json({
             status => 'error',
             code => 'acl_change',
-            msg => 'No permission to remove attachments of this task'
+            msg => 'No permission to remove task'
         }));
         return '';
     }
@@ -1435,7 +1435,11 @@ sub restCreate {
 
     if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
         $response->header(-status => 403);
-        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        $response->body(encode_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to update task'
+        }));
         return '';
     }
 
@@ -1491,20 +1495,32 @@ sub restUpdate {
 
     if( Foswiki::Func::isGroupMember("ReadOnlyGroup",$session->{user}) ){
         $response->header(-status => 403);
-        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        $response->body(encode_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to update task'
+        }));
         return '';
     }
 
     my $task = Foswiki::Plugins::TasksAPIPlugin::Task::load($Foswiki::cfg{TasksAPIPlugin}{DBWeb}, delete $data{id});
     unless ($task->checkACL('change')) {
         $response->header(-status => 403);
-        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update task"}');
+        $response->body(encode_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to update task'
+        }));
         return '';
     }
 
     if( $data{cid} && Foswiki::Func::getPreferencesValue('TASKS_IMMUTABLE_COMMENTS')){
         $response->header(-status => 403);
-        $response->body('{"status":"error","code":"acl_change","msg":"No permission to update comments"}');
+        $response->body(encode_json({
+            status => 'error',
+            code => 'acl_change',
+            msg => 'No permission to update comments'
+        }));
         return '';
     }
 
@@ -1518,9 +1534,13 @@ sub restUpdate {
             $task->update(%data);
         }
         else {
-             $response->header(-status => 403);
-        $response->body('{"status":"error","code":"lease_taken","msg":"Lease taken by another user"}');
-        return '';
+            $response->header(-status => 403);
+            $response->body(encode_json({
+                status => 'error',
+                code => 'lease_taken',
+                msg => 'Lease taken by another user'
+            }));
+            return '';
         }
     } else {
         $task->update(%data);
