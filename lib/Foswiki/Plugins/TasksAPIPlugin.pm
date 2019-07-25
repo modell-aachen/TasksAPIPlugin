@@ -3124,7 +3124,7 @@ sub _getTopicTitle {
         ($meta) = Foswiki::Func::readTopic($w, $t);
     }
     my $title = $meta->get('FIELD', 'TopicTitle');
-    return  $title->{value} || $meta->topic();
+    return  Foswiki::Func::encode($title->{value} || $meta->topic());
 }
 
 sub tagContextSelector {
@@ -3272,7 +3272,9 @@ sub tagInfo {
                 }
             }
 
+            @vals = map { Foswiki::Func::encode($_) } @vals;
             $val = join('<br>', sort { lc($a) cmp lc($b) } @vals);
+            return $val;
         }
         if (Foswiki::isTrue($params->{nohtml}, 0)) {
             $val =~ s|<.+?>||g;
