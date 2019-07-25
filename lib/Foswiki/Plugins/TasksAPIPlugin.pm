@@ -3085,7 +3085,6 @@ FORMAT
 sub _shorten {
     my ($text, $len) = @_;
     return $text unless defined $len;
-    $text =~ s/<.+?>//g;
     $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
     $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
     Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
@@ -3165,7 +3164,7 @@ sub makeDate {
     $date = Foswiki::Time::formatTime(time()) unless $date;
 
     if($date =~ /(\d{2}) (\w{3}) (\d{4})/) {
-         $date = "$1 " . $session->i18n->maketext($2) . " $3"
+         $date = "$1 " . $session->i18n->maketext($2) . " $3";
     }
     return $date;
 }
