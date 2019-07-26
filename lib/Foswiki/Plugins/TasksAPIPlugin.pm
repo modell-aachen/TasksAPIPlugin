@@ -2175,7 +2175,7 @@ sub restLink {
 sub _renderTask {
     my ($meta, $settings, $task, $addtozone) = @_;
     if ($renderRecurse >= 16) {
-        return '%RED{encode="none"}%Error: deep recursion in task rendering%ENDCOLOR{encode="none"}%';
+        return '%RED%Error: deep recursion in task rendering%ENDCOLOR%';
     }
 
     if(Foswiki::Func::isGroupMember("ReadOnlyGroup",$meta->session()->{user})){
@@ -2566,7 +2566,7 @@ sub tagGrid {
         my $err = $@;
         $err =~ s/&/&amp;/;
         $err =~ s/</&lt;/;
-        return "%RED{encode=\"none\"}%TASKSGRID: invalid query ($@)%ENDCOLOR{encode=\"none\"}%%BR%";
+        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
 
     require Foswiki::Contrib::PickADateContrib;
@@ -2628,7 +2628,7 @@ SCRIPT
 
     unless ($ctx eq 'any') {
         $templateFile = 'TasksAPIDefault' unless $templateFile;
-        return "<strong>%RED{encode=\"none\"}%TASKSGRID: missing parameter form!%ENDCOLOR{encode=\"none\"}%<strong>"unless $form
+        return "<strong>%RED%TASKSGRID: missing parameter form!%ENDCOLOR%<strong>"unless $form
     }
 
     my $_tplDefault = sub {
@@ -2724,7 +2724,7 @@ SCRIPT
         my $err = $@;
         $err =~ s/&/&amp;/;
         $err =~ s/</&lt;/;
-        return "%RED{encode=\"none\"}%TASKSGRID: invalid query ($@)%ENDCOLOR{encode=\"none\"}%%BR%";
+        return "%RED%TASKSGRID: invalid query ($@)%ENDCOLOR%%BR%";
     }
     $query->{Context} = $ctx unless $ctx eq 'any';
     $query->{Parent} = $parent unless $parent eq 'any';
@@ -3085,7 +3085,6 @@ FORMAT
 sub _shorten {
     my ($text, $len) = @_;
     return $text unless defined $len;
-    $text =~ s/<.+?>//g;
     $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
     $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
     Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
@@ -3125,7 +3124,7 @@ sub _getTopicTitle {
         ($meta) = Foswiki::Func::readTopic($w, $t);
     }
     my $title = $meta->get('FIELD', 'TopicTitle');
-    return  $title->{value} || $meta->topic();
+    return  Foswiki::Func::encode($title->{value} || $meta->topic());
 }
 
 sub tagContextSelector {
@@ -3136,7 +3135,7 @@ sub tagContextSelector {
         $task = Foswiki::Plugins::TasksAPIPlugin::Task::load(Foswiki::Func::normalizeWebTopicName(undef, $params->{task}));
     }
     if (!$task) {
-        return '%RED{encode="none"}%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR{encode="none"}%%BR%';
+        return '%RED%TASKCONTEXTSELECTOR: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
     }
 
     my $ctx = _available_contexts($task);
@@ -3165,7 +3164,7 @@ sub makeDate {
     $date = Foswiki::Time::formatTime(time()) unless $date;
 
     if($date =~ /(\d{2}) (\w{3}) (\d{4})/) {
-         $date = "$1 %MAKETEXT{\"$2\"}% $3"
+         $date = "$1 " . $session->i18n->maketext($2) . " $3";
     }
     return $date;
 }
@@ -3175,19 +3174,19 @@ sub tagInfo {
 
     if (my $option = $params->{option}) {
         if (!$currentOptions) {
-            return '%RED{encode="none"}%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR{encode="none"}%%BR%';
+            return '%RED%TASKINFO: parameter =option= can only be used in grid/task templates%ENDCOLOR%%BR%';
         }
         return $currentOptions->{$option};
     }
     if (my $expand = $params->{expand}) {
         if (!$currentExpands) {
-            return '%RED{encode="none"}%TASKINFO: parameter =expand= can only be used in task grid templates%ENDCOLOR{encode="none"}%%BR%';
+            return '%RED%TASKINFO: parameter =expand= can only be used in task grid templates%ENDCOLOR%%BR%';
         }
         return $currentExpands->{$expand};
     }
     if (my $expandTpl = $params->{expandtemplate}) {
         if (!$currentOptions) {
-            return '%RED{encode="none"}%TASKINFO: parameter =expandtemplate= can only be used in grid/task templates%ENDCOLOR{encode="none"}%%BR%';
+            return '%RED%TASKINFO: parameter =expandtemplate= can only be used in grid/task templates%ENDCOLOR%%BR%';
         }
         return Foswiki::Func::expandTemplate($expandTpl);
     }
@@ -3229,7 +3228,7 @@ sub tagInfo {
         }
     }
     if (!$task) {
-        return '%RED{encode="none"}%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR{encode="none"}%%BR%';
+        return '%RED%TASKINFO: not in a task template and no task parameter specified%ENDCOLOR%%BR%';
     }
 
     if (my $field = $params->{field}) {
@@ -3254,7 +3253,7 @@ sub tagInfo {
                 $val = Foswiki::Time::formatTime($val, $params->{format});
             }
 
-            $val =~ s/([^\d\s:\(\)]+)/%MAKETEXT\{$1\}%/;
+            $val =~ s/([^\d\s:\(\)]+)/$session->i18n->maketext($1)/e;
         }
         if (Foswiki::isTrue($params->{user}, 0)) {
             my @vals = ();
@@ -3273,21 +3272,15 @@ sub tagInfo {
                 }
             }
 
+            @vals = map { Foswiki::Func::encode($_) } @vals;
             $val = join('<br>', sort { lc($a) cmp lc($b) } @vals);
+            return $val;
         }
         if (Foswiki::isTrue($params->{nohtml}, 0)) {
             $val =~ s|<.+?>||g;
             $val = HTML::Entities::decode_entities($val);
         }
-        if (defined $params->{escape} && ($params->{escape} eq 'usercontext')) {
-            $val = Foswiki::Func::encode($val, 'usercontext');
-        }
-        elsif (Foswiki::isTrue($params->{escape}, 1)) {
-            $val =~ s/&/&amp;/g;
-            $val =~ s/</&lt;/g;
-            $val =~ s/>/&gt;/g;
-            $val =~ s/"/&quot;/g;
-        }
+        $val = Foswiki::Func::encode($val, $params->{escape});
         return $val;
     }
     if ($type eq 'changeset') {
