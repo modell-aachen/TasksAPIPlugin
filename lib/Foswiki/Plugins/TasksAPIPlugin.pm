@@ -3050,8 +3050,8 @@ FORMAT
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
         $out =~ s#\$title#_translate($meta, $f->{description} || $f->{tooltip} || '') || $f->{name}#eg;
-        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1)#eg;
-        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1)#eg;
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1, $params->{escape})#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1, $params->{escape})#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
         $out =~ s#\$new(\(\))?#$change->{new}#g;
         push @fout, $out;
@@ -3060,8 +3060,8 @@ FORMAT
         my $change = $changes->{_attachment};
         my $out = $change->{type} eq 'add' ? $faddformat : $fdeleteformat;
         $out =~ s#\$title#_translate($meta, "Attachment")#eg;
-        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1)#eg;
-        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1)#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($change->{new}, $1, $params->{escape})#eg;
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($change->{old}, $1, $params->{escape})#eg;
         push @fout, $out;
     }
 
@@ -3083,12 +3083,13 @@ FORMAT
 }
 
 sub _shorten {
-    my ($text, $len) = @_;
-    return $text unless defined $len;
-    $text = Encode::decode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
-    $text = substr($text, 0, $len - 3) ."..." if length($text) > ($len + 3); # a bit of fuzz
-    Encode::encode($Foswiki::cfg{Site}{CharSet}, $text) if Encode::is_utf8($text) && !$Foswiki::UNICODE;
-    return $text;
+    my ($text, $len, $encodingType) = @_;
+
+    if (defined $len && length($text) > ($len + 3)) {
+        $text = substr($text, 0, $len - 3) ."...";
+    }
+
+    return  Foswiki::Func::encode($text, $encodingType);
 }
 
 # Given a task changeset as a JSON string, deserialize and convert legacy
@@ -3246,7 +3247,7 @@ sub tagInfo {
             my $fieldTitle = $task->form->getField($field)->{tooltip} || $field;
             return Foswiki::Func::encode($fieldTitle, 'safe');
         }
-        $val = _shorten($val, $params->{shorten});
+        $val = _shorten($val, $params->{shorten}, $params->{escape});
         if ($params->{format}) {
             if ( $val =~ /^\d+$/ ) {
                 $val = substr $val, 0, 10 if ( length $val eq 13 );
