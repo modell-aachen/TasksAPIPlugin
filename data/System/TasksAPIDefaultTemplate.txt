@@ -457,7 +457,7 @@ $edit"
 }%<div class="task-details">
   <div class="caption %IF{"'%TASKINFO{field="Prioritize"}%'='Yes'" then="prioritize"}%">
     <div class="title view-only">
-      <span class="title" title="%TASKINFO{field="Title" escape="1"}%">%ENCODE{"%TASKINFO{field="Title" shorten="90"}%" type="entity"}%</span>
+      <span class="title" title="%TASKINFO{field="Title" escape="1"}%">%TASKINFO{field="Title" shorten="90"}%</span>
     </div>%{
     }%%IF{"context task_canedit and not context task_readonly" then="$percntIF{\"'%TASKINFO{field="Status"}%'='open'\" then=\"<div class='controls' title='$percentMAKETEXT{$quotClose task$quot}$percent'><a href='#' class='tasks-btn tasks-btn-close'><i class='far fa-square'></i></a></div>\" else=\"<div class='controls' title='$percentMAKETEXT{\"Reopen task\"}$percent'><i class='closed fa fa-check-square'></i></div>\"}$percnt"}%%{
   }%</div>
