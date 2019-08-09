@@ -3085,6 +3085,8 @@ FORMAT
 sub _shorten {
     my ($text, $len, $encodingType) = @_;
 
+    $text = HTML::Entities::decode_entities($text);
+
     if (defined $len && length($text) > ($len + 3)) {
         $text = substr($text, 0, $len - 3) ."...";
     }
