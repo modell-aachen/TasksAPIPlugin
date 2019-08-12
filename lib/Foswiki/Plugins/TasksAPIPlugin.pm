@@ -2955,6 +2955,8 @@ sub _renderChangeset {
     my $fields = $task->form->getFields;
     my $fsep = $params->{fieldseparator} || '';
 
+    my $isMail = Foswiki::isTrue($params->{mail}, 0);
+
     my $plain = Foswiki::isTrue($params->{nohtml}, 0);
     my $defaultFormat;
     if ( $plain ) {
@@ -3050,8 +3052,8 @@ FORMAT
         $out =~ s#\$name#$f->{name}#g;
         $out =~ s#\$type#$change->{type}#g;
         $out =~ s#\$title#_translate($meta, $f->{description} || $f->{tooltip} || '') || $f->{name}#eg;
-        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1, $params->{escape})#eg;
-        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1, $params->{escape})#eg;
+        $out =~ s#\$old\(shorten:(\d+)\)#_shorten($changeOld, $1, $params->{escape}, $isMail)#eg;
+        $out =~ s#\$new\(shorten:(\d+)\)#_shorten($changeNew, $1, $params->{escape}, $isMail)#eg;
         $out =~ s#\$old(\(\))?#$change->{old}#g;
         $out =~ s#\$new(\(\))?#$change->{new}#g;
         push @fout, $out;
@@ -3083,9 +3085,9 @@ FORMAT
 }
 
 sub _shorten {
-    my ($text, $len, $encodingType) = @_;
+    my ($text, $len, $encodingType, $isMail) = @_;
 
-    $text = HTML::Entities::decode_entities($text);
+    $text = HTML::Entities::decode_entities($text) if $isMail;
 
     if (defined $len && length($text) > ($len + 3)) {
         $text = substr($text, 0, $len - 3) ."...";
