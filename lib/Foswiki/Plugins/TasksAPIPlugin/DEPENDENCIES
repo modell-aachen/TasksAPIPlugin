@@ -5,7 +5,6 @@ Foswiki::Plugins::AmpelPlugin,>=1.2,perl,Required.
 Foswiki::Plugins::MimeIconPlugin,>=1.0,perl,Required.
 Foswiki::Plugins::JSi18nPlugin,>=1.0,perl,Required.
 Foswiki::Contrib::FontAwesomeContrib,>=1.0,perl,Required.
-Foswiki::Contrib::JQPluginContrib,>=1.0,perl,Required.
 Foswiki::Contrib::PickADateContrib,>=1.0,perl,Required.
 Foswiki::Plugins::DnDUploadPlugin,>=1.0,perl,Required.
 Foswiki::Plugins::QueryUserPlugin,>=0,perl,Required.
