@@ -2,6 +2,5 @@ Date::Manip,>=6.0,cpan,Required.
 Number::Bytes::Human,>=0.07,CPAN,Required.
 File::MimeInfo,>=0.16,CPAN,Required.
 Foswiki::Contrib::FontAwesomeContrib,>=1.0,perl,Required.
-Foswiki::Contrib::PickADateContrib,>=1.0,perl,Required.
 Foswiki::Plugins::DnDUploadPlugin,>=1.0,perl,Required.
 Foswiki::Plugins::QueryUserPlugin,>=0,perl,Required.
