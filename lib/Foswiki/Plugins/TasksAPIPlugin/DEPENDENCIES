@@ -3,4 +3,3 @@ Number::Bytes::Human,>=0.07,CPAN,Required.
 File::MimeInfo,>=0.16,CPAN,Required.
 Foswiki::Contrib::FontAwesomeContrib,>=1.0,perl,Required.
 Foswiki::Plugins::DnDUploadPlugin,>=1.0,perl,Required.
-Foswiki::Plugins::QueryUserPlugin,>=0,perl,Required.
